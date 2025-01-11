@@ -23,9 +23,14 @@ const userSchema = new Schema( {
     {
         type: Number,
     },
+    gender:{
+        type:String,enum:["M","F"],
+        required:true 
+    },
     email:
     {
-        type: String
+        type: String,
+        required:true
     },
     journals: [
         {
@@ -56,15 +61,28 @@ const userSchema = new Schema( {
 }, { timestamps: true})
 
 userSchema.methods.assignRandomAvatar = (user) => {
-    const avatars = [
-        "https://example.com/avatars/avatar1.png",
-        "https://example.com/avatars/avatar2.png",
-        "https://example.com/avatars/avatar3.png",
-        "https://example.com/avatars/avatar4.png",
+    const male_avatars = [
+        "https://tse2.mm.bing.net/th?id=OIP.Yj7V4oP9Noi8p77a8Oyd5QHaJA&pid=Api&P=0&h=180",
+         "https://tse2.mm.bing.net/th?id=OIP.zxQil4x4JMZtZm-7tUNF1QHaH_&pid=Api&P=0&h=180",  
+         "https://tse3.mm.bing.net/th?id=OIP.CHiM-UEsM0jqElrYHEftiwHaHa&pid=Api&P=0&h=180",
+         "https://tse2.mm.bing.net/th?id=OIP.2Be2070ayk9DYoV9xRXFEgHaHa&pid=Api&P=0&h=180"
 
+]   
+        const female_avatars=[
+        "https://tse3.mm.bing.net/th?id=OIP.GYuOR-Ox5UCX3-R_Qz49aQHaHa&pid=Api&P=0&h=180",
+        "https://tse1.mm.bing.net/th?id=OIP.HJ_CpQ29Bd9OeU98QDMe-gHaHa&pid=Api&P=0&h=180",
+        "https://tse3.mm.bing.net/th?id=OIP.KpNNDej-Xh6Njm4Xf-15BQHaHa&pid=Api&P=0&h=180",
+        "https://tse1.mm.bing.net/th?id=OIP.opldioYHZSr8ja6_DlApqgHaHa&pid=Api&P=0&h=180"
     ];
     if (!user.avatar) {
-        user.avatar = avatars[Math.floor(Math.random() * avatars.length)];
-        user.save();
+        if(user.gender=="M"){
+            user.avatar = avatars[Math.floor(Math.random() * male_avatars.length)];
+            user.save();
+        }
+        if(user.gender=="F"){
+            user.avatar = avatars[Math.floor(Math.random() * female_avatars.length)];
+            user.save();
+        }
+        
     }
 };
