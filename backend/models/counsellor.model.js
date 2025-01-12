@@ -2,19 +2,19 @@ import mongoose, {Schema} from mongoose;
 
 const counsellorSchema= new Schema({
     specification:
-    {
+    [{
         type: String,
         required: true
-    },
+    }],
     yearexp:
     {
         type: Number,
         required: true
     },
-    certifications:
+    certifications:[
     {
-        type: String
-    },
+        type: File
+    }],
     rating:
     {
         type: Number
