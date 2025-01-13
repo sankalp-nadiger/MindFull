@@ -17,7 +17,7 @@ import ParentSignIn from "./components/pages/ParentSignIn"; // Parent sign-in pa
 import CounsellorSignIn from "./components/pages/CounsellorSignIn"; // Counselor sign-in page
 import ParentSignUp from "./components/pages/ParentSignUp"; // Parent sign-up page
 import CounsellorSignUp from "./components/pages/CounsellorSignUp"; // Counselor sign-up page
-
+import Counsellorphase1 from "./components/pages/Counsellorphase1"
 
 const App = () => {
   return (
@@ -37,7 +37,7 @@ const App = () => {
         <Route path="/counsellor-signin" element={<CounsellorSignIn />} />
         <Route path="/parent-signup" element={<ParentSignUp />} />
         <Route path="/counsellor-signup" element={<CounsellorSignUp />} />
-
+          <Route path="/counsellorphase1" element={<Counsellorphase1/>}/>
       </Routes>
     </Router>
   );
