@@ -1,1 +1,1 @@
-export const DB_NAME= MindFull
+export const DB_NAME= "mindfull"
