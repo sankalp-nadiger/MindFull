@@ -5,6 +5,8 @@ import { User } from "../models/user.model.js";
 import { Resource } from "../models/resources.model.js";
 import { Parent } from "../models/parent.model.js";
 import { Post } from "../models/posts.model.js";
+import { Interest } from "../models/interests.models.js";
+import { Issue } from "../models/Issues.model.js";
 import ApiResponse from "../utils/API_Response.js";
 import jwt from "jsonwebtoken";
 
@@ -26,7 +28,7 @@ const generateAccessAndRefereshTokens = async (userId) => {
   }
 };
 const registerUser = asyncHandler(async (req, res) => {
-    const { fullName, email, username, password, dept, subscribedTags } = req.body;
+    const { fullName, email, username, password, age,interests } = req.body;
   
     // Validate fields
     if (
@@ -49,15 +51,21 @@ const registerUser = asyncHandler(async (req, res) => {
     if (!issue) {
       issue = await Issue.create(issue);
     }
-  
+    
+    if (age < 18) {
+      return res.status(200).json({
+        status: "requires_id_card",
+        message: "Users under 18 must upload a student ID card",
+      });
+    }
+    
     //Set profile avatar
-  
+    
 
   
     // Create the user
     const user = await User.create({
       fullName,
-      profileImage: profileImgUrl,
       email,
       password,
       username: username.toLowerCase(),
@@ -66,8 +74,8 @@ const registerUser = asyncHandler(async (req, res) => {
     });
   
     // Process and associate tags
-    const interests = [];
-    for (const tagName of interests) {
+    const user_interests = [];
+    for (const tagName of user_interests) {
       let tag = await Interest.findOne({ name: tagName });
   
       if (!tag) {
@@ -270,31 +278,18 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user, "Account details updated successfully"));
 });
 
-/*
-syntax used in updation of single entity 
-  const user = await User.findByIdAndUpdate(
-    req.user?._id,
-    {
-      $set: {
-        profileImage: newDP.url,
-      },
-    },
-    { new: true },
-  ).select("-password");
+const userProgress = asyncHandler(async (req,res) => {
+  const user= await User.findById();
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, user, "Profile image updated successfully"));
-});*/
+})
 
 module.exports = {
   registerUser,
   loginUser,
   logoutUser,
+  generateAccessAndRefereshTokens,
   refreshAccessToken,
   changeCurrentPassword,
   getCurrentUser,
   updateAccountDetails,
-  updateUserDP,
-  getUserUpvotes,
 };

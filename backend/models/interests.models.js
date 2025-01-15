@@ -1,12 +1,12 @@
 import {Schema,model} from mongoose;
 
 const interestSchema= new Schema({
-    user: {
+    user: [{
         type: Schema.Types.ObjectId,
         ref: "User",
         required: true,
-      } ,
-    topic:
+      } ],
+    name:
     {
       type: String, //Category
       required: true
