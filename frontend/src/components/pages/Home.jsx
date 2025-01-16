@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-//import "./Home.css"; // Your dark background styling with GIF
+import "./StudentSignIn.css"; // Your custom styling
 
 const Home = () => {
   return (
@@ -33,6 +33,22 @@ const Home = () => {
               className="form-control"
               placeholder="Enter your password"
             />
+          </div>
+          {/* Mood Field */}
+          <div className="form-group">
+            <label htmlFor="mood">Mood</label>
+            <select
+              id="mood"
+              className="form-control"
+              required
+            >
+              <option value="">Select Mood</option>
+              <option value="Happy">😊 Happy</option>
+              <option value="Sad">😢 Sad</option>
+              <option value="Excited">🤩 Excited</option>
+              <option value="Tired">😴 Tired</option>
+              <option value="Angry">😡 Angry</option>
+            </select>
           </div>
           <button type="submit" className="submit-button">
             Sign In
