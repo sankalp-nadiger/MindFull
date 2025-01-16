@@ -42,14 +42,8 @@ const postSchema = new mongoose.Schema(
       type: String, // Optional field for location-based posts
       trim: true,
     },
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
-    updatedAt: {
-      type: Date,
-      default: Date.now,
-    },
+    reactions: { type: Map, of: Number, default: new Map() },
+    isAnonymous: { type: Boolean, default: false },
   },
   {
     timestamps: true, // Adds createdAt and updatedAt automatically

@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import User from './User.js'; 
 
 const issueSchema = new mongoose.Schema({
   users: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }], // Reference to User model
