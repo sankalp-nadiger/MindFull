@@ -6,11 +6,21 @@ const interestSchema= new Schema({
         ref: "User",
         required: true,
       } ],
-    name:
-    {
-      type: String, //Category
-      required: true
-    },
+      name: {
+        type: Schema.Types.Mixed, // Allows for dynamic types
+        required: true,
+        validate: {
+          validator: function (value) {
+            // Validate based on isGoal field
+            if (this.isGoal) {
+              return typeof value === "string"; // If isGoal is true, name should be a string
+            } else {
+              return Array.isArray(value) && value.every((v) => typeof v === "string"); // If not, name should be an array of strings
+            }
+          },
+          message: "Invalid name format: must be a string if isGoal is true, or an array of strings otherwise.",
+        },
+      },    
     priority: {
       type: Number,
       default: 1, // Helps rank the importance of the interest (e.g., 1 = high priority)
@@ -19,11 +29,6 @@ const interestSchema= new Schema({
       type: Boolean,
       default: false, // Indicates if the interest is also a goal
     },
-    progress: {
-      type: Number,
-      default: 0, // Percentage progress if it's a goal (e.g., 0-100%)
-    },
-
 })
 
 export const Interest = model("Interest",interestSchema)

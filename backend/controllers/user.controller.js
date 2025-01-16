@@ -85,7 +85,7 @@ const registerUser = asyncHandler(async (req, res) => {
   });
   
   const addInterests= asyncHandler(async (req, res) => {
-    const { userId, selected_interests } = req.body;
+    const { userId, selected_interests, isGoal } = req.body;
     const user = await User.findById(userId);
   if (!user) {
     throw new ApiError(404, "Question not found");
@@ -98,6 +98,8 @@ const registerUser = asyncHandler(async (req, res) => {
         // Tag doesn't exist, create it 
         tag = await Interest.create({
           name: tagName,
+          user: userId,
+          isGoal
         });
       }
   
@@ -321,5 +323,5 @@ module.exports = {
   changeCurrentPassword,
   getCurrentUser,
   updateAccountDetails,
-  addInterests, userProgress
+  addInterests, userProgress, addIssues
 };
