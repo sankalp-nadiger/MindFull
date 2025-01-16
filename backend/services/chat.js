@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import { User } from '../models/user.model';
 import cors from 'cors';
 
+const UserSocketMap = {}; // Map to associate userId with their socket ID
 const setupchat= (server)=>{
 const io = new Server(server, {
     cors: {
@@ -17,7 +18,7 @@ const io = new Server(server, {
     // Store user socket association
     socket.on('register-user', (userId) => {
       // Associate socket ID with user in a store (e.g., Redis or in-memory map)
-        User[userId] = socket.id;
+      UserSocketMap[userId] = socket.id;
     });
   
     // Join chat or group room
@@ -27,7 +28,7 @@ const io = new Server(server, {
     });
   
     // Handle new message
-    socket.on('send-message', ({ message, roomId }) => {
+    socket.on('personal-message', ({ message, roomId }) => {
       socket.to(roomId).emit('personal-message', { message });
     });
   
@@ -48,9 +49,15 @@ const io = new Server(server, {
   
     // Handle disconnect
     socket.on('disconnect', () => {
-      console.log(`User disconnected: ${socket.id}`);
-      // Remove socket ID association
-    });
+      for (const userId in UserSocketMap) {
+          if (UserSocketMap[userId] === socket.id) {
+              delete UserSocketMap[userId];
+              console.log(`User ${userId} disconnected`);
+              break;
+          }
+      }
+  });
   });
 }
+
 export {setupchat}

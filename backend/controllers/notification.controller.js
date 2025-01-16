@@ -10,14 +10,13 @@ const createNotification = asyncHandler(async (req, res) => {
         throw new ApiError(400, 'Message and user are required');
     }
 
-    const notification = new Notification({
+    const notification = await createAndPushNotification({
         message,
         user,
         relatedInterest,
-        event,
-    });
-
-    await notification.save();
+        event,},
+        req.app.get('socketio')
+    );
     res.status(201).json({ message: 'Notification created successfully', notification });
 });
 
@@ -32,18 +31,6 @@ const getNotifications = asyncHandler(async (req, res) => {
     res.status(200).json(notifications);
 });
 
-// Mark Notification as Seen
-const markAsSeen = asyncHandler(async (req, res) => {
-    const { notificationId } = req.params;
-
-    const notification = await Notification.findByIdAndUpdate(notificationId, { isSeen: true }, { new: true });
-    if (!notification) {
-        throw new ApiError(404, 'Notification not found');
-    }
-
-    res.status(200).json(notification);
-});
-
 // Delete Notification
 const deleteNotification = asyncHandler(async (req, res) => {
     const { notificationId } = req.params;
@@ -56,4 +43,4 @@ const deleteNotification = asyncHandler(async (req, res) => {
     res.status(200).json({ message: 'Notification deleted successfully' });
 });
 
-export { createNotification, getNotifications, markAsSeen, deleteNotification };
+export { createNotification, getNotifications, deleteNotification };
