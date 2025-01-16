@@ -1,4 +1,5 @@
-const createPost = async (req, res) => {
+import {User} from "../models/user.model.js"
+
   try {
     const { userId, title, content, isAnonymous } = req.body;
 
@@ -42,6 +43,5 @@ const createPost = async (req, res) => {
       error: error.message,
     });
   }
-};
 
 export { createPost };
