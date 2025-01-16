@@ -28,8 +28,8 @@ const generateAccessAndRefereshTokens = async (userId) => {
   }
 };
 const registerUser = asyncHandler(async (req, res) => {
-    const { fullName, email, username, password, age,interests } = req.body;
-  
+    const { fullName, email, username, password, gender, age  } = req.body;
+    const {idCardFile}= req.file;
     // Validate fields
     if (
       [fullName, email, username, password].some((field) => field?.trim() === "")
@@ -46,21 +46,14 @@ const registerUser = asyncHandler(async (req, res) => {
       throw new ApiError(409, "User with email or username already exists");
     }
   
-    // Check if issue exists or create a new one
-    let issue = await issue.findOne({ issue_name: issue.issue_name });
-    if (!issue) {
-      issue = await Issue.create(issue);
+    if(age<18){
+      if(!idCardFile){
+        res.send(400,"ID card upload mandatory for students");
+      }
     }
-    
-    if (age < 18) {
-      return res.status(200).json({
-        status: "requires_id_card",
-        message: "Users under 18 must upload a student ID card",
-      });
-    }
-    
+
     //Set profile avatar
-    
+    await assignRandomAvatar();
 
   
     // Create the user
@@ -68,28 +61,11 @@ const registerUser = asyncHandler(async (req, res) => {
       fullName,
       email,
       password,
+      gender,
+      age,
       username: username.toLowerCase(),
-      interests: [],
+      idCard: idCardFile
     });
-  
-    // Process and associate tags
-    const user_interests = [];
-    for (const tagName of user_interests) {
-      let tag = await Interest.findOne({ name: tagName });
-  
-      if (!tag) {
-        // Tag doesn't exist, create it and associate the `createdBy` field
-        tag = await Interest.create({
-          name: tagName,
-        });
-      }
-  
-      interests.push(tag._id); // Collect tag IDs to associate with the user
-    }
-  
-    // Update the user's subscribed tags
-    user.interests = interests;
-    await user.save();
   
     // Fetch the created user without sensitive fields
     const createdUser = await User.findById(user._id).select(
@@ -108,30 +84,61 @@ const registerUser = asyncHandler(async (req, res) => {
       );
   });
   
-  const uploadIdCard = asyncHandler(async (req, res) => {
-    const { userId } = req.body;
-    const idCardFile = req.file; // Assuming you're using a middleware like multer for file uploads
-  
-    if (!userId || !idCardFile) {
-      throw new ApiError(400, "User ID and ID card file are required");
-    }
-  
-    // Find the user
+  const addInterests= asyncHandler(async (req, res) => {
+    const { userId, selected_interests } = req.body;
     const user = await User.findById(userId);
-    if (!user) {
-      throw new ApiError(404, "User not found");
+  if (!user) {
+    throw new ApiError(404, "Question not found");
+  }
+    const user_interests = [];
+    for (const tagName of selected_interests) {
+      let tag = await Interest.findOne({ name: tagName });
+  
+      if (!tag) {
+        // Tag doesn't exist, create it 
+        tag = await Interest.create({
+          name: tagName,
+        });
+      }
+  
+      user_interests.push(tag._id); 
+    // Collect tag IDs to associate with the user
     }
-  
-    // Save the ID card file path or URL to the user's profile
-    user.studentIdCard = idCardFile.path; 
+    user.interests=user_interests;
     await user.save();
-  
     return res.status(200).json({
       status: "success",
-      message: "Student ID card uploaded successfully",
+      message: "User Interests added successfully",
     });
   });
+
+  const addIssues= asyncHandler(async (req, res) => {
+    const { userId, diagnoised_issues } = req.body;
+    const user = await User.findById(userId);
+  if (!user) {
+    throw new ApiError(404, "Question not found");
+  }
+    for (const tagName of diagnoised_issues) {
+      let issue = await Issue.findOne({ name: tagName });
+      const user_issues=[]
+      if (!tag) {
+        // Tag doesn't exist, create it 
+        issue = await Interest.create({
+          name: Name,
+        });
+      }
   
+      user_issues.push(tag._id); 
+    // Collect tag IDs to associate with the user
+    }
+    user.issues=user_issues;
+    await user.save();
+    return res.status(200).json({
+      status: "success",
+      message: "User Issues added successfully",
+    });
+  });
+
 const loginUser = asyncHandler(async (req, res) => {
   const { username, password, email } = req.body;
   if (!username) {
@@ -314,5 +321,5 @@ module.exports = {
   changeCurrentPassword,
   getCurrentUser,
   updateAccountDetails,
-  uploadIdCard, userProgress
+  addInterests, userProgress
 };

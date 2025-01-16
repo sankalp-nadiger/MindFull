@@ -31,6 +31,9 @@ const io = new Server(server, {
     socket.on('personal-message', ({ message, roomId }) => {
       socket.to(roomId).emit('personal-message', { message });
     });
+    socket.on('community-message', ({ message, roomId }) => {
+      socket.to(roomId).emit('community-message', { message });
+  });  
   
     // Notify recipient
     socket.on('send-notification', async ({ toUserId, message }) => {

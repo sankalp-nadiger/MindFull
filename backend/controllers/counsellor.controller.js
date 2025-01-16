@@ -119,3 +119,5 @@ export const endSession = asyncHandler(async (req, res) => {
 
     res.status(200).json({ message: "Session ended successfully" });
 });
+
+export {getTwilioToken, generateTwilioToken, endSession, requestSession }
