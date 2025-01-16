@@ -1,28 +1,32 @@
 import mongoose, {Schema} from mongoose;
 
-const counsellorSchema= new Schema({
-    specification:
+const notificationSchema= new Schema({
+    message:
     [{
         type: String,
         required: true
     }],
-    yearexp:
+    user:
     {
-        type: Number,
+        type: Schema.Types.ObjectId,
+        ref:"User",
         required: true
     },
-    certifications:[
+    relatedInterest:
     {
-        type: File
-    }],
-    rating:
-    {
-        type: Number
+        type: Schema.Types.ObjectId,
+        ref: "Interest"
     },
-    feedback:[
+    type:
     {
-        type: String
-    }],
-})
+        type: String, enum: [chat, update],
+        required: true,
+    },
+    event:
+    {
+        type: Schema.Types.ObjectId,
+        ref: "Event"
+    },
+},{timestamps: true})
 
-export const Counsellor= mongoose.model("Counsellor", counsellorSchema);
+export const Notification= mongoose.model("Notification", notificationSchema);

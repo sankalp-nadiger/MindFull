@@ -69,7 +69,6 @@ const registerUser = asyncHandler(async (req, res) => {
       email,
       password,
       username: username.toLowerCase(),
-      issue: issue._id, 
       interests: [],
     });
   
@@ -109,7 +108,30 @@ const registerUser = asyncHandler(async (req, res) => {
       );
   });
   
-
+  const uploadIdCard = asyncHandler(async (req, res) => {
+    const { userId } = req.body;
+    const idCardFile = req.file; // Assuming you're using a middleware like multer for file uploads
+  
+    if (!userId || !idCardFile) {
+      throw new ApiError(400, "User ID and ID card file are required");
+    }
+  
+    // Find the user
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+  
+    // Save the ID card file path or URL to the user's profile
+    user.studentIdCard = idCardFile.path; 
+    await user.save();
+  
+    return res.status(200).json({
+      status: "success",
+      message: "Student ID card uploaded successfully",
+    });
+  });
+  
 const loginUser = asyncHandler(async (req, res) => {
   const { username, password, email } = req.body;
   if (!username) {
@@ -292,4 +314,5 @@ module.exports = {
   changeCurrentPassword,
   getCurrentUser,
   updateAccountDetails,
+  uploadIdCard, userProgress
 };
