@@ -2,15 +2,19 @@ import Resource from '../models/resource.model'; // Import the Resource model
 import Interest from '../models/interest.model'; // Import the Interest model
 
 // Simulated ML Model function (replace with actual ML model code)
-const generateResourceFromML = (interests) => {
-  // Example of how an ML model might generate data based on interests
+const generateResourceFromML = (interests, goals, issues) => {
+  // Example of how an ML model might generate data based on interests, goals, and issues
   // This is a simulation; replace with the real logic that calls your ML model
+
+  // Generating title and content based on interests, goals, and issues
   const resource = {
     type: 'article', // Example type
     title: `Resource for ${interests.map((interest) => interest.name).join(', ')}`, // Generated title based on interests
-    content: `This is a generated resource content based on the interests: ${interests
+    content: `This resource is tailored to your interests: ${interests
       .map((interest) => interest.name)
-      .join(', ')}.`, // Generated content based on interests
+      .join(', ')}. Goals: Short-term: ${goals.shortTerm}, Long-term: ${goals.longTerm}. Issues: ${issues
+      .map((issue) => `${issue.name}: ${issue.score}`)
+      .join(', ')}`, // Generated content based on interests, goals, and issues
   };
   return resource;
 };
@@ -18,8 +22,8 @@ const generateResourceFromML = (interests) => {
 // Controller function to create and store a resource
 export const createResource = async (req, res) => {
   try {
-    // Fetch the interests from the request body
-    const { interestIds } = req.body;
+    // Destructure interests, goals, and issues from the request body
+    const { interestIds, goals, issues } = req.body;
 
     // Fetch the interest documents from the database
     const interests = await Interest.find({ '_id': { $in: interestIds } });
@@ -28,8 +32,8 @@ export const createResource = async (req, res) => {
       return res.status(400).json({ message: 'No valid interests found.' });
     }
 
-    // Call the ML model to generate a resource based on the interests
-    const resourceData = generateResourceFromML(interests);
+    // Call the ML model to generate a resource based on interests, goals, and issues
+    const resourceData = generateResourceFromML(interests, goals, issues);
 
     // Create a new resource document to store in the database
     const resource = new Resource({
@@ -37,6 +41,8 @@ export const createResource = async (req, res) => {
       type: resourceData.type,
       content: resourceData.content,
       interests: interestIds, // Store the provided interest IDs
+      goals, // Store goals (short-term, long-term)
+      issues, // Store issues (score-based)
     });
 
     // Save the resource to the database
