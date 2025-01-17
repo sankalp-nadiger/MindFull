@@ -3,10 +3,9 @@ import asyncHandler from "../utils/asynchandler.utils.js";
 import ApiError from "../utils/API_Error.js";
 import { User } from "../models/user.model.js";
 import { Interest } from "../models/interests.models.js";
-import { Issue } from "../models/Issues.model.js";
 import ApiResponse from "../utils/API_Response.js";
 import jwt from "jsonwebtoken";
-import Tesseract from ""
+import Tesseract from "";
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -27,12 +26,10 @@ const registerUser = asyncHandler(async (req, res) => {
   const { fullName, email, username, password, gender, age } = req.body;
   const { idCardFile } = req.file;
 
-  // Validate fields
   if ([fullName, email, username, password].some((field) => field?.trim() === "")) {
     throw new ApiError(400, "All fields are required");
   }
 
-  // Check if user already exists
   const existedUser = await User.findOne({ $or: [{ username }, { email }] });
   if (existedUser) {
     throw new ApiError(409, "User with email or username already exists");
@@ -42,7 +39,6 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "ID card upload is mandatory for students under 18");
   }
 
-  // Create the user
   const user = await User.create({
     fullName,
     email,
@@ -80,8 +76,7 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError(401, "Invalid user credentials");
   }
 
-  // Handle streak logic
-  
+  // Streak logic
   const now = new Date();
   const lastLogin = user.lastLoginDate;
   const diffInHours = lastLogin ? (now - lastLogin) / (1000 * 60 * 60) : null;
@@ -126,9 +121,7 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
-  await User.findByIdAndUpdate(req.user._id, {
-    $unset: { refreshToken: 1 },
-  }, { new: true });
+  await User.findByIdAndUpdate(req.user._id, { $unset: { refreshToken: 1 } }, { new: true });
 
   const options = { httpOnly: true, secure: true };
 
@@ -206,37 +199,27 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user, "Account details updated successfully"));
 });
 
-const userProgress = asyncHandler(async (req,res) => {
-  const user= await User.findById();
-
-})
-
 const extractMobileNumber = async (imagePath) => {
   try {
-      const result = await Tesseract.recognize(imagePath, 'eng');
-      const text = result.data.text;
-      const phoneRegex = /\b(\+?\d{1,4}[-.\s]?)?(\(?\d{3}\)?[-.\s]?)?[\d-.\s]{7,10}\b/;
-      const mobileNumber = text.match(phoneRegex);
-      const user = await User.findByIdAndUpdate(
-        user._id,
-        { mobileNumber },
-        { new: true } // Returns the updated document
-      );
-      if (!user) {
-        return res.status(404).json({ message: "User not found." });
-      }
+    const result = await Tesseract.recognize(imagePath, 'eng');
+    const text = result.data.text;
+    const phoneRegex = /\b(\+?\d{1,4}[-.\s]?)?(\(?\d{3}\)?[-.\s]?)?[\d-.\s]{7,10}\b/;
+    const mobileNumber = text.match(phoneRegex);
+
+    return mobileNumber;
   } catch (error) {
-      console.error('Error extracting mobile number:', error);
-      return null;
+    console.error('Error extracting mobile number:', error);
+    return null;
   }
 };
 
 export {
-  registerUser, extractMobileNumber,
+  registerUser,
   loginUser,
   logoutUser,
   generateAccessAndRefreshTokens,
   refreshAccessToken,
   addInterests,
   updateAccountDetails,
+  extractMobileNumber,
 };
