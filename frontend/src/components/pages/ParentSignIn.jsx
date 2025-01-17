@@ -1,9 +1,8 @@
 import React, { useState } from "react";
-//import "./ParentSignIn.css";
 
 const ParentSignIn = () => {
+  const [fullName, setFullName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
@@ -12,7 +11,7 @@ const ParentSignIn = () => {
 
   const handleSendOtp = () => {
     if (phoneNumber.length === 10) {
-      // Simulate sending OTP (in a real scenario, OTP would be sent to the user's phone)
+      // Simulate sending OTP
       setOtpSent(true);
       setOtpError(false);
       alert("OTP sent to your phone!");
@@ -45,7 +44,7 @@ const ParentSignIn = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (otp.length === 6 && otp === "123456") {
-      alert("Sign In successful!");
+      alert(`Welcome ${fullName}, Sign-In successful!`);
     } else {
       setOtpError(true);
       alert("Invalid OTP.");
@@ -56,10 +55,30 @@ const ParentSignIn = () => {
     <div className="container">
       <h1>Parent Sign In</h1>
       <div className="gif-container">
-        <img src="https://media.giphy.com/media/hvRJCLFzcasrR4ia7z/giphy.gif" alt="Welcome GIF" className="welcome-gif" />
+        <img
+          src="https://media.giphy.com/media/hvRJCLFzcasrR4ia7z/giphy.gif"
+          alt="Welcome GIF"
+          className="welcome-gif"
+        />
       </div>
 
       <form onSubmit={handleSubmit} className="form-container">
+        {/* Full Name Field */}
+        {!otpSent && (
+          <div className="form-group">
+            <label htmlFor="fullName">Full Name</label>
+            <input
+              id="fullName"
+              type="text"
+              className="form-control"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Enter your full name"
+              required
+            />
+          </div>
+        )}
+
         {/* Phone Number Field */}
         {!otpSent && (
           <div className="form-group">
@@ -78,7 +97,7 @@ const ParentSignIn = () => {
               type="button"
               className="submit-button"
               onClick={handleSendOtp}
-              disabled={phoneNumber.length !== 10}
+              disabled={phoneNumber.length !== 10 || !fullName}
             >
               Send OTP
             </button>
@@ -103,38 +122,27 @@ const ParentSignIn = () => {
           </div>
         )}
 
-        {/* Email and Password Fields (Visible after OTP is entered) */}
+        {/* Password Field (visible after OTP is entered) */}
         {otpSent && (
-          <>
-            <div className="form-group">
-              <label htmlFor="email">Email</label>
-              <input
-                id="email"
-                type="email"
-                className="form-control"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                type="password"
-                className="form-control"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                required
-              />
-            </div>
-          </>
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              className="form-control"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              required
+            />
+          </div>
         )}
 
-        <button type="submit" className="submit-button" disabled={!otpSent || !otp || !email || !password}>
+        <button
+          type="submit"
+          className="submit-button"
+          disabled={!otpSent || !otp || !password || otp.length !== 6}
+        >
           Sign In
         </button>
 
@@ -152,8 +160,8 @@ const ParentSignIn = () => {
       </form>
 
       <div className="links">
-        <a href="/forgot-password" className="link">
-          Forgot Password?
+        <a href="/parent-signup" className="link">
+          Don't have an account? Sign Up
         </a>
       </div>
     </div>
