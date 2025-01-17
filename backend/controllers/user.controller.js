@@ -6,6 +6,7 @@ import { Interest } from "../models/interests.models.js";
 import { Issue } from "../models/Issues.model.js";
 import ApiResponse from "../utils/API_Response.js";
 import jwt from "jsonwebtoken";
+import Tesseract from ""
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -205,8 +206,33 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user, "Account details updated successfully"));
 });
 
-module.exports = {
-  registerUser,
+const userProgress = asyncHandler(async (req,res) => {
+  const user= await User.findById();
+
+})
+
+const extractMobileNumber = async (imagePath) => {
+  try {
+      const result = await Tesseract.recognize(imagePath, 'eng');
+      const text = result.data.text;
+      const phoneRegex = /\b(\+?\d{1,4}[-.\s]?)?(\(?\d{3}\)?[-.\s]?)?[\d-.\s]{7,10}\b/;
+      const mobileNumber = text.match(phoneRegex);
+      const user = await User.findByIdAndUpdate(
+        user._id,
+        { mobileNumber },
+        { new: true } // Returns the updated document
+      );
+      if (!user) {
+        return res.status(404).json({ message: "User not found." });
+      }
+  } catch (error) {
+      console.error('Error extracting mobile number:', error);
+      return null;
+  }
+};
+
+export {
+  registerUser, extractMobileNumber,
   loginUser,
   logoutUser,
   generateAccessAndRefreshTokens,
