@@ -18,14 +18,14 @@ const sendOTP = async (mobileNumber) => {
     // Save OTP to database (with expiry)
     await OTP.create({ mobileNumber, otp, createdAt: new Date() });
 
-    // Send OTP using Twilio
+    // Sending OTP using Twilio
     const accountSid = 'your-twilio-account-sid';
     const authToken = 'your-twilio-auth-token';
     const client = require('twilio')(accountSid, authToken);
 
     await client.messages.create({
         body: `Your OTP is ${otp}`,
-        from: '+1234567890', // Your Twilio number
+        from: '+15673717900', // Twilio number
         to: mobileNumber,
     });
 };
@@ -48,7 +48,7 @@ const verifyOTP = async (mobileNumber, enteredOTP) => {
 
 // Parent Registration with OTP authentication
 const registerParent = asyncHandler(async (req, res) => {
-    const { fullName, email, username, password, studentID, mobileNumber, otp } = req.body;
+    const { fullName, email, password, mobileNumber, otp } = req.body;
 
     // Validate fields
     if ([fullName, email, password, mobileNumber, otp].some((field) => field?.trim() === "")) {
@@ -100,8 +100,8 @@ const loginUser = asyncHandler(async (req, res) => {
     }
 
     // Validate user credentials
-    if (!username && !email) {
-        throw new ApiError(400, "Username or Email is required");
+    if (!email) {
+        throw new ApiError(400, "Email is required");
     }
 
     const user = await User.findOne({
@@ -145,7 +145,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     }
 
     // Remove refresh token to logout
-    await User.findByIdAndUpdate(
+    await Parent.findByIdAndUpdate(
         req.user._id,
         {
             $unset: {
@@ -169,6 +169,8 @@ const logoutUser = asyncHandler(async (req, res) => {
 });
 
 export {
+    sendOTP,
+    verifyOTP,
     registerParent,
     loginUser,
     logoutUser
