@@ -34,6 +34,18 @@ const ParentSignUp = () => {
             onChange={(e) => setName(e.target.value)}
           />
         </div>
+
+        <div className="form-group">
+          <label htmlFor="fullname">Email</label>
+          <input
+            type="name"
+            id="email"
+            className="form-control"
+            placeholder="Enter your full name"
+            value={email}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
         <div className="form-group">
           <label htmlFor="password">Password</label>
           <input
