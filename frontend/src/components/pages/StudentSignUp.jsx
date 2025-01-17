@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const SignUp = () => {
@@ -9,15 +10,15 @@ const SignUp = () => {
   const [password, setPassword] = useState("");
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
-  const [mood, setMood] = useState("");
   const [location, setLocation] = useState("Fetching location...");
   const [idCard, setIdCard] = useState(null);
   const [showIdUpload, setShowIdUpload] = useState(false);
 
+  const navigate = useNavigate(); // Hook for navigation
+
   const OPEN_CAGE_API_KEY = "YOUR_OPENCAGE_API_KEY";
 
   useEffect(() => {
-    // Fetch coordinates using browser's Geolocation API
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
@@ -35,7 +36,6 @@ const SignUp = () => {
     }
   }, []);
 
-  // Fetch address details from OpenCage API
   const fetchAddress = async (lat, lon) => {
     try {
       const response = await axios.get(
@@ -69,9 +69,9 @@ const SignUp = () => {
         password,
         age,
         gender,
-        mood,
         location,
       });
+      navigate("/phase1"); // Navigate to Phase 1 after successful signup
     }
   };
 
@@ -84,7 +84,6 @@ const SignUp = () => {
     <div className="container">
       <h1>Sign Up</h1>
       <form onSubmit={handleSubmit}>
-        {/* Full Name */}
         <div className="form-group">
           <label htmlFor="fullName">Full Name</label>
           <input
@@ -97,7 +96,6 @@ const SignUp = () => {
             required
           />
         </div>
-        {/* Email */}
         <div className="form-group">
           <label htmlFor="email">Email</label>
           <input
@@ -110,7 +108,6 @@ const SignUp = () => {
             required
           />
         </div>
-        {/* Password */}
         <div className="form-group">
           <label htmlFor="password">Password</label>
           <input
@@ -123,7 +120,6 @@ const SignUp = () => {
             required
           />
         </div>
-        {/* Age */}
         <div className="form-group">
           <label htmlFor="age">Age</label>
           <input
@@ -136,7 +132,6 @@ const SignUp = () => {
             required
           />
         </div>
-        {/* Gender */}
         <div className="form-group">
           <label htmlFor="gender">Gender</label>
           <select
@@ -152,9 +147,6 @@ const SignUp = () => {
             <option value="Other">Other</option>
           </select>
         </div>
-        {/* Mood */}
-       
-        {/* Location */}
         <div className="form-group">
           <label htmlFor="location">Location</label>
           <input
@@ -165,7 +157,6 @@ const SignUp = () => {
             readOnly
           />
         </div>
-        {/* ID Upload (if age < 18) */}
         {showIdUpload && (
           <div className="form-group">
             <label htmlFor="idCard">Upload ID Card</label>
@@ -177,7 +168,6 @@ const SignUp = () => {
             />
           </div>
         )}
-        {/* Submit Button */}
         <button className="submit-button" type="submit">
           Sign Up
         </button>

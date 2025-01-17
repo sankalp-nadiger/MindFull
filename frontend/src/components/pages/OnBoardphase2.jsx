@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Tags.css"; // Add your styles here
 
 // List of topics for interests
@@ -19,6 +20,7 @@ const OnBoardingPhase = () => {
   const [shortTermGoals, setShortTermGoals] = useState("");
   const [longTermGoals, setLongTermGoals] = useState("");
   const [selectedTopics, setSelectedTopics] = useState([]);
+  const navigate = useNavigate(); // Hook for navigation
 
   // Toggle function to select or deselect topics
   const toggleTopic = (topic) => {
@@ -43,6 +45,9 @@ const OnBoardingPhase = () => {
     // Log the user data for now
     console.log("User Data:", userData);
     alert("Your goals and interests have been saved!");
+
+    // Navigate to Phase 3
+    navigate("/phase3");
   };
 
   return (
