@@ -72,11 +72,7 @@ const userSchema = new Schema(
         ref: "Interest",
       },
     ],
-    role: {
-      type: String,
-      enum: ["Parent", "Mindfull Seeker", "Teacher", "Counselor"],
-      required: true,
-    },
+  
     lastLoginDate: {
       type: Date,
     },
