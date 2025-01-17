@@ -63,7 +63,7 @@ const registerParent = asyncHandler(async (req, res) => {
 
     // Check if user already exists
     const existedParent = await Parent.findOne({
-        $or: [{ username }, { email }],
+        $or: [{ fullName }, { email }],
     });
 
     if (existedParent) {
@@ -84,14 +84,17 @@ const registerParent = asyncHandler(async (req, res) => {
 
     // Send response with created user
     const createdUser = await Parent.findById(parent._id).select("-password -refreshToken");
-    return res.status(201).json(new ApiResponse(200, { createdUser }, "User registered successfully"));
+    return res.status(201).json(new ApiResponse(200, { createdUser }, "Parent registered successfully"));
 });
 
 // Login with OTP authentication
 const loginUser = asyncHandler(async (req, res) => {
-    const { username, password, email, mobileNumber, otp } = req.body;
+    const { password, fullName, mobileNumber, otp } = req.body;
 
-    // Validate OTP if mobile number is provided
+    // Validate user credentials
+    if (!(mobileNumber&&otp) ){
+        throw new ApiError(400, "Mobile & otp is required");
+    }
     if (mobileNumber && otp) {
         const otpVerification = await verifyOTP(mobileNumber, otp);
         if (!otpVerification.success) {
@@ -99,28 +102,23 @@ const loginUser = asyncHandler(async (req, res) => {
         }
     }
 
-    // Validate user credentials
-    if (!email) {
-        throw new ApiError(400, "Email is required");
-    }
-
-    const user = await User.findOne({
-        $or: [{ username }, { email }],
+    const parent = await Parent.findOne({
+        $or: [{ fullName }],
     });
     
-    if (!user) {
+    if (!parent) {
         throw new ApiError(404, "User does not exist");
     }
 
-    const isPasswordValid = await user.isPasswordCorrect(password);
+    const isPasswordValid = await parent.isPasswordCorrect(password);
 
     if (!isPasswordValid) {
         throw new ApiError(401, "Invalid user credentials");
     }
 
-    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(parent._id);
 
-    const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
+    const loggedInUser = await User.findById(parent._id).select("-password -refreshToken");
 
     const options = {
         httpOnly: true,
