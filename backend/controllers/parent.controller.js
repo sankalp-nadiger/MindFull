@@ -54,6 +54,15 @@ const registerParent = asyncHandler(async (req, res) => {
     if ([fullName, email, password, mobileNumber, otp].some((field) => field?.trim() === "")) {
         throw new ApiError(400, "All fields are required");
     }
+    // Check if the mobile number exists in any user's document
+    const user = await User.findOne({ parent_phone_no: mobileNumber });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Mobile number is not related to any user.",
+      });
+    }
 
     // Verify OTP
     const otpVerification = await verifyOTP(mobileNumber, otp);
@@ -88,14 +97,14 @@ const registerParent = asyncHandler(async (req, res) => {
 });
 
 // Login with OTP authentication
-const loginUser = asyncHandler(async (req, res) => {
+const loginParent = asyncHandler(async (req, res) => {
     const { password, fullName, mobileNumber, otp } = req.body;
 
     // Validate user credentials
     if (!(mobileNumber&&otp) ){
         throw new ApiError(400, "Mobile & otp is required");
     }
-    if (mobileNumber && otp) {
+    else{
         const otpVerification = await verifyOTP(mobileNumber, otp);
         if (!otpVerification.success) {
             throw new ApiError(400, otpVerification.message);
@@ -118,7 +127,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
     const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(parent._id);
 
-    const loggedInUser = await User.findById(parent._id).select("-password -refreshToken");
+    const loggedInParent = await User.findById(parent._id).select("-password -refreshToken");
 
     const options = {
         httpOnly: true,
@@ -127,11 +136,11 @@ const loginUser = asyncHandler(async (req, res) => {
 
     return res.status(200).cookie("accessToken", accessToken, options)
                .cookie("refreshToken", refreshToken, options)
-               .json(new ApiResponse(200, { user: loggedInUser, accessToken, refreshToken }, "User logged In Successfully"));
+               .json(new ApiResponse(200, { user: loggedInParent, accessToken, refreshToken }, "User logged In Successfully"));
 });
 
 // Logout User with OTP authentication (for added security)
-const logoutUser = asyncHandler(async (req, res) => {
+const logoutParent = asyncHandler(async (req, res) => {
     const { mobileNumber, otp } = req.body;
 
     // Validate OTP if provided
@@ -144,7 +153,7 @@ const logoutUser = asyncHandler(async (req, res) => {
 
     // Remove refresh token to logout
     await Parent.findByIdAndUpdate(
-        req.user._id,
+        req.parent._id,
         {
             $unset: {
                 refreshToken: 1, // Remove refresh token from the document
