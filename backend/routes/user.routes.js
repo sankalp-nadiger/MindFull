@@ -13,37 +13,38 @@ import {
   userProgress,
 } from "../controllers/user.controller.js";
 import { protect } from "../middlewares/auth.middleware.js"; // Ensure the user is authenticated
+import { user_verifyJWT } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
 // User Registration
-router.post("/register", registerUser); // Route: POST /api/users/register
+router.post("/register", registerUser);
 
 // User Login
-router.post("/login", loginUser); // Route: POST /api/users/login
+router.post("/login", loginUser);
 
 // User Logout
-router.post("/logout", protect, logoutUser); // Route: POST /api/users/logout
+router.post("/logout", user_verifyJWT, logoutUser);
 
 // Refresh Access Token
-router.post("/refresh-token", refreshAccessToken); // Route: POST /api/users/refresh-token
+router.post("/refresh-token", refreshAccessToken);
 
 // Change Current Password
-router.put("/change-password", protect, changeCurrentPassword); // Route: PUT /api/users/change-password
+router.post("/change-password", user_verifyJWT, changeCurrentPassword);
 
 // Get Current User
-router.get("/current", protect, getCurrentUser); // Route: GET /api/users/current
+router.get("/current", user_verifyJWT, getCurrentUser); 
 
 // Update Account Details
-router.put("/update", protect, updateAccountDetails); // Route: PUT /api/users/update
+router.post("/update", user_verifyJWT, updateAccountDetails); 
 
 // Add User Interests
-router.post("/add-interests", protect, addInterests); // Route: POST /api/users/add-interests
+router.patch("/add-interests", user_verifyJWT, addInterests); 
 
 // Add Diagnosed Issues
-router.post("/add-issues", protect, addIssues); // Route: POST /api/users/add-issues
+router.post("/add-issues", user_verifyJWT, addIssues); 
 
 // Get User Progress
-router.get("/progress", protect, userProgress); // Route: GET /api/users/progress
+router.get("/progress", user_verifyJWT, userProgress); 
 
 export default router;

@@ -175,10 +175,36 @@ const logoutParent = asyncHandler(async (req, res) => {
               .json(new ApiResponse(200, {}, "User logged Out"));
 });
 
+const getStudentReport = async (parentId) => {
+    const parentID= req.params;
+    if(!parentID)
+        throw ApiError( 404, "ParentID necessary!");
+    const parent = await Parent.findById({ parentID }).populate('student');
+  
+    if (!parent) {
+      throw ApiError( 404, "Parent not found!");
+    }
+    const studentID = parent.student;
+    const student = await User.findOne({ studentID });
+
+    if (!student) {
+        throw ApiError( 404, "Student not found!");    }
+    const report = {
+      name: student.name,
+      studentId: student.studentId,
+      journalActivities: student.journalActivities,
+      progress: student.progress,
+      // other data need to included
+    };
+  
+    return report;
+  };
+  
 export {
     sendOTP,
     verifyOTP,
     registerParent,
     loginUser,
-    logoutUser
+    logoutUser,
+    getStudentReport
 }

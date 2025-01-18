@@ -1,19 +1,17 @@
 import express from "express";
+import { parent_verifyJWT } from "../middleware/auth.middleware.js";
 import {
   registerParent,
-  loginUser,
-  logoutUser,
-} from "../controllers/auth.controller.js";
+  loginParent,
+  logoutParent
+} from "../controllers/parent.controller.js";
 
 const router = express.Router();
 
-// Parent Registration
 router.post("/register-parent", registerParent);
+router.get("/parent/:parentId/report", getStudentReport);
+router.post("/login", parent_verifyJWT,loginParent);
 
-// User Login
-router.post("/login", loginUser);
-
-// User Logout
-router.post("/logout", logoutUser);
+router.post("/logout", parent_verifyJWT, logoutParent);
 
 export default router;
