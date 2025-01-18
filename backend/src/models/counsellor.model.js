@@ -13,7 +13,7 @@ const counsellorSchema= new Schema({
     },
     certifications:[
     {
-        type: File
+        type: String
     }],
     rating:
     {

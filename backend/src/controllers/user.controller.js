@@ -7,6 +7,7 @@ import { Parent } from "../models/parent.model.js";
 import { Post } from "../models/posts.model.js";
 import { Interest } from "../models/interests.models.js";
 import { Issue } from "../models/Issues.model.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import ApiResponse from "../utils/API_Response.js";
 import jwt from "jsonwebtoken";
 import Tesseract from "Tesseract"

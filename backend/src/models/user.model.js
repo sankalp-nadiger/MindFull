@@ -74,7 +74,7 @@ const userSchema = new Schema( {
         },
         idCard:
         {
-          type: File
+          type: String
         },
         parent_phone_no: Number,
         lastLoginDate: {
