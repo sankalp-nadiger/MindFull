@@ -1,6 +1,6 @@
-const Resource = require('../models/resource.model');
-const Interest = require('../models/interest.model');
-const Issue = require('../models/issue.model');
+import Resource from '../models/resource.model';
+import Interest from '../models/interest.model';
+import Issue from '../models/issue.model';
 
 // Fetch recommendations dynamically
 export const fetchRecommendations = async (req, res) => {
@@ -114,5 +114,33 @@ export const fetchRecommendations = async (req, res) => {
   } catch (error) {
     console.error("Error fetching recommendations:", error);
     res.status(500).json({ message: "Error fetching recommendations.", error: error.message });
+  }
+};
+
+export const markRecommendationAsWatched = async (req, res) => {
+  try {
+    const { userId, recommendationId } = req.body;
+
+    if (!userId || !recommendationId) {
+      return res.status(400).json({ message: 'Missing required fields.' });
+    }
+
+    const recommendation = await Recommendation.findOneAndUpdate(
+      { user: userId, referenceId: recommendationId },
+      { watched: true },
+      { new: true }
+    );
+
+    if (!recommendation) {
+      return res.status(404).json({ message: 'Recommendation not found.' });
+    }
+
+    res.status(200).json({
+      message: 'Recommendation marked as watched.',
+      data: recommendation,
+    });
+  } catch (error) {
+    console.error('Error marking recommendation as watched:', error);
+    res.status(500).json({ message: 'Error updating recommendation.', error: error.message });
   }
 };
