@@ -6,14 +6,14 @@ const resourceSchema = new Schema({
         required:true
     },
     type: {
-        type: String, enum : [article, audio, video, podcast, extblog],
+        type: String, enum : [events, audio, video, podcast, extblog],
         required:true
     },
     content: {
         type: File,
         required: true
     },
-    interests: [{
+    related_interests: [{
         type: Schema.Types. ObjectId,
         ref: "Interest"
     }],

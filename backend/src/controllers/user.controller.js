@@ -1,4 +1,5 @@
-import mongoose from "mongoose";
+import { createAndPushNotification } from './notification.controller';
+import Event from '../models/event.model';
 import asyncHandler from "../utils/asynchandler.utils.js";
 import ApiError from "../utils/API_Error.js";
 import { User } from "../models/user.model.js";
@@ -188,7 +189,30 @@ const registerUser = asyncHandler(async (req, res) => {
       httpOnly: true,
       secure: true,
     };
-  
+    const events = await Event.find({ user: user._id }); // Fetch all events related to the user
+
+    const today = new Date();
+    const eventNotifications = [];
+
+    // Check each event to see if it's 7 or 3 days away
+    for (const eventRec of events) {
+      const eventDate = new Date(eventRec.date);
+      const daysToEvent = Math.ceil((eventDate - today) / (1000 * 60 * 60 * 24)); // Calculate days until event
+
+      // If the event is 7 or 3 days away, send a notification
+      if (daysToEvent === 7 || daysToEvent === 3) {
+        const notificationData = {
+          message: `Event Reminder: ${eventRec.entryText} is ${daysToEvent} days away!`,
+          user: user._id,
+          relatedInterest: user.interests, // Assuming interests are directly associated with the user
+          event: eventRec._id,
+        };
+
+        // Push the notification using the existing function
+        await createAndPushNotification(notificationData, req.io);
+        eventNotifications.push(notificationData); // Track notifications sent
+      }
+    }
     return res
       .status(200)
       .cookie("accessToken", accessToken, options)
