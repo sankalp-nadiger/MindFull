@@ -15,6 +15,6 @@ const journalSchema = new Schema ({
     topic: String,
     entryDate: Date,
     moodScore: Number
-})
+}, {timestamps: true})
 
 export const Journal = model("Journal",journalSchema)
