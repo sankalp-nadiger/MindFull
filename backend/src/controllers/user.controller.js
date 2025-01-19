@@ -194,15 +194,25 @@ const registerUser = asyncHandler(async (req, res) => {
       .cookie("accessToken", accessToken, options)
       .cookie("refreshToken", refreshToken, options)
       .json(
-        new ApiResponse(200, {
-          user: loggedInUser,
-          accessToken,
-          refreshToken,
-          streak: user.streak,
-          maxStreak: user.maxStreak,
-        }, "User logged in successfully"),
+        new ApiResponse(
+          200,
+          {
+            user: loggedInUser,
+            accessToken,
+            refreshToken,
+            activities: [
+              "Stretching routines",
+              "Home workouts",
+              "Breathing exercises",
+              "Yoga practices",
+              "Meditation guides",
+            ],
+          },
+          "User logged in successfully. Redirecting to dashboard.",
+        ),
       );
   });
+  
 
 const logoutUser = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
