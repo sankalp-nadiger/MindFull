@@ -2,6 +2,10 @@ import express from "express"
 import cors from "cors"
 import http from "http"
 import cookieParser from "cookie-parser"
+import axios from 'axios'
+import cheerio from 'cheerio'
+
+//router imports
 import userRouter from './routes/user.routes'
 import resourceRouter from "./routes/resource.routes.js"
 import activityRouter from "./routes/activity.routes.js"
@@ -14,8 +18,12 @@ import notificationRouter from "./routes/notification.routes.js"
 import parentRouter from "./routes/parent.routes.js"
 import sessionRouter from "./routes/session.routes.js"
 import storyRouter from "./routes/story.routes.js"
+import recommendationRouter from './routes/recommendations.route.js'
+
+//service imports
 import {setupSignalServer} from './services/signalserver.js'
 import {setupchat} from './services/signalserver.js'
+
 
 const app = express();
 const server = http.createServer(app);
@@ -47,5 +55,6 @@ app.use("/api/notifications",notificationRouter)
 app.use("/api/parent",parentRouter)
 app.use("/api/session",sessionRouter)
 app.use("/api/story",storyRouter)
+app.use("api/recommendations", recommendationRouter)
 
 module.exports= app;
