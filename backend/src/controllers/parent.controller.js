@@ -142,11 +142,11 @@ const loginParent = asyncHandler(async (req, res) => {
         httpOnly: true,
         secure: true,
     };
-    const trigger= await checkMoodAndNotifyParent(parentId);
+    await checkMoodAndNotifyParent(parentId);
 
     return res.status(200).cookie("accessToken", accessToken, options)
                .cookie("refreshToken", refreshToken, options)
-               .json(new ApiResponse(200, {{ parent: loggedInParent, accessToken, refreshToken },msg}, "User logged In Successfully"));
+               .json(new ApiResponse(200, { parent: loggedInParent, accessToken, refreshToken }, "Parent logged In Successfully"))
 });
 
 // Logout User with OTP authentication (for added security)
@@ -300,7 +300,7 @@ const checkMoodAndNotifyParent = async (req,res) => {
         }
       }
   
-      return { success: true, message};
+      throw new ApiResponse(200, {message}, "Mood verified");
     } catch (error) {
       console.error("Error checking mood history:", error);
       throw new Error("Failed to check mood history");
