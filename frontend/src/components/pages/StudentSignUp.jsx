@@ -23,7 +23,19 @@ const StudentSignUp = () => {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          setLocation({ latitude, longitude });
+  
+          // Assuming you can obtain the address, if not, you can use reverse geocoding API like Google Maps API or OpenStreetMap.
+          const address = "Sample Address";  // Replace with reverse geocoding logic if necessary
+  
+          // Construct the proper JSON format expected by the backend
+          const locationData = {
+            type: "Point",  // Assuming GeoJSON format for coordinates
+            coordinates: [longitude, latitude], // [longitude, latitude] format
+            address: address // Address should be retrieved via reverse geocoding
+          };
+  
+          // Send the location data to the backend
+          setLocation(locationData);
           toast.success("Location retrieved successfully!");
         },
         (error) => {
@@ -34,7 +46,7 @@ const StudentSignUp = () => {
       toast.error("Geolocation is not supported by this browser.");
     }
   };
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
 
