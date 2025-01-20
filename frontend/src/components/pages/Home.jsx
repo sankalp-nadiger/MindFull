@@ -1,11 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import "./StudentSignIn.css"; // Custom styles
 
 const Home = () => {
-  //const navigate = useNavigate();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
-  const handleSignIn = (event) => {
+  const handleSignIn = async (event) => {
     event.preventDefault();
 
     // Collect form data
@@ -20,11 +22,36 @@ const Home = () => {
       return;
     }
 
-    // Simulate a successful sign-in
-    console.log("Sign-in successful:", { email, mood, wellBeing });
+    setLoading(true); // Show loading state during login
 
-    // Redirect to onboarding phase 1
-    // navigate("/phase1");
+    try {
+      // Simulate API call
+      const response = await axios.post("/api/login", {
+        email,
+        password,
+        mood,
+        wellBeing,
+      });
+
+      if (response.status === 200) {
+        const { data } = response;
+        console.log("Login successful:", data);
+
+        // Save user data (e.g., token) if needed
+        localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("token", data.token);
+
+        // Redirect to dashboard
+        navigate("/dashboard", )
+      } else {
+        alert("Login failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("An error occurred during login.");
+    } finally {
+      setLoading(false); // Hide loading state
+    }
   };
 
   return (
@@ -87,8 +114,8 @@ const Home = () => {
               required
             />
           </div>
-          <button type="submit" className="submit-button">
-            Sign In
+          <button type="submit" className="submit-button" disabled={loading}>
+            {loading ? "Signing In..." : "Sign In"}
           </button>
         </form>
         <div className="links">

@@ -20,7 +20,9 @@ import CounsellorSignUp from "./components/pages/CounsellorSignUp"; // Counselor
 import Counsellorphase1 from "./components/pages/Counsellorphase1";
 //import Recomendation from "./components/pages/Recomendation";
 //import StudentSignIn from './components/pages/StudentSignIn';
+import Dashboard from './components/pages/DashBoard';
 import StudentSignUp from './components/pages/StudentSignUp';
+import JournalPage from './components/pages/JournalPage';
 const App = () => {
   return (
     <Router>
@@ -43,6 +45,8 @@ const App = () => {
           <Route path="/counsellorphase1" element={<Counsellorphase1/>}/>
           {/* <Route path="/student-signin" element={<StudentSignIn/>}/> */}
           <Route path="/student-signup" element={<StudentSignUp/>}/>
+          <Route path="/dashboard" element={<Dashboard/>}/>
+          <Route path="/journal" element={<JournalPage/>}/>
       </Routes>
     </Router>
   );
