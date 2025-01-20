@@ -23,6 +23,7 @@ import Counsellorphase1 from "./components/pages/Counsellorphase1";
 import Dashboard from './components/pages/DashBoard';
 import StudentSignUp from './components/pages/StudentSignUp';
 import JournalPage from './components/pages/JournalPage';
+import HomePage from './components/HomePage/HomePage';
 const App = () => {
   return (
     <>
@@ -35,7 +36,7 @@ const App = () => {
         <Route path="/parent-signin" element={<ParentSignIn />} />
         <Route path="/counsellor-signin" element={<CounsellorSignIn />} />
         <Route path="/student-signin" element={<StudentSignIN />} /> */}
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<HomePage />} />
         {/* <Route path="/recommendations" element={<Recommendation />} /> */}
         <Route path="/role-selection" element={<RoleSelection />} />
         <Route path="/student-signup" element={<StudentSignUp />} />
@@ -48,6 +49,7 @@ const App = () => {
           <Route path="/student-signup" element={<StudentSignUp/>}/>
           <Route path="/dashboard" element={<Dashboard/>}/>
           <Route path="/journal" element={<JournalPage/>}/>
+        
       </Routes>
     </Router>
     </>

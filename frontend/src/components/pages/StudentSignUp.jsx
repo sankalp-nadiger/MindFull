@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
@@ -7,76 +7,56 @@ import axios from "axios";
 const SignUp = () => {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
-  const [location, setLocation] = useState("Fetching location...");
-  const [idCard, setIdCard] = useState(null);
+  const [mood, setMood] = useState("");
+  const [idCardFile, setIdCardFile] = useState(null);
   const [showIdUpload, setShowIdUpload] = useState(false);
 
   const navigate = useNavigate(); // Hook for navigation
 
-  const OPEN_CAGE_API_KEY = "YOUR_OPENCAGE_API_KEY";
-
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          await fetchAddress(latitude, longitude);
-        },
-        (error) => {
-          toast.error("Failed to fetch location. Please enable location access.");
-          setLocation("Unable to fetch location.");
-        }
-      );
-    } else {
-      toast.error("Geolocation is not supported by your browser.");
-      setLocation("Geolocation not supported.");
-    }
-  }, []);
-
-  const fetchAddress = async (lat, lon) => {
-    try {
-      const response = await axios.get(
-        `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lon}&key=${"a539a1f609ec48dba964a6ae2afd113f"}`
-      );
-      const { results } = response.data;
-      if (results && results.length > 0) {
-        const { formatted } = results[0];
-        setLocation(formatted);
-      } else {
-        toast.error("Unable to fetch address details.");
-        setLocation("Address not available.");
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("Error fetching location details.");
-      setLocation("Error fetching address.");
-    }
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (parseInt(age, 10) < 18) {
-      toast.error("Age is less than 18! Please upload your ID card.");
-      setShowIdUpload(true);
-    } else {
-      toast.success("Sign-up successful!");
-      console.log({
-        fullName,
-        email,
-        password,
-        age,
-        gender,
-        location,
+
+    // Validate required fields
+    if ([fullName, email, username, password].some((field) => field.trim() === "")) {
+      toast.error("Please fill out all required fields.");
+      return;
+    }
+
+    // Age validation
+    if (parseInt(age, 10) < 18 && !idCardFile) {
+      toast.error("ID card upload is required for users under 18.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("fullName", fullName);
+    formData.append("email", email);
+    formData.append("username", username);
+    formData.append("password", password);
+    formData.append("age", age);
+    formData.append("gender", gender);
+    formData.append("mood", mood);
+    if (idCardFile) formData.append("idCardFile", idCardFile);
+
+    try {
+      const response = await axios.post("http://localhost:8000/api/users/register", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data", // Important for file uploads
+        },
       });
+      toast.success("User registered successfully!");
       navigate("/phase1"); // Navigate to Phase 1 after successful signup
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Error during registration");
     }
   };
 
-  const handleIdUpload = (e) => {
-    setIdCard(e.target.files[0]);
+  const handleIdCardUpload = (e) => {
+    setIdCardFile(e.target.files[0]);
     toast.success("ID card uploaded successfully!");
   };
 
@@ -96,6 +76,7 @@ const SignUp = () => {
             required
           />
         </div>
+
         <div className="form-group">
           <label htmlFor="email">Email</label>
           <input
@@ -108,6 +89,20 @@ const SignUp = () => {
             required
           />
         </div>
+
+        <div className="form-group">
+          <label htmlFor="username">Username</label>
+          <input
+            type="text"
+            id="username"
+            className="form-control"
+            placeholder="Enter your username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+        </div>
+
         <div className="form-group">
           <label htmlFor="password">Password</label>
           <input
@@ -120,6 +115,7 @@ const SignUp = () => {
             required
           />
         </div>
+
         <div className="form-group">
           <label htmlFor="age">Age</label>
           <input
@@ -132,6 +128,7 @@ const SignUp = () => {
             required
           />
         </div>
+
         <div className="form-group">
           <label htmlFor="gender">Gender</label>
           <select
@@ -147,28 +144,32 @@ const SignUp = () => {
             <option value="Other">Other</option>
           </select>
         </div>
+
         <div className="form-group">
-          <label htmlFor="location">Location</label>
+          <label htmlFor="mood">Mood</label>
           <input
             type="text"
-            id="location"
+            id="mood"
             className="form-control"
-            value={location}
-            readOnly
+            placeholder="Enter your current mood"
+            value={mood}
+            onChange={(e) => setMood(e.target.value)}
           />
         </div>
-        {showIdUpload && (
+
+        {parseInt(age, 10) < 18 && (
           <div className="form-group">
             <label htmlFor="idCard">Upload ID Card</label>
             <input
               type="file"
               id="idCard"
               className="form-control"
-              onChange={handleIdUpload}
+              onChange={handleIdCardUpload}
             />
           </div>
         )}
-        <button className="submit-button" type="submit">
+
+        <button className="btn btn-primary" type="submit">
           Sign Up
         </button>
       </form>
