@@ -1,63 +1,146 @@
-import Resource from '../models/resource.model'; // Import the Resource model
-import Interest from '../models/interest.model'; // Import the Interest model
+import Resource from '../models/resource.model';
+import Interest from '../models/interest.model';
+import Issue from '../models/issue.model';
 
-// Simulated ML Model function (replace with actual ML model code)
-const generateResourceFromML = (interests, goals, issues) => {
-  // Example of how an ML model might generate data based on interests, goals, and issues
-  // This is a simulation; replace with the real logic that calls your ML model
-
-  // Generating title and content based on interests, goals, and issues
-  const resource = {
-    type: 'article', // Example type
-    title: `Resource for ${interests.map((interest) => interest.name).join(', ')}`, // Generated title based on interests
-    content: `This resource is tailored to your interests: ${interests
-      .map((interest) => interest.name)
-      .join(', ')}. Goals: Short-term: ${goals.shortTerm}, Long-term: ${goals.longTerm}. Issues: ${issues
-      .map((issue) => `${issue.name}: ${issue.score}`)
-      .join(', ')}`, // Generated content based on interests, goals, and issues
-  };
-  return resource;
-};
-
-// Controller function to create and store a resource
-export const createResource = async (req, res) => {
+// Fetch recommendations dynamically
+export const fetchRecommendations = async (req, res) => {
   try {
-    // Destructure interests, goals, and issues from the request body
-    const { interestIds, goals, issues } = req.body;
+    const { userId} = req.body;
 
-    // Fetch the interest documents from the database
-    const interests = await Interest.find({ '_id': { $in: interestIds } });
-
-    if (!interests || interests.length === 0) {
-      return res.status(400).json({ message: 'No valid interests found.' });
+    if (!userId) {
+      return res.status(400).json({ message: 'Missing required fields.' });
     }
 
-    // Call the ML model to generate a resource based on interests, goals, and issues
-    const resourceData = generateResourceFromML(interests, goals, issues);
+    // Fetch the user's watch history (already used recommendations)
+    const watchHistory = await Recommendation.find({ user: userId, watched: true });
 
-    // Create a new resource document to store in the database
-    const resource = new Resource({
-      title: resourceData.title,
-      type: resourceData.type,
-      content: resourceData.content,
-      interests: interestIds, // Store the provided interest IDs
-      goals, // Store goals (short-term, long-term)
-      issues, // Store issues (score-based)
+    const watchedIds = watchHistory.map((item) => item.referenceId);
+
+    // Populate events in the database
+    const eventIds = [];
+    for (const event of events) {
+      const existingEvent = await Event.findOne({ entryText: event.entryText });
+
+      if (!existingEvent) {
+        const newEvent = new Event({
+          entryText: event.entryText,
+          hostedBy: event.hostedBy,
+          type: event.type,
+          date: event.date,
+          location: event.location,
+          slots: event.slots,
+          description: event.description,
+        });
+
+        const savedEvent = await newEvent.save();
+        eventIds.push(savedEvent._id); // Track the event IDs
+      } else {
+        eventIds.push(existingEvent._id); // Use existing event ID
+      }
+    }
+
+    // Fetch user's interests and goals
+    const interests = await Interest.find({ _id: { $in: interestIds }, isGoal: false });
+    const goals = await Interest.find({ user: userId, isGoal: true });
+
+    // Fetch user's issues
+    const issues = await Issue.find({ users: userId });
+
+    // Call ML model for recommendations
+    const mlResponse = await axios.post('http://django-ml-model-url/recommendations', {
+      interests,
+      goals,
+      issues,
+      excludeIds: watchedIds,
     });
 
-    // Save the resource to the database
-    await resource.save();
+    const { books, videos, blogs, podcasts, events } = mlResponse.data;
 
-    // Return the newly created resource as a response
-    res.status(201).json({
-      message: 'Resource created successfully.',
-      data: resource,
+    // Save recommendations to the database
+    const resources = [
+      ...books.map((item) => ({
+        user: userId,
+        type: "book",
+        title: item.title,
+        content: item.content,
+        related_interest: interests.map((i) => i._id),
+        related_issues: issues.map((i) => i._id),
+        related_goals: goals.map((g) => g._id),
+      })),
+      ...videos.map((item) => ({
+        user: userId,
+        type: "video",
+        title: item.title,
+        content: item.content,
+        related_interest: interests.map((i) => i._id),
+        related_issues: issues.map((i) => i._id),
+        related_goals: goals.map((g) => g._id),
+      })),
+      ...blogs.map((item) => ({
+        user: userId,
+        type: "blog",
+        title: item.title,
+        content: item.content,
+        related_interest: interests.map((i) => i._id),
+        related_issues: issues.map((i) => i._id),
+        related_goals: goals.map((g) => g._id),
+      })),
+      ...podcasts.map((item) => ({
+        user: userId,
+        type: "podcast",
+        title: item.title,
+        content: item.content,
+        related_interest: interests.map((i) => i._id),
+        related_issues: issues.map((i) => i._id),
+        related_goals: goals.map((g) => g._id),
+      })),
+      ...events.map((event) => ({
+        user: userId,
+        type: "event",
+        title: event.entryText,
+        content: event.description,
+        related_interest: interests.map((i) => i._id),
+        related_issues: issues.map((i) => i._id),
+        related_goals: goals.map((g) => g._id),
+      })),
+    ];
+
+    await Resource.insertMany(resources);
+
+    res.status(200).json({
+      message: "Recommendations fetched and saved successfully.",
+      data: mlResponse.data,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      message: 'Error creating resource.',
-      error: error.message,
+    console.error("Error fetching recommendations:", error);
+    res.status(500).json({ message: "Error fetching recommendations.", error: error.message });
+  }
+};
+
+export const markRecommendationAsWatched = async (req, res) => {
+  try {
+    const { userId, recommendationId } = req.body;
+
+    if (!userId || !recommendationId) {
+      return res.status(400).json({ message: 'Missing required fields.' });
+    }
+
+    const recommendation = await Recommendation.findOneAndUpdate(
+      { user: userId, referenceId: recommendationId },
+      { watched: true },
+      { new: true }
+    );
+
+    if (!recommendation) {
+      return res.status(404).json({ message: 'Recommendation not found.' });
+    }
+
+    res.status(200).json({
+      message: 'Recommendation marked as watched.',
+      data: recommendation,
     });
+  } catch (error) {
+    console.error('Error marking recommendation as watched:', error);
+    res.status(500).json({ message: 'Error updating recommendation.', error: error.message });
   }
 };

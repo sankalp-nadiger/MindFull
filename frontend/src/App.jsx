@@ -25,6 +25,7 @@ import StudentSignUp from './components/pages/StudentSignUp';
 import JournalPage from './components/pages/JournalPage';
 const App = () => {
   return (
+    <>
     <Router>
       <Routes>
         <Route path="/phase1" element={<OnBoardphase1 />} />

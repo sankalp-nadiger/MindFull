@@ -2,6 +2,7 @@ import asyncHandler from "../utils/asynchandler.utils.js";
 import ApiError from "../utils/API_Error.js";
 import { Counsellor } from "../models/counselor.model.js";
 import { User } from "../models/user.model.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Session } from "../models/session.model.js";
 import twilio from "twilio";
 
@@ -10,7 +11,7 @@ const apiKeySid = process.env.TWILIO_API_KEY_SID;
 const apiKeySecret = process.env.TWILIO_API_KEY_SECRET;
 
 // Twilio Video Token Generation
-const generateTwilioToken = (identity, roomName) => {
+export const generateTwilioToken = (identity, roomName) => {
     const AccessToken = twilio.jwt.AccessToken;
     const VideoGrant = AccessToken.VideoGrant;
 
@@ -111,21 +112,44 @@ export const endSession = asyncHandler(async (req, res) => {
     await session.save();
 
     // Mark counselor as available again
-    const counselor = await Counselor.findById(session.counselor);
-    if (counselor) {
-        counselor.isAvailable = true;
-        await counselor.save();
+    const counsellor = await Counsellor.findById(session.counsellor);
+    if (counsellor) {
+        counsellor.isAvailable = true;
+        await counsellor.save();
     }
 
     res.status(200).json({ message: "Session ended successfully" });
 });
 
 export const registerCounsellor = asyncHandler(async (req, res) => {
-    const { fullName, email, password, mobileNumber, otp, specifications, certifictions} = req.body;
+    const { 
+        fullName, 
+        email, 
+        password, 
+        mobileNumber, 
+        otp, 
+        specifications = [], 
+        yearExp, 
+        availability = [],
+    } = req.body;
+
 
     // Validate fields
-    if ([fullName, email, password, mobileNumber, otp].some((field) => field?.trim() === "")) {
+    if ([fullName, email, password, mobileNumber, otp, yearExp].some((field) => field?.trim() === "")) {
         throw new ApiError(400, "All fields are required");
+    }
+    let certificateImgUrl = null;
+    const certificateLocalPath =
+      (req?.files?.certificateImage && req.files.certificateImage[0]?.path) || null;
+  
+    if (certificateLocalPath) {
+      const certificateImg = await uploadOnCloudinary(certificateLocalPath, { folder: Mindfull });
+  
+      if (!certificateImg) {
+        throw new ApiError(400, "Certificate upload failed");
+      }
+  
+      certificateImgUrl = certificateImg.url;
     }
 
     // Verify OTP
@@ -149,9 +173,12 @@ export const registerCounsellor = asyncHandler(async (req, res) => {
         email,
         password,
         mobileNumber,
-        specifications,
-        certifictions
+        specification: specifications,
+        yearexp: yearExp,
+        certifications: certificateImgUrl ? [certificateImgUrl] : [], 
+        availability
     });
+
 
     // Send response with created counsellor
     const createdCounsellor = await Counsellor.findById(counsellor._id).select("-password -refreshToken");
@@ -247,4 +274,56 @@ export const logoutCounsellor = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, {}, "User logged out"));
 });
 
-export {getTwilioToken, registerCounsellor, loginCounsellor, logoutCounsellor, generateTwilioToken, endSession, requestSession }
+export const updateFeedback = asyncHandler(async (req, res) => {
+    const { counsellorId, feedback } = req.body;
+
+    // Validate inputs
+    if (!counsellorId || !feedback?.trim()) {
+        throw new ApiError(400, "Counsellor ID and feedback are required");
+    }
+
+    // Find the counsellor and update feedback
+    const counsellor = await Counsellor.findById(counsellorId);
+    if (!counsellor) {
+        throw new ApiError(404, "Counsellor not found");
+    }
+
+    counsellor.feedback.push(feedback);
+    await counsellor.save();
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, { feedback: counsellor.feedback }, "Feedback updated successfully"));
+});
+
+export const updateProfile = asyncHandler(async (req, res) => {
+    const { counsellorId, updates } = req.body;
+
+    // Validate inputs
+    if (!counsellorId || typeof updates !== "object") {
+        throw new ApiError(400, "Counsellor ID and updates object are required");
+    }
+
+    // Allowed fields for update
+    const allowedFields = ["fullName", "email", "mobileNumber", "specification", "yearexp", "certifications", "availability"];
+    const sanitizedUpdates = Object.keys(updates)
+        .filter((key) => allowedFields.includes(key))
+        .reduce((obj, key) => ({ ...obj, [key]: updates[key] }), {});
+
+    // Find and update the counsellor
+    const counsellor = await Counsellor.findByIdAndUpdate(
+        counsellorId,
+        { $set: sanitizedUpdates },
+        { new: true, runValidators: true }
+    ).select("-password -refreshToken");
+
+    if (!counsellor) {
+        throw new ApiError(404, "Counsellor not found");
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, { updatedCounsellor: counsellor }, "Profile updated successfully"));
+});
+
+

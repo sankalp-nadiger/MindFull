@@ -1,10 +1,12 @@
-// routes/journalRoutes.js
 import express from "express";
 import { createJournalEntry } from "../controllers/journalController";
+import { aiAssistedJournal, suggestJournalTopics } from "../controllers/journal.controller";
 
 const router = express.Router();
 
-// Route to create a new journal entry
 router.post("/create", createJournalEntry);
 
-export default router;
+router.get("/assist", aiAssistedJournal);
+router.post("/suggest", suggestJournalTopics);
+
+export default router;
