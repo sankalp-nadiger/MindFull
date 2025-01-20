@@ -143,7 +143,7 @@ const generateAccessAndRefereshTokens = async (userId) => {
   }
 };
 const registerUser = asyncHandler(async (req, res) => {
-    const { fullName, email, username, password, gender, age  } = req.body;
+    const { fullName, email, username, password, gender, age, mood  } = req.body;
     const {idCardFile}= req.file;
     // Validate fields
     if (
@@ -170,7 +170,7 @@ const registerUser = asyncHandler(async (req, res) => {
     //Set profile avatar
     await assignRandomAvatar();
 
-  
+    await saveUserMood(userId, mood);
     // Create the user
     const user = await User.create({
       fullName,
@@ -257,7 +257,7 @@ const registerUser = asyncHandler(async (req, res) => {
   });
 
   const loginUser = asyncHandler(async (req, res) => {
-    const { username, password, email } = req.body;
+    const { username, password, email, mood } = req.body;
   
     if (!username) {
       throw new ApiError(400, "Username is required");
@@ -327,7 +327,7 @@ const registerUser = asyncHandler(async (req, res) => {
     }
     
     const randomActivity = getRandomActivity();
-
+    await saveUserMood(userId, mood);
     return res
       .status(200)
       .cookie("accessToken", accessToken, options)
@@ -491,6 +491,93 @@ const userProgress = asyncHandler(async (req,res) => {
   }
 });
 
+const getUserMoodHistory = async (userId, days) => {
+  try {
+    const fromDate = new Date();
+    fromDate.setDate(fromDate.getDate() - days);
+
+    const moodHistory = await Mood.find({
+      user: userId,
+      timestamp: { $gte: fromDate },
+    }).sort({ timestamp: 1 }); // Sort by date ascending
+
+    return moodHistory;
+  } catch (error) {
+    console.error("Error fetching mood history:", error);
+    throw new Error("Failed to fetch mood history");
+  }
+};
+
+
+const moodScores = {
+  Happy: 5,
+  Excited: 4,
+  Neutral: 3,
+  Anxious: 2,
+  Sad: 1,
+  Angry: 0,
+};
+const getWeeklyMoodData = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    // Get today's date
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to midnight
+
+    // Get the start of the week (Monday)
+    const startOfWeek = new Date(today);
+    const dayOfWeek = today.getDay() === 0 ? 6 : today.getDay() - 1; // Handle Sunday as the last day
+    startOfWeek.setDate(today.getDate() - dayOfWeek);
+    const weeklyMoods = await Mood.find({
+      user: userId,
+      timestamp: { $gte: startOfWeek },
+    });
+
+    // Initialize array to hold daily mood scores
+    const dailyMoodData = Array(7).fill(null); // Default null for days without data
+
+    // Populate mood scores for the respective days
+    weeklyMoods.forEach((entry) => {
+      const dayIndex = Math.floor((entry.timestamp - startOfWeek) / (24 * 60 * 60 * 1000)); // Day index
+      if (dayIndex >= 0 && dayIndex < 7) {
+        dailyMoodData[dayIndex] = moodScores[entry.mood];
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      data: dailyMoodData, // Send array of daily mood values for the week
+    });
+  } catch (error) {
+    console.error("Error fetching weekly mood data:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch weekly mood data",
+    });
+  }
+};
+
+
+const calculateAverageMood = async (userId, days = 30) => {
+  try {
+    const moods = await getUserMoodHistory(userId, days);
+
+    if (!moods.length) return null; // No mood data
+
+    const totalScore = moods.reduce(
+      (sum, mood) => sum + moodScores[mood.mood],
+      0
+    );
+
+    return (totalScore / moods.length).toFixed(2); // Average mood score
+  } catch (error) {
+    console.error("Error calculating average mood:", error);
+    throw new Error("Failed to calculate average mood");
+  }
+};
+
+
 
 const extractMobileNumber = async (imagePath) => {
   try {
@@ -522,5 +609,6 @@ export {
   changeCurrentPassword,
   getCurrentUser,
   updateAccountDetails,
-  addInterests, userProgress, addIssues
+  addInterests, userProgress, addIssues, calculateAverageMood,
+  getWeeklyMoodData
 };
