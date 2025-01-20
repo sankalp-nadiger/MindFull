@@ -1,8 +1,10 @@
-# MindfulStudent Platform
+
+<p align="center">
+  <img src="MindFull.png" alt="Platform Logo" />
+</p>
+# Mindfull Student Platform
 
 A comprehensive mental health support platform designed to help students, parents, and educators foster better mental well-being through personalized content, peer support, and professional guidance.
-
-![Platform Logo](MindFull.png)
 
 ## 🌟 Overview
 
