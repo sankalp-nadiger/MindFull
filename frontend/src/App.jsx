@@ -50,6 +50,7 @@ const App = () => {
           <Route path="/journal" element={<JournalPage/>}/>
       </Routes>
     </Router>
+    </>
   );
 };
 
