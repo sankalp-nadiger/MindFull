@@ -88,6 +88,7 @@ const userSchema = new Schema( {
           type: Number,
           default: 0,
         },    
+        achievements: String
 }, { timestamps: true})
 
 userSchema.methods.assignRandomAvatar = (user) => {
