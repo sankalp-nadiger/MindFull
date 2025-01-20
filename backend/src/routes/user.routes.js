@@ -41,10 +41,10 @@ router.get("/current", user_verifyJWT, getCurrentUser);
 router.post("/update", user_verifyJWT, updateAccountDetails); 
 
 // Add User Interests
-router.patch("/add-interests", user_verifyJWT, addInterests); 
+router.patch("/add-interests", addInterests); 
 
 // Add Diagnosed Issues
-router.post("/add-issues", user_verifyJWT, addIssues); 
+router.post("/add-issues", addIssues); 
 
 // Get User Progress
 router.get("/progress", user_verifyJWT, userProgress); 

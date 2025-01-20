@@ -182,15 +182,15 @@ const registerUser = asyncHandler(async (req, res) => {
       throw new ApiError(400, "Location is required");
     }
   
-    let parsedLocation;
-    try {
-      parsedLocation = JSON.parse(location);
-      if (!parsedLocation.type || !parsedLocation.coordinates) {
-        throw new Error("Invalid location format");
-      }
-    } catch (error) {
-      throw new ApiError(400, "Invalid location JSON format");
-    }
+    // let parsedLocation;
+    // try {
+    //   parsedLocation = JSON.parse(location);
+    //   if (!parsedLocation.type || !parsedLocation.coordinates) {
+    //     throw new Error("Invalid location format");
+    //   }
+    // } catch (error) {
+    //   throw new ApiError(400, "Invalid location JSON format");
+    // }
     // Create the user
     const user = await User.create({
       fullName,
@@ -225,8 +225,8 @@ const registerUser = asyncHandler(async (req, res) => {
   });
   
   const addInterests= asyncHandler(async (req, res) => {
-    const { userId, selected_interests, isGoal } = req.body;
-    const user = await User.findById(userId);
+    const {  userId,selected_interests, isGoal } = req.body;
+   const user = await User.findById(userId);
   if (!user) {
     throw new ApiError(404, "Question not found");
   }
@@ -253,31 +253,53 @@ const registerUser = asyncHandler(async (req, res) => {
       message: "User Interests added successfully",
     });
   });
-
-  const addIssues= asyncHandler(async (req, res) => {
+  export const addIssues = asyncHandler(async (req, res) => {
     const { userId, diagnoised_issues } = req.body;
+  
+    // Check if user exists
     const user = await User.findById(userId);
-  if (!user) {
-    throw new ApiError(404, "Question not found");
-  }
-    for (const tagName of diagnoised_issues) {
-      let issue = await Issue.findOne({ name: tagName });
-      const user_issues=[]
-      if (!tag) {
-        // Tag doesn't exist, create it 
-        issue = await Interest.create({
-          name: Name,
-        });
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+  
+    // List of valid issues (ensure these match frontend names exactly)
+    const validIssues = [
+      "Anxiety",
+      "Depression",
+      "Bipolar Disorder",
+      "Obsessive-Compulsive Disorder",
+      "PTSD",
+      "Substance Use",
+      "ADHD",
+      "Eating Disorders",
+    ];
+  
+    // Store the issue IDs that will be associated with the user
+    const user_issues = [];
+  
+    // Loop through the selected issues and check if they exist in the database
+    for (const issueName of diagnoised_issues) {
+      if (!validIssues.includes(issueName)) {
+        return res.status(400).json({ message: `${issueName} is not a valid issue` });
       }
   
-      user_issues.push(tag._id); 
-    // Collect tag IDs to associate with the user
+      let issue = await Issue.findOne({ name: issueName });
+  
+      if (!issue) {
+        // If the issue does not exist, create a new issue
+        issue = await Issue.create({ name: issueName });
+      }
+  
+      user_issues.push(issue._id);
     }
-    user.issues=user_issues;
+  
+    // Update the user's issues field
+    user.issues = user_issues;
     await user.save();
+  
     return res.status(200).json({
       status: "success",
-      message: "User Issues added successfully",
+      message: "User issues added successfully",
     });
   });
 
@@ -662,6 +684,6 @@ export {
   changeCurrentPassword,
   getCurrentUser,
   updateAccountDetails,
-  addInterests, userProgress, addIssues, calculateAverageMood,
+  addInterests, userProgress, calculateAverageMood,
   getWeeklyMoodData
 };

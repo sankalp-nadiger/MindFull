@@ -25,7 +25,7 @@ const userSchema = new Schema( {
         type: Number,
     },
     gender:{
-        type:String,enum:["M","F"],
+        type:String,enum:["Male","Female","Other"],
         required:true 
     },
     email:
@@ -49,11 +49,11 @@ const userSchema = new Schema( {
           type: {
             type: String,
             enum: ["Point"], // GeoJSON type for geospatial data
-            required: true,
+           
           },
           coordinates: {
             type: [Number], // [longitude, latitude]
-            required: true,
+         
           },
           address: {
             type: String, // Human-readable address
