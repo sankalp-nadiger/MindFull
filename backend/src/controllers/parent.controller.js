@@ -4,6 +4,7 @@ import ApiError from "../utils/API_Error.js";
 import { User } from "../models/user.model.js";
 import { Parent } from "../models/parent.model.js";
 import { OTP } from "../models/otp.model.js";
+import { Session } from "../models/session.model.js";
 import ApiResponse from "../utils/API_Response.js";
 import { generateAccessAndRefreshTokens, refreshAccessToken } from "./user.controller.js";
 import jwt from "jsonwebtoken";
@@ -141,10 +142,11 @@ const loginParent = asyncHandler(async (req, res) => {
         httpOnly: true,
         secure: true,
     };
+    const trigger= await checkMoodAndNotifyParent(parentId);
 
     return res.status(200).cookie("accessToken", accessToken, options)
                .cookie("refreshToken", refreshToken, options)
-               .json(new ApiResponse(200, { user: loggedInParent, accessToken, refreshToken }, "User logged In Successfully"));
+               .json(new ApiResponse(200, {{ parent: loggedInParent, accessToken, refreshToken },msg}, "User logged In Successfully"));
 });
 
 // Logout User with OTP authentication (for added security)
@@ -183,7 +185,8 @@ const logoutParent = asyncHandler(async (req, res) => {
               .json(new ApiResponse(200, {}, "User logged Out"));
 });
 
-  const getStudentReport = async (parentId) => {
+  const getStudentReport = (async (req,res) => {
+    const parentId= req.params;
     try {
       // Find the parent and populate associated students
       const parent = await Parent.findById(parentId).populate({
@@ -226,7 +229,6 @@ const logoutParent = asyncHandler(async (req, res) => {
             studentName: user.name,
             avgMood: avgMood.toFixed(2),
             totalJournals: journals.length,
-            activitiesCompleted: user.activitiesCompleted || 0,
           };
         })
       );
@@ -240,13 +242,136 @@ const logoutParent = asyncHandler(async (req, res) => {
       console.error("Error generating report:", error);
       throw new Error("Report generation failed");
     }
-  };
+   });
+
+ const getSessions= (async (req,res) =>{
+    const parentId=req.params;
+    try {
+        // Find the student (user) who has this parent
+        const student = await User.findOne({ parent: parentId });
+
+        if (!student) {
+            return {
+                success: false,
+                message: "No student found for this parent",
+            };
+        }
+
+        // Retrieve all sessions for this student's ID
+        const sessions = await Session.find({ student: student._id })
+            .populate("student", "name email")  // Populating student details
+            .populate("counselor", "name expertise")  // Populating counselor details
+            .exec();
+
+        return {
+            success: true,
+            sessions: sessions,
+        };
+    } catch (error) {
+        console.error("Error fetching sessions:", error);
+        return {
+            success: false,
+            message: "Failed to fetch sessions",
+            error: error.message,
+        };
+    }
+})
+
+const checkMoodAndNotifyParent = async (req,res) => {
+    const parentId=req.params;
+    try {
+      const student = await User.findOne({ parent: parentId });
+      // Fetch mood history for the past 7 days
+      const moodHistory = await getUserMoodHistory({student: student._id}, 7);
   
+      // Check if all mood scores for the past 7 days are below 1 (Sad or Angry)
+      const isMoodLowForEntireWeek = moodHistory.every(mood => moodScores[mood.mood] <= 1);
+  
+      if (isMoodLowForEntireWeek) {
+        // If mood is low for the entire week, trigger a notification for the parent
+        const user = await User.findById(userId).populate('parent'); // Assuming 'parent' is a reference in the User model
+  
+        if (user && user.parent) {
+          const parent = user.parent;
+          // Send notification or alert to the parent (can be a message, email, etc.)
+          // Example: You can create a notification model, or send an email
+          const message= "Your child has had a low mood for the past week. Please check in.";
+  
+        }
+      }
+  
+      return { success: true, message};
+    } catch (error) {
+      console.error("Error checking mood history:", error);
+      throw new Error("Failed to check mood history");
+    }
+  };
+
+const getJournals=(async(req,res)=> {
+    try {
+        const parentId=req.params;
+        const student = await User.findOne({ parent: parentId }).populate("journals");
+
+        if (!student) {
+            return {
+                success: false,
+                message: "No student found for this parent",
+            };
+        }
+
+        // Retrieve all journals for this student
+        const journals = student.journals;
+
+        return {
+            success: true,
+            journals: journals,
+        };
+    } catch (error) {
+        console.error("Error fetching journal entries:", error);
+        return {
+            success: false,
+            message: "Failed to fetch journal entries",
+            error: error.message,
+        };
+    }
+})
+
+const getIssues=(async(req,res) =>{
+    const parentId= req.params;
+    try {
+        // Find the student (user) who has this parent
+        const student = await User.findOne({ parent: parentId }).populate("issues");
+
+        if (!student) {
+            return {
+                success: false,
+                message: "No student found for this parent",
+            };
+        }
+
+        // Retrieve all issues for this student
+        const issues = student.issues;
+
+        return {
+            success: true,
+            issues: issues,
+        };
+    } catch (error) {
+        console.error("Error fetching issues:", error);
+        return {
+            success: false,
+            message: "Failed to fetch issues",
+            error: error.message,
+        };
+    }
+})
+
 export {
     sendOTP,
     verifyOTP,
     registerParent,
-    loginUser,
-    logoutUser,
-    getStudentReport
+    loginParent,
+    logoutParent,
+    getStudentReport,
+    getSessions, getJournals, getIssues
 }
