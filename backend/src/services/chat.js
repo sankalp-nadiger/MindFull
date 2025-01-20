@@ -1,7 +1,7 @@
 import express from 'express'
 import http from 'http';
 import { Server } from 'socket.io'; 
-import { User } from '../models/user.model';
+import { User } from '../models/user.model.js';
 import cors from 'cors';
 
 const UserSocketMap = {}; // Map to associate userId with their socket ID

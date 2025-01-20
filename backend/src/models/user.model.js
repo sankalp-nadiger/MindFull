@@ -157,4 +157,4 @@ userSchema.methods.assignRandomAvatar = (user) => {
       };
 };
 
-export const User= mongoose.model(User, userSchema)
+export const User= mongoose.model("User", userSchema)

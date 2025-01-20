@@ -1,9 +1,10 @@
-import { createAndPushNotification } from './notification.controller';
-import Event from '../models/event.model';
+import { createAndPushNotification } from "../services/eventupdate.js";
+import {Event} from '../models/event.model.js';
+import {Notification} from '../models/notification.model.js';
 import asyncHandler from "../utils/asynchandler.utils.js";
-import ApiError from "../utils/API_Error.js";
+import {ApiError} from "../utils/API_Error.js";
 import { User } from "../models/user.model.js";
-import { Resource } from "../models/resources.model.js";
+import { Resource } from "../models/resource.model.js";
 import { Parent } from "../models/parent.model.js";
 import { Post } from "../models/posts.model.js";
 import { Interest } from "../models/interests.models.js";
@@ -11,7 +12,7 @@ import { Issue } from "../models/Issues.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import ApiResponse from "../utils/API_Response.js";
 import jwt from "jsonwebtoken";
-import Tesseract from "Tesseract";
+import Tesseract from 'tesseract.js';
 
 const additionalActivities = [
   // Stress Relief
@@ -125,7 +126,7 @@ const getRandomActivity = () => {
   return additionalActivities[randomIndex];
 };
 
-const generateAccessAndRefereshTokens = async (userId) => {
+const generateAccessAndRefreshTokens = async (userId) => {
   try {
     const user = await User.findById(userId);
     const accessToken = user.generateAccessToken();
@@ -319,6 +320,8 @@ const registerUser = asyncHandler(async (req, res) => {
           relatedInterest: user.interests, // Assuming interests are directly associated with the user
           event: eventRec._id,
         };
+        const notification = new Notification(notificationData);
+        await notification.save();
 
         // Push the notification using the existing function
         await createAndPushNotification(notificationData, req.io);
@@ -327,7 +330,7 @@ const registerUser = asyncHandler(async (req, res) => {
     }
     
     const randomActivity = getRandomActivity();
-    await saveUserMood(userId, mood);
+    await saveUserMood(user._id, mood);
     return res
       .status(200)
       .cookie("accessToken", accessToken, options)
@@ -400,7 +403,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     };
 
     const { accessToken, newRefreshToken } =
-      await generateAccessAndRefereshTokens(user._id);
+      await generateAccessAndRefreshTokens(user._id);
 
     return res
       .status(200)
@@ -607,7 +610,7 @@ export {
   registerUser, extractMobileNumber,
   loginUser,
   logoutUser,
-  generateAccessAndRefereshTokens,
+  generateAccessAndRefreshTokens,
   refreshAccessToken,
   changeCurrentPassword,
   getCurrentUser,

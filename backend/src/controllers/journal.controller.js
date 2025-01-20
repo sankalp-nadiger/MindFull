@@ -1,10 +1,13 @@
-import { Journal } from "../models/Journal.js";
+import { Journal } from "../models/journal.model.js";
 import axios from "axios";
 import dotenv from "dotenv";
-
+import { GoogleGenerativeAI } from "@google/generative-ai";
 dotenv.config();
 
-const GEMINI_API_URL = "https://api.gemini.com/assist";
+const genAI = new GoogleGenerativeAI("GEMINI_API_KEY");
+
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
 
 // Create a new journal entry
 export const createJournalEntry = async (req, res) => {
@@ -44,24 +47,12 @@ export const aiAssistedJournal = async (req, res) => {
     if (!topic) {
       return res.status(400).json({ message: "Topic is required" });
     }
+    const prompt = `Help me write a journal entry on the topic "${topic}". Provide suggestions for what to include and how to structure it.`;
 
-    const response = await axios.post(
-      GEMINI_API_URL,
-      {
-        prompt: `Help me write a journal entry on the topic "${topic}". Provide suggestions for what to include and how to structure it.`,
-        max_tokens: 300,
-        temperature: 0.7,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.GEMINI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const result = await model.generateContent(prompt);
 
-    const aiSuggestions = response.data.choices[0]?.text;
-
+    const aiSuggestions = result.response.text;
+  
     res.status(200).json({
       message: "AI suggestions generated successfully",
       topic,
@@ -85,24 +76,10 @@ export const suggestJournalTopics = async (req, res) => {
     if (recentEntries && recentEntries.length > 0) {
       prompt += ` Avoid topics related to their recent entries: ${recentEntries.join(", ")}.`;
     }
+    const result = await model.generateContent(prompt);
 
-    const response = await axios.post(
-      GEMINI_API_URL,
-      {
-        prompt,
-        max_tokens: 100,
-        temperature: 0.8,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.GEMINI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    const suggestions = response.data.choices[0]?.text.split("\n").filter(Boolean);
-
+    const suggestions = result.response.text.split("\n").filter(Boolean);
+    
     res.status(200).json({
       message: "Journal topics suggested successfully",
       topics: suggestions,

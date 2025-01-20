@@ -1,6 +1,6 @@
-import Resource from '../models/resource.model';
-import Interest from '../models/interest.model';
-import Issue from '../models/issue.model';
+import {Resource} from '../models/resource.model.js';
+import {Interest} from '../models/interests.models.js';
+import {Issue} from '../models/Issues.model.js';
 
 // Fetch recommendations dynamically
 export const fetchRecommendations = async (req, res) => {

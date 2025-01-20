@@ -13,15 +13,15 @@ const resourceSchema = new Schema({
   },
   content: String,
   related_interest: [{
-    type: mongoose.Schema.Types.ObjectId,
+    type: Schema.Types.ObjectId,
     ref: 'Interest'
   }],
   related_issues: [{
-    type: mongoose.Schema.Types.ObjectId,
+    type: Schema.Types.ObjectId,
     ref: 'Issue'
   }],
   related_goals: [{
-    type: mongoose.Schema.Types.ObjectId,
+    type: Schema.Types.ObjectId,
     ref: 'Interest'
   }],
   watched: {
@@ -29,7 +29,7 @@ const resourceSchema = new Schema({
     default: false
   },
   user: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: Schema.Types.ObjectId,
     ref: 'User'
   },
   metadata: {

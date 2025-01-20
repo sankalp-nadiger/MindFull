@@ -3,26 +3,25 @@ import cors from "cors"
 import http from "http"
 import cookieParser from "cookie-parser"
 import axios from 'axios'
-import cheerio from 'cheerio'
+//import {cheerio} from 'cheerio'
 
 //router imports
-import userRouter from './routes/user.routes'
+import userRouter from './routes/user.routes.js'
 import resourceRouter from "./routes/resource.routes.js"
 import activityRouter from "./routes/activity.routes.js"
-import communityRouter from "./routes/community.routes.js"
+//import communityRouter from "./routes/community.routes.js"
 import counsellorRouter from "./routes/counsellor.routes.js"
 import dm_chatRouter from "./routes/dm_chat.routes.js"
-import eventRouter from "./routes/event.routes.js"
-import journalRouter from "./routes/.journalroutes.js"
+//import eventRouter from "./routes/event.routes.js"
+import journalRouter from "./routes/journal.routes.js"
 import notificationRouter from "./routes/notification.routes.js"
 import parentRouter from "./routes/parent.routes.js"
-import sessionRouter from "./routes/session.routes.js"
+//import sessionRouter from "./routes/session.routes.js"
 import storyRouter from "./routes/story.routes.js"
-import recommendationRouter from './routes/recommendations.route.js'
 
 //service imports
 import {setupSignalServer} from './services/signalserver.js'
-import {setupchat} from './services/signalserver.js'
+import {setupchat} from './services/chat.js'
 
 
 const app = express();
@@ -47,14 +46,13 @@ app.use("/api/users",userRouter)
 app.use("/api/resources",resourceRouter)
 app.use("/api/journals",journalRouter)
 app.use("/api/activity",activityRouter)
-app.use("/api/community",communityRouter)
-app.use("/api/councellor",counsellorRouter)
+//app.use("/api/community",communityRouter)
+app.use("/api/counsellor",counsellorRouter)
 app.use("/api/dm_chat",dm_chatRouter)
-app.use("/api/event",eventRouter)
+//app.use("/api/event",eventRouter)
 app.use("/api/notifications",notificationRouter)
 app.use("/api/parent",parentRouter)
-app.use("/api/session",sessionRouter)
+//app.use("/api/session",sessionRouter)
 app.use("/api/story",storyRouter)
-app.use("api/recommendations", recommendationRouter)
 
-module.exports= app;
+export default app;

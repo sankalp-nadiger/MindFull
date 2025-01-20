@@ -7,6 +7,4 @@ const issueSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-const Issue = mongoose.model('Issue', issueSchema);
-
-export default Issue;
+export const Issue = mongoose.model('Issue', issueSchema);

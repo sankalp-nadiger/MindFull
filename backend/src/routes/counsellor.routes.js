@@ -15,7 +15,7 @@ const router = express.Router();
 router.post("/request", user_verifyJWT, requestSession);
 
 // Get a Twilio token for a session (Student/Counselor)
-router.post("/token/student", student_verifyJWT, getTwilioToken);
+router.post("/token/student", user_verifyJWT, getTwilioToken);
 router.post("/token/counsellor", counsellor_verifyJWT, getTwilioToken);
 
 // End a session (Counselor Side)

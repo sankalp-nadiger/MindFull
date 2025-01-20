@@ -1,6 +1,6 @@
 import express from "express";
-import { createJournalEntry } from "../controllers/journalController";
-import { aiAssistedJournal, suggestJournalTopics } from "../controllers/journal.controller";
+import { createJournalEntry } from "../controllers/journal.controller.js";
+import { aiAssistedJournal, suggestJournalTopics } from "../controllers/journal.controller.js";
 
 const router = express.Router();
 
