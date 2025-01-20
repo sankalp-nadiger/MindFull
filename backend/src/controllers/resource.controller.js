@@ -5,7 +5,7 @@ import Issue from '../models/issue.model';
 // Fetch recommendations dynamically
 export const fetchRecommendations = async (req, res) => {
   try {
-    const { userId} = req.body;
+    const userId = req.userId;
 
     if (!userId) {
       return res.status(400).json({ message: 'Missing required fields.' });
@@ -48,6 +48,7 @@ export const fetchRecommendations = async (req, res) => {
 
     // Call ML model for recommendations
     const mlResponse = await axios.post('http://django-ml-model-url/recommendations', {
+      userId,
       interests,
       goals,
       issues,

@@ -466,7 +466,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 });
 
 const userProgress = asyncHandler(async (req,res) => {
-  const userId = req.user.id;
+  const userId = req.user._id;
 
   try {
     const user = await User.findById(userId);
@@ -519,7 +519,7 @@ const moodScores = {
   Angry: 0,
 };
 const getWeeklyMoodData = async (req, res) => {
-  const { userId } = req.params;
+  const  userId = req.userId;
 
   try {
     // Get today's date
@@ -560,8 +560,10 @@ const getWeeklyMoodData = async (req, res) => {
 };
 
 
-const calculateAverageMood = async (userId, days = 30) => {
+const calculateAverageMood = async (req,res) => {
+  const userId=req.user.selected_interestsid;
   try {
+    let days=30;
     const moods = await getUserMoodHistory(userId, days);
 
     if (!moods.length) return null; // No mood data

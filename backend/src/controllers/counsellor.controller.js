@@ -275,7 +275,8 @@ export const logoutCounsellor = asyncHandler(async (req, res) => {
 });
 
 export const updateFeedback = asyncHandler(async (req, res) => {
-    const { counsellorId, feedback } = req.body;
+    const counsellorId = req.counsellor._id;
+    const { feedback } = req.body;
 
     // Validate inputs
     if (!counsellorId || !feedback?.trim()) {
@@ -297,7 +298,8 @@ export const updateFeedback = asyncHandler(async (req, res) => {
 });
 
 export const updateProfile = asyncHandler(async (req, res) => {
-    const { counsellorId, updates } = req.body;
+    const counsellorId= req.counsellor._id;
+    const { updates } = req.body;
 
     // Validate inputs
     if (!counsellorId || typeof updates !== "object") {

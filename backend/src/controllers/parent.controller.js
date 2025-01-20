@@ -5,6 +5,7 @@ import { User } from "../models/user.model.js";
 import { Parent } from "../models/parent.model.js";
 import { OTP } from "../models/otp.model.js";
 import { Session } from "../models/session.model.js";
+import { Mood } from "../models/mood.model.js";
 import ApiResponse from "../utils/API_Response.js";
 import { generateAccessAndRefreshTokens, refreshAccessToken } from "./user.controller.js";
 import jwt from "jsonwebtoken";
@@ -186,7 +187,7 @@ const logoutParent = asyncHandler(async (req, res) => {
 });
 
   const getStudentReport = (async (req,res) => {
-    const parentId= req.params;
+    const parentId= req.params.parentId;
     try {
       // Find the parent and populate associated students
       const parent = await Parent.findById(parentId).populate({
@@ -245,7 +246,7 @@ const logoutParent = asyncHandler(async (req, res) => {
    });
 
  const getSessions= (async (req,res) =>{
-    const parentId=req.params;
+    const parentId=req.params.parentId;
     try {
         // Find the student (user) who has this parent
         const student = await User.findOne({ parent: parentId });
@@ -278,7 +279,7 @@ const logoutParent = asyncHandler(async (req, res) => {
 })
 
 const checkMoodAndNotifyParent = async (req,res) => {
-    const parentId=req.params;
+    const parentId=req.params.parentId;
     try {
       const student = await User.findOne({ parent: parentId });
       // Fetch mood history for the past 7 days
@@ -309,7 +310,7 @@ const checkMoodAndNotifyParent = async (req,res) => {
 
 const getJournals=(async(req,res)=> {
     try {
-        const parentId=req.params;
+        const parentId=req.params.parentId;
         const student = await User.findOne({ parent: parentId }).populate("journals");
 
         if (!student) {
@@ -337,7 +338,7 @@ const getJournals=(async(req,res)=> {
 })
 
 const getIssues=(async(req,res) =>{
-    const parentId= req.params;
+    const parentId= req.params.parentId;
     try {
         // Find the student (user) who has this parent
         const student = await User.findOne({ parent: parentId }).populate("issues");
