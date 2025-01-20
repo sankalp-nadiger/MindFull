@@ -4,18 +4,36 @@ import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-const SignUp = () => {
+const StudentSignUp = () => {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
-  const [mood, setMood] = useState("");
   const [idCardFile, setIdCardFile] = useState(null);
+  const [location, setLocation] = useState(null); // For storing latitude and longitude
   const [showIdUpload, setShowIdUpload] = useState(false);
 
   const navigate = useNavigate(); // Hook for navigation
+
+  // Function to get the user's geolocation
+  const getLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setLocation({ latitude, longitude });
+          toast.success("Location retrieved successfully!");
+        },
+        (error) => {
+          toast.error("Unable to retrieve your location. Please enable geolocation.");
+        }
+      );
+    } else {
+      toast.error("Geolocation is not supported by this browser.");
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,6 +50,11 @@ const SignUp = () => {
       return;
     }
 
+    if (!location) {
+      toast.error("Location is required. Please allow location access.");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("fullName", fullName);
     formData.append("email", email);
@@ -39,7 +62,7 @@ const SignUp = () => {
     formData.append("password", password);
     formData.append("age", age);
     formData.append("gender", gender);
-    formData.append("mood", mood);
+    formData.append("location", JSON.stringify(location)); // Add location to form data
     if (idCardFile) formData.append("idCardFile", idCardFile);
 
     try {
@@ -145,16 +168,11 @@ const SignUp = () => {
           </select>
         </div>
 
+        {/* Add button to get location */}
         <div className="form-group">
-          <label htmlFor="mood">Mood</label>
-          <input
-            type="text"
-            id="mood"
-            className="form-control"
-            placeholder="Enter your current mood"
-            value={mood}
-            onChange={(e) => setMood(e.target.value)}
-          />
+          <button type="button" className="btn btn-info" onClick={getLocation}>
+            Get Location
+          </button>
         </div>
 
         {parseInt(age, 10) < 18 && (
@@ -178,4 +196,4 @@ const SignUp = () => {
   );
 };
 
-export default SignUp;
+export default StudentSignUp;
