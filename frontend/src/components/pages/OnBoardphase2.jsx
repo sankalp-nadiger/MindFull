@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios"; // For API calls
+import axios from "axios";
 import "./Tags.css"; // Add your styles here
 
 // List of topics for interests
@@ -18,8 +18,7 @@ const topicsList = [
 ];
 
 const OnBoardingPhase = () => {
-  const [shortTermGoals, setShortTermGoals] = useState("");
-  const [longTermGoals, setLongTermGoals] = useState("");
+  const [goal, setGoal] = useState("");  // Single goal state
   const [selectedTopics, setSelectedTopics] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate(); // Hook for navigation
@@ -38,8 +37,7 @@ const OnBoardingPhase = () => {
 
   // Handle submission
   const handleSubmit = async () => {
-    // Assuming you have a way to get the current logged-in user's ID
-    const userId = localStorage.getItem("userId"); // Replace this with the actual user ID (from context, auth, or props)
+    const userId = "678eb93145dd095192be902d" // Replace this with the actual user ID (from context, auth, or props)
     
     if (!userId) {
       alert("User not authenticated");
@@ -47,22 +45,23 @@ const OnBoardingPhase = () => {
     }
 
     const userData = {
-      userId,
+      userId, // Add userId to the request body
       selected_interests: selectedTopics,
-      isGoal: shortTermGoals || longTermGoals ? true : false, // Set isGoal based on whether any goals are provided
+      isGoal: goal ? true : false, // Set isGoal based on whether any goal is provided
+       // Send the single goal value
     };
 
     try {
       setIsSubmitting(true);
       // API call to save user goals and interests
-      const response = await axios.post("http://localhost:8000/api/users/add-intersts", userData);
+      const response = await axios.patch("http://localhost:8000/api/users/add-interests", userData);
       console.log("Response:", response.data);
-      alert("Your goals and interests have been saved!");
+      alert("Your goal and interests have been saved!");
       // Navigate to Phase 3
       navigate("/phase3");
     } catch (error) {
       console.error("Error saving data:", error);
-      alert("Failed to save your goals and interests. Please try again.");
+      alert("Failed to save your goal and interests. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -71,28 +70,18 @@ const OnBoardingPhase = () => {
   return (
     <div className="container">
       <h1>Welcome! Let's Get Started</h1>
-      <p>Set your goals and select your interests to personalize your experience.</p>
-      {/* Goals Section */}
-      <div className="goals-section">
-        <h2>Set Your Goals</h2>
+      <p>Set your goal and select your interests to personalize your experience.</p>
+      {/* Goal Section */}
+      <div className="goal-section">
+        <h2>Set Your Goal</h2>
         <div className="form-group">
-          <label htmlFor="shortTermGoals">Short-Term Goals</label>
+          <label htmlFor="goal">Goal</label>
           <textarea
-            id="shortTermGoals"
+            id="goal"
             className="form-control"
-            placeholder="Enter your short-term goals..."
-            value={shortTermGoals}
-            onChange={(e) => setShortTermGoals(e.target.value)}
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="longTermGoals">Long-Term Goals</label>
-          <textarea
-            id="longTermGoals"
-            className="form-control"
-            placeholder="Enter your long-term goals..."
-            value={longTermGoals}
-            onChange={(e) => setLongTermGoals(e.target.value)}
+            placeholder="Enter your goal..."
+            value={goal}
+            onChange={(e) => setGoal(e.target.value)}
           />
         </div>
       </div>
@@ -118,7 +107,7 @@ const OnBoardingPhase = () => {
           className="submit-button"
           disabled={
             isSubmitting ||
-            (!shortTermGoals && !longTermGoals && selectedTopics.length === 0)
+            (!goal && selectedTopics.length === 0)
           }
           onClick={handleSubmit}
         >

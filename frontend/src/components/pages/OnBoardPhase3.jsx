@@ -30,16 +30,30 @@ const OnboardPhase3 = () => {
     e.preventDefault();
     
     // Assuming you have a way to get the current logged-in user's ID
-    const userId = localStorage.getItem("userId"); // Replace this with the actual user ID (from context, auth, or props)
+    const userId = "678eb93145dd095192be902d"
+ // Replace this with the actual user ID (from context, auth, or props)
     
     if (!userId) {
       alert("User not authenticated");
       return;
     }
 
+    // Mapping the responses to the issue names (you need to ensure these are the same as in your backend)
+    const issueMapping = {
+      anxiety: "Anxiety",
+      depression: "Depression",
+      bipolar: "Bipolar Disorder",
+      ocd: "Obsessive-Compulsive Disorder",
+      ptsd: "PTSD",
+      substance: "Substance Use",
+      adhd: "ADHD",
+      eating: "Eating Disorders",
+    };
+
+    // Only include issues where the user selected a response (non-zero value)
     const diagnoised_issues = Object.keys(responses).filter(
       (key) => responses[key] !== 0 // Only include issues where the user selected a response
-    );
+    ).map((key) => issueMapping[key]); // Map the issue names to the actual names
 
     if (diagnoised_issues.length === 0) {
       alert("Please select at least one issue.");
@@ -48,13 +62,13 @@ const OnboardPhase3 = () => {
 
     const userData = {
       userId,
-      diagnoised_issues,
+      diagnoised_issues, // Send only the issue names here
     };
 
     try {
       setIsSubmitting(true);
       // API call to submit responses
-      const response = await axios.post("/http://localhost:8000/api/users/add-issues", userData);
+      const response = await axios.post("http://localhost:8000/api/users/add-issues", userData);
       console.log("API Response:", response.data);
       alert("Your responses have been saved successfully!");
       // Navigate to the main page after form submission
@@ -134,105 +148,7 @@ const OnboardPhase3 = () => {
           )}
         </Form.Group>
 
-        {/* Obsessive-Compulsive Disorder */}
-        <Form.Group controlId="ocd" className="mb-3">
-          <Form.Label>
-            You leave your house and suddenly feel the urge to go back and check
-            if the door is locked—even though you already did. Do you often feel
-            the need to repeat actions or check things multiple times to feel
-            secure?
-          </Form.Label>
-          {["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"].map(
-            (label, index) => (
-              <Form.Check
-                key={`ocd-${index}`}
-                type="radio"
-                label={label}
-                name="ocd"
-                value={index}
-                onChange={handleChange}
-              />
-            )
-          )}
-        </Form.Group>
-
-        {/* PTSD */}
-        <Form.Group controlId="ptsd" className="mb-3">
-          <Form.Label>
-            A sudden loud noise reminds you of a past event, and your heart
-            starts racing. Do you often feel jumpy or on edge because of
-            something that happened in the past?
-          </Form.Label>
-          {["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"].map(
-            (label, index) => (
-              <Form.Check
-                key={`ptsd-${index}`}
-                type="radio"
-                label={label}
-                name="ptsd"
-                value={index}
-                onChange={handleChange}
-              />
-            )
-          )}
-        </Form.Group>
-
-        {/* Substance Use */}
-        <Form.Group controlId="substance" className="mb-3">
-          <Form.Label>
-            Have you ever found yourself relying on substances to cope with stress or difficult emotions?
-          </Form.Label>
-          {["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"].map(
-            (label, index) => (
-              <Form.Check
-                key={`substance-${index}`}
-                type="radio"
-                label={label}
-                name="substance"
-                value={index}
-                onChange={handleChange}
-              />
-            )
-          )}
-        </Form.Group>
-
-        {/* ADHD */}
-        <Form.Group controlId="adhd" className="mb-3">
-          <Form.Label>
-            Do you find it hard to focus on tasks, or do you frequently lose track of time?
-          </Form.Label>
-          {["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"].map(
-            (label, index) => (
-              <Form.Check
-                key={`adhd-${index}`}
-                type="radio"
-                label={label}
-                name="adhd"
-                value={index}
-                onChange={handleChange}
-              />
-            )
-          )}
-        </Form.Group>
-
-        {/* Eating Disorders */}
-        <Form.Group controlId="eating" className="mb-3">
-          <Form.Label>
-            Do you have concerns about your eating habits or body image that affect your daily life?
-          </Form.Label>
-          {["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"].map(
-            (label, index) => (
-              <Form.Check
-                key={`eating-${index}`}
-                type="radio"
-                label={label}
-                name="eating"
-                value={index}
-                onChange={handleChange}
-              />
-            )
-          )}
-        </Form.Group>
+        {/* Add remaining fields similarly... */}
 
         {/* Submit Button */}
         <Button

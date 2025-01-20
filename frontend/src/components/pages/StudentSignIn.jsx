@@ -11,13 +11,14 @@ const StudentSignIn = () => {
     event.preventDefault();
 
     // Collect form data
+    const username=event.target.username.value;
     const email = event.target.email.value;
     const password = event.target.password.value;
     const mood = event.target.mood.value;
-    const wellBeing = event.target.wellBeing.value;
+    //const wellBeing = event.target.wellBeing.value;
 
     // Validate fields
-    if (!email || !password || !mood || !wellBeing) {
+    if (!email || !password || !mood || !username) {
       alert("Please fill in all fields.");
       return;
     }
@@ -27,10 +28,10 @@ const StudentSignIn = () => {
     try {
       // API call to backend login endpoint
       const response = await axios.post("http://localhost:8000/api/users/login", {
-        email,
+        username,
         password,
-        mood,
-        wellBeing,
+        email,
+        mood
       });
 
       if (response.status === 200) {
@@ -77,15 +78,17 @@ const StudentSignIn = () => {
         <h2>Student Sign In</h2>
         <form onSubmit={handleSignIn}>
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="username">username</label>
             <input
-              type="email"
-              id="email"
-              name="email"
+              type="text"
+              id="username"
+              name="username"
               className="form-control"
-              placeholder="Enter your email"
+              placeholder="Enter your username"
             />
           </div>
+          
+          
           <div className="form-group">
             <label htmlFor="password">Password</label>
             <input
@@ -94,6 +97,16 @@ const StudentSignIn = () => {
               name="password"
               className="form-control"
               placeholder="Enter your password"
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="email">email</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              className="form-control"
+              placeholder="Enter your email"
             />
           </div>
           <div className="form-group">
@@ -107,7 +120,7 @@ const StudentSignIn = () => {
               <option value="Angry">😡 Angry</option>
             </select>
           </div>
-          <div className="form-group">
+          {/* <div className="form-group">
             <label htmlFor="wellBeing">
               On a scale of 1-10, how would you rate your mental well-being today?
             </label>
@@ -121,7 +134,7 @@ const StudentSignIn = () => {
               max="10"
               required
             />
-          </div>
+          </div> */}
           <button type="submit" className="submit-button" disabled={loading}>
             {loading ? "Signing In..." : "Sign In"}
           </button>
