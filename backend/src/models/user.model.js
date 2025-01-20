@@ -80,6 +80,10 @@ const userSchema = new Schema( {
         lastLoginDate: {
           type: Date,
         },
+        parent :{
+             type: Schema.Types.ObjectId,
+            ref: "parent"
+        },
         streak: {
           type: Number,
           default: 0,

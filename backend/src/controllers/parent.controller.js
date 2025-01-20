@@ -87,13 +87,21 @@ const registerParent = asyncHandler(async (req, res) => {
         fullName,
         email,
         password,
-        studentID,
+        studentID:user._id,
         interests: [],
     });
 
     // Send response with created user
-    const createdUser = await Parent.findById(parent._id).select("-password -refreshToken");
-    return res.status(201).json(new ApiResponse(200, { createdUser }, "Parent registered successfully"));
+    // const createdUser = await Parent.findById(parent._id).select("-password -refreshToken");
+    // return res.status(201).json(new ApiResponse(200, { createdUser }, "Parent registered successfully"));
+    user.parent = parent._id; // Assuming the `User` schema has a `parent` field
+    await user.save();
+
+    // Populate the `parent` field in the user document
+    const updatedUser = await User.findById(user._id).populate('parent').select('-password -refreshToken');
+
+    // Send response with the updated user document
+    return res.status(201).json(new ApiResponse(200, { updatedUser }, "Parent registered successfully"));
 });
 
 // Login with OTP authentication
