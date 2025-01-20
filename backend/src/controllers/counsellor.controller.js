@@ -1,6 +1,6 @@
 import asyncHandler from "../utils/asynchandler.utils.js";
-import ApiError from "../utils/API_Error.js";
-import { Counsellor } from "../models/counselor.model.js";
+import {ApiError} from "../utils/API_Error.js";
+import { Counsellor } from "../models/counsellor.model.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Session } from "../models/session.model.js";
@@ -275,7 +275,8 @@ export const logoutCounsellor = asyncHandler(async (req, res) => {
 });
 
 export const updateFeedback = asyncHandler(async (req, res) => {
-    const { counsellorId, feedback } = req.body;
+    const counsellorId = req.counsellor._id;
+    const { feedback } = req.body;
 
     // Validate inputs
     if (!counsellorId || !feedback?.trim()) {
@@ -297,7 +298,8 @@ export const updateFeedback = asyncHandler(async (req, res) => {
 });
 
 export const updateProfile = asyncHandler(async (req, res) => {
-    const { counsellorId, updates } = req.body;
+    const counsellorId= req.counsellor._id;
+    const { updates } = req.body;
 
     // Validate inputs
     if (!counsellorId || typeof updates !== "object") {

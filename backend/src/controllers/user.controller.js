@@ -1,17 +1,18 @@
-import { createAndPushNotification } from './notification.controller';
-import Event from '../models/event.model';
+import { createAndPushNotification } from "../services/eventupdate.js";
+import {Event} from '../models/event.model.js';
+import {Notification} from '../models/notification.model.js';
 import asyncHandler from "../utils/asynchandler.utils.js";
-import ApiError from "../utils/API_Error.js";
+import {ApiError} from "../utils/API_Error.js";
 import { User } from "../models/user.model.js";
-import { Resource } from "../models/resources.model.js";
+import { Resource } from "../models/resource.model.js";
 import { Parent } from "../models/parent.model.js";
-import { Post } from "../models/posts.model.js";
+import { Mood } from "../models/mood.model.js";
 import { Interest } from "../models/interests.models.js";
 import { Issue } from "../models/Issues.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import ApiResponse from "../utils/API_Response.js";
 import jwt from "jsonwebtoken";
-import Tesseract from "Tesseract";
+import Tesseract from 'tesseract.js';
 
 const additionalActivities = [
   // Stress Relief
@@ -125,26 +126,37 @@ const getRandomActivity = () => {
   return additionalActivities[randomIndex];
 };
 
-const generateAccessAndRefereshTokens = async (userId) => {
+const generateAccessAndRefreshTokens = async (userId) => {
   try {
     const user = await User.findById(userId);
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    console.log("User found:", user); // Log user to verify it's fetched correctly
+
     const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken();
 
-    user.refreshToken = refreshToken;
+    console.log("Access token:", accessToken); // Log tokens for debugging
+    console.log("Refresh token:", refreshToken);
+
+    user.refreshToken = refreshToken; // Store the refresh token in the user document
     await user.save({ validateBeforeSave: false });
 
     return { accessToken, refreshToken };
   } catch (error) {
+    console.error("Error generating tokens:", error); // Log the error for debugging
     throw new ApiError(
       500,
-      "Something went wrong while generating referesh and access token",
+      "Something went wrong while generating refresh and access token"
     );
   }
 };
+
 const registerUser = asyncHandler(async (req, res) => {
-    const { fullName, email, username, password, gender, age, mood  } = req.body;
-    const {idCardFile}= req.file;
+    const { fullName, email, username, password, gender, age, mood,  location   } = req.body;
+    const idCardFile = req.file?.path;
     // Validate fields
     if (
       [fullName, email, username, password].some((field) => field?.trim() === "")
@@ -166,11 +178,19 @@ const registerUser = asyncHandler(async (req, res) => {
         res.send(400,"ID card upload mandatory for students");
       }
     }
-
-    //Set profile avatar
-    await assignRandomAvatar();
-
-    await saveUserMood(userId, mood);
+    if (!location) {
+      throw new ApiError(400, "Location is required");
+    }
+  
+    let parsedLocation;
+    try {
+      parsedLocation = JSON.parse(location);
+      if (!parsedLocation.type || !parsedLocation.coordinates) {
+        throw new Error("Invalid location format");
+      }
+    } catch (error) {
+      throw new ApiError(400, "Invalid location JSON format");
+    }
     // Create the user
     const user = await User.create({
       fullName,
@@ -179,9 +199,14 @@ const registerUser = asyncHandler(async (req, res) => {
       gender,
       age,
       username: username.toLowerCase(),
-      idCard: idCardFile
+      idCard: idCardFile,
+      location: parsedLocation,
     });
   
+    //Set profile avatar
+    await user.assignRandomAvatar();
+
+    await saveUserMood(user._id, mood);
     // Fetch the created user without sensitive fields
     const createdUser = await User.findById(user._id).select(
       "-password -refreshToken",
@@ -258,7 +283,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const loginUser = asyncHandler(async (req, res) => {
     const { username, password, email, mood } = req.body;
-  
+    console.log("Request body:", req.body);
     if (!username) {
       throw new ApiError(400, "Username is required");
     }
@@ -319,15 +344,17 @@ const registerUser = asyncHandler(async (req, res) => {
           relatedInterest: user.interests, // Assuming interests are directly associated with the user
           event: eventRec._id,
         };
+        const notification = new Notification(notificationData);
+        await notification.save();
 
         // Push the notification using the existing function
         await createAndPushNotification(notificationData, req.io);
         eventNotifications.push(notificationData); // Track notifications sent
       }
     }
-    
+  
     const randomActivity = getRandomActivity();
-    await saveUserMood(userId, mood);
+    await saveUserMood(user._id, mood);
     return res
       .status(200)
       .cookie("accessToken", accessToken, options)
@@ -344,6 +371,29 @@ const registerUser = asyncHandler(async (req, res) => {
       );
   });
   
+  const saveUserMood = async (userId, mood) => {
+    try {
+      // Validate mood input
+      if (!mood) {
+        throw new Error("Mood is required.");
+      }
+  
+      // Create a new mood record
+      const newMood = new Mood({
+        user: userId,
+        mood,
+      });
+  
+      // Save the mood record to the database
+      await newMood.save();
+  
+      // Return success message or saved mood data
+      return { message: "Mood saved successfully.", mood: newMood };
+    } catch (error) {
+      // Handle any errors
+      throw new Error(`Error saving mood: ${error.message}`);
+    }
+  };
 
 const logoutUser = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
@@ -400,7 +450,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     };
 
     const { accessToken, newRefreshToken } =
-      await generateAccessAndRefereshTokens(user._id);
+      await generateAccessAndRefreshTokens(user._id);
 
     return res
       .status(200)
@@ -466,7 +516,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 });
 
 const userProgress = asyncHandler(async (req,res) => {
-  const userId = req.user.id;
+  const userId = req.user._id;
 
   try {
     const user = await User.findById(userId);
@@ -519,7 +569,7 @@ const moodScores = {
   Angry: 0,
 };
 const getWeeklyMoodData = async (req, res) => {
-  const { userId } = req.params;
+  const  userId = req.userId;
 
   try {
     // Get today's date
@@ -560,8 +610,10 @@ const getWeeklyMoodData = async (req, res) => {
 };
 
 
-const calculateAverageMood = async (userId, days = 30) => {
+const calculateAverageMood = async (req,res) => {
+  const userId=req.user.selected_interestsid;
   try {
+    let days=30;
     const moods = await getUserMoodHistory(userId, days);
 
     if (!moods.length) return null; // No mood data
@@ -605,7 +657,7 @@ export {
   registerUser, extractMobileNumber,
   loginUser,
   logoutUser,
-  generateAccessAndRefereshTokens,
+  generateAccessAndRefreshTokens,
   refreshAccessToken,
   changeCurrentPassword,
   getCurrentUser,

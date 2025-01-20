@@ -6,7 +6,8 @@ import {
   logoutParent,
   getSessions,
   getJournals,
-  getIssues
+  getIssues,
+  getStudentReport
 } from "../controllers/parent.controller.js";
 
 const router = express.Router();

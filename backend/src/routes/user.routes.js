@@ -3,7 +3,7 @@ import {
   registerUser,
   loginUser,
   logoutUser,
-  generateAccessAndRefereshTokens,
+  generateAccessAndRefreshTokens,
   refreshAccessToken,
   changeCurrentPassword,
   getCurrentUser,
@@ -14,12 +14,13 @@ import {
   calculateAverageMood,
   getWeeklyMoodData,
 } from "../controllers/user.controller.js";
+import {upload} from "../middleware/multer.middleware.js"
 import { user_verifyJWT } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
 // User Registration
-router.post("/register", registerUser);
+router.post("/register", upload.single("idCardFile"), registerUser);
 
 // User Login
 router.post("/login", loginUser);

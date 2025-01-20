@@ -1,6 +1,6 @@
 import asyncHandler from '../utils/asynchandler.utils.js';
-import ApiError from '../utils/API_Error.js';
-import User from '../models/user.model.js';
+import {ApiError} from '../utils/API_Error.js';
+import {User} from '../models/user.model.js';
 // Start a Personal Chat
 const startPersonalChat = asyncHandler(async (req, res) => {
     const { senderId, receiverId } = req.body;

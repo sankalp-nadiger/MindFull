@@ -1,12 +1,12 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const { createStory, getStories } = require("../controllers/story.controller.js");
-const { verifyJWT } = require("../middleware/auth.middleware.js");
+import { createStory, getStories } from "../controllers/story.controller.js";
+import { user_verifyJWT } from "../middleware/auth.middleware.js";
 
 // Route to create a story
-router.post("/stories", verifyJWT, createStory);
+router.post("/stories", user_verifyJWT, createStory);
 
 // Route to get all stories for the homepage
-router.get("/stories", verifyJWT, getStories);
+router.get("/stories", user_verifyJWT, getStories);
 
-module.exports = router;
+export default router;

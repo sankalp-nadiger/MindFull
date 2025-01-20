@@ -1,5 +1,5 @@
-import { ApiError } from "utils/API_Error.js";
-import { asyncHandler } from "../utils/asynchandler.utils.js";
+import { ApiError } from "../utils/API_Error.js";
+import asyncHandler from "../utils/asynchandler.utils.js";
 import jwt from "jsonwebtoken";
 import { User } from "../models/user.model.js";
 import { Parent } from "../models/parent.model.js";
@@ -52,7 +52,7 @@ export const parent_verifyJWT = asyncHandler(async (req, _, next) => {
   next();
 });
 
-export const consellor_verifyJWT = asyncHandler(async (req, _, next) => {
+export const counsellor_verifyJWT = asyncHandler(async (req, _, next) => {
   const token =
     req.cookies?.accessToken ||
     req.header("Authorization")?.replace("Bearer ", "");

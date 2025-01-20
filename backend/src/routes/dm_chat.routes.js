@@ -2,7 +2,7 @@ import express from "express";
 import {
   startPersonalChat,
   sendMessageToUser,
-} from "../controllers/chat.controller.js";
+} from "../controllers/dm_chat.controller.js";
 
 const router = express.Router();
 

@@ -1,11 +1,11 @@
-import Resource from '../models/resource.model';
-import Interest from '../models/interest.model';
-import Issue from '../models/issue.model';
+import {Resource} from '../models/resource.model.js';
+import {Interest} from '../models/interests.models.js';
+import {Issue} from '../models/Issues.model.js';
 
 // Fetch recommendations dynamically
 export const fetchRecommendations = async (req, res) => {
   try {
-    const { userId} = req.body;
+    const userId = req.userId;
 
     if (!userId) {
       return res.status(400).json({ message: 'Missing required fields.' });
@@ -48,6 +48,7 @@ export const fetchRecommendations = async (req, res) => {
 
     // Call ML model for recommendations
     const mlResponse = await axios.post('http://django-ml-model-url/recommendations', {
+      userId,
       interests,
       goals,
       issues,

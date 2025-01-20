@@ -1,4 +1,4 @@
-import mongoose, {Schema} from mongoose;
+import mongoose, {Schema} from "mongoose";
 
 const notificationSchema= new Schema({
     message:
@@ -19,7 +19,7 @@ const notificationSchema= new Schema({
     },
     type:
     {
-        type: String, enum: [chat, update],
+        type: String, enum: ['chat', 'update'],
         required: true,
     },
     event:
