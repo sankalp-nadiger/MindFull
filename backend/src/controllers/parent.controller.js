@@ -175,29 +175,63 @@ const logoutParent = asyncHandler(async (req, res) => {
               .json(new ApiResponse(200, {}, "User logged Out"));
 });
 
-const getStudentReport = async (parentId) => {
-    const parentID= req.params;
-    if(!parentID)
-        throw ApiError( 404, "ParentID necessary!");
-    const parent = await Parent.findById({ parentID }).populate('student');
+  const getStudentReport = async (parentId) => {
+    try {
+      // Find the parent and populate associated students
+      const parent = await Parent.findById(parentId).populate({
+        path: "student", // Populate the students field
+        populate: { path: "userId", model: "User" }, // Populate userId in Student
+      });
   
-    if (!parent) {
-      throw ApiError( 404, "Parent not found!");
+      if (!parent) throw new Error("Parent not found");
+  
+      // Extract userIds from the populated student data
+      const userIds = parent.student.map((student) => student.userId._id);
+  
+      // Fetch data for each userId
+      const reports = await Promise.all(
+        userIds.map(async (userId) => {
+          const user = await User.findById(userId);
+          if (!user) throw new Error(`User with ID ${userId} not found`);
+  
+          // Fetch moods for the past month
+          const oneMonthAgo = new Date();
+          oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+  
+          const moods = await Mood.find({
+            user: userId,
+            timestamp: { $gte: oneMonthAgo },
+          });
+  
+          // Fetch journal entries for the past month
+          const journals = await Journal.find({
+            user: userId,
+            createdAt: { $gte: oneMonthAgo },
+          });
+  
+          // Calculate average mood
+          const avgMood =
+            moods.reduce((sum, mood) => sum + mood.value, 0) / (moods.length || 1);
+  
+          // Construct individual report data
+          return {
+            studentName: user.name,
+            avgMood: avgMood.toFixed(2),
+            totalJournals: journals.length,
+            activitiesCompleted: user.activitiesCompleted || 0,
+          };
+        })
+      );
+  
+      return {
+        parentName: parent.name,
+        reports,
+        generatedAt: new Date(),
+      };
+    } catch (error) {
+      console.error("Error generating report:", error);
+      throw new Error("Report generation failed");
     }
-    const studentID = parent.student;
-    const student = await User.findOne({ studentID });
-
-    if (!student) {
-        throw ApiError( 404, "Student not found!");    }
-    const report = {
-      name: student.name,
-      studentId: student.studentId,
-      journalActivities: student.journalActivities,
-      progress: student.progress,
-      // other data need to included
-    };
-  
-    return report;
   };
   
 export {
