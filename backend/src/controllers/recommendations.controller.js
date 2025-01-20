@@ -118,7 +118,7 @@ async function fetchExternalResources(interests) {
       });
 
       // Eventbrite API for events
-      const eventResponse = await axios.get(`https://www.eventbriteapi.com/v3/events/search/?q=${encodeURIComponent(interest)}&token=YOUR_EVENTBRITE_TOKEN`, {
+      const eventResponse = await axios.get(`https://www.eventbriteapi.com/v3/events/search/?q=${encodeURIComponent(interest)}&token=XJP4I6OXDUWYHIC44MTL`, {
         params: { "expand": "venue", "page_size": maxResults }
       });
       (eventResponse.data.events || []).forEach(event => {
