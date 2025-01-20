@@ -21,8 +21,15 @@ import Counsellorphase1 from "./components/pages/Counsellorphase1";
 //import Recomendation from "./components/pages/Recomendation";
 //import StudentSignIn from './components/pages/StudentSignIn';
 import StudentSignUp from './components/pages/StudentSignUp';
-const App = () => {
+import './App.css'
+import HomePage from './components/HomePage/HomePage'
+import ParentDashboard from "./components/ParentPage/ParentPage"
+import { HeroHighlightDemo } from "./components/MainPage/mainPage"
+import Activity from "./components/Activities/activity"
+function App() {
+
   return (
+    <>
     <Router>
       <Routes>
         <Route path="/phase1" element={<OnBoardphase1 />} />
@@ -43,10 +50,19 @@ const App = () => {
           <Route path="/counsellorphase1" element={<Counsellorphase1/>}/>
           {/* <Route path="/student-signin" element={<StudentSignIn/>}/> */}
           <Route path="/student-signup" element={<StudentSignUp/>}/>
-      </Routes>
-    </Router>
-  );
-};
+     
+
+   
+  
+        <Route path="/" element={<HomePage />} />
+        <Route path="/ParentDashboard" element={<ParentDashboard />} />
+        <Route path="/MainPage" element={<HeroHighlightDemo />} />
+        <Route path="/Activities" element={<Activity />} />
+        </Routes>
+      </Router>
+    </>
+  )
+}
 
 export default App;
 
