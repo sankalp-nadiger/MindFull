@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import "./StudentSignIn.css"; // Custom styles
+import "./StudentSignIn.css";
 
-const Home = () => {
+const StudentSignIn = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
@@ -25,8 +25,8 @@ const Home = () => {
     setLoading(true); // Show loading state during login
 
     try {
-      // Simulate API call
-      const response = await axios.post("/api/login", {
+      // API call to backend login endpoint
+      const response = await axios.post("http://localhost:8000/api/users/login", {
         email,
         password,
         mood,
@@ -34,21 +34,30 @@ const Home = () => {
       });
 
       if (response.status === 200) {
-        const { data } = response;
-        console.log("Login successful:", data);
+        const { user, accessToken, streak, maxStreak, suggestedActivity } =
+          response.data.data;
 
-        // Save user data (e.g., token) if needed
-        localStorage.setItem("user", JSON.stringify(data.user));
-        localStorage.setItem("token", data.token);
+        console.log("Login successful:", response.data);
+
+        // Save user data and tokens
+        // localStorage.setItem("user", JSON.stringify(user));
+        // localStorage.setItem("accessToken", accessToken);
+
+        // Display streak and suggested activity
+        alert(
+          `Welcome back, ${user.username}!\nYour streak: ${streak}\nMax streak: ${maxStreak}\nSuggested Activity: ${suggestedActivity}`
+        );
 
         // Redirect to dashboard
-        navigate("/dashboard", )
+        navigate("/");
       } else {
         alert("Login failed. Please try again.");
       }
     } catch (error) {
-      console.error("Login error:", error);
-      alert("An error occurred during login.");
+      console.error("Login error:", error.response?.data?.message || error.message);
+      alert(
+        error.response?.data?.message || "An error occurred during login. Please try again."
+      );
     } finally {
       setLoading(false); // Hide loading state
     }
@@ -100,8 +109,7 @@ const Home = () => {
           </div>
           <div className="form-group">
             <label htmlFor="wellBeing">
-              On a scale of 1-10, how would you rate your mental well-being
-              today?
+              On a scale of 1-10, how would you rate your mental well-being today?
             </label>
             <input
               type="number"
@@ -137,4 +145,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default StudentSignIn;

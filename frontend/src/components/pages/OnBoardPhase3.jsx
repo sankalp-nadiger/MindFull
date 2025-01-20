@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Button, Form, Container } from "react-bootstrap";
-import "./OnboardPhase3.css"; // Include the CSS file for styling
+import { useNavigate } from "react-router-dom";
+import axios from "axios"; // Import axios for API calls
+import "./OnboardPhase3.css";
 
 const OnboardPhase3 = () => {
   const [responses, setResponses] = useState({
@@ -13,6 +15,8 @@ const OnboardPhase3 = () => {
     adhd: 0,
     eating: 0,
   });
+  const [isSubmitting, setIsSubmitting] = useState(false); // Handle submission state
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -22,19 +26,53 @@ const OnboardPhase3 = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Responses to be sent:", responses);
-    // Replace with API call to send responses to the backend
+    
+    // Assuming you have a way to get the current logged-in user's ID
+    const userId = localStorage.getItem("userId"); // Replace this with the actual user ID (from context, auth, or props)
+    
+    if (!userId) {
+      alert("User not authenticated");
+      return;
+    }
+
+    const diagnoised_issues = Object.keys(responses).filter(
+      (key) => responses[key] !== 0 // Only include issues where the user selected a response
+    );
+
+    if (diagnoised_issues.length === 0) {
+      alert("Please select at least one issue.");
+      return;
+    }
+
+    const userData = {
+      userId,
+      diagnoised_issues,
+    };
+
+    try {
+      setIsSubmitting(true);
+      // API call to submit responses
+      const response = await axios.post("/http://localhost:8000/api/users/add-issues", userData);
+      console.log("API Response:", response.data);
+      alert("Your responses have been saved successfully!");
+      // Navigate to the main page after form submission
+      navigate("/");
+    } catch (error) {
+      console.error("Error submitting responses:", error);
+      alert("Failed to submit your responses. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <Container className="mt-4">
-      <h2>Lets know u more!!</h2>
+      <h2>Let's know you more!!</h2>
       <Form onSubmit={handleSubmit}>
         {/* Anxiety Disorders */}
-    
-        <Form.Group>
+        <Form.Group controlId="anxiety" className="mb-3">
           <Form.Label>
             You’re getting ready for a big event, but the thought of it keeps
             you up all night. Do you often feel anxious about things that might
@@ -55,8 +93,7 @@ const OnboardPhase3 = () => {
         </Form.Group>
 
         {/* Depression */}
-        <h5> </h5>
-        <Form.Group>
+        <Form.Group controlId="depression" className="mb-3">
           <Form.Label>
             You’re sitting with friends who are laughing and enjoying
             themselves, but you feel like you can’t join in. Do you often feel
@@ -77,8 +114,7 @@ const OnboardPhase3 = () => {
         </Form.Group>
 
         {/* Bipolar Disorder */}
-        <h5></h5>
-        <Form.Group>
+        <Form.Group controlId="bipolar" className="mb-3">
           <Form.Label>
             One day, you feel like you can take on the world, full of energy and
             ideas, but the next day, it’s hard to even get out of bed. Do you
@@ -99,8 +135,7 @@ const OnboardPhase3 = () => {
         </Form.Group>
 
         {/* Obsessive-Compulsive Disorder */}
-        <h5></h5>
-        <Form.Group>
+        <Form.Group controlId="ocd" className="mb-3">
           <Form.Label>
             You leave your house and suddenly feel the urge to go back and check
             if the door is locked—even though you already did. Do you often feel
@@ -122,8 +157,7 @@ const OnboardPhase3 = () => {
         </Form.Group>
 
         {/* PTSD */}
-        <h5></h5>
-        <Form.Group>
+        <Form.Group controlId="ptsd" className="mb-3">
           <Form.Label>
             A sudden loud noise reminds you of a past event, and your heart
             starts racing. Do you often feel jumpy or on edge because of
@@ -143,8 +177,71 @@ const OnboardPhase3 = () => {
           )}
         </Form.Group>
 
-        <Button type="submit" variant="primary" className="mt-3">
-          Submit
+        {/* Substance Use */}
+        <Form.Group controlId="substance" className="mb-3">
+          <Form.Label>
+            Have you ever found yourself relying on substances to cope with stress or difficult emotions?
+          </Form.Label>
+          {["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"].map(
+            (label, index) => (
+              <Form.Check
+                key={`substance-${index}`}
+                type="radio"
+                label={label}
+                name="substance"
+                value={index}
+                onChange={handleChange}
+              />
+            )
+          )}
+        </Form.Group>
+
+        {/* ADHD */}
+        <Form.Group controlId="adhd" className="mb-3">
+          <Form.Label>
+            Do you find it hard to focus on tasks, or do you frequently lose track of time?
+          </Form.Label>
+          {["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"].map(
+            (label, index) => (
+              <Form.Check
+                key={`adhd-${index}`}
+                type="radio"
+                label={label}
+                name="adhd"
+                value={index}
+                onChange={handleChange}
+              />
+            )
+          )}
+        </Form.Group>
+
+        {/* Eating Disorders */}
+        <Form.Group controlId="eating" className="mb-3">
+          <Form.Label>
+            Do you have concerns about your eating habits or body image that affect your daily life?
+          </Form.Label>
+          {["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"].map(
+            (label, index) => (
+              <Form.Check
+                key={`eating-${index}`}
+                type="radio"
+                label={label}
+                name="eating"
+                value={index}
+                onChange={handleChange}
+              />
+            )
+          )}
+        </Form.Group>
+
+        {/* Submit Button */}
+        <Button
+          type="submit"
+          variant="primary"
+          className="mt-3"
+          disabled={isSubmitting} // Disable button while submitting
+        >
+          {isSubmitting ? "Submitting..." : "Submit"}
         </Button>
       </Form>
     </Container>

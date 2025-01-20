@@ -8,7 +8,7 @@ function HomePage() {
   const navigate = useNavigate();  // Initialize navigate function
 
   const handleGetStartedClick = () => {
-    navigate('/student-signup');  // Navigate to the /signup page
+    navigate('/student-signin');  // Navigate to the /signup page
   };
 
   return (
