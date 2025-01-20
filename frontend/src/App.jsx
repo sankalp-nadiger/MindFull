@@ -21,8 +21,6 @@ import Counsellorphase1 from "./components/pages/Counsellorphase1";
 //import Recomendation from "./components/pages/Recomendation";
 //import StudentSignIn from './components/pages/StudentSignIn';
 import StudentSignUp from './components/pages/StudentSignUp';
-import React from "react"
-import {BrowserRouter as Router,Routes,Route} from "react-router-dom"
 import './App.css'
 import HomePage from './components/HomePage/HomePage'
 import ParentDashboard from "./components/ParentPage/ParentPage"

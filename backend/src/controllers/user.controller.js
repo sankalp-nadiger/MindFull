@@ -11,7 +11,119 @@ import { Issue } from "../models/Issues.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import ApiResponse from "../utils/API_Response.js";
 import jwt from "jsonwebtoken";
-import Tesseract from "Tesseract"
+import Tesseract from "Tesseract";
+
+const additionalActivities = [
+  // Stress Relief
+  {
+    title: "Stretching Routines",
+    type: "Physical Wellness",
+    content: "Simple stretches to release tension and improve flexibility. Example: Take a 5-minute break to stretch your neck and back.",
+  },
+  {
+    title: "Dance Therapy",
+    type: "Physical Wellness",
+    content: "Uplift your mood by dancing to your favorite tunes. Example: Groove to a 10-minute dance workout playlist.",
+  },
+  {
+    title: "Home Workouts",
+    type: "Physical Wellness",
+    content: "Short workout sessions to energize your body and mind.",
+  },
+  {
+    title: "Breathing Exercises",
+    type: "Stress Relief",
+    content: "Practice controlled breathing to reduce stress. Example: Try the 4-7-8 breathing technique for instant relaxation.",
+  },
+  {
+    title: "Gratitude Practice",
+    type: "Stress Relief",
+    content: "Focus on positivity by listing what you're thankful for. Example: Start a gratitude jar and add a note daily.",
+  },
+  {
+    title: "Visualization Techniques",
+    type: "Stress Relief",
+    content: "Imagine calming scenes to alleviate anxiety. Example: Picture yourself on a serene beach for 5 minutes.",
+  },
+
+  // Social Connection
+  {
+    title: "Virtual Support Groups",
+    type: "Social Connection",
+    content: "Connect with others in a safe, moderated environment. Example: Join a community of like-minded individuals.",
+  },
+  {
+    title: "Random Acts of Kindness",
+    type: "Social Connection",
+    content: "Perform small gestures to spread positivity. Example: Send a thoughtful message to a friend today.",
+  },
+  {
+    title: "Story Sharing",
+    type: "Social Connection",
+    content: "Share personal experiences to inspire and connect. Example: Write about a challenge you overcame and share it anonymously.",
+  },
+
+  // Creative Outlets
+  {
+    title: "Art Therapy",
+    type: "Creative Outlets",
+    content: "Draw, paint, or doodle to express emotions. Example: Sketch your emotions for 10 minutes.",
+  },
+  {
+    title: "Music Sessions",
+    type: "Creative Outlets",
+    content: "Listen to calming or uplifting playlists. Example: Discover soothing nature sounds or meditation music.",
+  },
+  {
+    title: "DIY Crafts",
+    type: "Creative Outlets",
+    content: "Engage in hands-on activities like origami or knitting. Example: Make a simple DIY stress ball using balloons and rice.",
+  },
+
+  // Lifestyle & Personal Growth
+  {
+    title: "Time Management Tips",
+    type: "Lifestyle & Personal Growth",
+    content: "Learn to prioritize tasks effectively. Example: Plan your day using the Pomodoro Technique.",
+  },
+  {
+    title: "Healthy Eating Suggestions",
+    type: "Lifestyle & Personal Growth",
+    content: "Discover nutritious recipes and snack ideas. Example: Try a recipe for a refreshing fruit smoothie.",
+  },
+  {
+    title: "Digital Detox Challenges",
+    type: "Lifestyle & Personal Growth",
+    content: "Limit screen time to recharge mentally. Example: Spend an hour device-free before bed tonight.",
+  },
+  {
+    title: "Sleep Hygiene Tips",
+    type: "Lifestyle & Personal Growth",
+    content: "Improve sleep quality with better bedtime routines. Example: Try a calming herbal tea and reduce blue light exposure.",
+  },
+
+  // Mindful Activities
+  {
+    title: "Walking Meditation",
+    type: "Mindful Activities",
+    content: "Combine mindfulness with light exercise. Example: Focus on your steps and breathing during your walk.",
+  },
+  {
+    title: "Nature Appreciation",
+    type: "Mindful Activities",
+    content: "Spend time observing nature to rejuvenate. Example: Take 10 minutes to sit outside and enjoy the fresh air.",
+  },
+  {
+    title: "Mindful Eating",
+    type: "Mindful Activities",
+    content: "Pay attention to your food’s taste, texture, and smell. Example: Savor your next meal by eating slowly and mindfully.",
+  },
+];
+
+const getRandomActivity = () => {
+  const randomIndex = Math.floor(Math.random() * additionalActivities.length);
+  return additionalActivities[randomIndex];
+};
 
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
@@ -213,6 +325,9 @@ const registerUser = asyncHandler(async (req, res) => {
         eventNotifications.push(notificationData); // Track notifications sent
       }
     }
+    
+    const randomActivity = getRandomActivity();
+
     return res
       .status(200)
       .cookie("accessToken", accessToken, options)
@@ -224,6 +339,7 @@ const registerUser = asyncHandler(async (req, res) => {
           refreshToken,
           streak: user.streak,
           maxStreak: user.maxStreak,
+          suggestedActivity: randomActivity,
         }, "User logged in successfully"),
       );
   });
@@ -349,9 +465,32 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 });
 
 const userProgress = asyncHandler(async (req,res) => {
-  const user= await User.findById();
+  const userId = req.user.id;
 
-})
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Calculate the journal entry count
+    const journalCount = await Journal.countDocuments({ user: userId });
+
+    const progress = {
+      name: user.name,
+      email: user.email,
+      journalCount, 
+      // Add other progress details here, e.g., goals, activities
+    };
+
+    res.status(200).json(progress);
+  } catch (error) {
+    console.error("Error fetching user progress:", error);
+    res.status(500).json({ message: "Error fetching user progress" });
+  }
+});
+
 
 const extractMobileNumber = async (imagePath) => {
   try {
