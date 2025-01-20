@@ -74,7 +74,7 @@ async function fetchExternalResources(interests) {
       });
 
       // YouTube Data API for videos
-      const videoResponse = await axios.get(`https://youtube.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(interest)}&maxResults=${maxResults}&type=video&key=YOUR_YOUTUBE_API_KEY`);
+      const videoResponse = await axios.get(`https://youtube.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(interest)}&maxResults=${maxResults}&type=video&key=AIzaSyAKONN4jJvULvjKLIpbkd1U-Bioq2zrDIs`);
       (videoResponse.data.items || []).forEach(video => {
         fetchedResources.push({
           title: video.snippet.title,
