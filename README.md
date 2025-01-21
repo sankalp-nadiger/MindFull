@@ -71,6 +71,7 @@ MindfulStudent is an innovative digital platform that addresses the growing ment
 ### Backend
 - Node.js
 - Express
+- Flask
 - MongoDB (for user and activity data)
 
 ### AI/ML
