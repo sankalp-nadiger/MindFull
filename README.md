@@ -63,6 +63,15 @@ MindfulStudent is an innovative digital platform that addresses the growing ment
 
 ## 🔧 Technology Stack
 
+### AI/ML
+- Scikit learn
+- Numpy
+- Pandas
+- Tensorflow
+- Transformers
+- Hugging Face
+- Langchain_groq
+
 ### Frontend
 - React
 - Tailwind CSS
@@ -73,14 +82,6 @@ MindfulStudent is an innovative digital platform that addresses the growing ment
 - Express
 - Flask
 - MongoDB (for user and activity data)
-
-### AI/ML
-- Scikit learn
-- Numpy
-- Pandas
-- Tensorflow
-- Transformers
-- Hugging Face
 
 ### Real-Time Features
 - Socket.IO (chat)
