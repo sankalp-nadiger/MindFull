@@ -30,8 +30,10 @@ import JournalEntryWithSuggestions from './components/pages/JournalPage';
 import ActivityRecommendations from './components/pages/Activity';
 import Stories from './components/pages/FetchStory';
 import CreateStory from './components/pages/CreateStory';
-import ParentDashboard from './components/pages/ParentDashBoard';
+//import ParentDashboard from './components/pages/ParentDashBoard';
 import WeeklyMoodChart from './components/Parent/Parent';
+import Crossword from './components/pages/Games/Crossword';
+import SudokuGame from './components/pages/Games/Sudoko';
 const App = () => {
   return (
     <>
@@ -64,6 +66,8 @@ const App = () => {
          <Route path="/storyfetch" element={<Stories/>}/>
          <Route path="/createStory" element={<CreateStory/>}/>
          <Route path="/Parentdashboard" element={<WeeklyMoodChart/>}/>
+         <Route path="/crossword" element={<Crossword/>}/>
+         <Route path="/Sudoku" element={<SudokuGame/>}/>
       </Routes>
     </Router>
     </>
