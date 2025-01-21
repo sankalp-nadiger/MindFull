@@ -14,7 +14,7 @@ import counsellorRouter from "./routes/counsellor.routes.js"
 import dm_chatRouter from "./routes/dm_chat.routes.js"
 //import eventRouter from "./routes/event.routes.js"
 import journalRouter from "./routes/journal.routes.js"
-import notificationRouter from "./routes/notification.routes.js"
+//import notificationRouter from "./routes/notification.routes.js"
 import parentRouter from "./routes/parent.routes.js"
 //import sessionRouter from "./routes/session.routes.js"
 import storyRouter from "./routes/story.routes.js"
@@ -51,7 +51,7 @@ app.use("/api/activity",activityRouter)
 app.use("/api/counsellor",counsellorRouter)
 app.use("/api/dm_chat",dm_chatRouter)
 //app.use("/api/event",eventRouter)
-app.use("/api/notifications",notificationRouter)
+//app.use("/api/notifications",notificationRouter)
 app.use("/api/parent",parentRouter)
 //app.use("/api/session",sessionRouter)
 app.use("/api/story",storyRouter)
