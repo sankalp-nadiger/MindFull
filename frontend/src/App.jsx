@@ -31,7 +31,6 @@ import ActivityRecommendations from './components/pages/Activity';
 import Stories from './components/pages/FetchStory';
 import CreateStory from './components/pages/CreateStory';
 //import ParentDashboard from './components/pages/ParentDashBoard';
-import WeeklyMoodChart from './components/Parent/Parent';
 import Crossword from './components/pages/Games/Crossword';
 import SudokuGame from './components/pages/Games/Sudoko';
 //import ParentDashboard from './components/pages/ParentDashBoard';
