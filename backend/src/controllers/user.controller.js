@@ -601,78 +601,46 @@ const moodScores = {
   Angry: 0,
 };
 const getWeeklyMoodData = async (req, res) => {
-  try {
-    // Log the incoming request
-    console.log("Received request for weekly mood data");
-    console.log("User ID:", req.user._id);
+  const  userId = req.user._id;
 
+  try {
     // Get today's date
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0); // Reset time to midnight
 
-    // Calculate start of week (Monday)
+    // Get the start of the week (Monday)
     const startOfWeek = new Date(today);
-    const dayOfWeek = today.getDay() === 0 ? 6 : today.getDay() - 1;
+    const dayOfWeek = today.getDay() === 0 ? 6 : today.getDay() - 1; // Handle Sunday as the last day
     startOfWeek.setDate(today.getDate() - dayOfWeek);
-
-    // Calculate end of week (Sunday)
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 7);
-
-    console.log("Fetching moods between:", startOfWeek, "and", endOfWeek);
-
-    // Query the database
     const weeklyMoods = await Mood.find({
-      user: req.user._id,
-      timestamp: { 
-        $gte: startOfWeek,
-        $lt: endOfWeek
-      }
-    }).sort({ timestamp: 1 });
+      user: userId,
+      timestamp: { $gte: startOfWeek },
+    });
 
-    console.log("Found mood entries:", weeklyMoods.length);
+    // Initialize array to hold daily mood scores
+    const dailyMoodData = Array(7).fill(null); // Default null for days without data
 
-    // Initialize mood data array
-    const dailyMoodData = Array(7).fill(0);
-
-    // Map mood values to scores
-    const moodScores = {
-      VERY_SAD: 1,
-      SAD: 2,
-      NEUTRAL: 3,
-      HAPPY: 4,
-      VERY_HAPPY: 5
-    };
-
-    // Process mood entries
+    // Populate mood scores for the respective days
     weeklyMoods.forEach((entry) => {
-      const entryDate = new Date(entry.timestamp);
-      const dayIndex = Math.floor(
-        (entryDate - startOfWeek) / (24 * 60 * 60 * 1000)
-      );
-      
+      const dayIndex = Math.floor((entry.timestamp - startOfWeek) / (24 * 60 * 60 * 1000)); // Day index
       if (dayIndex >= 0 && dayIndex < 7) {
-        dailyMoodData[dayIndex] = moodScores[entry.mood] || 0;
+        dailyMoodData[dayIndex] = moodScores[entry.mood];
       }
     });
 
-    console.log("Processed mood data:", dailyMoodData);
-
-    // Send response
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
-      data: dailyMoodData
+      data: dailyMoodData, // Send array of daily mood values for the week
     });
-
   } catch (error) {
-    console.error("Error in getWeeklyMoodData:", error);
-    return res.status(500).json({
+    console.error("Error fetching weekly mood data:", error);
+    res.status(500).json({
       success: false,
       message: "Failed to fetch weekly mood data",
-      error: error.message
     });
   }
 };
+
 
 const calculateAverageMood = async (req,res) => {
   const userId=req.user.selected_interestsid;
