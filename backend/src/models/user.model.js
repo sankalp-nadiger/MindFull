@@ -93,6 +93,7 @@ const userSchema = new Schema( {
           type: Number,
           default: 0,
         },    
+        refreshToken: String,
         achievements: String
 }, { timestamps: true})
 

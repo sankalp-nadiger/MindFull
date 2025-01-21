@@ -185,11 +185,11 @@ const registerUser = asyncHandler(async (req, res) => {
       parsedLocation = JSON.parse(location);
       if (!parsedLocation.type || !parsedLocation.coordinates) {
         throw new Error("Invalid location format");
-      }
+       }
     } catch (error) {
-      throw new ApiError(400, "Invalid location JSON format");
-    }
-    //Create the user
+       throw new ApiError(400, "Invalid location JSON format");
+     }
+    // Create the user
     const user = await User.create({
       fullName,
       email,
@@ -211,13 +211,13 @@ const registerUser = asyncHandler(async (req, res) => {
     //await saveUserMood(user._id, mood);
     // Fetch the created user without sensitive fields
     const createdUser = await User.findById(user._id).select(
-      "-password -refreshToken",
+      "-password",
     );
   
     if (!createdUser) {
       throw new ApiError(500, "Something went wrong while registering the user");
     }
-  
+    console.log(createdUser.refreshToken)
     // Send response with created user
     return res
       .status(201)
@@ -601,46 +601,78 @@ const moodScores = {
   Angry: 0,
 };
 const getWeeklyMoodData = async (req, res) => {
-  const  userId = req.userId;
-
   try {
+    // Log the incoming request
+    console.log("Received request for weekly mood data");
+    console.log("User ID:", req.user._id);
+
     // Get today's date
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset time to midnight
+    today.setHours(0, 0, 0, 0);
 
-    // Get the start of the week (Monday)
+    // Calculate start of week (Monday)
     const startOfWeek = new Date(today);
-    const dayOfWeek = today.getDay() === 0 ? 6 : today.getDay() - 1; // Handle Sunday as the last day
+    const dayOfWeek = today.getDay() === 0 ? 6 : today.getDay() - 1;
     startOfWeek.setDate(today.getDate() - dayOfWeek);
+
+    // Calculate end of week (Sunday)
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 7);
+
+    console.log("Fetching moods between:", startOfWeek, "and", endOfWeek);
+
+    // Query the database
     const weeklyMoods = await Mood.find({
-      user: userId,
-      timestamp: { $gte: startOfWeek },
-    });
+      user: req.user._id,
+      timestamp: { 
+        $gte: startOfWeek,
+        $lt: endOfWeek
+      }
+    }).sort({ timestamp: 1 });
 
-    // Initialize array to hold daily mood scores
-    const dailyMoodData = Array(7).fill(null); // Default null for days without data
+    console.log("Found mood entries:", weeklyMoods.length);
 
-    // Populate mood scores for the respective days
+    // Initialize mood data array
+    const dailyMoodData = Array(7).fill(0);
+
+    // Map mood values to scores
+    const moodScores = {
+      VERY_SAD: 1,
+      SAD: 2,
+      NEUTRAL: 3,
+      HAPPY: 4,
+      VERY_HAPPY: 5
+    };
+
+    // Process mood entries
     weeklyMoods.forEach((entry) => {
-      const dayIndex = Math.floor((entry.timestamp - startOfWeek) / (24 * 60 * 60 * 1000)); // Day index
+      const entryDate = new Date(entry.timestamp);
+      const dayIndex = Math.floor(
+        (entryDate - startOfWeek) / (24 * 60 * 60 * 1000)
+      );
+      
       if (dayIndex >= 0 && dayIndex < 7) {
-        dailyMoodData[dayIndex] = moodScores[entry.mood];
+        dailyMoodData[dayIndex] = moodScores[entry.mood] || 0;
       }
     });
 
-    res.status(200).json({
+    console.log("Processed mood data:", dailyMoodData);
+
+    // Send response
+    return res.status(200).json({
       success: true,
-      data: dailyMoodData, // Send array of daily mood values for the week
+      data: dailyMoodData
     });
+
   } catch (error) {
-    console.error("Error fetching weekly mood data:", error);
-    res.status(500).json({
+    console.error("Error in getWeeklyMoodData:", error);
+    return res.status(500).json({
       success: false,
       message: "Failed to fetch weekly mood data",
+      error: error.message
     });
   }
 };
-
 
 const calculateAverageMood = async (req,res) => {
   const userId=req.user.selected_interestsid;

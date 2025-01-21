@@ -25,8 +25,13 @@ import StudentSignUp from './components/pages/StudentSignUp';
 import JournalPage from './components/pages/JournalPage';
 import HomePage from './components/HomePage/HomePage';
 import MainPage from './components/MainPage/mainPage';
+<<<<<<< HEAD
 import ResultPage from './components/pages/ResultPage';
 import JournalEntryWithSuggestions from './components/pages/JournalPage';
+=======
+import ResultPage from './components/pages/ResultPage';import WeeklyMoodChart from './components/Parent/Parent'
+
+>>>>>>> 8b2c54f7d3682357834ed70fe38cfdf2009626e4
 const App = () => {
   return (
     <>
@@ -54,7 +59,12 @@ const App = () => {
           <Route path="/journal" element={<JournalPage/>}/>
           <Route path="/main" element={<MainPage/>}/>
           <Route path="/result" element={<ResultPage/>}/>
+<<<<<<< HEAD
          <Route path="/journal" element={<JournalEntryWithSuggestions/>}/>
+=======
+          <Route path="/Parentdashboard" element={<WeeklyMoodChart/>}/>
+
+>>>>>>> 8b2c54f7d3682357834ed70fe38cfdf2009626e4
       </Routes>
     </Router>
     </>
