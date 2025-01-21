@@ -26,6 +26,7 @@ import JournalPage from './components/pages/JournalPage';
 import HomePage from './components/HomePage/HomePage';
 import MainPage from './components/MainPage/mainPage';
 import ResultPage from './components/pages/ResultPage';
+import JournalEntryWithSuggestions from './components/pages/JournalPage';
 const App = () => {
   return (
     <>
@@ -53,7 +54,7 @@ const App = () => {
           <Route path="/journal" element={<JournalPage/>}/>
           <Route path="/main" element={<MainPage/>}/>
           <Route path="/result" element={<ResultPage/>}/>
-         
+         <Route path="/journal" element={<JournalEntryWithSuggestions/>}/>
       </Routes>
     </Router>
     </>
