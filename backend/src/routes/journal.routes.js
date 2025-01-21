@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.post("/create", createJournalEntry);
 
-router.get("/assist", aiAssistedJournal);
+router.post("/assist", aiAssistedJournal);
 router.post("/suggest", suggestJournalTopics);
 
 export default router;

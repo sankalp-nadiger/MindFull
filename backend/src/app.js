@@ -18,6 +18,7 @@ import notificationRouter from "./routes/notification.routes.js"
 import parentRouter from "./routes/parent.routes.js"
 //import sessionRouter from "./routes/session.routes.js"
 import storyRouter from "./routes/story.routes.js"
+//import moodRouter from "./routes/mood.routes.js"
 
 //service imports
 import {setupSignalServer} from './services/signalserver.js'
@@ -54,5 +55,6 @@ app.use("/api/notifications",notificationRouter)
 app.use("/api/parent",parentRouter)
 //app.use("/api/session",sessionRouter)
 app.use("/api/story",storyRouter)
+// app.use("/api/mood",moodRouter)
 
 export default app;
