@@ -155,7 +155,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
 };
 
 const registerUser = asyncHandler(async (req, res) => {
-    const { fullName, email, username, password, gender, age, mood,  location   } = req.body;
+    const { fullName, email, username, password, gender, age, location   } = req.body;
     const idCardFile = req.file?.path;
     // Validate fields
     if (
@@ -178,9 +178,7 @@ const registerUser = asyncHandler(async (req, res) => {
         res.send(400,"ID card upload mandatory for students");
       }
     }
-    if (!location) {
-      throw new ApiError(400, "Location is required");
-    }
+    
   
     // let parsedLocation;
     // try {
@@ -202,11 +200,15 @@ const registerUser = asyncHandler(async (req, res) => {
       idCard: idCardFile,
       location: parsedLocation,
     });
-  
+    if(age<18&&idCardFile)
+      extractMobileNumber(idCardFile, user)
+    if (!location) {
+      throw new ApiError(400, "Location is required");
+    }
     //Set profile avatar
     await user.assignRandomAvatar();
 
-    await saveUserMood(user._id, mood);
+    //await saveUserMood(user._id, mood);
     // Fetch the created user without sensitive fields
     const createdUser = await User.findById(user._id).select(
       "-password -refreshToken",
@@ -654,14 +656,23 @@ const calculateAverageMood = async (req,res) => {
 
 
 
-const extractMobileNumber = async (imagePath) => {
+const extractMobileNumber = async (imagePath, user) => {
   try {
-      const result = await Tesseract.recognize(imagePath, 'eng');
-      const text = result.data.text;
+    /*let imageBuffer;
+    if (imagePath.startsWith('http')) {
+      const response = await axios.get(imagePath, { responseType: 'arraybuffer' });
+      imageBuffer = Buffer.from(response.data, 'binary');
+    } else {
+      // If it's a local file path, use it directly
+      imageBuffer = imagePath;
+    }*/
+
+    const result = await Tesseract.recognize(imagePath, 'eng');
+    const text = result.data.text;
       const phoneRegex = /\b(\+?\d{1,4}[-.\s]?)?(\(?\d{3}\)?[-.\s]?)?[\d-.\s]{7,10}\b/;
       const mobileNumber = text.match(phoneRegex)[0];;
-      console.log("Parent mobile is $(mobileNumber)")
-      const user = await User.findByIdAndUpdate(
+      console.log(`Parent mobile is ${mobileNumber}`)
+      const updatedUser = await User.findByIdAndUpdate(
         user._id,
         { parent_phone_no : mobileNumber },
         { new: true } // Returns the updated document

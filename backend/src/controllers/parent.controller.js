@@ -9,33 +9,38 @@ import { Mood } from "../models/mood.model.js";
 import ApiResponse from "../utils/API_Response.js";
 import { generateAccessAndRefreshTokens, refreshAccessToken } from "./user.controller.js";
 import jwt from "jsonwebtoken";
+import dotenv from 'dotenv';
+import axios from "axios";
+import twilio from "twilio"
 //import { JsonWebTokenError } from "jsonwebtoken";
-
+dotenv.config();
 // OTP generation function
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
-// Function to send OTP via Twilio (or other services)
-const sendOTP = async (mobileNumber) => {
-    const otp = generateOTP();
-    // Save OTP to database (with expiry)
+const sendOTP = async (req, res) => {
+    const mobileNumber= req.body.mobileNumber;
+    const otp=generateOTP();
     await OTP.create({ mobileNumber, otp, createdAt: new Date() });
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_API_KEY_SECRET;
+const Twilio_Number = process.env.TWILIO_NUMBER;
+const client = twilio(accountSid, authToken);
+try {
+    const message = await client.messages.create({
+        body: `Your OTP is: ${otp}`, // Use template literals to include OTP
+        to: `+91${mobileNumber}`, 
+        from: Twilio_Number });
 
-    // Sending OTP using Twilio
-    const accountSid = 'your-twilio-account-sid';
-    const authToken = 'your-twilio-auth-token';
-    const client = require('twilio')(accountSid, authToken);
-
-    await client.messages.create({
-        body: `Your OTP is ${otp}`,
-        from: '+15673717900', // Twilio number
-        to: mobileNumber,
-    });
+    res.json({ success: true, messageSid: message.sid });
+} catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+}
 };
-
 // OTP verification function
 const verifyOTP = async (mobileNumber, enteredOTP) => {
-    const record = await OTP.findOne({ mobileNumber }).sort({ createdAt: -1 });
-
+    console.log('Searching for OTP with mobile number:', mobileNumber);
+    const record = await OTP.findOne({ mobileNumber }).setOptions({ bypassHooks: true }).sort({ createdAt: -1 });
+    console.log(record);
     if (!record || record.otp !== enteredOTP) {
         return { success: false, message: 'Invalid OTP' };
     }
@@ -49,22 +54,19 @@ const verifyOTP = async (mobileNumber, enteredOTP) => {
 };
 
 // Parent Registration with OTP authentication
-const registerParent = asyncHandler(async (req, res) => {
-    const { fullName, email, password, mobileNumber, otp } = req.body;
-
-    // Validate fields
-    if ([fullName, email, password, mobileNumber, otp].some((field) => field?.trim() === "")) {
-        throw new ApiError(400, "All fields are required");
-    }
-    // Check if the mobile number exists in any user's document
-    const user = await User.findOne({ parent_phone_no: mobileNumber });
-
-    if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: "Mobile number is not related to any user.",
-      });
-    }
+    const registerParent = asyncHandler(async (req, res) => {
+        const { fullName, email, password, mobileNumber, otp } = req.body;
+    
+        // Validate fields
+        if ([fullName, email, password, mobileNumber, otp].some((field) => field?.trim() === "")) {
+            throw new ApiError(400, "All fields are required");
+        }
+    
+        // Check if the mobile number exists in any user's document
+        const user = await User.findOne({ parent_phone_no: mobileNumber });
+        if (!user) {
+            throw new ApiError(400, "Mobile number is not related to any user.");
+        }
 
     // Verify OTP
     const otpVerification = await verifyOTP(mobileNumber, otp);
@@ -89,21 +91,14 @@ const registerParent = asyncHandler(async (req, res) => {
         fullName,
         email,
         password,
-        studentID:user._id,
-        interests: [],
+        studentID: user._id,
     });
 
-    // Send response with created user
-    // const createdUser = await Parent.findById(parent._id).select("-password -refreshToken");
-    // return res.status(201).json(new ApiResponse(200, { createdUser }, "Parent registered successfully"));
     user.parent = parent._id; // Assuming the `User` schema has a `parent` field
     await user.save();
-
-    // Populate the `parent` field in the user document
-    const updatedUser = await User.findById(user._id).populate('parent').select('-password -refreshToken');
-
-    // Send response with the updated user document
-    return res.status(201).json(new ApiResponse(200, { updatedUser }, "Parent registered successfully"));
+    // Send response with created parent
+    const createdParent = await Parent.findById(parent._id).select("-password -refreshToken");
+    return res.status(201).json(new ApiResponse(200, { createdParent }, "Parent registered successfully"));
 });
 
 // Login with OTP authentication

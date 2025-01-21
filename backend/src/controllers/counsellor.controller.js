@@ -1,9 +1,11 @@
 import asyncHandler from "../utils/asynchandler.utils.js";
 import {ApiError} from "../utils/API_Error.js";
+import ApiResponse from "../utils/API_Response.js";
 import { Counsellor } from "../models/counsellor.model.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Session } from "../models/session.model.js";
+import { verifyOTP } from "./parent.controller.js";
 import twilio from "twilio";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -132,7 +134,12 @@ export const registerCounsellor = asyncHandler(async (req, res) => {
         yearExp, 
         availability = [],
     } = req.body;
-
+    let certifications =[];
+    if (req.files && req.files.length > 0) {
+        certifications = req.files.map(file => ({
+            url: file.path, // Or use a cloud storage URL if uploading to cloud
+            fileName: file.filename,
+        }));}
 
     // Validate fields
     if ([fullName, email, password, mobileNumber, otp, yearExp].some((field) => field?.trim() === "")) {
@@ -151,7 +158,7 @@ export const registerCounsellor = asyncHandler(async (req, res) => {
   
       certificateImgUrl = certificateImg.url;
     }
-
+    console.log(req.body);
     // Verify OTP
     const otpVerification = await verifyOTP(mobileNumber, otp);
     if (!otpVerification.success) {

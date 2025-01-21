@@ -1,4 +1,6 @@
 import mongoose, {Schema} from "mongoose";
+import bcrypt from 'bcryptjs';
+import jwt from "jsonwebtoken";
 
 const counsellorSchema= new Schema({
     specification:
@@ -6,6 +8,11 @@ const counsellorSchema= new Schema({
         type: String,
         required: true
     }],
+    mobileNumber:
+    {
+      type: Number,
+      required: true
+    },
     yearexp:
     {
         type: Number,

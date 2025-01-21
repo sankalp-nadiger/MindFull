@@ -5,7 +5,7 @@ import {Issue} from '../models/Issues.model.js';
 // Fetch recommendations dynamically
 export const fetchRecommendations = async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = req.user._id;
 
     if (!userId) {
       return res.status(400).json({ message: 'Missing required fields.' });

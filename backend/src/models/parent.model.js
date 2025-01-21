@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 const Schema = mongoose.Schema;
+import bcrypt from 'bcryptjs';
+import jwt from "jsonwebtoken";
 
 // Parent Schema
 const parentSchema = new Schema({

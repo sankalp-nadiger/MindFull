@@ -8,6 +8,8 @@ import {
   loginCounsellor,
   logoutCounsellor
 } from "../controllers/counsellor.controller.js";
+import { sendOTP } from "../controllers/parent.controller.js";
+import { upload } from "../middleware/multer.middleware.js"
 
 const router = express.Router();
 
@@ -21,8 +23,8 @@ router.post("/token/counsellor", counsellor_verifyJWT, getTwilioToken);
 // End a session (Counselor Side)
 router.post("/end", counsellor_verifyJWT, endSession);
 
-router.post("/register-counsellor", registerCounsellor);
-
+router.post("/register-counsellor", upload.array('certifications', 5), registerCounsellor);
+router.post("/send-otp", sendOTP);
 router.post("/login-counsellor", counsellor_verifyJWT, loginCounsellor);
 
 router.post("/logout-counsellor", counsellor_verifyJWT, logoutCounsellor);
