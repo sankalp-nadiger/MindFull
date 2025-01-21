@@ -34,6 +34,8 @@ import CreateStory from './components/pages/CreateStory';
 import WeeklyMoodChart from './components/Parent/Parent';
 import Crossword from './components/pages/Games/Crossword';
 import SudokuGame from './components/pages/Games/Sudoko';
+//import ParentDashboard from './components/pages/ParentDashBoard';
+import ParentDashboard from './components/Parent/Parent';
 const App = () => {
   return (
     <>
@@ -68,6 +70,7 @@ const App = () => {
          <Route path="/Parentdashboard" element={<WeeklyMoodChart/>}/>
          <Route path="/crossword" element={<Crossword/>}/>
          <Route path="/Sudoku" element={<SudokuGame/>}/>
+         <Route path="/Parentdashboard" element={<ParentDashboard/>}/>
       </Routes>
     </Router>
     </>
