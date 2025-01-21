@@ -30,6 +30,7 @@ import JournalEntryWithSuggestions from './components/pages/JournalPage';
 import ActivityRecommendations from './components/pages/Activity';
 import Stories from './components/pages/FetchStory';
 import CreateStory from './components/pages/CreateStory';
+import WeeklyMoodChart from './components/Parent/Parent';
 const App = () => {
   return (
     <>
@@ -61,6 +62,7 @@ const App = () => {
          <Route path="/activity" element={<ActivityRecommendations/>}/>
          <Route path="/storyfetch" element={<Stories/>}/>
          <Route path="/createStory" element={<CreateStory/>}/>
+         <Route path="/Parentdashboard" element={<WeeklyMoodChart/>}/>
       </Routes>
     </Router>
     </>
