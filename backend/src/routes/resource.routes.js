@@ -5,6 +5,6 @@ import { user_verifyJWT } from '../middleware/auth.middleware.js';
 const router = express.Router();
 
 // POST route to create a resource based on interests
-router.post('/create-resource', user_verifyJWT, fetchRecommendations);
+router.post('/create-resource', fetchRecommendations);
 
 export default router;

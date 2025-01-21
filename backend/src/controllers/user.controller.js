@@ -180,16 +180,16 @@ const registerUser = asyncHandler(async (req, res) => {
     }
     
   
-    // let parsedLocation;
-    // try {
-    //   parsedLocation = JSON.parse(location);
-    //   if (!parsedLocation.type || !parsedLocation.coordinates) {
-    //     throw new Error("Invalid location format");
-    //   }
-    // } catch (error) {
-    //   throw new ApiError(400, "Invalid location JSON format");
-    // }
-    // Create the user
+    let parsedLocation;
+    try {
+      parsedLocation = JSON.parse(location);
+      if (!parsedLocation.type || !parsedLocation.coordinates) {
+        throw new Error("Invalid location format");
+      }
+    } catch (error) {
+      throw new ApiError(400, "Invalid location JSON format");
+    }
+    //Create the user
     const user = await User.create({
       fullName,
       email,
@@ -258,6 +258,11 @@ const registerUser = asyncHandler(async (req, res) => {
   export const addIssues = asyncHandler(async (req, res) => {
     const { userId, diagnoised_issues } = req.body;
   
+    // Check if diagnosed_issues is an array and not empty
+    if (!Array.isArray(diagnoised_issues) || diagnoised_issues.length === 0) {
+      return res.status(400).json({ message: "Diagnosed issues must be an array with at least one issue." });
+    }
+  
     // Check if user exists
     const user = await User.findById(userId);
     if (!user) {
@@ -281,10 +286,12 @@ const registerUser = asyncHandler(async (req, res) => {
   
     // Loop through the selected issues and check if they exist in the database
     for (const issueName of diagnoised_issues) {
-      if (!validIssues.includes(issueName)) {
+      // Ensure issueName is a string and check if it's a valid issue
+      if (typeof issueName !== 'string' || !validIssues.includes(issueName)) {
         return res.status(400).json({ message: `${issueName} is not a valid issue` });
       }
   
+      // Check if the issue exists in the database
       let issue = await Issue.findOne({ name: issueName });
   
       if (!issue) {
@@ -292,6 +299,7 @@ const registerUser = asyncHandler(async (req, res) => {
         issue = await Issue.create({ name: issueName });
       }
   
+      // Push the issue ID to the user_issues array
       user_issues.push(issue._id);
     }
   
@@ -304,7 +312,7 @@ const registerUser = asyncHandler(async (req, res) => {
       message: "User issues added successfully",
     });
   });
-
+  
   const loginUser = asyncHandler(async (req, res) => {
     const { username, password, email, mood } = req.body;
     console.log("Request body:", req.body);
