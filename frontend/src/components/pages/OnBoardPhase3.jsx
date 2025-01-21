@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { Button, Form, Container } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
-import axios from "axios"; // Import axios for API calls
-import "./OnboardPhase3.css";
+import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
+import "./OnboardPhase3.css"; // Include the CSS file for styling
 
 const OnboardPhase3 = () => {
   const [responses, setResponses] = useState({
@@ -15,8 +14,8 @@ const OnboardPhase3 = () => {
     adhd: 0,
     eating: 0,
   });
-  const [isSubmitting, setIsSubmitting] = useState(false); // Handle submission state
-  const navigate = useNavigate();
+
+  const navigate = useNavigate(); // Initialize useNavigate hook
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -26,67 +25,21 @@ const OnboardPhase3 = () => {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    
-    // Assuming you have a way to get the current logged-in user's ID
-    const userId = "678eb93145dd095192be902d"
- // Replace this with the actual user ID (from context, auth, or props)
-    
-    if (!userId) {
-      alert("User not authenticated");
-      return;
-    }
-
-    // Mapping the responses to the issue names (you need to ensure these are the same as in your backend)
-    const issueMapping = {
-      anxiety: "Anxiety",
-      depression: "Depression",
-      bipolar: "Bipolar Disorder",
-      ocd: "Obsessive-Compulsive Disorder",
-      ptsd: "PTSD",
-      substance: "Substance Use",
-      adhd: "ADHD",
-      eating: "Eating Disorders",
-    };
-
-    // Only include issues where the user selected a response (non-zero value)
-    const diagnoised_issues = Object.keys(responses).filter(
-      (key) => responses[key] !== 0 // Only include issues where the user selected a response
-    ).map((key) => issueMapping[key]); // Map the issue names to the actual names
-
-    if (diagnoised_issues.length === 0) {
-      alert("Please select at least one issue.");
-      return;
-    }
-
-    const userData = {
-      userId,
-      diagnoised_issues, // Send only the issue names here
-    };
-
-    try {
-      setIsSubmitting(true);
-      // API call to submit responses
-      const response = await axios.post("http://localhost:8000/api/users/add-issues", userData);
-      console.log("API Response:", response.data);
-      alert("Your responses have been saved successfully!");
-      // Navigate to the main page after form submission
-      navigate("/");
-    } catch (error) {
-      console.error("Error submitting responses:", error);
-      alert("Failed to submit your responses. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    console.log("Responses to be sent:", responses);
+    // Assuming the API call is successful, navigate to the main page
+    // Replace with your API call
+    // If your API call is successful, navigate to the main page:
+    navigate("/main"); // Change "/main" to the actual route of your main page
   };
 
   return (
     <Container className="mt-4">
-      <h2>Let's know you more!!</h2>
+      <h2>Lets know u more!!</h2>
       <Form onSubmit={handleSubmit}>
         {/* Anxiety Disorders */}
-        <Form.Group controlId="anxiety" className="mb-3">
+        <Form.Group>
           <Form.Label>
             You’re getting ready for a big event, but the thought of it keeps
             you up all night. Do you often feel anxious about things that might
@@ -107,7 +60,8 @@ const OnboardPhase3 = () => {
         </Form.Group>
 
         {/* Depression */}
-        <Form.Group controlId="depression" className="mb-3">
+        <h5> </h5>
+        <Form.Group>
           <Form.Label>
             You’re sitting with friends who are laughing and enjoying
             themselves, but you feel like you can’t join in. Do you often feel
@@ -128,7 +82,8 @@ const OnboardPhase3 = () => {
         </Form.Group>
 
         {/* Bipolar Disorder */}
-        <Form.Group controlId="bipolar" className="mb-3">
+        <h5></h5>
+        <Form.Group>
           <Form.Label>
             One day, you feel like you can take on the world, full of energy and
             ideas, but the next day, it’s hard to even get out of bed. Do you
@@ -148,16 +103,53 @@ const OnboardPhase3 = () => {
           )}
         </Form.Group>
 
-        {/* Add remaining fields similarly... */}
+        {/* Obsessive-Compulsive Disorder */}
+        <h5></h5>
+        <Form.Group>
+          <Form.Label>
+            You leave your house and suddenly feel the urge to go back and check
+            if the door is locked—even though you already did. Do you often feel
+            the need to repeat actions or check things multiple times to feel
+            secure?
+          </Form.Label>
+          {["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"].map(
+            (label, index) => (
+              <Form.Check
+                key={`ocd-${index}`}
+                type="radio"
+                label={label}
+                name="ocd"
+                value={index}
+                onChange={handleChange}
+              />
+            )
+          )}
+        </Form.Group>
 
-        {/* Submit Button */}
-        <Button
-          type="submit"
-          variant="primary"
-          className="mt-3"
-          disabled={isSubmitting} // Disable button while submitting
-        >
-          {isSubmitting ? "Submitting..." : "Submit"}
+        {/* PTSD */}
+        <h5></h5>
+        <Form.Group>
+          <Form.Label>
+            A sudden loud noise reminds you of a past event, and your heart
+            starts racing. Do you often feel jumpy or on edge because of
+            something that happened in the past?
+          </Form.Label>
+          {["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"].map(
+            (label, index) => (
+              <Form.Check
+                key={`ptsd-${index}`}
+                type="radio"
+                label={label}
+                name="ptsd"
+                value={index}
+                onChange={handleChange}
+              />
+            )
+          )}
+        </Form.Group>
+
+        <Button type="submit" variant="primary" className="mt-3">
+          Submit
         </Button>
       </Form>
     </Container>

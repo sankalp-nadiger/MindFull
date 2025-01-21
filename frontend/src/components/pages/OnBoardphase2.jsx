@@ -49,6 +49,8 @@ const OnBoardingPhase = () => {
       selected_interests: selectedTopics,
       isGoal: goal ? true : false, // Set isGoal based on whether any goal is provided
        // Send the single goal value
+       issues: [] // We'll send this in Phase 3
+
     };
 
     try {

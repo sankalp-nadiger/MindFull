@@ -24,7 +24,8 @@ import Dashboard from './components/pages/DashBoard';
 import StudentSignUp from './components/pages/StudentSignUp';
 import JournalPage from './components/pages/JournalPage';
 import HomePage from './components/HomePage/HomePage';
-
+import MainPage from './components/MainPage/mainPage';
+import ResultPage from './components/pages/ResultPage';
 const App = () => {
   return (
     <>
@@ -50,6 +51,8 @@ const App = () => {
           <Route path="/student-signup" element={<StudentSignUp/>}/>
           <Route path="/dashboard" element={<Dashboard/>}/>
           <Route path="/journal" element={<JournalPage/>}/>
+          <Route path="/main" element={<MainPage/>}/>
+          <Route path="/result" element={<ResultPage/>}/>
          
       </Routes>
     </Router>
