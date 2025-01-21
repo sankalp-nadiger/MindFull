@@ -46,11 +46,12 @@ const JournalApp = () => {
       
       // Changed from GET to POST since we're sending data
       const response = await fetch('http://localhost:8000/api/journals/assist', {
-        method: 'GET',
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           
         },
+        body: JSON.stringify({ topic }), // Send topic in the request body
         
       });
 

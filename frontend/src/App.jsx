@@ -30,6 +30,7 @@ import JournalEntryWithSuggestions from './components/pages/JournalPage';
 import ActivityRecommendations from './components/pages/Activity';
 import Stories from './components/pages/FetchStory';
 import CreateStory from './components/pages/CreateStory';
+import ParentDashboard from './components/pages/ParentDashBoard';
 import WeeklyMoodChart from './components/Parent/Parent';
 const App = () => {
   return (
