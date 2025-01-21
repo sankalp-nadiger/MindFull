@@ -28,6 +28,8 @@ import MainPage from './components/MainPage/mainPage';
 import ResultPage from './components/pages/ResultPage';
 import JournalEntryWithSuggestions from './components/pages/JournalPage';
 import ActivityRecommendations from './components/pages/Activity';
+import Stories from './components/pages/FetchStory';
+import CreateStory from './components/pages/CreateStory';
 const App = () => {
   return (
     <>
@@ -57,6 +59,8 @@ const App = () => {
           <Route path="/result" element={<ResultPage/>}/>
          <Route path="/journals" element={<JournalEntryWithSuggestions/>}/>
          <Route path="/activity" element={<ActivityRecommendations/>}/>
+         <Route path="/storyfetch" element={<Stories/>}/>
+         <Route path="/createStory" element={<CreateStory/>}/>
       </Routes>
     </Router>
     </>
