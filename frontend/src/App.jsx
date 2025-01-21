@@ -25,13 +25,9 @@ import StudentSignUp from './components/pages/StudentSignUp';
 import JournalPage from './components/pages/JournalPage';
 import HomePage from './components/HomePage/HomePage';
 import MainPage from './components/MainPage/mainPage';
-<<<<<<< HEAD
 import ResultPage from './components/pages/ResultPage';
 import JournalEntryWithSuggestions from './components/pages/JournalPage';
-=======
-import ResultPage from './components/pages/ResultPage';import WeeklyMoodChart from './components/Parent/Parent'
-
->>>>>>> 8b2c54f7d3682357834ed70fe38cfdf2009626e4
+import ActivityRecommendations from './components/pages/Activity';
 const App = () => {
   return (
     <>
@@ -56,15 +52,11 @@ const App = () => {
           { <Route path="/student-signin" element={<StudentSignIn/>}/> }
           <Route path="/student-signup" element={<StudentSignUp/>}/>
           <Route path="/dashboard" element={<Dashboard/>}/>
-          <Route path="/journal" element={<JournalPage/>}/>
+          {/* <Route path="/journal" element={<JournalPage/>}/> */}
           <Route path="/main" element={<MainPage/>}/>
           <Route path="/result" element={<ResultPage/>}/>
-<<<<<<< HEAD
-         <Route path="/journal" element={<JournalEntryWithSuggestions/>}/>
-=======
-          <Route path="/Parentdashboard" element={<WeeklyMoodChart/>}/>
-
->>>>>>> 8b2c54f7d3682357834ed70fe38cfdf2009626e4
+         <Route path="/journals" element={<JournalEntryWithSuggestions/>}/>
+         <Route path="/activity" element={<ActivityRecommendations/>}/>
       </Routes>
     </Router>
     </>
