@@ -14,6 +14,13 @@ MindfulStudent is an innovative digital platform that addresses the growing ment
 
 ### Core Platform Features
 
+- **MindFull Bot**
+  - Personalized mental health assistant
+  - AI-driven conversational support
+  - Guided mindfulness and relaxation exercises
+  - Quick resources based on user queries
+  - 24/7 availability for immediate help
+
 - **Personalized Content Delivery**
   - Age-appropriate mental health resources
   - Customized educational materials
