@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="MindFull.png" alt="Platform Logo" />
+  <img src="MindFull.png" alt="Platform Logo" width="150" height="150" />
 </p>
 
 # 🧠MindFull
