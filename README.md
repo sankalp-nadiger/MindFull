@@ -65,8 +65,8 @@ MindfulStudent is an innovative digital platform that addresses the growing ment
 
 ### Frontend
 - React
-- WebRTC (for real-time video counseling)
-- Firebase (for push notifications)
+- Tailwind CSS
+- Gradio 
 
 ### Backend
 - Node.js
@@ -74,11 +74,16 @@ MindfulStudent is an innovative digital platform that addresses the growing ment
 - MongoDB (for user and activity data)
 
 ### AI/ML
-- Transformers (for sentiment analysis, mood prediction, and personalized suggestions)
+- Scikit learn
+- Numpy
+- Pandas
+- Tensorflow
+- Transformers
+- Hugging Face
 
 ### Real-Time Features
 - Socket.IO (chat)
-- WebRTC (video sessions)
+- Jitsi Meet
 
 ## 🔄 Workflow
 
