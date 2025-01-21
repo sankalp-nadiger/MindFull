@@ -96,13 +96,14 @@ MindfulStudent is an innovative digital platform that addresses the growing ment
    - Goals setting
 
 2. **Core Features**
+   - MindFull AI ChatBot
    - Daily activity tracking
    - Mood selection
    - Personalized content delivery
    - Private journaling
    - Community engagement
 
-3. **Support Systems**
+4. **Support Systems**
    - Progress tracking
    - Badge updates
    - Streak maintenance
