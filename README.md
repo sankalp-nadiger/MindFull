@@ -1,8 +1,8 @@
+<div align="center">  <img src="https://readme-typing-svg.herokuapp.com?color=45ffaa&size=35&width=900&height=80&lines=🧠MindFull+Student+Mental+Wellness+Platform!"/></div>
 <p align="center">
   <img src="MindFull.png" alt="Platform Logo" width="150" height="150" />
 </p>
 
-# 🧠MindFull
 
 A comprehensive mental health support platform designed to help students, parents, and educators foster better mental well-being through personalized content, peer support, and professional guidance.
 
