@@ -7,18 +7,21 @@ import {
   getSessions,
   getJournals,
   getIssues,
-  getStudentReport
+  getStudentReport,
+  checkMoodAndNotifyParent
 } from "../controllers/parent.controller.js";
 
 const router = express.Router();
 
 router.post("/register-parent", registerParent);
-router.get("/parent/:parentId/report", getStudentReport);
+router.get("/parent/report", parent_verifyJWT, getStudentReport);
 router.post("/login", parent_verifyJWT,loginParent);
 
 router.post("/logout", parent_verifyJWT, logoutParent);
-router.get("/parent/:parentId/sessions", getSessions);
-router.get("/parent/:parentId/journals", getJournals);
-router.get("/parent/:parentId/issues", getIssues);
+router.get("/parent/sessions", parent_verifyJWT, getSessions);
+router.get("/parent/journals", parent_verifyJWT, getJournals);
+router.get("/parent/issues", parent_verifyJWT, getIssues);
+router.get("/parent/mood-check", parent_verifyJWT, checkMoodAndNotifyParent);
+
 
 export default router;

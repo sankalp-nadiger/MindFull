@@ -259,10 +259,10 @@ const logoutParent = asyncHandler(async (req, res) => {
             .populate("counselor", "name expertise")  // Populating counselor details
             .exec();
 
-        return {
-            success: true,
-            sessions: sessions,
-        };
+            res.status(200).json({
+                success: true,
+                sessions: sessions,
+            });
     } catch (error) {
         console.error("Error fetching sessions:", error);
         return {
@@ -285,7 +285,7 @@ const checkMoodAndNotifyParent = async (req,res) => {
   
       if (isMoodLowForEntireWeek) {
         // If mood is low for the entire week, trigger a notification for the parent
-        const user = await User.findById(userId).populate('parent'); // Assuming 'parent' is a reference in the User model
+        const user = await User.findById(student._id).populate('parent'); // Assuming 'parent' is a reference in the User model
   
         if (user && user.parent) {
           const parent = user.parent;
@@ -318,10 +318,10 @@ const getJournals=(async(req,res)=> {
         // Retrieve all journals for this student
         const journals = student.journals;
 
-        return {
+        res.status(200).json({
             success: true,
             journals: journals,
-        };
+        });
     } catch (error) {
         console.error("Error fetching journal entries:", error);
         return {
@@ -348,10 +348,10 @@ const getIssues=(async(req,res) =>{
         // Retrieve all issues for this student
         const issues = student.issues;
 
-        return {
+        res.status(200).json({
             success: true,
             issues: issues,
-        };
+        });
     } catch (error) {
         console.error("Error fetching issues:", error);
         return {
@@ -369,5 +369,5 @@ export {
     loginParent,
     logoutParent,
     getStudentReport,
-    getSessions, getJournals, getIssues
+    getSessions, getJournals, getIssues, checkMoodAndNotifyParent
 }
