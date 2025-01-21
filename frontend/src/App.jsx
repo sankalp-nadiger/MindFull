@@ -25,7 +25,8 @@ import StudentSignUp from './components/pages/StudentSignUp';
 import JournalPage from './components/pages/JournalPage';
 import HomePage from './components/HomePage/HomePage';
 import MainPage from './components/MainPage/mainPage';
-import ResultPage from './components/pages/ResultPage';
+import ResultPage from './components/pages/ResultPage';import WeeklyMoodChart from './components/Parent/Parent'
+
 const App = () => {
   return (
     <>
@@ -53,7 +54,8 @@ const App = () => {
           <Route path="/journal" element={<JournalPage/>}/>
           <Route path="/main" element={<MainPage/>}/>
           <Route path="/result" element={<ResultPage/>}/>
-         
+          <Route path="/Parentdashboard" element={<WeeklyMoodChart/>}/>
+
       </Routes>
     </Router>
     </>
