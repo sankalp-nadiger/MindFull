@@ -15,7 +15,7 @@ export const createStory = async (req, res) => {
     }
 
     const story = new Story({
-      user: req.user.id, // Assuming req.user is populated by authentication middleware
+      user: "678e87c5b00317631329f4c1", // Assuming req.user is populated by authentication middleware
       type,
       content,
     });
