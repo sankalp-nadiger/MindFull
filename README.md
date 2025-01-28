@@ -19,8 +19,7 @@ MindfulStudent is an innovative digital platform that addresses the growing ment
   - AI-driven conversational support
   - Guided mindfulness and relaxation exercises
   - Quick resources based on user queries
-  - 24/7 availability for immediate help
-  - [Try the MindFull Bot now!](https://huggingface.co/spaces/vaibhav2154/MindFullBot)  
+  - 24/7 availability for immediate help 
 
 
 - **Personalized Content Delivery**
