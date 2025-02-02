@@ -52,116 +52,128 @@ const CounselorSignIn = () => {
   };
 
   return (
-    <div className="container">
-      <h1>Counselor Sign In</h1>
-      <div className="gif-container">
-        <img src="/path/to/your/gif.gif" alt="Welcome GIF" className="welcome-gif" />
-      </div>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-black via-blue-950 to-black text-white px-6">
+  <h1 className="text-4xl font-bold text-indigo-400 mb-6">Counselor Sign In</h1>
 
-      <form onSubmit={handleSubmit} className="form-container">
-        {/* Phone Number Field */}
-        {!otpSent && (
-          <div className="form-group">
-            <label htmlFor="phoneNumber">Phone Number</label>
-            <input
-              id="phoneNumber"
-              type="tel"
-              className="form-control"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              placeholder="Enter your phone number"
-              maxLength={10}
-              required
-            />
-            <button
-              type="button"
-              className="submit-button"
-              onClick={handleSendOtp}
-              disabled={phoneNumber.length !== 10}
-            >
-              Send OTP
-            </button>
-          </div>
-        )}
+  <div className="w-full max-w-md p-6 bg-gray-900 shadow-lg rounded-lg flex flex-col items-center">
+    <div className="mb-4">
+      <img
+        src="https://media.giphy.com/media/hvRJCLFzcasrR4ia7z/giphy.gif"
+        alt="Welcome GIF"
+        className="w-20 h-20"
+      />
+    </div>
 
-        {/* OTP Field (visible after sending OTP) */}
-        {otpSent && (
-          <div className="form-group">
-            <label htmlFor="otp">OTP</label>
-            <input
-              id="otp"
-              type="text"
-              className="form-control"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              placeholder="Enter OTP"
-              maxLength={6}
-              required
-            />
-            {otpError && <span className="error-text">Invalid OTP. Please try again.</span>}
-          </div>
-        )}
-
-        {/* Email and Password Fields (Visible after OTP is entered) */}
-        {otpSent && (
-          <>
-            <div className="form-group">
-              <label htmlFor="email">Email</label>
-              <input
-                id="email"
-                type="email"
-                className="form-control"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                type="password"
-                className="form-control"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                required
-              />
-            </div>
-          </>
-        )}
-
-        <button type="submit" className="submit-button" disabled={!otpSent || !otp || !email || !password}>
-          Sign In
-        </button>
-
-        {/* Resend OTP Feature */}
-        {otpSent && (
+    <form onSubmit={handleSubmit} className="w-full space-y-4">
+      {/* Phone Number Field */}
+      {!otpSent && (
+        <div className="flex flex-col">
+          <label htmlFor="phoneNumber" className="text-sm font-medium text-gray-300">Phone Number</label>
+          <input
+            id="phoneNumber"
+            type="tel"
+            className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            placeholder="Enter your phone number"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+            maxLength={10}
+            required
+          />
           <button
             type="button"
-            className="submit-button resend-button"
-            onClick={handleResendOtp}
-            disabled={otpTimer > 0}
+            className="w-full mt-2 px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition-all disabled:opacity-50"
+            onClick={handleSendOtp}
+            disabled={phoneNumber.length !== 10}
           >
-            Resend OTP ({otpTimer}s)
+            Send OTP
           </button>
-        )}
-      </form>
-
-      <div className="links">
-        <a href="/forgot-password" className="link">
-          Forgot Password?
-        </a>
-        <div className="signup-link">
-          <p>Don't have an account?</p>
-          <a href="/counsellor-signup" className="link">
-            Sign Up
-          </a>
         </div>
+      )}
+
+      {/* OTP Field */}
+      {otpSent && (
+        <div className="flex flex-col">
+          <label htmlFor="otp" className="text-sm font-medium text-gray-300">OTP</label>
+          <input
+            id="otp"
+            type="text"
+            className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            placeholder="Enter OTP"
+            value={otp}
+            onChange={(e) => setOtp(e.target.value)}
+            maxLength={6}
+            required
+          />
+          {otpError && <span className="text-red-500 text-sm mt-1">Invalid OTP. Please try again.</span>}
+        </div>
+      )}
+
+      {/* Email & Password Fields */}
+      {otpSent && (
+        <>
+          <div className="flex flex-col">
+            <label htmlFor="email" className="text-sm font-medium text-gray-300">Email</label>
+            <input
+              id="email"
+              type="email"
+              className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="flex flex-col">
+            <label htmlFor="password" className="text-sm font-medium text-gray-300">Password</label>
+            <input
+              id="password"
+              type="password"
+              className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+        </>
+      )}
+
+      <button
+        type="submit"
+        className="w-full px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-all disabled:opacity-50"
+        disabled={!otpSent || !otp || !email || !password}
+      >
+        Sign In
+      </button>
+
+      {/* Resend OTP Feature */}
+      {otpSent && (
+        <button
+          type="button"
+          className="w-full px-4 py-2 bg-yellow-500 text-black rounded-md hover:bg-yellow-600 transition-all disabled:opacity-50"
+          onClick={handleResendOtp}
+          disabled={otpTimer > 0}
+        >
+          Resend OTP ({otpTimer}s)
+        </button>
+      )}
+    </form>
+
+    <div className="flex flex-col items-center mt-4">
+      <a href="/forgot-password" className="text-sm text-gray-400 hover:text-white transition-all">
+        Forgot Password?
+      </a>
+      <div className="mt-2">
+        <p className="text-sm text-gray-400">Don't have an account?</p>
+        <a href="/counsellor-signup" className="text-indigo-400 hover:underline transition-all">
+          Sign Up
+        </a>
       </div>
     </div>
+  </div>
+</div>
+
   );
 };
 

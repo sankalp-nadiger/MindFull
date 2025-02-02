@@ -1,6 +1,4 @@
-/* SignIn.css */
-
-/* Background animation */
+/* 
 body {
     background: linear-gradient(45deg, #f06, #4e54c8, #8f94fb);
     background-size: 400% 400%;
@@ -51,7 +49,7 @@ body {
     background-color: #8f94fb;
   }
   
-  /* Animation for background */
+ 
   @keyframes gradientBG {
     0% {
       background-position: 0% 50%;
@@ -63,4 +61,4 @@ body {
       background-position: 0% 50%;
     }
   }
-  
+   */

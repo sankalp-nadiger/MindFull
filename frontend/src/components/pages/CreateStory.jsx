@@ -36,35 +36,43 @@ const CreateStory = () => {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h2 className="text-2xl font-bold mb-4 text-center">Create a Story</h2>
-      {message && <div className="text-center mb-4 text-blue-500">{message}</div>}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <select
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-          className="p-2 border rounded"
-        >
-          <option value="image">Image</option>
-          <option value="video">Video</option>
-        </select>
-        <input
-          type="text"
-          placeholder="Enter content URL"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          className="p-2 border rounded"
-          required
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          className="p-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-        >
-          {loading ? "Uploading..." : "Upload Story"}
-        </button>
-      </form>
-    </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-black via-blue-900 to-black p-6">
+  <div className="max-w-4xl w-full bg-gray-900 text-white font-sans shadow-lg rounded-lg p-6">
+    <h2 className="text-2xl font-bold  mb-4 text-center text-gray-100">Create a Story</h2>
+    {message && <div className="text-center mb-4 text-blue-400">{message}</div>}
+
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    
+      <select
+        value={type}
+        onChange={(e) => setType(e.target.value)}
+        className="p-3 bg-gray-800 text-white border border-gray-600 rounded focus:ring-2 focus:ring-blue-500"
+      >
+        <option value="image">Image</option>
+        <option value="video">Video</option>
+      </select>
+
+      <input
+        type="text"
+        placeholder="Enter content URL"
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        className="p-3 bg-gray-800 text-white border border-gray-600 rounded focus:ring-2 focus:ring-blue-500"
+        required
+      />
+
+      
+      <button
+        type="submit"
+        disabled={loading}
+        className="p-3 bg-gradient-to-r from-purple-500 to-blue-600 text-white rounded-md font-semibold hover:scale-105 transition-transform hover:shadow-lg disabled:opacity-50"
+      >
+        {loading ? "Uploading..." : "🚀 Upload Story"}
+      </button>
+    </form>
+  </div>
+</div>
+
   );
 };
 
