@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { Button, Form, Container } from "react-bootstrap";
 import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
-import "./OnboardPhase3.css"; // Include the CSS file for styling
+ // Include the CSS file for styling
 
 const OnboardPhase3 = () => {
   const [responses, setResponses] = useState({
@@ -35,124 +34,118 @@ const OnboardPhase3 = () => {
   };
 
   return (
-    <Container className="mt-4">
-      <h2>Lets know u more!!</h2>
-      <Form onSubmit={handleSubmit}>
-        {/* Anxiety Disorders */}
-        <Form.Group>
-          <Form.Label>
-            You’re getting ready for a big event, but the thought of it keeps
-            you up all night. Do you often feel anxious about things that might
-            not happen?
-          </Form.Label>
-          {["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"].map(
-            (label, index) => (
-              <Form.Check
-                key={`anxiety-${index}`}
-                type="radio"
-                label={label}
-                name="anxiety"
-                value={index}
-                onChange={handleChange}
-              />
-            )
-          )}
-        </Form.Group>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-black via-blue-950 to-black text-white px-6 py-10">
+  <h2 className="text-3xl font-semibold text-white mb-6">Let's know you more!!</h2>
 
-        {/* Depression */}
-        <h5> </h5>
-        <Form.Group>
-          <Form.Label>
-            You’re sitting with friends who are laughing and enjoying
-            themselves, but you feel like you can’t join in. Do you often feel
-            disconnected or uninterested in things you used to enjoy?
-          </Form.Label>
-          {["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"].map(
-            (label, index) => (
-              <Form.Check
-                key={`depression-${index}`}
-                type="radio"
-                label={label}
-                name="depression"
-                value={index}
-                onChange={handleChange}
-              />
-            )
-          )}
-        </Form.Group>
+  <form onSubmit={handleSubmit} className="w-full max-w-2xl bg-gray-800 p-6 rounded-lg shadow-lg">
+    
+    <div className="mb-6">
+      <label className="block text-white font-semibold mb-2">
+        You’re getting ready for a big event, but the thought of it keeps you up all night.
+        Do you often feel anxious about things that might not happen?
+      </label>
+      {["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"].map((label, index) => (
+        <div key={`anxiety-${index}`} className="flex items-center mb-2">
+          <input
+            type="radio"
+            name="anxiety"
+            value={index}
+            onChange={handleChange}
+            className="form-radio text-indigo-500 focus:ring-indigo-400"
+          />
+          <span className="ml-2 text-gray-400">{label}</span>
+        </div>
+      ))}
+    </div>
 
-        {/* Bipolar Disorder */}
-        <h5></h5>
-        <Form.Group>
-          <Form.Label>
-            One day, you feel like you can take on the world, full of energy and
-            ideas, but the next day, it’s hard to even get out of bed. Do you
-            experience drastic changes in your energy and mood?
-          </Form.Label>
-          {["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"].map(
-            (label, index) => (
-              <Form.Check
-                key={`bipolar-${index}`}
-                type="radio"
-                label={label}
-                name="bipolar"
-                value={index}
-                onChange={handleChange}
-              />
-            )
-          )}
-        </Form.Group>
+    {/* Depression */}
+    <div className="mb-6">
+      <label className="block text-white font-semibold mb-2">
+        You’re sitting with friends who are laughing and enjoying themselves, but you feel like you can’t join in.
+        Do you often feel disconnected or uninterested in things you used to enjoy?
+      </label>
+      {["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"].map((label, index) => (
+        <div key={`depression-${index}`} className="flex items-center mb-2">
+          <input
+            type="radio"
+            name="depression"
+            value={index}
+            onChange={handleChange}
+            className="form-radio text-indigo-500 focus:ring-indigo-400"
+          />
+          <span className="ml-2 text-gray-400">{label}</span>
+        </div>
+      ))}
+    </div>
 
-        {/* Obsessive-Compulsive Disorder */}
-        <h5></h5>
-        <Form.Group>
-          <Form.Label>
-            You leave your house and suddenly feel the urge to go back and check
-            if the door is locked—even though you already did. Do you often feel
-            the need to repeat actions or check things multiple times to feel
-            secure?
-          </Form.Label>
-          {["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"].map(
-            (label, index) => (
-              <Form.Check
-                key={`ocd-${index}`}
-                type="radio"
-                label={label}
-                name="ocd"
-                value={index}
-                onChange={handleChange}
-              />
-            )
-          )}
-        </Form.Group>
+    {/* Bipolar Disorder */}
+    <div className="mb-6">
+      <label className="block text-white font-semibold  mb-2">
+        One day, you feel like you can take on the world, full of energy and ideas, but the next day, it’s hard to even get out of bed.
+        Do you experience drastic changes in your energy and mood?
+      </label>
+      {["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"].map((label, index) => (
+        <div key={`bipolar-${index}`} className="flex items-center mb-2">
+          <input
+            type="radio"
+            name="bipolar"
+            value={index}
+            onChange={handleChange}
+            className="form-radio text-indigo-500 focus:ring-indigo-400"
+          />
+          <span className="ml-2 text-gray-400">{label}</span>
+        </div>
+      ))}
+    </div>
 
-        {/* PTSD */}
-        <h5></h5>
-        <Form.Group>
-          <Form.Label>
-            A sudden loud noise reminds you of a past event, and your heart
-            starts racing. Do you often feel jumpy or on edge because of
-            something that happened in the past?
-          </Form.Label>
-          {["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"].map(
-            (label, index) => (
-              <Form.Check
-                key={`ptsd-${index}`}
-                type="radio"
-                label={label}
-                name="ptsd"
-                value={index}
-                onChange={handleChange}
-              />
-            )
-          )}
-        </Form.Group>
+    {/* Obsessive-Compulsive Disorder */}
+    <div className="mb-6">
+      <label className="block text-white font-semibold mb-2">
+        You leave your house and suddenly feel the urge to go back and check if the door is locked—even though you already did.
+        Do you often feel the need to repeat actions or check things multiple times to feel secure?
+      </label>
+      {["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"].map((label, index) => (
+        <div key={`ocd-${index}`} className="flex items-center mb-2">
+          <input
+            type="radio"
+            name="ocd"
+            value={index}
+            onChange={handleChange}
+            className="form-radio text-indigo-500 focus:ring-indigo-400"
+          />
+          <span className="ml-2 text-gray-400">{label}</span>
+        </div>
+      ))}
+    </div>
 
-        <Button type="submit" variant="primary" className="mt-3">
-          Submit
-        </Button>
-      </Form>
-    </Container>
+    {/* PTSD */}
+    <div className="mb-6">
+      <label className="block text-white font-semibold mb-2">
+        A sudden loud noise reminds you of a past event, and your heart starts racing.
+        Do you often feel jumpy or on edge because of something that happened in the past?
+      </label>
+      {["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"].map((label, index) => (
+        <div key={`ptsd-${index}`} className="flex items-center mb-2">
+          <input
+            type="radio"
+            name="ptsd"
+            value={index}
+            onChange={handleChange}
+            className="form-radio text-indigo-500 focus:ring-indigo-400"
+          />
+          <span className="ml-2 text-gray-400">{label}</span>
+        </div>
+      ))}
+    </div>
+
+    <div className="text-center">
+      <button type="submit" className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all">
+        Submit
+      </button>
+    </div>
+  </form>
+</div>
+
   );
 };
 

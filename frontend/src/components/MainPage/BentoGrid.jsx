@@ -1,5 +1,6 @@
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { useNavigate } from "react-router-dom";
 export function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
@@ -28,6 +29,12 @@ export const BentoGridItem = ({
   bgcolor,
   btnSubmit
 }) => {
+  const navigate= useNavigate();
+  const handleClick = () => {
+    console.log(btnSubmit)
+    navigate(`/${btnSubmit}`); // Use backticks for string interpolation
+};
+
   return (
     (<div
       className={cn(
@@ -46,7 +53,7 @@ export const BentoGridItem = ({
         </div>
         <div className="flex justify-start align-middle">
             <button class="relative m-0 my-2 w-30 px-2  text-lg font-bold text-white bg-black border-2 border-pink-500 rounded-lg transition duration-500 hover:shadow-[0_0_20px_5px_rgba(236,72,153,0.8)] group"
-            type="submit" name={btnSubmit}>
+            type="submit" onClick={handleClick}>
     <span class="absolute inset-0 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 blur-lg opacity-75 group-hover:opacity-100 transition duration-500"></span>
     <span class="relative z-10">{btntext}</span>
   </button>

@@ -1,16 +1,18 @@
-// import React from 'react';
-// //import AuthPage from './components/pages/Authpage';
-// import 'bootstrap/dist/css/bootstrap.min.css';
-// import OnBoardphase1 from './components/OnBoardphase1';
-// const App = () => <OnBoardphase1 />;
-
-// export default App;
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import OnBoardphase1 from './components/pages/OnBoardphase1';
+import React from "react"
+import {BrowserRouter as Router,Routes,Route} from "react-router-dom"
+import HomePage from './components/HomePage/HomePage'
+import ParentDashboard from "./components/ParentPage/ParentPage"
+import { HeroHighlightDemo } from "./components/MainPage/mainPage"
+import Activity from "./components/Activities/activity"
+import Councellor from "./components/Councellor/councellor"
+import CommunityChat from "./components/Community/Communitychat"
+import Quiz from "./components/Games/quizgame"
+import SudokuGame from "./components/Games/sudoku"
+import CrosswordGame from "./components/Games/Crosswords"
+import Leaderboard from "./components/Badges and Leaderboard/Leaderboard"
+import OnBoardphase1 from "./components/pages/OnBoardphase1"
 import OnBoardphase2 from './components/pages/OnBoardphase2';
 import OnBoardphase3 from "./components/pages/OnBoardPhase3"
-//import Home from "./components/pages/Home"; // The landing page for student sign-in
 import RoleSelection from "./components/pages/RoleSelection"; // Role selection page for Parent, Counsellor
 //import StudentSignUp from "./components/pages/StudentSignUp"; // Student sign-up page
 import ParentSignIn from "./components/pages/ParentSignIn"; // Parent sign-in page
@@ -18,37 +20,35 @@ import CounsellorSignIn from "./components/pages/CounsellorSignIn"; // Counselor
 import ParentSignUp from "./components/pages/ParentSignUp"; // Parent sign-up page
 import CounsellorSignUp from "./components/pages/CounsellorSignUp"; // Counselor sign-up page
 import Counsellorphase1 from "./components/pages/Counsellorphase1";
-//import Recomendation from "./components/pages/Recomendation";
 import StudentSignIn from './components/pages/StudentSignIn';
 import Dashboard from './components/pages/DashBoard';
 import StudentSignUp from './components/pages/StudentSignUp';
 import JournalPage from './components/pages/JournalPage';
-import HomePage from './components/HomePage/HomePage';
-import MainPage from './components/MainPage/mainPage';
 import ResultPage from './components/pages/ResultPage';
 import JournalEntryWithSuggestions from './components/pages/JournalPage';
 import ActivityRecommendations from './components/pages/Activity';
 import Stories from './components/pages/FetchStory';
 import CreateStory from './components/pages/CreateStory';
-//import ParentDashboard from './components/pages/ParentDashBoard';
-import Crossword from './components/pages/Games/Crossword';
-import SudokuGame from './components/pages/Games/Sudoko';
-//import ParentDashboard from './components/pages/ParentDashBoard';
-import ParentDashboard from './components/Parent/Parent';
-const App = () => {
+import SuccessStories from "./components/HomePage/SuccessStories"
+
+function App() {
+
   return (
     <>
-    <Router>
-      <Routes>
+      <Router>
+        <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/ParentDashboard" element={<ParentDashboard />} />
+        <Route path="/MainPage" element={<HeroHighlightDemo />} />
+        <Route path="/councellor" element={<Councellor />} />
+        <Route path="/communitychat" element={<CommunityChat />} />
+        <Route path="/Quiz" element={<Quiz/>} />
+        <Route path="/SudokuGame" element={<SudokuGame/>} />
+        <Route path="/Crossword" element={<CrosswordGame/>} />
+        <Route path="/Leaderboard" element={<Leaderboard/>} />
         <Route path="/phase1" element={<OnBoardphase1 />} />
         <Route path="/phase2" element={<OnBoardphase2 />} />
         <Route path="/phase3" element={<OnBoardphase3/>}/>
-        {/* // <Route path="/home" element={<Home/>}/> */}
-        <Route path="/parent-signin" element={<ParentSignIn />} />
-        <Route path="/counsellor-signin" element={<CounsellorSignIn />} />
-        {/* <Route path="/student-signin" element={<StudentSignIN />} /> */} 
-        <Route path="/" element={<HomePage />} />
-        {/* <Route path="/recommendations" element={<Recommendation />} /> */}
         <Route path="/role-selection" element={<RoleSelection />} />
         <Route path="/student-signup" element={<StudentSignUp />} />
         <Route path="/parent-signin" element={<ParentSignIn />} />
@@ -58,23 +58,17 @@ const App = () => {
           <Route path="/counsellorphase1" element={<Counsellorphase1/>}/>
           { <Route path="/student-signin" element={<StudentSignIn/>}/> }
           <Route path="/student-signup" element={<StudentSignUp/>}/>
-          <Route path="/dashboard" element={<Dashboard/>}/>
-          {/* <Route path="/journal" element={<JournalPage/>}/> */}
-          <Route path="/main" element={<MainPage/>}/>
           <Route path="/result" element={<ResultPage/>}/>
          <Route path="/journals" element={<JournalEntryWithSuggestions/>}/>
          <Route path="/activity" element={<ActivityRecommendations/>}/>
          <Route path="/storyfetch" element={<Stories/>}/>
          <Route path="/createStory" element={<CreateStory/>}/>
-         <Route path="/Parentdashboard" element={<WeeklyMoodChart/>}/>
-         <Route path="/crossword" element={<Crossword/>}/>
-         <Route path="/Sudoku" element={<SudokuGame/>}/>
-         <Route path="/Parentdashboard" element={<ParentDashboard/>}/>
-      </Routes>
-    </Router>
+         <Route path="/Leaderboard" element={<Leaderboard />} />
+         <Route path="/SuccessStories" element={<SuccessStories />} />
+        </Routes>
+      </Router>
     </>
-  );
-};
+  )
+}
 
-export default App;
-
+export default App

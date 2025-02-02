@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import "./StudentSignIn.css";
+
 
 const StudentSignIn = () => {
   const navigate = useNavigate();
@@ -65,96 +65,92 @@ const StudentSignIn = () => {
   };
 
   return (
-    <div className="container">
-      <h1>Welcome to Mindful</h1>
-      <div className="gif-container">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-black via-blue-950 to-black text-white px-6">
+    <h1 className="text-4xl font-bold text-green-600 mb-6">Welcome to Mindfull</h1>
+    
+    <div className="w-full max-w-md p-6 bg-gray-900 shadow-lg rounded-lg">
+      <div className="flex justify-center mb-4">
         <img
           src="https://media.giphy.com/media/hvRJCLFzcasrR4ia7z/giphy.gif"
           alt="Welcome GIF"
-          className="welcome-gif"
+          className="w-16 h-16 "
         />
       </div>
-      <div className="signin-options">
-        <h2>Student Sign In</h2>
-        <form onSubmit={handleSignIn}>
-          <div className="form-group">
-            <label htmlFor="username">username</label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              className="form-control"
-              placeholder="Enter your username"
-            />
-          </div>
-          
-          
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              className="form-control"
-              placeholder="Enter your password"
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="email">email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              className="form-control"
-              placeholder="Enter your email"
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="mood">Mood</label>
-            <select id="mood" name="mood" className="form-control" required>
-              <option value="">Select Mood</option>
-              <option value="Happy">😊 Happy</option>
-              <option value="Sad">😢 Sad</option>
-              <option value="Excited">🤩 Excited</option>
-              <option value="Tired">😴 Tired</option>
-              <option value="Angry">😡 Angry</option>
-            </select>
-          </div>
-          {/* <div className="form-group">
-            <label htmlFor="wellBeing">
-              On a scale of 1-10, how would you rate your mental well-being today?
-            </label>
-            <input
-              type="number"
-              id="wellBeing"
-              name="wellBeing"
-              className="form-control"
-              placeholder="Rate between 1 and 10"
-              min="1"
-              max="10"
-              required
-            />
-          </div> */}
-          <button type="submit" className="submit-button" disabled={loading}>
-            {loading ? "Signing In..." : "Sign In"}
-          </button>
-        </form>
-        <div className="links">
-          <p>
-            Don't have an account?{" "}
-            <Link to="/student-signup" className="link">
-              Click here to sign up
-            </Link>
-          </p>
-          <p>
-            Not a student?{" "}
-            <Link to="/role-selection" className="link">
-              Select your role
-            </Link>
-          </p>
+  
+      <h2 className="text-2xl font-semibold text-center text-indigo-300 mb-4">Student Sign In</h2>
+  
+      <form onSubmit={handleSignIn} className="space-y-4">
+        <div>
+          <label htmlFor="username" className="block text-gray-300">Username</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            className="w-full px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            placeholder="Enter your username"
+          />
         </div>
+  
+        <div>
+          <label htmlFor="password" className="block text-gray-300">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            className="w-full px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            placeholder="Enter your password"
+          />
+        </div>
+  
+        <div>
+          <label htmlFor="email" className="block text-gray-300">Email</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            className="w-full px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            placeholder="Enter your email"
+          />
+        </div>
+  
+        <div>
+          <label htmlFor="mood" className="block text-gray-300">Mood</label>
+          <select id="mood" name="mood" className="w-full px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+            <option value="">Select Mood</option>
+            <option value="Happy">😊 Happy</option>
+            <option value="Sad">😢 Sad</option>
+            <option value="Excited">🤩 Excited</option>
+            <option value="Tired">😴 Tired</option>
+            <option value="Angry">😡 Angry</option>
+          </select>
+        </div>
+  
+        <button 
+          type="submit"
+          className="w-full py-2 text-lg font-bold text-white bg-indigo-500 rounded-md hover:bg-indigo-600 transition-all disabled:opacity-50"
+          disabled={loading}
+        >
+          {loading ? "Signing In..." : "Sign In"}
+        </button>
+      </form>
+  
+      <div className="mt-4 text-center text-gray-400">
+        <p>
+          Don't have an account?{" "}
+          <Link to="/student-signup" className="text-indigo-400 hover:underline">
+            Click here to sign up
+          </Link>
+        </p>
+        <p className="mt-2">
+          Not a student?{" "}
+          <Link to="/role-selection" className="text-indigo-400 hover:underline">
+            Select your role
+          </Link>
+        </p>
       </div>
     </div>
+  </div>
+  
   );
 };
 
