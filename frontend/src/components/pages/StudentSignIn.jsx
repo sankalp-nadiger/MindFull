@@ -50,7 +50,7 @@ const StudentSignIn = () => {
         );
 
         // Redirect to dashboard
-        navigate("/");
+        navigate("/MainPage");
       } else {
         alert("Login failed. Please try again.");
       }

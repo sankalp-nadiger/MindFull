@@ -132,7 +132,7 @@ Testimonials
       <div class="lg:w-1/3 lg:mb-0 mb-6 p-4">
         <div class="h-full text-center">
           <img alt="testimonial" class="w-20 h-20 mb-8 object-cover object-center rounded-full inline-block border-2 border-gray-800 bg-gray-800 bg-opacity-10" src="55.png"/>
-          <p class="leading-relaxed">MindfulStudent has completely changed how I handle stress. The AI-driven exercises help me stay on track, and the peer support community makes me feel less alone. I’ve become more confident and focused!</p>
+          <p class="leading-relaxed">MindfullStudent has completely changed how I handle stress. The AI-driven exercises help me stay on track, and the peer support community makes me feel less alone. I’ve become more confident and focused!</p>
           <span class="inline-block h-1 w-10 rounded bg-indigo-500 mt-6 mb-4"></span>
           <h2 class="text-white font-medium title-font tracking-wider text-sm">ALEX J</h2>
           <p class="text-gray-500">High School Student</p>
@@ -141,7 +141,7 @@ Testimonials
       <div class="lg:w-1/3 lg:mb-0 mb-6 p-4">
         <div class="h-full text-center">
           <img alt="testimonial" class="w-20 h-20 mb-8 object-cover object-center rounded-full inline-block border-2 border-gray-800 bg-gray-800 bg-opacity-10" src="41.png"/>
-          <p class="leading-relaxed">I used to struggle with anxiety before exams, but MindfulStudent’s mindfulness techniques and expert guidance have helped me stay calm. Now, I feel more balanced and in control</p>
+          <p class="leading-relaxed">I used to struggle with anxiety before exams, but MindfullStudent’s mindfulness techniques and expert guidance have helped me stay calm. Now, I feel more balanced and in control</p>
           <span class="inline-block h-1 w-10 rounded bg-indigo-500 mt-6 mb-4"></span>
           <h2 class="text-white font-medium title-font tracking-wider text-sm">PRIYA S</h2>
           <p class="text-gray-500">Under-Graduate</p>
@@ -150,7 +150,7 @@ Testimonials
       <div class="lg:w-1/3 lg:mb-0 p-4">
         <div class="h-full text-center">
           <img alt="testimonial" class="w-20 h-20 mb-8 object-cover object-center rounded-full inline-block border-2 border-gray-800 bg-gray-800 bg-opacity-10" src="56.png"/>
-          <p class="leading-relaxed">MindfulStudent provided me with the tools to manage my mental health effectively. The personalized approach made a huge difference in my daily routine. Highly recommended!</p>
+          <p class="leading-relaxed">MindfullStudent provided me with the tools to manage my mental health effectively. The personalized approach made a huge difference in my daily routine. Highly recommended!</p>
           <span class="inline-block h-1 w-10 rounded bg-indigo-500 mt-6 mb-4"></span>
           <h2 class="text-white font-medium title-font tracking-wider text-sm">ROBERT M</h2>
           <p class="text-gray-500">High School Student</p>
