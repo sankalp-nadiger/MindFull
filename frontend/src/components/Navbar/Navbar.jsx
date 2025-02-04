@@ -48,7 +48,8 @@ function Navbar(){
               menuOpen ? "flex" : "hidden"
             } flex-col md:flex md:flex-row gap-2 md:ml-auto items-center text-base justify-center`}
           >
-            <a className="mb-2 md:mb-0 md:mr-5 hover:text-gray-500" href="/storyfetch">Stories</a>
+            <a className="mb-2 md:mb-0 md:mr-5 hover:text-gray-500" href="/createStory">Stories</a>
+            <a className="mb-2 md:mb-0 md:mr-5 hover:text-gray-500" href="/activity">Activities</a>
             <a className="mb-2 md:mb-0 md:mr-5 hover:text-gray-500" href="/journals">Journals</a>
             <a className="mb-2 md:mb-0 md:mr-5 hover:text-gray-500">Councellor</a>
             <a className="mb-2 md:mb-0 md:mr-5 hover:text-gray-500"href="/Leaderboard">Leaderboard</a>

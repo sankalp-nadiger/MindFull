@@ -10,7 +10,7 @@ import { BentoGridDemo } from "./BentoGridDemo";
 import Getquotes from "./quotes";
 import BadgesCorner from "../Badges and Leaderboard/Badges";
 import Recommendations from "../Materialrecommendation/AIrecommendation";
-
+import Stories from "../pages/FetchStory";
 import Footer from "../Footer/Footer";
 export function HeroHighlightDemo() {
   const navigate = useNavigate(); 
@@ -97,8 +97,10 @@ export function HeroHighlightDemo() {
        <Getquotes/> 
     </div>
     <div className="bg-black">
+      <Stories/>
     <BentoGridDemo/>
     </div>
+    <Recommendations/>
     <section class="text-white bg-black body-font">
   <div class="container px-3 py-24 mx-auto">
     <div class="lg:w-2/3 flex flex-col sm:flex-row sm:items-center items-start mx-auto w-full">
@@ -106,7 +108,7 @@ export function HeroHighlightDemo() {
       <button onClick={handleactivity} className="flex-shrink-0 text-black bg-green-600 border-0 py-2 px-8 focus:outline-none hover:bg-green-400 rounded text-lg mt-10 sm:mt-0">See Activities</button>
     </div>
   </div>
-  <Recommendations/>
+  
   <BadgesCorner/>
   <Footer/>
 </section>
