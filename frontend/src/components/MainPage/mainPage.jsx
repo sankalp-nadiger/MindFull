@@ -98,7 +98,6 @@ export function HeroHighlightDemo() {
     </div>
     <div className="bg-black">
       <Stories/>
-    <BentoGridDemo/>
     </div>
     <Recommendations/>
     <section class="text-white bg-black body-font">
@@ -108,7 +107,7 @@ export function HeroHighlightDemo() {
       <button onClick={handleactivity} className="flex-shrink-0 text-black bg-green-600 border-0 py-2 px-8 focus:outline-none hover:bg-green-400 rounded text-lg mt-10 sm:mt-0">See Activities</button>
     </div>
   </div>
-  
+  <BentoGridDemo/>
   <BadgesCorner/>
   <Footer/>
 </section>
