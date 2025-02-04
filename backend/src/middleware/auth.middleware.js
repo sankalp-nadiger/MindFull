@@ -36,11 +36,11 @@ export const user_verifyJWT = asyncHandler(async (req, _, next) => {
   const token =
     req.cookies?.accessToken ||
     req.header("Authorization")?.replace("Bearer ", "");
-
   const user = await verifyJWT(token, User, "User");
-  req.user = user;
+  req.user = user; // Attach the user to the request object
   next();
 });
+
 
 export const parent_verifyJWT = asyncHandler(async (req, _, next) => {
   const token =
@@ -49,6 +49,7 @@ export const parent_verifyJWT = asyncHandler(async (req, _, next) => {
 
   const parent = await verifyJWT(token, Parent, "Parent");
   req.parent = parent;
+  req.isParent = true; // Flag the request as from a parent
   next();
 });
 

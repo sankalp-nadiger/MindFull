@@ -7,7 +7,7 @@ import { OTP } from "../models/otp.model.js";
 import { Session } from "../models/session.model.js";
 import { Mood } from "../models/mood.model.js";
 import ApiResponse from "../utils/API_Response.js";
-import { generateAccessAndRefreshTokens, refreshAccessToken } from "./user.controller.js";
+//import { generateAccessAndRefreshTokens, refreshAccessToken } from "./user.controller.js";
 import jwt from "jsonwebtoken";
 import dotenv from 'dotenv';
 import axios from "axios";
@@ -52,7 +52,33 @@ const verifyOTP = async (mobileNumber, enteredOTP) => {
 
     return { success: true, message: 'OTP verified' };
 };
-
+const generateAccessAndRefreshTokens = async (userId) => {
+    try {
+      const parent = await Parent.findById(userId);
+      if (!parent) {
+        throw new ApiError(404, "User not found");
+      }
+  
+      console.log("User found:", parent); // Log user to verify it's fetched correctly
+  
+      const accessToken = parent.generateAccessToken();
+      const refreshToken = parent.generateRefreshToken();
+  
+      console.log("Access token:", accessToken); // Log tokens for debugging
+      console.log("Refresh token:", refreshToken);
+  
+      parent.refreshToken = refreshToken; // Store the refresh token in the user document
+      await parent.save({ validateBeforeSave: false });
+  
+      return { accessToken, refreshToken };
+    } catch (error) {
+      console.error("Error generating tokens:", error); // Log the error for debugging
+      throw new ApiError(
+        500,
+        "Something went wrong while generating refresh and access token"
+      );
+    }
+  };
 // Parent Registration with OTP authentication
     const registerParent = asyncHandler(async (req, res) => {
         const { fullName, email, password, mobileNumber, otp } = req.body;
@@ -76,7 +102,7 @@ const verifyOTP = async (mobileNumber, enteredOTP) => {
 
     // Check if user already exists
     const existedParent = await Parent.findOne({
-        $or: [{ fullName }, { email }],
+        $or: [{ fullName }],
     });
 
     if (existedParent) {
@@ -90,6 +116,7 @@ const verifyOTP = async (mobileNumber, enteredOTP) => {
     const parent = await Parent.create({
         fullName,
         email,
+        mobileNumber,
         password,
         studentID: user._id,
     });
@@ -138,11 +165,22 @@ const loginParent = asyncHandler(async (req, res) => {
         httpOnly: true,
         secure: true,
     };
-    await checkMoodAndNotifyParent(parentId);
+    //await checkMoodAndNotifyParent(parent._id);
 
-    return res.status(200).cookie("accessToken", accessToken, options)
-               .cookie("refreshToken", refreshToken, options)
-               .json(new ApiResponse(200, { parent: loggedInParent, accessToken, refreshToken }, "Parent logged In Successfully"))
+    return res.status(200)
+  .cookie("accessToken", accessToken, options)
+  .cookie("refreshToken", refreshToken, options)
+  .json({
+    statusCode: 200,
+    success: true,
+    message: "Parent logged In Successfully",
+    data: {
+      parent: loggedInParent,
+      accessToken,
+      refreshToken
+    }
+  });
+
 });
 
 // Logout User with OTP authentication (for added security)
@@ -241,7 +279,7 @@ const logoutParent = asyncHandler(async (req, res) => {
    });
 
  const getSessions= (async (req,res) =>{
-    const parentId=req.parent_.id;
+    const parentId=req.parent._id;
     try {
         // Find the student (user) who has this parent
         const student = await User.findOne({ parent: parentId });

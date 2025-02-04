@@ -595,23 +595,39 @@ const getUserMoodHistory = async (userId, days) => {
 const moodScores = {
   Happy: 5,
   Excited: 4,
-  Neutral: 3,
+  Tired: 3,
   Anxious: 2,
   Sad: 1,
   Angry: 0,
 };
 const getWeeklyMoodData = async (req, res) => {
-  const  userId = req.user._id;
+  let userId;
 
   try {
+    if (req.isParent) {
+      // Find the user (child) associated with the parent
+      const linkedUser = await User.findOne({ parent: req.parent._id });
+      if (!linkedUser) {
+        return res.status(404).json({
+          success: false,
+          message: "No linked user found for this parent",
+        });
+      }
+      userId = linkedUser._id; // Use the child's user ID
+    } else {
+      userId = req.user._id; // If request is from a regular user
+    }
+
     // Get today's date
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Reset time to midnight
 
     // Get the start of the week (Monday)
     const startOfWeek = new Date(today);
-    const dayOfWeek = today.getDay() === 0 ? 6 : today.getDay() - 1; // Handle Sunday as the last day
+    const dayOfWeek = today.getDay() === 0 ? 6 : today.getDay() - 1; // Handle Sunday as last day
     startOfWeek.setDate(today.getDate() - dayOfWeek);
+
+    // Fetch mood data for the user
     const weeklyMoods = await Mood.find({
       user: userId,
       timestamp: { $gte: startOfWeek },
@@ -620,7 +636,7 @@ const getWeeklyMoodData = async (req, res) => {
     // Initialize array to hold daily mood scores
     const dailyMoodData = Array(7).fill(null); // Default null for days without data
 
-    // Populate mood scores for the respective days
+    // Populate mood scores for respective days
     weeklyMoods.forEach((entry) => {
       const dayIndex = Math.floor((entry.timestamp - startOfWeek) / (24 * 60 * 60 * 1000)); // Day index
       if (dayIndex >= 0 && dayIndex < 7) {
@@ -630,7 +646,7 @@ const getWeeklyMoodData = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: dailyMoodData, // Send array of daily mood values for the week
+      data: dailyMoodData,
     });
   } catch (error) {
     console.error("Error fetching weekly mood data:", error);
@@ -640,6 +656,8 @@ const getWeeklyMoodData = async (req, res) => {
     });
   }
 };
+
+
 
 
 const calculateAverageMood = async (req,res) => {
