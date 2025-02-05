@@ -70,7 +70,7 @@ function ParentDashboard({ parentId }) {
         setSessions(sessionsRes.sessions || []);
         setJournals(journalsRes.journals || []);
         setIssues(issuesRes.issues || []);
-        setReport(reportRes || null);
+        setReport(reportRes.data || null);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -114,12 +114,13 @@ function ParentDashboard({ parentId }) {
           color: "white",
           stepSize: 1,
           min: 0,
-          max: 6,
+          max: moodLabels.length - 1,
           callback: (value) => moodLabels[value] || "",
         },
         title: { display: true, text: "Mood Score", color: "white" },
       },
     },
+    //maintainAspectRatio: false
   };
 
   return (
@@ -186,20 +187,22 @@ function ParentDashboard({ parentId }) {
             </ul>
           </div>
 
-          {report && (
-            <div className="bg-gray-800 p-6 rounded-lg shadow-md">
-              <h3 className="text-2xl font-semibold mb-4">Student Report</h3>
-              <p className="text-lg font-medium">Parent Name: {report.parentName}</p>
-              <ul className="mt-4 space-y-2">
-                {report.reports.map((r) => (
-                  <li key={r.studentName} className="border-b border-gray-600 pb-2">
-                    {r.studentName}: <span className="font-semibold">Avg Mood:</span> {r.avgMood},{" "}
-                    <span className="font-semibold">Journals:</span> {r.totalJournals}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          {report && Object.keys(report).length > 0 ? (
+  <div className="bg-gray-800 p-6 rounded-lg shadow-md">
+    <h3 className="text-2xl font-semibold mb-4">Student Report</h3>
+    <p className="text-lg font-medium">Parent Name: {report.parentName || "N/A"}</p>
+    <p className="text-lg font-medium">Student Name: {report.studentName || "N/A"}</p>
+    <p className="mt-2">
+      <span className="font-semibold">Avg Mood:</span> {report.avgMood || "N/A"}
+    </p>
+    <p>
+      <span className="font-semibold">Journals:</span> {report.totalJournals || "N/A"}
+    </p>
+  </div>
+) : (
+  <p className="text-gray-500">No report available</p>
+)}
+
         </div>
       </div>
     </div>
