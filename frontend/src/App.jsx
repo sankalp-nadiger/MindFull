@@ -4,7 +4,7 @@ import HomePage from './components/HomePage/HomePage'
 import ParentDashboard from "./components/ParentPage/ParentPage"
 import { HeroHighlightDemo } from "./components/MainPage/mainPage"
 import Activity from "./components/Activities/activity"
-import Councellor from "./components/Councellor/councellor"
+import Councellor from "./components/Councellor/Councellor"
 import CommunityChat from "./components/Community/Communitychat"
 import Quiz from "./components/Games/quizgame"
 import SudokuGame from "./components/Games/sudoku"

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios'; // Import axios for API calls
 import { Bell, Calendar, Users, Settings, LogOut, Video, User, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 
 function Councellor() {
@@ -10,95 +11,49 @@ function Councellor() {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
- 
   useEffect(() => {
-    
-    
-    setProfile({
-      fullName: "Dr. abcdefg",
-      email: "abcedfg@example.com",
-      mobileNumber: "+1234567890",
-      specifications: ["Anxiety", "Depression", "Stress Management"],
-      yearExp: 8,
-      availability: ["Mon-Fri, 9AM-5PM"],
-      feedback: ["Great session, very helpful!", "Excellent counselor"],
-      isAvailable: true
-    });
+    // Fetch profile data from the backend
+    axios.get('http://localhost:8000/api/profile')
+      .then(response => setProfile(response.data))
+      .catch(error => console.error('Error fetching profile data', error));
 
- 
-    setSessions([
-      {
-        _id: "1",
-        student: { _id: "s1", name: "Mindfull student" },
-        issueDetails: "Anxiety management",
-        status: "Pending",
-        roomName: "session-1"
-      },
-      {
-        _id: "2",
-        student: { _id: "s2", name: "Mindfull student" },
-        issueDetails: "Stress related to work",
-        status: "Active",
-        roomName: "session-2"
-      }
-    ]);
+    // Fetch sessions data from the backend
+    axios.get('http://localhost:8000/api/sessions')
+      .then(response => setSessions(response.data))
+      .catch(error => console.error('Error fetching sessions', error));
 
-    setNotifications([
-        {
-          id: 1,
-          type: 'session_request',
-          title: 'New Session Request',
-          message: 'Mindfull student has requested a counseling session',
-          timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-          read: false,
-          priority: 'high'
-        },
-        {
-          id: 2,
-          type: 'schedule_change',
-          title: 'Schedule Update',
-          message: 'Your session with mindfull student has been rescheduled to tomorrow',
-          timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-          read: false,
-          priority: 'medium'
-        },
-        {
-          id: 3,
-          type: 'feedback',
-          title: 'New Feedback Received',
-          message: 'You received new feedback from your last session',
-          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-          read: true,
-          priority: 'low'
-        }
-      ]);
-  
-      // Update unread count
-      setUnreadCount(notifications.filter(n => !n.read).length);
-  
-
-
+    // Fetch notifications data from the backend
+    axios.get('http://localhost:8000/api/notifications')
+      .then(response => {
+        setNotifications(response.data);
+        setUnreadCount(response.data.filter(n => !n.read).length);
+      })
+      .catch(error => console.error('Error fetching notifications', error));
   }, []);
 
   const handleJoinSession = async (session) => {
     setIsJoiningSession(true);
     setSelectedSession(session);
-    // In real app: Call getTwilioToken endpoint and handle video session
+    // Call backend to get Twilio token and handle video session (mocked)
     setTimeout(() => setIsJoiningSession(false), 2000);
   };
 
   const handleEndSession = async (sessionId) => {
-    // In real app: Call endSession endpoint
+    // In real app: Call backend to end the session
+    await axios.post(`http://localhost:8000/api/sessions/${sessionId}/end`);
     setSessions(sessions.map(s => 
-      s._id === sessionId ? {...s, status: 'Completed'} : s
+      s._id === sessionId ? { ...s, status: 'Completed' } : s
     ));
   };
 
   const handleUpdateProfile = async (updates) => {
-    // In real app: Call updateProfile endpoint
-    setProfile(prev => prev ? {...prev, ...updates} : null);
+    try {
+      await axios.put('http://localhost:8000/api/profile', updates);
+      setProfile(prev => prev ? { ...prev, ...updates } : null);
+    } catch (error) {
+      console.error('Error updating profile', error);
+    }
   };
-
 
   const markNotificationAsRead = (notificationId) => {
     setNotifications(notifications.map(notification => 
@@ -107,11 +62,17 @@ function Councellor() {
         : notification
     ));
     setUnreadCount(prev => Math.max(0, prev - 1));
+
+    // Update notification read status on backend
+    axios.post(`http://localhost:8000/api/notifications/${notificationId}/read`);
   };
 
   const markAllNotificationsAsRead = () => {
     setNotifications(notifications.map(notification => ({ ...notification, read: true })));
     setUnreadCount(0);
+
+    // Update all notifications to read on the backend
+    axios.post('http://localhost:8000/api/notifications/markAllAsRead');
   };
 
   const getNotificationIcon = (type, priority) => {
@@ -142,25 +103,23 @@ function Councellor() {
     }
   };
 
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-blue-950 to-black">
-     
       <nav className="bg-gray-800 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-            <img
-              src="plant.png"
-              alt="Logo"
-              style={{ height: "30px", width: "30px" }}
-            />
+              <img
+                src="plant.png"
+                alt="Logo"
+                style={{ height: "30px", width: "30px" }}
+              />
               <span className="ml-2 text-xl font-semibold text-white">
                 Councellor Dashboard
               </span>
             </div>
             <div className="flex items-center space-x-4">
-            <button 
+              <button
                 onClick={() => setActiveTab('notifications')}
                 className="relative p-2 rounded-full hover:bg-gray-100"
               >
@@ -183,10 +142,8 @@ function Councellor() {
         </div>
       </nav>
 
-      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-12 gap-6">
-          
           <div className="col-span-3">
             <div className="bg-gray-100 rounded-lg shadow p-6">
               <div className="space-y-6">
@@ -196,7 +153,6 @@ function Councellor() {
                     activeTab === 'dashboard' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600'
                   }`}
                 >
-                     
                   <Users className="h-5 w-5" />
                   <span>Dashboard</span>
                 </button>
@@ -252,172 +208,63 @@ function Councellor() {
             </div>
           </div>
 
-          
           <div className="col-span-9">
             <div className="bg-gray-800 rounded-lg shadow p-6">
-
               {activeTab === 'dashboard' && (
                 <div className="space-y-6">
                   <h2 className="text-2xl font-semibold text-white">Welcome back, {profile?.fullName}</h2>
-                  
-                  
+
                   <div className="grid grid-cols-3 gap-6">
                     <div className="bg-indigo-50 p-6 rounded-lg">
-                      <h3 className="text-lg font-medium text-indigo-900">Active Sessions</h3>
-                      <p className="text-3xl font-bold text-indigo-600">
-                        {sessions.filter(s => s.status === 'Active').length}
-                      </p>
+                      <h3 className="text-lg font-medium text-indigo-600">Upcoming Sessions</h3>
+                      <ul className="space-y-4">
+                        {sessions.filter(s => s.status === 'Scheduled').map(session => (
+                          <li key={session._id} className="flex justify-between">
+                            <span className="text-sm text-gray-700">{session.title}</span>
+                            <button
+                              onClick={() => handleJoinSession(session)}
+                              className="text-xs text-blue-600 hover:text-blue-800"
+                            >
+                              Join
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    <div className="bg-green-50 p-6 rounded-lg">
-                      <h3 className="text-lg font-medium text-green-900">Completed Sessions</h3>
-                      <p className="text-3xl font-bold text-green-600">
-                        {sessions.filter(s => s.status === 'Completed').length}
-                      </p>
+                    <div className="bg-indigo-50 p-6 rounded-lg">
+                      <h3 className="text-lg font-medium text-indigo-600">Notifications</h3>
+                      <ul className="space-y-4">
+                        {notifications.map(notification => (
+                          <li key={notification.id} className="flex justify-between">
+                            <span className="text-sm text-gray-700">
+                              {getNotificationIcon(notification.type, notification.priority)}
+                              <span className="ml-2">{notification.message}</span>
+                            </span>
+                            <button
+                              onClick={() => markNotificationAsRead(notification.id)}
+                              className="text-xs text-blue-600 hover:text-blue-800"
+                            >
+                              Mark as Read
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    <div className="bg-yellow-50 p-6 rounded-lg">
-                      <h3 className="text-lg font-medium text-yellow-900">Pending Sessions</h3>
-                      <p className="text-3xl font-bold text-yellow-600">
-                        {sessions.filter(s => s.status === 'Pending').length}
-                      </p>
-                    </div>
-                  </div>
-
-                  
-                  <div>
-                    <h3 className="text-xl font-semibold text-white mb-4">Recent Sessions</h3>
-                    <div className="space-y-4">
-                      {sessions.map(session => (
-                        <div key={session._id} className="border border-gray-400 rounded-lg p-4">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <h4 className="font-medium text-white">{session.student.name}</h4>
-                              <p className="text-sm text-red-600">{session.issueDetails}</p>
-                            </div>
-                            <div className="flex items-center space-x-4">
-                              <span className={`px-3 py-1 rounded-full text-sm ${
-                                session.status === 'Active' ? 'bg-green-100 text-green-800' :
-                                session.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-gray-100 text-gray-800'
-                              }`}>
-                                {session.status}
-                              </span>
-                              {session.status === 'Pending' && (
-                                <button
-                                  onClick={() => handleJoinSession(session)}
-                                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-                                  disabled={isJoiningSession}
-                                >
-                                  {isJoiningSession ? 'Joining...' : 'Join Session'}
-                                </button>
-                              )}
-                              {session.status === 'Active' && (
-                                <button
-                                  onClick={() => handleEndSession(session._id)}
-                                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                                >
-                                  End Session
-                                </button>
-                              )}
-                            </div>
+                    <div className="bg-indigo-50 p-6 rounded-lg">
+                      <h3 className="text-lg font-medium text-indigo-600">Your Profile</h3>
+                      <div className="space-y-4">
+                        {profile && (
+                          <div>
+                            <p className="text-sm text-gray-700">Name: {profile.fullName}</p>
+                            <p className="text-sm text-gray-700">Email: {profile.email}</p>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-{activeTab === 'notifications' && (
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-2xl font-semibold text-white">Notifications</h2>
-                    {unreadCount > 0 && (
-                      <button
-                        onClick={markAllNotificationsAsRead}
-                        className="text-sm text-indigo-400 hover:text-indigo-500"
-                      >
-                        Mark all as read
-                      </button>
-                    )}
-                  </div>
-                  <div className="space-y-4">
-                    {notifications.map(notification => (
-                      <div
-                        key={notification.id}
-                        className={`border rounded-lg p-4 transition-colors duration-200 ${
-                          notification.read ? 'bg-white' : 'bg-indigo-50'
-                        }`}
-                        onClick={() => !notification.read && markNotificationAsRead(notification.id)}
-                      >
-                        <div className="flex items-start space-x-4">
-                          <div className="flex-shrink-0">
-                            {getNotificationIcon(notification.type, notification.priority)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between">
-                              <p className={`text-sm font-medium ${notification.read ? 'text-gray-900' : 'text-indigo-900'}`}>
-                                {notification.title}
-                              </p>
-                              <span className="text-sm text-gray-500">
-                                {formatTimestamp(notification.timestamp)}
-                              </span>
-                            </div>
-                            <p className="mt-1 text-sm text-gray-500">
-                              {notification.message}
-                            </p>
-                          </div>
-                        </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-
-
-              {activeTab === 'settings' && profile && (
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-semibold text-white">Profile Settings</h2>
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-white">Full Name</label>
-                      <input
-                        type="text"
-                        value={profile.fullName}
-                        onChange={(e) => handleUpdateProfile({ fullName: e.target.value })}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-white">Email</label>
-                      <input
-                        type="email"
-                        value={profile.email}
-                        onChange={(e) => handleUpdateProfile({ email: e.target.value })}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-white">Mobile Number</label>
-                      <input
-                        type="tel"
-                        value={profile.mobileNumber}
-                        onChange={(e) => handleUpdateProfile({ mobileNumber: e.target.value })}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-white">Years of Experience</label>
-                      <input
-                        type="number"
-                        value={profile.yearExp}
-                        onChange={(e) => handleUpdateProfile({ yearExp: parseInt(e.target.value) })}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                      />
                     </div>
                   </div>
                 </div>
               )}
+              {/* Add other tabs like notifications, sessions, etc */}
             </div>
           </div>
         </div>
