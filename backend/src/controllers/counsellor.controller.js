@@ -124,6 +124,9 @@ export const endSession = asyncHandler(async (req, res) => {
 });
 
 export const registerCounsellor = asyncHandler(async (req, res) => {
+    if (typeof req.body.availability === 'string') {
+        req.body.availability = JSON.parse(req.body.availability);
+    }
     const { 
         fullName, 
         email, 
@@ -134,12 +137,14 @@ export const registerCounsellor = asyncHandler(async (req, res) => {
         yearExp, 
         availability = [],
     } = req.body;
+    //console.log(typeof req.body.availability);  // Should log "object" (array)
     let certifications =[];
     if (req.files && req.files.length > 0) {
         certifications = req.files.map(file => ({
             url: file.path, // Or use a cloud storage URL if uploading to cloud
             fileName: file.filename,
         }));}
+        console.log(req.body.availability);  // Check if it's an array or string
 
     // Validate fields
     if ([fullName, email, password, mobileNumber, otp, yearExp].some((field) => field?.trim() === "")) {
@@ -180,10 +185,10 @@ export const registerCounsellor = asyncHandler(async (req, res) => {
         email,
         password,
         mobileNumber,
-        specification: specifications,
+         specification: specifications,
         yearexp: yearExp,
         certifications: certificateImgUrl ? [certificateImgUrl] : [], 
-        availability
+         availability
     });
 
 
