@@ -67,19 +67,21 @@ export const aiAssistedJournal = async (req, res) => {
 // Suggest journal topics
 export const suggestJournalTopics = async (req, res) => {
   try {
-    const { preferences, recentEntries } = req.body;
+    const { topic, count = 5 } = req.body; // Get topic & count from request
 
-    let prompt = "Suggest unique and engaging journal topics for a user.";
-    if (preferences) {
-      prompt += ` The user's interests are: ${preferences.join(", ")}.`;
+    if (!topic) {
+      return res.status(400).json({ message: "Topic is required" });
     }
-    if (recentEntries && recentEntries.length > 0) {
-      prompt += ` Avoid topics related to their recent entries: ${recentEntries.join(", ")}.`;
-    }
+
+    let prompt = `Suggest ${count} unique and engaging journal topics for a user interested in ${topic}.`;
+
     const result = await model.generateContent(prompt);
-
-    const suggestions = result.response.text.split("\n").filter(Boolean);
     
+    console.log("AI Response:", result); // Debugging
+
+    const text = result?.response?.text || result?.text || result?.choices?.[0]?.text || "";
+    const suggestions = typeof text === "string" ? text.split("\n").filter(Boolean).slice(0, count) : [];
+
     res.status(200).json({
       message: "Journal topics suggested successfully",
       topics: suggestions,
@@ -89,3 +91,4 @@ export const suggestJournalTopics = async (req, res) => {
     res.status(500).json({ message: "Error suggesting journal topics", error: error.message });
   }
 };
+

@@ -10,6 +10,12 @@ const userSchema = new Schema( {
         minLength: 10,
         maxLength: 30
     },
+    fullName:
+    {
+      type: String,
+      required:true,
+      unique:true,
+  },
     password:
     {
         type: String,
@@ -36,7 +42,7 @@ const userSchema = new Schema( {
     journals: [
         {
             type: Schema.Types.ObjectId,
-            ref: "Journals"
+            ref: "Journal"
         }],
         events:
         [
@@ -80,6 +86,11 @@ const userSchema = new Schema( {
         parent_phone_no: Number,
         lastLoginDate: {
           type: Date,
+        },
+        issues:
+        {
+          type: Schema.Types.ObjectId,
+            ref: "Issue"
         },
         parent :{
              type: Schema.Types.ObjectId,

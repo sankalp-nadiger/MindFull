@@ -6,6 +6,7 @@ import { Parent } from "../models/parent.model.js";
 import { OTP } from "../models/otp.model.js";
 import { Session } from "../models/session.model.js";
 import { Mood } from "../models/mood.model.js";
+import { Journal } from "../models/journal.model.js";
 import ApiResponse from "../utils/API_Response.js";
 //import { generateAccessAndRefreshTokens, refreshAccessToken } from "./user.controller.js";
 import jwt from "jsonwebtoken";
@@ -219,64 +220,67 @@ const logoutParent = asyncHandler(async (req, res) => {
               .json(new ApiResponse(200, {}, "User logged Out"));
 });
 
-  const getStudentReport = (async (req,res) => {
-    const parentId= req.parent._id;
+const moodScores = {
+    Happy: 5,
+    Excited: 4,
+    Tired: 3,
+    Anxious: 2,
+    Sad: 1,
+    Angry: 0,
+  };
+
+const getStudentReport = async (req, res) => {
+    const parentId = req.parent._id;
     try {
-      // Find the parent and populate associated students
-      const parent = await Parent.findById(parentId).populate({
-        path: "student", // Populate the students field
-        populate: { path: "userId", model: "User" }, // Populate userId in Student
+      const parent = await Parent.findById(parentId).populate("student", "fullName email");
+  
+      if (!parent) throw new ApiError(404, "Parent not found");
+      if (!parent.student) throw new ApiError(404, "No student linked to this parent");
+  
+      const userId = parent.student._id;
+      if (!userId) throw new ApiError(404, "User not found for this student");
+  
+      // ✅ Fix: Ensure timestamps cover the last month properly
+      const today = new Date();
+      today.setHours(23, 59, 59, 999); // End of today
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+      oneMonthAgo.setHours(0, 0, 0, 0); // Start of that day
+  
+      // ✅ Fetch moods ensuring timestamps are correct
+      const moods = await Mood.find({
+        user: userId,
+        timestamp: { $gte: oneMonthAgo, $lte: today }, // Include today & yesterday
+      });
+      console.log(moods)
+      // ✅ Fetch journal entries with corrected timestamps
+      const journals = await Journal.find({
+        user: userId,
+        createdAt: { $gte: oneMonthAgo, $lte: today },
       });
   
-      if (!parent) throw new Error("Parent not found");
+      // ✅ Fix: Ensure avgMood is calculated correctly
+      let avgMood = 0;
+       if (moods.length > 0) {
+      const totalMoodScore = moods.reduce((sum, mood) => sum + (moodScores[mood.mood] || 0), 0);
+      avgMood = totalMoodScore / moods.length;
+    }
   
-      // Extract userIds from the populated student data
-      const userIds = parent.student.map((student) => student.userId._id);
-  
-      // Fetch data for each userId
-      const reports = await Promise.all(
-        userIds.map(async (userId) => {
-          const user = await User.findById(userId);
-          if (!user) throw new Error(`User with ID ${userId} not found`);
-  
-          // Fetch moods for the past month
-          const oneMonthAgo = new Date();
-          oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-  
-          const moods = await Mood.find({
-            user: userId,
-            timestamp: { $gte: oneMonthAgo },
-          });
-  
-          // Fetch journal entries for the past month
-          const journals = await Journal.find({
-            user: userId,
-            createdAt: { $gte: oneMonthAgo },
-          });
-  
-          // Calculate average mood
-          const avgMood =
-            moods.reduce((sum, mood) => sum + mood.value, 0) / (moods.length || 1);
-  
-          // Construct individual report data
-          return {
-            studentName: user.name,
-            avgMood: avgMood.toFixed(2),
-            totalJournals: journals.length,
-          };
-        })
-      );
-  
-      return {
-        parentName: parent.name,
-        reports,
+      // Construct report
+      const report = {
+        parentName: parent.fullName,
+        studentName: parent.student.fullName,
+        avgMood: avgMood.toFixed(2), // Proper decimal format
+        totalJournals: journals.length,
         generatedAt: new Date(),
       };
+      console.log(report)
+      res.status(200).json(new ApiResponse(200, report, "Student report generated successfully"));
     } catch (error) {
       console.error("Error generating report:", error);
-      throw new Error("Report generation failed");
+      res.status(500).json(new ApiResponse(500, null, "Report generation failed"));
     }
-   });
+  };
 
  const getSessions= (async (req,res) =>{
     const parentId=req.parent._id;
