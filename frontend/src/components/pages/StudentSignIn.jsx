@@ -41,8 +41,9 @@ const StudentSignIn = () => {
         console.log("Login successful:", response.data);
 
         // Save user data and tokens
-        // localStorage.setItem("user", JSON.stringify(user));
-        // localStorage.setItem("accessToken", accessToken);
+        sessionStorage.setItem("accessToken", accessToken);
+      sessionStorage.setItem("user", JSON.stringify(user));
+
 
         // Display streak and suggested activity
         alert(

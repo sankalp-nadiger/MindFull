@@ -82,12 +82,34 @@ const StudentSignUp = () => {
         headers: {
           "Content-Type": "multipart/form-data", // Important for file uploads
         },
+        withCredentials: true, // Ensures cookies (accessToken, refreshToken) are included if using HTTP-only cookies
       });
-      toast.success("User registered successfully!");
-      navigate("/phase1"); // Navigate to Phase 1 after successful signup
+    
+      // Extract data from response
+      if (response.status === 201) {
+        console.log(response.data)
+        const { accessToken, createdUser } = response.data.data || {}; // Ensure correct response structure
+    
+        toast.success("User registered successfully!");
+    
+        // Store accessToken and user data only if they exist
+        if (accessToken) {
+          sessionStorage.setItem("accessToken", accessToken);
+        }
+    
+        if (createdUser) {
+          sessionStorage.setItem("user", JSON.stringify(createdUser));
+        }
+    
+        // Navigate only after storing data
+        navigate("/phase1");
+      } else {
+        toast.error("Unexpected response from server.");
+      }
     } catch (error) {
+      console.error("Registration failed:", error);
       toast.error(error.response?.data?.message || "Error during registration");
-    }
+    }    
   };
 
   const handleIdCardUpload = (e) => {

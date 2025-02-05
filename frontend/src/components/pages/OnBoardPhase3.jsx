@@ -30,7 +30,7 @@ const OnboardPhase3 = () => {
     // Assuming the API call is successful, navigate to the main page
     // Replace with your API call
     // If your API call is successful, navigate to the main page:
-    navigate("/main"); // Change "/main" to the actual route of your main page
+    navigate("/MainPage"); // Change "/main" to the actual route of your main page
   };
 
   return (
