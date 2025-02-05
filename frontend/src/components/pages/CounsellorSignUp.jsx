@@ -1,228 +1,294 @@
 import React, { useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
-const CounselorSignUp = () => {
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [yearExp, setYearExp] = useState("");
-  const [password, setPassword] = useState("");
-  const [certifications, setCertifications] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+const CounsellorSignUp = () => {
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    mobileNumber: "",
+    otp: "",
+    specification: [""], // Changed from specifications to specification
+    availability: [
+      { day: "Monday", slots: [] },
+      { day: "Tuesday", slots: [] },
+      { day: "Wednesday", slots: [] },
+      { day: "Thursday", slots: [] },
+      { day: "Friday", slots: [] },
+      { day: "Saturday", slots: [] },
+      { day: "Sunday", slots: [] }
+    ],
+    certifications: null,
+    yearExp: "", // Changed from yearExp to yearexp
+  });
+
   const [otpSent, setOtpSent] = useState(false);
-  const [otpVerified, setOtpVerified] = useState(false);
 
-  // Handle Send OTP
+  const handleChange = (e) => {
+    const value = e.target.type === "number" ? parseInt(e.target.value) || "" : e.target.value;
+    setFormData({ ...formData, [e.target.name]: value });
+  };
+
+  const handleFileChange = (e) => {
+    setFormData({ ...formData, certifications: e.target.files[0] });
+  };
+
   const handleSendOtp = async () => {
-    setLoading(true);
-    setError("");
-    setSuccess("");
-
     try {
-      const response = await fetch("http://localhost:8000/api/auth/send-otp", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ phone, email }),
+      const response = await axios.post("http://localhost:8000/api/counsellor/send-otp", {
+        mobileNumber: parseInt(formData.mobileNumber),
       });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to send OTP");
+      if (response.data.success) {
+        setOtpSent(true);
+        alert("OTP sent successfully!");
       }
-
-      setOtpSent(true);
-      setSuccess("OTP sent successfully!");
-    } catch (err) {
-      setError(err.message);
+    } catch (error) {
+      console.error("OTP error:", error);
+      alert("Error sending OTP: " + (error.response?.data?.message || error.message));
     }
-    setLoading(false);
   };
 
-  // Handle OTP Verification
-  const handleVerifyOtp = async () => {
-    setLoading(true);
-    setError("");
-    setSuccess("");
-
-    try {
-      const response = await fetch("http://localhost:8000/api/auth/verify-otp", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ phone, otp }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || "OTP verification failed");
-      }
-
-      setOtpVerified(true);
-      setSuccess("OTP verified successfully!");
-    } catch (err) {
-      setError(err.message);
-    }
-    setLoading(false);
-  };
-
-  // Handle Final Form Submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
-    setSuccess("");
-
-    const formData = new FormData();
-    formData.append("fullName", fullName);
-    formData.append("email", email);
-    formData.append("password", password);
-    formData.append("mobileNumber", phone);
-    formData.append("yearExp", yearExp);
-
-    if (certifications) {
-      Array.from(certifications).forEach(file => {
-        formData.append("certifications", file);
-      });
-    }
-
     try {
-      const response = await fetch("http://localhost:8000/api/counsellor/register-counsellor", {
-        method: "POST",
-        body: formData,
+
+      // Format the data to match the schema
+      const submissionData = {
+        ...formData,
+        mobileNumber: parseInt(formData.mobileNumber),
+        yearExp: parseInt(formData.yearExp),
+        availability: JSON.stringify(formData.availability.map(day => ({
+          day: day.day,
+          slots: day.slots.map(slot => ({
+            startTime: slot.startTime,
+            endTime: slot.endTime
+          }))
+        })))
+      };
+      
+      // Create FormData object
+      const formDataObj = new FormData();
+      
+      // Append all fields to FormData
+      Object.keys(submissionData).forEach((key) => {
+        if (key === "certifications" && Array.isArray(submissionData[key]) && submissionData[key].length > 0) {
+          // Assuming certifications is an array of file objects
+          submissionData[key].forEach(file => {
+            formDataObj.append(key, file);
+          });
+        } else if (Array.isArray(submissionData[key]) || typeof submissionData[key] === "object") {
+          // Stringify the value if it's an array or object (like availability)
+          formDataObj.append(key, JSON.stringify(submissionData[key]));
+        } else {
+          formDataObj.append(key, submissionData[key]);
+        }
       });
+      
+      // Send request using axios with the correct content type for FormData
+      const response = await axios.post(
+        "http://localhost:8000/api/counsellor/register-counsellor",
+        formDataObj,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",  // This header is automatically handled by FormData
+          },
+        }
+      );
+        
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || "Something went wrong");
+      if (response.status === 201) {
+        alert("Counsellor Sign-up successful!");
+        navigate("/councellor");
       }
-
-      setSuccess("Counselor registered successfully!");
-      setLoading(false);
-    } catch (err) {
-      setError(err.message);
-      setLoading(false);
+    } catch (error) {
+      console.error("Submission error:", error);
+      alert("Registration failed: " + (error.response?.data?.message || error.message));
     }
+  };
+
+  const handleSpecificationChange = (e, index) => {
+    const updatedSpecification = [...formData.specification];
+    updatedSpecification[index] = e.target.value;
+    setFormData({ ...formData, specification: updatedSpecification });
+  };
+
+  const handleAddSpecification = () => {
+    setFormData({ ...formData, specification: [...formData.specification, ""] });
+  };
+
+  const handleAvailabilityChange = (e, dayIndex, slotIndex, field) => {
+    const updatedAvailability = [...formData.availability];
+    updatedAvailability[dayIndex].slots[slotIndex] = {
+      ...updatedAvailability[dayIndex].slots[slotIndex],
+      [field]: e.target.value,
+    };
+    setFormData({ ...formData, availability: updatedAvailability });
+  };
+
+  const handleAddSlot = (dayIndex) => {
+    const updatedAvailability = [...formData.availability];
+    updatedAvailability[dayIndex].slots.push({ startTime: "", endTime: "" });
+    setFormData({ ...formData, availability: updatedAvailability });
+  };
+
+  const handleDayChange = (e, dayIndex) => {
+    const updatedAvailability = [...formData.availability];
+    updatedAvailability[dayIndex].day = e.target.value;
+    setFormData({ ...formData, availability: updatedAvailability });
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-black via-blue-950 to-black text-white px-6">
-      <h1 className="text-4xl font-bold text-indigo-400 mb-6">Counselor Sign Up</h1>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-6">
+      <h1 className="text-3xl font-bold text-blue-400 mb-4">Counsellor Sign-Up</h1>
+      <form className="bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md" onSubmit={handleSubmit}>
+        {/* Personal details */}
+        {["fullName", "email", "password", "mobileNumber"].map((field) => (
+          <div key={field} className="mb-4">
+            <label className="block text-sm font-medium capitalize">{field}</label>
+            <input
+              type={field === "password" ? "password" : field === "mobileNumber" ? "number" : "text"}
+              name={field}
+              value={formData[field]}
+              onChange={handleChange}
+              className="w-full p-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none"
+              required
+            />
+          </div>
+        ))}
 
-      <div className="w-full max-w-md p-6 bg-gray-900 shadow-lg rounded-lg flex flex-col items-center">
-        {error && <div className="text-red-500">{error}</div>}
-        {success && <div className="text-green-500">{success}</div>}
+        {/* Years of Experience */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium">Years of Experience</label>
+          <input
+            type="number"
+            name="yearExp"
+            value={formData.yearExp}
+            onChange={handleChange}
+            className="w-full p-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none"
+            required
+          />
+        </div>
 
-        {/* Step 1: Enter Basic Info */}
-        {!otpSent && (
-          <>
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-300">Full Name</label>
+        {/* Specifications */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium">Specifications</label>
+          {formData.specification.map((spec, index) => (
+            <div key={index} className="flex space-x-4 mb-2">
               <input
                 type="text"
-                className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md"
-                placeholder="Enter your full name"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                value={spec}
+                onChange={(e) => handleSpecificationChange(e, index)}
+                className="w-full p-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none"
                 required
               />
             </div>
+          ))}
+          <button
+            type="button"
+            onClick={handleAddSpecification}
+            className="w-full p-2 bg-blue-500 hover:bg-blue-600 rounded-md"
+          >
+            Add Specification
+          </button>
+        </div>
 
-            <div className="flex flex-col mt-4">
-              <label className="text-sm font-medium text-gray-300">Phone</label>
-              <input
-                type="tel"
-                className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md"
-                placeholder="Enter your phone number"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                required
-              />
+        {/* Availability */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium">Availability</label>
+          {formData.availability.map((day, dayIndex) => (
+            <div key={dayIndex} className="mb-4 p-4 border border-gray-600 rounded-md">
+              <select
+                value={day.day}
+                onChange={(e) => handleDayChange(e, dayIndex)}
+                className="w-full p-2 mb-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none"
+              >
+                {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+
+              {day.slots.map((slot, slotIndex) => (
+                <div key={slotIndex} className="flex space-x-4 mb-2">
+                  <input
+                    type="time"
+                    value={slot.startTime}
+                    onChange={(e) => handleAvailabilityChange(e, dayIndex, slotIndex, "startTime")}
+                    className="w-full p-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none"
+                    required
+                  />
+                  <input
+                    type="time"
+                    value={slot.endTime}
+                    onChange={(e) => handleAvailabilityChange(e, dayIndex, slotIndex, "endTime")}
+                    className="w-full p-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none"
+                    required
+                  />
+                </div>
+              ))}
+
+              <button
+                type="button"
+                onClick={() => handleAddSlot(dayIndex)}
+                className="w-full mt-2 p-2 bg-blue-500 hover:bg-blue-600 rounded-md"
+              >
+                Add Time Slot
+              </button>
             </div>
+          ))}
+        </div>
 
-            <div className="flex flex-col mt-4">
-              <label className="text-sm font-medium text-gray-300">Email</label>
-              <input
-                type="email"
-                className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
+        {/* Upload Certification */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium">Upload Certification</label>
+          <input
+            type="file"
+            name="certifications"
+            onChange={handleFileChange}
+            className="w-full p-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none"
+            required
+          />
+        </div>
 
-            <button
-              className="w-full mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-              onClick={handleSendOtp}
-              disabled={loading}
-            >
-              {loading ? "Sending OTP..." : "Send OTP"}
-            </button>
-          </>
+        {/* OTP */}
+        {otpSent && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium">OTP</label>
+            <input
+              type="text"
+              name="otp"
+              value={formData.otp}
+              onChange={handleChange}
+              className="w-full p-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none"
+              required
+            />
+          </div>
         )}
 
-        {/* Step 2: Enter OTP */}
-        {otpSent && !otpVerified && (
-          <>
-            <div className="flex flex-col mt-4">
-              <label className="text-sm font-medium text-gray-300">Enter OTP</label>
-              <input
-                type="text"
-                className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md"
-                placeholder="Enter OTP"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                required
-              />
-            </div>
-
-            <button
-              className="w-full mt-4 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
-              onClick={handleVerifyOtp}
-              disabled={loading}
-            >
-              {loading ? "Verifying..." : "Verify OTP"}
-            </button>
-          </>
+        {/* Submit Buttons */}
+        {!otpSent ? (
+          <button
+            type="button"
+            onClick={handleSendOtp}
+            className="w-full p-2 bg-blue-500 hover:bg-blue-600 rounded-md"
+          >
+            Send OTP
+          </button>
+        ) : (
+          <button
+            type="submit"
+            className="w-full p-2 bg-green-500 hover:bg-green-600 rounded-md"
+          >
+            Complete Sign-Up
+          </button>
         )}
-
-        {/* Step 3: Enter Additional Details */}
-        {otpVerified && (
-          <form onSubmit={handleSubmit} className="w-full space-y-4">
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-300">Years of Experience</label>
-              <input
-                type="text"
-                className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md"
-                placeholder="Years of Experience"
-                value={yearExp}
-                onChange={(e) => setYearExp(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-300">Upload Certifications</label>
-              <input
-                type="file"
-                accept="image/*,application/pdf"
-                onChange={(e) => setCertifications(e.target.files)}
-              />
-            </div>
-
-            <button className="w-full px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600" type="submit">
-              {loading ? "Submitting..." : "Submit"}
-            </button>
-          </form>
-        )}
-      </div>
+      </form>
     </div>
   );
 };
 
-export default CounselorSignUp;
+export default CounsellorSignUp;
