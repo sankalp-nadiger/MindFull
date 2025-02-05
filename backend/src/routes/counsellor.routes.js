@@ -25,7 +25,7 @@ router.post("/end", counsellor_verifyJWT, endSession);
 
 router.post("/register-counsellor", upload.array('certifications', 5), registerCounsellor);
 router.post("/send-otp", sendOTP);
-router.post("/login-counsellor", counsellor_verifyJWT, loginCounsellor);
+router.post("/login-counsellor", loginCounsellor);
 
 router.post("/logout-counsellor", counsellor_verifyJWT, logoutCounsellor);
 

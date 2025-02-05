@@ -8,6 +8,17 @@ const counsellorSchema= new Schema({
         type: String,
         required: true
     }],
+    fullName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    email: {
+      type: String,
+      //required: true,
+      unique: true,
+      lowercase: true,
+    },
     mobileNumber:
     {
       type: Number,
@@ -22,6 +33,7 @@ const counsellorSchema= new Schema({
     {
         type: String
     }],
+    password: String,
     rating:
     {
         type: Number
@@ -51,7 +63,9 @@ counsellorSchema.pre("save", async function (next) {
   });
   
   counsellorSchema.methods.isPasswordCorrect = async function (password) {
-    return await bcrypt.compare(password, this.password);
+    console.log("Entered:", `"${password}"`);
+    console.log("Stored:", `"${this.password}"`);
+    return await bcrypt.compare(password,this.password);
   };
   
   counsellorSchema.methods.generateAccessToken = function () {
@@ -59,7 +73,6 @@ counsellorSchema.pre("save", async function (next) {
       {
         _id: this._id,
         email: this.email,
-        username: this.username,
         fullName: this.fullName,
       },
       process.env.ACCESS_TOKEN_SECRET,

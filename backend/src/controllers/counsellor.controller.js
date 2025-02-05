@@ -123,6 +123,34 @@ export const endSession = asyncHandler(async (req, res) => {
     res.status(200).json({ message: "Session ended successfully" });
 });
 
+const generateAccessAndRefreshTokens = async (userId) => {
+    try {
+      const counsellor = await Counsellor.findById(userId);
+      if (!counsellor) {
+        throw new ApiError(404, "User not found");
+      }
+  
+      console.log("User found:", counsellor); // Log user to verify it's fetched correctly
+  
+      const accessToken = counsellor.generateAccessToken();
+      const refreshToken = counsellor.generateRefreshToken();
+  
+      console.log("Access token:", accessToken); // Log tokens for debugging
+      console.log("Refresh token:", refreshToken);
+  
+      counsellor.refreshToken = refreshToken; // Store the refresh token in the user document
+      await counsellor.save({ validateBeforeSave: false });
+  
+      return { accessToken, refreshToken };
+    } catch (error) {
+      console.error("Error generating tokens:", error); // Log the error for debugging
+      throw new ApiError(
+        500,
+        "Something went wrong while generating refresh and access token"
+      );
+    }
+  };
+
 export const registerCounsellor = asyncHandler(async (req, res) => {
     if (typeof req.body.availability === 'string') {
         req.body.availability = JSON.parse(req.body.availability);
@@ -201,7 +229,7 @@ export const registerCounsellor = asyncHandler(async (req, res) => {
 
 // Login Counsellor
 export const loginCounsellor = asyncHandler(async (req, res) => {
-    const { password, fullName, mobileNumber, otp } = req.body;
+    const { password, email, mobileNumber, otp } = req.body;
 
     // Validate user credentials
     if (!(mobileNumber && otp)) {
@@ -214,7 +242,7 @@ export const loginCounsellor = asyncHandler(async (req, res) => {
     }
 
     const counsellor = await Counsellor.findOne({
-        $or: [{ fullName }, { mobileNumber }],
+        $or: [{ email }, { mobileNumber }],
     });
 
     if (!counsellor) {
