@@ -31,7 +31,7 @@ setupSignalServer(server);
 setupchat(server)
 // app.options('*', cors()); 
 app.use(cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin:'http://localhost:5173',
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'], 
 }))

@@ -155,76 +155,80 @@ const generateAccessAndRefreshTokens = async (userId) => {
 };
 
 const registerUser = asyncHandler(async (req, res) => {
-    const { fullName, email, username, password, gender, age, location   } = req.body;
-    const idCardFile = req.file?.path;
-    // Validate fields
-    if (
-      [fullName, email, username, password].some((field) => field?.trim() === "")
-    ) {
-      throw new ApiError(400, "All fields are required");
-    }
+  try {
+      const { fullName, email, username, password, gender, age, location } = req.body;
+      const idCardFile = req.file?.path;
   
-    // Check if user already exists
-    const existedUser = await User.findOne({
-      $or: [{ username }, { email }],
-    });
-  
-    if (existedUser) {
-      throw new ApiError(409, "User with email or username already exists");
-    }
-  
-    if(age<18){
-      if(!idCardFile){
-        res.send(400,"ID card upload mandatory for students");
+      if ([fullName, email, username, password].some((field) => field?.trim() === "")) {
+          return res.status(400).json({ success: false, message: "All fields are required" });
       }
-    }
-    
   
-    let parsedLocation;
-    try {
-      parsedLocation = JSON.parse(location);
-      if (!parsedLocation.type || !parsedLocation.coordinates) {
-        throw new Error("Invalid location format");
-       }
-    } catch (error) {
-       throw new ApiError(400, "Invalid location JSON format");
-     }
-    // Create the user
-    const user = await User.create({
-      fullName,
-      email,
-      password,
-      gender,
-      age,
-      username: username.toLowerCase(),
-      idCard: idCardFile,
-      location: parsedLocation,
-    });
-    if(age<18&&idCardFile)
-      extractMobileNumber(idCardFile, user)
-    if (!location) {
-      throw new ApiError(400, "Location is required");
-    }
-    //Set profile avatar
-    await user.assignRandomAvatar();
+      // Check if user exists
+      const existedUser = await User.findOne({ $or: [{ username }, { email }] });
+      if (existedUser) {
+          return res.status(409).json({ success: false, message: "User with email or username already exists" });
+      }
 
-    //await saveUserMood(user._id, mood);
-    // Fetch the created user without sensitive fields
-    const createdUser = await User.findById(user._id).select(
-      "-password",
-    );
+      if (age < 18 && !idCardFile) {
+          return res.status(400).json({ success: false, message: "ID card upload mandatory for students" });
+      }
   
-    if (!createdUser) {
-      throw new ApiError(500, "Something went wrong while registering the user");
-    }
-    console.log(createdUser.refreshToken)
-    // Send response with created user
-    return res
-      .status(201)
-      .json(
-        new ApiResponse(200, { createdUser }, "User registered successfully"),
-      );
-  });
+      // Process location
+      let parsedLocation;
+      try {
+          parsedLocation = JSON.parse(location);
+          if (!parsedLocation.type || !parsedLocation.coordinates) {
+              throw new Error("Invalid location format");
+          }
+      } catch (error) {
+          return res.status(400).json({ success: false, message: "Invalid location JSON format" });
+      }
+
+      // Create user
+      const user = await User.create({
+          fullName,
+          email,
+          password,
+          gender,
+          age,
+          username: username.toLowerCase(),
+          idCard: idCardFile,
+          location: parsedLocation,
+      });
+
+      console.log("User successfully created:", user);
+
+      // Generate tokens
+      const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
+      console.log("Generated Tokens:", { accessToken, refreshToken });
+
+      // Cookie options
+      const options = {
+          httpOnly: true,
+          secure: false, // Set `true` in production with HTTPS
+          sameSite: "lax",
+      };
+
+      // Send response
+      return res
+          .status(201)
+          .cookie("accessToken", accessToken, options)
+          .cookie("refreshToken", refreshToken, options)
+          .json({
+              success: true,
+              message: "User registered successfully",
+              data: {
+                  user: await User.findById(user._id).select("-password"),
+                  accessToken,
+              },
+          });
+
+  } catch (error) {
+      console.error("Error during registration:", error);
+      return res.status(500).json({ success: false, message: "Internal Server Error", error: error.message });
+  }
+});
+
   
   const addInterests= asyncHandler(async (req, res) => {
     const {  userId,selected_interests, isGoal } = req.body;
