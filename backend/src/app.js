@@ -19,6 +19,7 @@ import parentRouter from "./routes/parent.routes.js"
 //import sessionRouter from "./routes/session.routes.js"
 import storyRouter from "./routes/story.routes.js"
 //import moodRouter from "./routes/mood.routes.js"
+import recomendations from "./routes/recommendations.route.js"
 
 //service imports
 import {setupSignalServer} from './services/signalserver.js'
@@ -55,6 +56,7 @@ app.use("/api/dm_chat",dm_chatRouter)
 app.use("/api/parent",parentRouter)
 //app.use("/api/session",sessionRouter)
 app.use("/api/story",storyRouter)
+app.use("/api/recommendations",recomendations)
 // app.use("/api/mood",moodRouter)
 
 export default app;

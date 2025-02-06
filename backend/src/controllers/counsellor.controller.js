@@ -12,8 +12,7 @@ const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const apiKeySid = process.env.TWILIO_API_KEY_SID;
 const apiKeySecret = process.env.TWILIO_API_KEY_SECRET;
 
-// Twilio Video Token Generation
-export const generateTwilioToken = (identity, roomName) => {
+const generateTwilioToken = (identity, roomName) => {
     const AccessToken = twilio.jwt.AccessToken;
     const VideoGrant = AccessToken.VideoGrant;
 
@@ -99,7 +98,6 @@ export const getTwilioToken = asyncHandler(async (req, res) => {
 
     res.status(200).json({ token, roomName: session.roomName });
 });
-
 // End a session (Counselor Side)
 export const endSession = asyncHandler(async (req, res) => {
     const { sessionId } = req.body;
@@ -114,7 +112,7 @@ export const endSession = asyncHandler(async (req, res) => {
     await session.save();
 
     // Mark counselor as available again
-    const counsellor = await Counsellor.findById(session.counsellor);
+    const counsellor = await Counsellor.findById(session.counselor);
     if (counsellor) {
         counsellor.isAvailable = true;
         await counsellor.save();
