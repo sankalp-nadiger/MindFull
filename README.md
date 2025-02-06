@@ -142,7 +142,7 @@ MongoDB >= 4.0.0
 ### Installation
 1. Clone the repository
 ```bash
-git clone https://github.com/your-org/mindful-student.git
+git clone https://github.com/sankalp-nadiger/MindFull.git
 cd mindful-student
 ```
 
@@ -172,7 +172,7 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ## 🤝 Support
 
-For support, email support@mindfulstudent.com or join our Slack channel.
+For support, reach out to us on email.
 
 ---
 
