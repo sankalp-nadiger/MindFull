@@ -44,7 +44,7 @@ export const requestSession = asyncHandler(async (req, res) => {
     }
 
     // Find an available counselor
-    const counselor = await Counselor.findOne({ isAvailable: true });
+    const counselor = await Counsellor.findOne({ isAvailable: true });
     if (!counselor) {
         throw new ApiError(404, "No available counselors at the moment");
     }

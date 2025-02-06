@@ -345,35 +345,37 @@ const checkMoodAndNotifyParent = async (req,res) => {
     }
   };
 
-const getJournals=(async(req,res)=> {
+  const getJournals = async (req, res) => {
     try {
-        const parentId=req.parent._id;
-        const student = await User.findOne({ parent: parentId }).populate("journals");
-
+        const parentId = req.parent._id;
+        
+        // First find the student
+        const student = await User.findOne({ parent: parentId });
+        
         if (!student) {
-            return {
+            return res.status(404).json({
                 success: false,
                 message: "No student found for this parent",
-            };
+            });
         }
 
-        // Retrieve all journals for this student
-        const journals = student.journals;
+        // Directly query the journals collection
+        const journals = await Journal.find({ user: student._id });
+        console.log("Direct journal query result:", journals);
 
         res.status(200).json({
             success: true,
-            journals: journals,
+            journals: journals
         });
     } catch (error) {
         console.error("Error fetching journal entries:", error);
-        return {
+        res.status(500).json({
             success: false,
             message: "Failed to fetch journal entries",
             error: error.message,
-        };
+        });
     }
-})
-
+};
 const getIssues=(async(req,res) =>{
     const parentId= req.parent._id;
     try {

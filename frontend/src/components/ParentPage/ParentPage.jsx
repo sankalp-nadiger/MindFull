@@ -64,13 +64,19 @@ function ParentDashboard({ parentId }) {
         );
 
         const [moodRes, sessionsRes, journalsRes, issuesRes, reportRes] = await Promise.all(requests);
-
+        console.log(journalsRes)
         if (moodRes.data) {
           setMoodData(moodRes.data.map((val) => (val !== null ? val + 1 : 0)));
           setActivityData(moodRes.activitiesCompleted || Array(7).fill(0));
         }
         setSessions(sessionsRes.sessions || []);
-        setJournals(journalsRes.journals || []);
+        if (journalsRes && journalsRes.journals) {
+          console.log("Setting journals:", journalsRes.journals);
+          setJournals(journalsRes.journals);
+      } else {
+          console.log("No journals found in response");
+          setJournals([]);
+      }
         setIssues(issuesRes.issues || []);
         setReport(reportRes.data || null);
       } catch (error) {
@@ -135,15 +141,34 @@ function ParentDashboard({ parentId }) {
             </div>
 
             <div className="bg-gray-800 p-6 rounded-lg shadow-md">
-              <h3 className="text-2xl font-semibold mb-4">Journals</h3>
-              <ul className="space-y-2">
-                {journals.map((journal) => (
-                  <li key={journal._id} className="border-b border-gray-600 pb-2">
-                    {journal.content}
-                  </li>
-                ))}
-              </ul>
-            </div>
+    <h3 className="text-2xl font-semibold mb-4">Journals</h3>
+    {journals.length > 0 ? (
+        <ul className="space-y-4">
+            {journals.map((journal) => (
+                <li key={journal._id} className="border-b border-gray-600 pb-4">
+                    <div className="flex justify-between items-start mb-2">
+                        <h4 className="text-lg font-medium text-blue-400">
+                            {journal.topic || "Untitled Entry"}
+                        </h4>
+                        <span className="text-sm text-gray-400">
+                            {new Date(journal.entryDate).toLocaleDateString()}
+                        </span>
+                    </div>
+                    <p className="text-gray-300 whitespace-pre-wrap">
+                        {journal.entryText}
+                    </p>
+                    {journal.moodScore && (
+                        <div className="mt-2 text-sm text-gray-400">
+                            Mood Score: {journal.moodScore}
+                        </div>
+                    )}
+                </li>
+            ))}
+        </ul>
+    ) : (
+        <p className="text-gray-400">No journal entries found.</p>
+    )}
+</div>
 
             <div className="bg-gray-800 p-6 rounded-lg shadow-md">
               <h3 className="text-2xl font-semibold mb-4">Issues</h3>

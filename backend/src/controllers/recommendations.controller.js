@@ -1,142 +1,206 @@
-// recommendstions Controller
 import axios from 'axios';
-import Resource from '../models/resource.model';
-import Interest from '../models/interests.model';
-import Issue from '../models/issue.model';
+import {Resource} from '../models/resource.model.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 export const fetchRecommendations = async (req, res) => {
   try {
-    const { userId, interests: userInterests, issues: userIssues, goals: userGoals } = req.body;
+    const { userId, watchedUrls, userPreferences } = req.body;
+    const { interests = [], goals = [], issues = [] } = userPreferences || {};
 
-    if (!userId || !Array.isArray(userInterests) || !Array.isArray(userIssues) || !Array.isArray(userGoals)) {
+    if (!userId || !userPreferences) {
       return res.status(400).json({ 
-        status: 'error',
-        message: 'Missing or invalid required fields. Please provide userId, interests, issues, and goals arrays.'
+        message: 'Missing required fields.' 
       });
     }
-      
-    // Fetch user's watched resources to exclude them from recommendations
-    const watchedResources = await Resource.find({ user: userId, watched: true });
-    const watchedIds = watchedResources.map((resource) => resource._id.toString());
 
-    // Fetch dynamic resources based on interests, issues, and goals
-    const fetchedResources = await fetchExternalResources([...userInterests, ...userIssues, ...userGoals]);
+    // Combine all user preferences for search
+    const searchTerms = [
+      ...(interests || []).map(i => i.name || ""),
+      ...(goals || []).map(g => g.name || ""),
+      ...(issues || []).map(i => i.name || "")
+    ].filter(Boolean);
+    console.log("Search terms:", searchTerms);
+if (searchTerms.length === 0) {
+  console.error("No valid search terms available.");
+  return res.status(400).json({ message: "No valid search terms provided." });
+}
+    // Get resources for all preferences combined
+    const allResources = await fetchExternalResources(searchTerms);
 
-    // Filter out already watched resources
-    const filteredResources = fetchedResources.filter(resource => 
-      !watchedIds.includes(resource.url) && resource.available
+    // Remove watched resources
+    const newResources = allResources.filter(resource => 
+      !watchedUrls.includes(resource.url)
     );
 
-    // Save new recommendations to the database
-    const resourcesToSave = filteredResources.map(resource => ({
+    // Score resources based on relevance to all user preferences
+    const scoredResources = newResources.map(resource => ({
       ...resource,
       user: userId,
-      related_interest: resource.related_interest,
-      related_issues: userIssues,
-      related_goals: userGoals
+      relevanceScores: {
+        interests: calculateInterestRelevance(resource, interests),
+        goals: calculateGoalRelevance(resource, goals),
+        issues: calculateIssueRelevance(resource, issues)
+      }
     }));
 
-    const savedResources = await Resource.insertMany(resourcesToSave);
+    // Calculate final score considering all factors
+    const rankedResources = scoredResources.map(resource => ({
+      ...resource,
+      finalScore: (
+        resource.relevanceScores.interests + 
+        resource.relevanceScores.goals + 
+        resource.relevanceScores.issues
+      ) / 3
+    }))
+    .sort((a, b) => b.finalScore - a.finalScore);
 
+const resourcesToSave = rankedResources.map(resource => ({
+      title: resource.title,
+      description: resource.description || "No description available",
+      url: resource.url,
+      type: resource.type,
+      user: userId,
+      watched: false,
+      relevanceScore: resource.finalScore || 0,
+      related_interest: [
+        ...(interests || []).map(i => i?._id).filter(Boolean),  // Ensures valid interest IDs
+        ...(goals || []).map(g => g?._id).filter(Boolean)       // Ensures valid goal IDs
+      ],
+      related_issues: (issues || []).map(i => i?._id).filter(Boolean)  // Ensures valid issue IDs
+    }));
+    
+    for (let resource of resourcesToSave) {
+      const existingResource = await Resource.findOne({ url: resource.url });
+      if (existingResource) {
+        console.log(`Resource with URL ${resource.url} already exists, skipping insert.`);
+      } else {
+        await Resource.create(resource);
+        console.log(`Resource with URL ${resource.url} saved.`);
+      }
+    }
+    
+    return resourcesToSave;
     res.status(200).json({
-      status: 'success',
-      message: 'Recommendations fetched and saved successfully.',
-      data: savedResources
+      message: 'Recommendations fetched successfully.',
+      data: resourcesToSave
     });
+
   } catch (error) {
     console.error('Error in fetchRecommendations:', error);
     res.status(500).json({
-      status: 'error',
       message: 'Error fetching recommendations',
       error: error.message
     });
   }
 };
 
-async function fetchExternalResources(interests) {
-  const fetchedResources = [];
+async function fetchExternalResources(searchTerms) {
+  const resources = [];
   const maxResults = 5;
+  console.log("Books API Key:", process.env.BOOKS_API_KEY);
+console.log("YouTube API Key:", process.env.YOUTUBE_API_KEY);
+console.log("Spotify API Key:", process.env.SPOTIFY_API_KEY);
 
-  for (const interest of interests) {
+  for (const term of searchTerms) {
     try {
-      // Google Books API for books
-      const bookResponse = await axios.get(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(interest)}&maxResults=${maxResults}`);
+      // Fetch books
+      const bookResponse = await axios.get(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(term)}&maxResults=${maxResults}&key=${process.env.BOOKS_API_KEY}`);
       (bookResponse.data.items || []).forEach(book => {
-        fetchedResources.push({
+        resources.push({
           title: book.volumeInfo.title,
           description: book.volumeInfo.description || '',
-          url: book.volumeInfo.infoLink || '',
+          url: book.volumeInfo.infoLink,
           type: 'book',
-          related_interest: [interest],
-          watched: false,
-          available: true
+          searchTerm: term
         });
       });
 
-      // YouTube Data API for videos
-      const videoResponse = await axios.get(`https://youtube.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(interest)}&maxResults=${maxResults}&type=video&key=AIzaSyAKONN4jJvULvjKLIpbkd1U-Bioq2zrDIs`);
+      // Fetch videos
+      const videoResponse = await axios.get(`https://youtube.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(term)}&maxResults=${maxResults}&type=video&key=${process.env.YOUTUBE_API_KEY}`);
       (videoResponse.data.items || []).forEach(video => {
-        fetchedResources.push({
+        resources.push({
           title: video.snippet.title,
           description: video.snippet.description || '',
           url: `https://www.youtube.com/watch?v=${video.id.videoId}`,
           type: 'video',
-          related_interest: [interest],
-          watched: false,
-          available: true
+          searchTerm: term
         });
       });
 
-      // Medium API for blogs
-      const mediumResponse = await axios.get(`https://api.rss2json.com/v1/api.json?rss_url=https://medium.com/feed/tag/${encodeURIComponent(interest)}&count=${maxResults}`);
-      (mediumResponse.data.items || []).forEach(blog => {
-        fetchedResources.push({
+      // Fetch blogs
+      /*const blogResponse = await axios.get(`https://api.rss2json.com/v1/api.json?rss_url=https://medium.com/feed/tag/${encodeURIComponent(term)}&count=${maxResults}&api_key=${process.env.MEDIUM_API_KEY}`);
+      (blogResponse.data.items || []).forEach(blog => {
+        resources.push({
           title: blog.title,
           description: blog.description || '',
-          url: blog.link || '',
+          url: blog.link,
           type: 'blog',
-          related_interest: [interest],
-          watched: false,
-          available: true
+          searchTerm: term
         });
-      });
+      });*/
 
-      // Spotify Web API for podcasts
-      const spotifyResponse = await axios.get(`https://api.spotify.com/v1/search?q=${encodeURIComponent(interest)}&type=podcast&limit=${maxResults}`, {
-        headers: { 'Authorization': 'Bearer YOUR_SPOTIFY_ACCESS_TOKEN' }
+      // Fetch podcasts (Spotify)
+      /*const spotifyResponse = await axios.get(`https://api.spotify.com/v1/search?q=${encodeURIComponent(term)}&type=podcast&limit=${maxResults}`, {
+        headers: { 'Authorization': `Bearer ${process.env.SPOTIFY_API_KEY}` }
       });
       (spotifyResponse.data.podcasts?.items || []).forEach(podcast => {
-        fetchedResources.push({
+        resources.push({
           title: podcast.name,
           description: podcast.description || '',
-          url: podcast.external_urls.spotify || '',
+          url: podcast.external_urls.spotify,
           type: 'podcast',
-          related_interest: [interest],
-          watched: false,
-          available: true
+          searchTerm: term
         });
-      });
-
-      // Eventbrite API for events
-      const eventResponse = await axios.get(`https://www.eventbriteapi.com/v3/events/search/?q=${encodeURIComponent(interest)}&token=XJP4I6OXDUWYHIC44MTL`, {
-        params: { "expand": "venue", "page_size": maxResults }
-      });
-      (eventResponse.data.events || []).forEach(event => {
-        fetchedResources.push({
-          title: event.name.text,
-          description: event.description.text || '',
-          url: event.url || '',
-          type: 'event',
-          related_interest: [interest],
-          watched: false,
-          available: true
-        });
-      });
+      });*/
 
     } catch (error) {
-      console.error(`Error fetching resources for interest ${interest}:`, error);
+      console.error(`Error fetching resources for term ${term}:`, error.message);
     }
   }
 
-  return fetchedResources;
+  return resources;
+}
+
+
+function calculateInterestRelevance(resource, interests) {
+  let score = 0;
+  interests.forEach(interest => {
+    if (
+      resource.title.toLowerCase().includes(interest.name.toLowerCase()) ||
+      resource.description.toLowerCase().includes(interest.name.toLowerCase()) ||
+      resource.searchTerm.toLowerCase() === interest.name.toLowerCase()
+    ) {
+      score += 1;
+    }
+  });
+  return score / interests.length;
+}
+
+function calculateGoalRelevance(resource, goals) {
+  let score = 0;
+  goals.forEach(goal => {
+    if (
+      resource.title.toLowerCase().includes(goal.name.toLowerCase()) ||
+      resource.description.toLowerCase().includes(goal.name.toLowerCase()) ||
+      resource.searchTerm.toLowerCase() === goal.name.toLowerCase()
+    ) {
+      score += 1;
+    }
+  });
+  return score / goals.length;
+}
+
+function calculateIssueRelevance(resource, issues) {
+  let score = 0;
+  issues.forEach(issue => {
+    if (
+      resource.title.toLowerCase().includes(issue.name.toLowerCase()) ||
+      resource.description.toLowerCase().includes(issue.name.toLowerCase()) ||
+      resource.searchTerm.toLowerCase() === issue.name.toLowerCase()
+    ) {
+      score += 1;
+    }
+  });
+  return score / issues.length;
 }

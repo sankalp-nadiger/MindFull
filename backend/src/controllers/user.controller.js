@@ -230,84 +230,94 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
   
-  const addInterests= asyncHandler(async (req, res) => {
-    const {  userId,selected_interests, isGoal } = req.body;
-   const user = await User.findById(userId);
+const addInterests = asyncHandler(async (req, res) => {
+  const { selected_interests, goal } = req.body;
+  const userId = req.user._id;
+  console.log(req.body)
+  const user = await User.findById(userId);
   if (!user) {
-    throw new ApiError(404, "Question not found");
+    throw new ApiError(404, "User not found");
   }
-    const user_interests = [];
-    for (const tagName of selected_interests) {
-      let tag = await Interest.findOne({ name: tagName });
-  
-      if (!tag) {
-        // Tag doesn't exist, create it 
-        tag = await Interest.create({
-          name: tagName,
-          user: userId,
-          isGoal
-        });
-      }
-  
-      user_interests.push(tag._id); 
-    // Collect tag IDs to associate with the user
-    }
-    user.interests=user_interests;
-    await user.save();
-    return res.status(200).json({
-      status: "success",
-      message: "User Interests added successfully",
+
+  const user_interests = [];
+
+  // Save interests
+  for (const tagName of selected_interests) {
+    const tag = await Interest.create({
+      name: tagName,
+      user: userId,
+      isGoal: false, // Regular interests are not goals
     });
+
+    user_interests.push(tag._id);
+  }
+
+  // Save goal if provided
+  if (goal) {
+    const goalTag = await Interest.create({
+      name: goal,
+      user: userId,
+      isGoal: true, // Mark this as a goal
+    });
+
+    user_interests.push(goalTag._id);
+  }
+
+  // Update user's interests
+  user.interests = user_interests;
+  await user.save();
+
+  return res.status(200).json({
+    status: "success",
+    message: "User interests and goal added successfully",
   });
+});
+
   export const addIssues = asyncHandler(async (req, res) => {
-    const { userId, diagnoised_issues } = req.body;
-  
-    // Check if diagnosed_issues is an array and not empty
-    if (!Array.isArray(diagnoised_issues) || diagnoised_issues.length === 0) {
+    const { diagnosed_issues } = req.body;  // Expecting an array of { issueName, severity }
+    const userId = req.user._id;
+    console.log("Full request body:", req.body);
+    console.log("Full user object:", req.user);
+    if (!Array.isArray(diagnosed_issues) || diagnosed_issues.length === 0) {
       return res.status(400).json({ message: "Diagnosed issues must be an array with at least one issue." });
     }
   
-    // Check if user exists
     const user = await User.findById(userId);
     if (!user) {
-      throw new ApiError(404, "User not found");
+      return res.status(404).json({ message: "User not found" });
     }
   
-    // List of valid issues (ensure these match frontend names exactly)
     const validIssues = [
       "Anxiety",
       "Depression",
-      "Bipolar Disorder",
-      "Obsessive-Compulsive Disorder",
+      "Bipolar",
+      "Ocd",
       "PTSD",
       "Substance Use",
       "ADHD",
       "Eating Disorders",
     ];
-  
-    // Store the issue IDs that will be associated with the user
     const user_issues = [];
   
-    // Loop through the selected issues and check if they exist in the database
-    for (const issueName of diagnoised_issues) {
-      // Ensure issueName is a string and check if it's a valid issue
-      if (typeof issueName !== 'string' || !validIssues.includes(issueName)) {
-        return res.status(400).json({ message: `${issueName} is not a valid issue` });
+    for (const { illnessType, severity } of diagnosed_issues) {
+      if (typeof illnessType !== "string" || !validIssues.includes(illnessType)) {
+        return res.status(400).json({ message: `${illnessType} is not a valid issue` });
       }
   
-      // Check if the issue exists in the database
-      let issue = await Issue.findOne({ name: issueName });
-  
-      if (!issue) {
-        // If the issue does not exist, create a new issue
-        issue = await Issue.create({ name: issueName });
+      if (!["Low", "Moderate", "High"].includes(severity)) {
+        return res.status(400).json({ message: `Invalid severity level for ${illnessType}` });
       }
   
-      // Push the issue ID to the user_issues array
-      user_issues.push(issue._id);
+      try {
+        const issue = await Issue.create({ illnessType, severity, user: userId });
+        user_issues.push(issue._id);
+      } catch (error) {
+        console.log("Error creating issue:", error);
+        return res.status(400).json({ message: error.message });
+      }
+      //user_issues.push(issue._id);
     }
   
-    // Update the user's issues field
     user.issues = user_issues;
     await user.save();
   
@@ -316,6 +326,7 @@ const registerUser = asyncHandler(async (req, res) => {
       message: "User issues added successfully",
     });
   });
+  
   
   const loginUser = asyncHandler(async (req, res) => {
     const { username, password, email, mood } = req.body;
@@ -688,15 +699,6 @@ const calculateAverageMood = async (req,res) => {
 
 const extractMobileNumber = async (imagePath, user) => {
   try {
-    /*let imageBuffer;
-    if (imagePath.startsWith('http')) {
-      const response = await axios.get(imagePath, { responseType: 'arraybuffer' });
-      imageBuffer = Buffer.from(response.data, 'binary');
-    } else {
-      // If it's a local file path, use it directly
-      imageBuffer = imagePath;
-    }*/
-
     const result = await Tesseract.recognize(imagePath, 'eng');
     const text = result.data.text;
       const phoneRegex = /\b(\+?\d{1,4}[-.\s]?)?(\(?\d{3}\)?[-.\s]?)?[\d-.\s]{7,10}\b/;

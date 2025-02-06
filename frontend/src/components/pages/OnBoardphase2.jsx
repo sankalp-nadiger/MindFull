@@ -37,30 +37,39 @@ const OnBoardingPhase = () => {
 
   // Handle submission
   const handleSubmit = async () => {
-    const userId = "678eb93145dd095192be902d" // Replace this with the actual user ID (from context, auth, or props)
-    
-    if (!userId) {
-      alert("User not authenticated");
-      return;
-    }
-
     const userData = {
-      userId, // Add userId to the request body
       selected_interests: selectedTopics,
-      isGoal: goal ? true : false, // Set isGoal based on whether any goal is provided
-       // Send the single goal value
-       issues: [] // We'll send this in Phase 3
-
+      goal
     };
-
+  
     try {
       setIsSubmitting(true);
+      
+      // Retrieve the access token from sessionStorage
+      const accessToken = sessionStorage.getItem("accessToken");
+      
+      if (!accessToken) {
+        alert("Some error has occured. Please try to sign up again.");
+        return;
+      }
+  
       // API call to save user goals and interests
-      const response = await axios.patch("http://localhost:8000/api/users/add-interests", userData);
+      const response = await axios.patch(
+        "http://localhost:8000/api/users/add-interests", 
+        userData, 
+        { 
+          headers: { 
+            Authorization: `Bearer ${accessToken}` // Include access token in the header
+          }
+        }
+      );
+      
       console.log("Response:", response.data);
       alert("Your goal and interests have been saved!");
+      
       // Navigate to Phase 3
       navigate("/phase3");
+  
     } catch (error) {
       console.error("Error saving data:", error);
       alert("Failed to save your goal and interests. Please try again.");
@@ -68,6 +77,7 @@ const OnBoardingPhase = () => {
       setIsSubmitting(false);
     }
   };
+  
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen  bg-gradient-to-b from-black via-blue-950 to-black text-white px-6 py-10">

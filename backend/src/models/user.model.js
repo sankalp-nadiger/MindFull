@@ -68,9 +68,6 @@ const userSchema = new Schema( {
         mood: {
             type: String
         },
-        goals: [ {
-            type: String
-        } ],
         interests: [{
             type: Schema.Types.ObjectId,
             ref: "Interest"
@@ -88,10 +85,10 @@ const userSchema = new Schema( {
           type: Date,
         },
         issues:
-        {
+        [{
           type: Schema.Types.ObjectId,
             ref: "Issue"
-        },
+        }],
         parent :{
              type: Schema.Types.ObjectId,
             ref: "parent"

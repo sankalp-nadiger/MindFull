@@ -1,43 +1,15 @@
-import {Schema, model} from "mongoose";
+import mongoose from 'mongoose';
 
-const resourceSchema = new Schema({
-  url: String,
-  type: {
-    type: String,
-    enum: ['book', 'video', 'blog', 'podcast', 'event'],
-    required: true
-  },
-  title: {
-    type: String,
-    required: true
-  },
-  content: String,
-  related_interest: [{
-    type: Schema.Types.ObjectId,
-    ref: 'Interest'
-  }],
-  related_issues: [{
-    type: Schema.Types.ObjectId,
-    ref: 'Issue'
-  }],
-  related_goals: [{
-    type: Schema.Types.ObjectId,
-    ref: 'Interest'
-  }],
-  watched: {
-    type: Boolean,
-    default: false
-  },
-  user: {
-    type: Schema.Types.ObjectId,
-    ref: 'User'
-  },
-  metadata: {
-    type: Map,
-    of: String
-  }
-},{
-  timestamps: true
-});
+const ResourceSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  description: { type: String },
+  url: { type: String, required: true, unique: true },
+  type: { type: String, enum: ['book', 'video', 'blog', 'podcast'], required: true },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  watched: { type: Boolean, default: false },
+  relevanceScore: { type: Number, default: 0 },
+  related_interest: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Interest' }],  // ✅ Now includes goals
+  related_issues: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Issue' }],
+}, { timestamps: true });
 
-export const Resource= model("Resource",resourceSchema)
+export const Resource = mongoose.model('Resource', ResourceSchema);
