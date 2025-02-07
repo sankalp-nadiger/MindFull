@@ -66,7 +66,8 @@ export const fetchResourceRecommendations = async (req, res) => {
 };
 export const markRecommendationAsWatched = async (req, res) => {
   try {
-    const { userId, recommendationId } = req.body;
+    const userId= req.user._id;
+    const { recommendationId } = req.body;
 
     if (!userId || !recommendationId) {
       return res.status(400).json({ message: 'Missing required fields.' });
