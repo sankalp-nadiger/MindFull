@@ -5,7 +5,7 @@ import ParentDashboard from "./components/ParentPage/ParentPage"
 import { HeroHighlightDemo } from "./components/MainPage/mainPage"
 import Activity from "./components/Activities/activity"
 import Councellor from "./components/Councellor/Councellor"
-import CommunityChat from "./components/Community/Communitychat"
+//import CommunityChat from "./components/Community/Communitychat"
 import Quiz from "./components/Games/quizgame"
 import SudokuGame from "./components/Games/sudoku"
 import CrosswordGame from "./components/Games/Crosswords"
@@ -32,6 +32,7 @@ import CreateStory from './components/pages/CreateStory';
 import SuccessStories from "./components/HomePage/SuccessStories"
 import VideoChat from "./components/Videochat/Videochat"
 import AIrecommendation from "./components/Materialrecommendation/AIrecommendation"
+import CommunityChat from "./components/Community/Communitychat"
 
 function App() {
 
@@ -69,6 +70,7 @@ function App() {
          <Route path="/SuccessStories" element={<SuccessStories />} />
          <Route path="/video" element={<VideoChat />}/>
          <Route path="/recommend" element={<AIrecommendation/>}/>
+         <Route path="/community" element={<CommunityChat/>}/>
         </Routes>
       </Router>
     </>

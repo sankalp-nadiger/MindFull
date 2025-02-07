@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate from react-router-dom
 import axios from 'axios'; // Import axios for API calls
 import { Bell, Calendar, Users, Settings, LogOut, Video, User, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 
@@ -7,19 +6,23 @@ function Councellor() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sessions, setSessions] = useState([]);
   const [profile, setProfile] = useState(null);
+  const [isJoiningSession, setIsJoiningSession] = useState(false);
+  const [selectedSession, setSelectedSession] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const navigate = useNavigate(); // Initialize the navigate function
 
   useEffect(() => {
+    // Fetch profile data from the backend
     axios.get('http://localhost:8000/api/profile')
       .then(response => setProfile(response.data))
       .catch(error => console.error('Error fetching profile data', error));
 
+    // Fetch sessions data from the backend
     axios.get('http://localhost:8000/api/sessions')
       .then(response => setSessions(response.data))
       .catch(error => console.error('Error fetching sessions', error));
 
+    // Fetch notifications data from the backend
     axios.get('http://localhost:8000/api/notifications')
       .then(response => {
         setNotifications(response.data);
@@ -28,9 +31,76 @@ function Councellor() {
       .catch(error => console.error('Error fetching notifications', error));
   }, []);
 
-  const handleJoinSession = (session) => {
-    // Navigate to the /video route when the session is joined
-    navigate('/video');
+  const handleJoinSession = async (session) => {
+    setIsJoiningSession(true);
+    setSelectedSession(session);
+    // Call backend to get Twilio token and handle video session (mocked)
+    setTimeout(() => setIsJoiningSession(false), 2000);
+  };
+
+  const handleEndSession = async (sessionId) => {
+    // In real app: Call backend to end the session
+    await axios.post(`http://localhost:8000/api/sessions/${sessionId}/end`);
+    setSessions(sessions.map(s => 
+      s._id === sessionId ? { ...s, status: 'Completed' } : s
+    ));
+  };
+
+  const handleUpdateProfile = async (updates) => {
+    try {
+      await axios.put('http://localhost:8000/api/profile', updates);
+      setProfile(prev => prev ? { ...prev, ...updates } : null);
+    } catch (error) {
+      console.error('Error updating profile', error);
+    }
+  };
+
+  const markNotificationAsRead = (notificationId) => {
+    setNotifications(notifications.map(notification => 
+      notification.id === notificationId 
+        ? { ...notification, read: true }
+        : notification
+    ));
+    setUnreadCount(prev => Math.max(0, prev - 1));
+
+    // Update notification read status on backend
+    axios.post(`http://localhost:8000/api/notifications/${notificationId}/read`);
+  };
+
+  const markAllNotificationsAsRead = () => {
+    setNotifications(notifications.map(notification => ({ ...notification, read: true })));
+    setUnreadCount(0);
+
+    // Update all notifications to read on the backend
+    axios.post('http://localhost:8000/api/notifications/markAllAsRead');
+  };
+
+  const getNotificationIcon = (type, priority) => {
+    switch (type) {
+      case 'session_request':
+        return <Clock className={`h-6 w-6 ${priority === 'high' ? 'text-red-500' : 'text-blue-500'}`} />;
+      case 'schedule_change':
+        return <AlertCircle className={`h-6 w-6 ${priority === 'medium' ? 'text-yellow-500' : 'text-blue-500'}`} />;
+      case 'feedback':
+        return <CheckCircle className={`h-6 w-6 ${priority === 'low' ? 'text-green-500' : 'text-blue-500'}`} />;
+      default:
+        return <Bell className="h-6 w-6 text-gray-500" />;
+    }
+  };
+
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes} minutes ago`;
+    } else if (diffInMinutes < 1440) {
+      const hours = Math.floor(diffInMinutes / 60);
+      return `${hours} hours ago`;
+    } else {
+      return date.toLocaleDateString();
+    }
   };
 
   return (
@@ -63,7 +133,7 @@ function Councellor() {
               <div className="flex items-center">
                 <img
                   className="h-8 w-8 rounded-full"
-                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
                   alt="Profile"
                 />
               </div>
@@ -101,7 +171,7 @@ function Councellor() {
                   )}
                 </button>
                 <button
-                  onClick={() => handleJoinSession()} // Handle join session to navigate to /video
+                  onClick={() => setActiveTab('sessions')}
                   className={`flex items-center space-x-3 w-full p-2 rounded ${
                     activeTab === 'sessions' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600'
                   }`}
@@ -152,7 +222,7 @@ function Councellor() {
                           <li key={session._id} className="flex justify-between">
                             <span className="text-sm text-gray-700">{session.title}</span>
                             <button
-                              onClick={() => handleJoinSession(session)} // Clicking this will navigate to /video
+                              onClick={() => handleJoinSession(session)}
                               className="text-xs text-blue-600 hover:text-blue-800"
                             >
                               Join
@@ -161,7 +231,36 @@ function Councellor() {
                         ))}
                       </ul>
                     </div>
-                    {/* Other sections like notifications and profile */}
+                    <div className="bg-indigo-50 p-6 rounded-lg">
+                      <h3 className="text-lg font-medium text-indigo-600">Notifications</h3>
+                      <ul className="space-y-4">
+                        {notifications.map(notification => (
+                          <li key={notification.id} className="flex justify-between">
+                            <span className="text-sm text-gray-700">
+                              {getNotificationIcon(notification.type, notification.priority)}
+                              <span className="ml-2">{notification.message}</span>
+                            </span>
+                            <button
+                              onClick={() => markNotificationAsRead(notification.id)}
+                              className="text-xs text-blue-600 hover:text-blue-800"
+                            >
+                              Mark as Read
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="bg-indigo-50 p-6 rounded-lg">
+                      <h3 className="text-lg font-medium text-indigo-600">Your Profile</h3>
+                      <div className="space-y-4">
+                        {profile && (
+                          <div>
+                            <p className="text-sm text-gray-700">Name: {profile.fullName}</p>
+                            <p className="text-sm text-gray-700">Email: {profile.email}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}

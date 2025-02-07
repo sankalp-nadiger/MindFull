@@ -1,204 +1,215 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const VideoChat = () => {
+const VideoChat = ({ userType = 'user' }) => {
   const [issueDetails, setIssueDetails] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [selectedSession, setSelectedSession] = useState(null);
-  const [roomName, setRoomName] = useState('');
-  const [token, setToken] = useState('');
-  const [userId, setUserId] = useState(null);  // State to store userId
-  const JWTToken = sessionStorage.getItem("accessToken"); // Retrieve the token from session storage
+  const [session, setSession] = useState(null);
+  const [jitsiApi, setJitsiApi] = useState(null);
+  const navigate = useNavigate();
 
-  // Retrieve userId from sessionStorage or user data
+  const user = JSON.parse(sessionStorage.getItem("user"));
+  const JWTToken = sessionStorage.getItem("accessToken");
+
   useEffect(() => {
-    const user = JSON.parse(sessionStorage.getItem("user"));  // Retrieve the user object
-    console.log(user);  // Log the user object to check if the 'id' exists
-    if (user && user._id) {
-      setUserId(user._id);  // Set userId from the stored user data
+    if (userType === 'counsellor') {
+      fetchActiveSessions();
     }
-  }, []);
-  
+    return () => {
+      if (jitsiApi) {
+        jitsiApi.dispose();
+      }
+    };
+  }, [userType]);
 
-  // Request a session
+  const fetchActiveSessions = async () => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/counsellor/sessions/${user._id}`, {
+        headers: {
+          'Authorization': `Bearer ${JWTToken}`
+        }
+      });
+      const data = await response.json();
+      if (response.ok && data.sessions.length > 0) {
+        setSession(data.sessions[0]); // Get the most recent session
+      }
+    } catch (error) {
+      setError('Failed to fetch active sessions');
+    }
+  };
+
   const handleRequestSession = async () => {
     if (!issueDetails) {
       setError('Please provide issue details');
       return;
     }
 
-    if (!userId) {
-      setError('User ID is not available');
-      return;
-    }
-
     setLoading(true);
-
     try {
-      const response = await fetch('http://localhost:8000/api/counsellor/request', {  // Updated URL
+      const response = await fetch('http://localhost:8000/api/counsellor/request', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${JWTToken}`,
+          'Authorization': `Bearer ${JWTToken}`
         },
         body: JSON.stringify({
-          studentId: userId,
+          userId: user._id,
           issueDetails,
         }),
       });
-      const data = await response.json();
 
+      const data = await response.json();
       if (response.ok) {
-        setSelectedSession(data.session);
-        setRoomName(data.roomName);
+        setSession(data.session);
+        setError('');
       } else {
-        setError(data.message || 'Error requesting session');
+        setError(data.message || 'Failed to request session');
       }
     } catch (error) {
-      setError('No available Counsellor at Momemt pls wait');
+      setError('No available counsellor at moment, please wait');
     } finally {
       setLoading(false);
     }
   };
 
-  // Get Twilio token and join a session
-  const handleJoinSession = async () => {
-    if (!selectedSession) {
-      setError('Please request a session first');
-      return;
-    }
-
+  const handleAcceptSession = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/counsellor/token/student', {  // Updated URL
+      const response = await fetch('http://localhost:8000/api/counsellor/accept', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${JWTToken}`,
+          'Authorization': `Bearer ${JWTToken}`
         },
         body: JSON.stringify({
-          sessionId: selectedSession._id,
-          userId,
+          sessionId: session._id,
+          counselorId: user._id
         }),
       });
 
       const data = await response.json();
-
       if (response.ok) {
-        setToken(data.token);
-        setRoomName(data.roomName);
-      } else {
-        setError('Failed to get token');
+        startJitsiMeet(data.session.roomName);
       }
     } catch (error) {
-      setError('Something went wrong while joining the session');
+      setError('Failed to accept session');
     }
   };
 
-  // End session
-  const handleEndSession = async () => {
-    try {
-      const response = await fetch('http://localhost:8000/api/counsellor/end', {  // Updated URL
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ sessionId: selectedSession._id }),
-      });
-
-      if (response.ok) {
-        setSelectedSession(null);
-        setRoomName('');
-        setToken('');
-        alert('Session ended');
-      } else {
-        setError('Failed to end session');
-      }
-    } catch (error) {
-      setError('Something went wrong while ending the session');
-    }
-  };
-
-  // Jitsi Video Call integration
-  const startJitsiMeeting = () => {
-    const domain = 'meet.jit.si';  // Jitsi Meet server domain
-
+  const startJitsiMeet = (roomName) => {
+    const domain = 'meet.jit.si';
     const options = {
       roomName: roomName,
       width: '100%',
       height: 500,
-      parentNode: document.getElementById('jitsi-container'),
-      configOverwrite: { startWithAudioMuted: true, startWithVideoMuted: false },
-      interfaceConfigOverwrite: { filmStripOnly: false },
+      parentNode: document.querySelector('#jitsi-container'),
+      configOverwrite: {
+        startWithAudioMuted: false,
+        startWithVideoMuted: false,
+        prejoinPageEnabled: false
+      },
+      interfaceConfigOverwrite: {
+        SHOW_JITSI_WATERMARK: false,
+        DISPLAY_WELCOME_PAGE_CONTENT: false,
+        DISPLAY_WELCOME_PAGE_TOOLBAR_ADDITIONAL_CONTENT: false,
+      },
+      userInfo: {
+        displayName: user.name
+      }
     };
 
     const api = new window.JitsiMeetExternalAPI(domain, options);
-    api.executeCommand('displayName', 'Student');  // Or dynamic name
+    setJitsiApi(api);
 
-    // Cleanup when the component unmounts
-    return api;
+    api.addEventListener('videoConferenceLeft', () => {
+      handleEndSession();
+    });
   };
 
-  useEffect(() => {
-    if (roomName && token) {
-      startJitsiMeeting();
+  const handleEndSession = async () => {
+    if (!session) return;
+
+    try {
+      await fetch('http://localhost:8000/api/counsellor/end', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${JWTToken}`
+        },
+        body: JSON.stringify({
+          sessionId: session._id,
+          userId: user._id
+        }),
+      });
+
+      setSession(null);
+      if (jitsiApi) {
+        jitsiApi.dispose();
+        setJitsiApi(null);
+      }
+      navigate('/dashboard');
+    } catch (error) {
+      setError('Failed to end session');
     }
-  }, [roomName, token]);
+  };
 
   return (
-    <div className="video-chat-page bg-gray-900 min-h-screen flex flex-col items-center justify-center">
-      <h2 className="text-white text-2xl mb-6">Video Call Dashboard</h2>
+    <div className="min-h-screen bg-gray-900 p-8">
+      <div className="max-w-4xl mx-auto">
+        <h2 className="text-3xl font-bold text-white mb-8">
+          {userType === 'user' ? 'Request Counselling Session' : 'Counsellor Dashboard'}
+        </h2>
 
-      {/* Request session form */}
-      {!selectedSession && (
-        <div className="request-session bg-indigo-500 p-6 rounded-lg">
-          <h3 className="text-lg font-medium text-white mb-4">Request a Session</h3>
-          <textarea
-            value={issueDetails}
-            onChange={(e) => setIssueDetails(e.target.value)}
-            placeholder="Describe your issue..."
-            rows="4"
-            cols="50"
-            className="p-2 mb-4 w-full"
-          />
-          <button
-            onClick={handleRequestSession}
-            disabled={loading}
-            className="bg-blue-600 text-white p-2 rounded mt-2"
-          >
-            {loading ? 'Requesting...' : 'Request Session'}
-          </button>
-          {error && <p className="text-red-500 mt-2">{error}</p>}
-        </div>
-      )}
+        {error && (
+          <div className="bg-red-500 text-white p-4 rounded mb-4">
+            {error}
+          </div>
+        )}
 
-      {/* Video Call */}
-      {selectedSession && !token && (
-        <div className="my-6">
-          <h3 className="text-white mb-4">Session: {selectedSession.issueDetails}</h3>
-          <button
-            onClick={handleJoinSession}
-            className="bg-green-600 text-white p-2 rounded mt-2"
-          >
-            Join Session
-          </button>
-        </div>
-      )}
+        {userType === 'user' && !session && (
+          <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
+            <textarea
+              className="w-full p-4 rounded bg-gray-700 text-white mb-4"
+              rows="4"
+              value={issueDetails}
+              onChange={(e) => setIssueDetails(e.target.value)}
+              placeholder="Describe your concerns..."
+            />
+            <button
+              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+              onClick={handleRequestSession}
+              disabled={loading}
+            >
+              {loading ? 'Requesting...' : 'Request Session'}
+            </button>
+          </div>
+        )}
 
-      {/* Video Call */}
-      {token && roomName && (
-        <div className="video-call mt-8">
-          <h3 className="text-white text-xl">Session: {selectedSession.issueDetails}</h3>
-          <button
-            onClick={handleEndSession}
-            className="bg-red-500 text-white p-2 rounded mt-4"
-          >
-            End Session
-          </button>
+        {userType === 'counsellor' && session?.status === 'Pending' && (
+          <div className="bg-gray-800 p-6 rounded-lg shadow-lg mb-6">
+            <h3 className="text-xl text-white mb-4">New Session Request</h3>
+            <p className="text-gray-300 mb-4">{session.issueDetails}</p>
+            <button
+              className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
+              onClick={handleAcceptSession}
+            >
+              Accept Session
+            </button>
+          </div>
+        )}
 
-          {/* Jitsi Video Call */}
-          <div id="jitsi-container" style={{ height: '500px' }}></div>
-        </div>
-      )}
+        {session?.status === 'Active' && (
+          <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
+            <div id="jitsi-container" className="w-full rounded overflow-hidden" />
+            <button
+              className="mt-4 bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700"
+              onClick={handleEndSession}
+            >
+              End Session
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
