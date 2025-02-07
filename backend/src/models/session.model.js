@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const sessionSchema = new mongoose.Schema({
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // changed from student to user
-    counselor: { type: mongoose.Schema.Types.ObjectId, ref: "Counselor", required: true },
+    counselor: { type: mongoose.Schema.Types.ObjectId, ref: "Counsellor", required: true },
     roomName: { type: String, required: true },
     issueDetails: { type: String, required: true },
     status: { 

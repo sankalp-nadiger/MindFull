@@ -60,5 +60,6 @@ export const counsellor_verifyJWT = asyncHandler(async (req, _, next) => {
 
   const counsellor = await verifyJWT(token, Counsellor, "Counsellor");
   req.counsellor = counsellor;
+  req.isCounsellor= true
   next();
 });

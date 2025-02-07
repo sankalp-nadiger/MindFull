@@ -53,7 +53,11 @@ const counsellorSchema= new Schema({
             ]
         }
     ],
-
+    isAvailable:
+    {
+      type: Boolean,
+      default: false
+    }
 });
 counsellorSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next();
@@ -62,10 +66,10 @@ counsellorSchema.pre("save", async function (next) {
     next();
   });
   
-  counsellorSchema.methods.isPasswordCorrect = async function (password) {
+  counsellorSchema.methods.isPasswordCorrect = function (password) {
     console.log("Entered:", `"${password}"`);
     console.log("Stored:", `"${this.password}"`);
-    return await bcrypt.compare(password,this.password);
+    return password===this.password;
   };
   
   counsellorSchema.methods.generateAccessToken = function () {

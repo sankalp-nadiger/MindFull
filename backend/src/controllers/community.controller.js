@@ -41,8 +41,8 @@ const getCommunityRooms = asyncHandler(async (req, res) => {
 
 // Join a Community Room (Group Chat) - HTTP-based
 const joinCommunityRoom = asyncHandler(async (req, res) => {
-    const { userId, roomId } = req.body;
-
+    const { roomId } = req.body;
+    const userId = req.user._id;
     if (!userId || !roomId) {
         throw new ApiError(400, 'User ID and Room ID are required');
     }
@@ -64,8 +64,8 @@ const joinCommunityRoom = asyncHandler(async (req, res) => {
 
 // Send a Message to Community Room - HTTP-based
 const sendMessageToCommunityRoom = asyncHandler(async (req, res) => {
-    const { roomId, userId, message } = req.body;
-
+    const { roomId, message } = req.body;
+    const userId = req.user._id;
     if (!roomId || !userId || !message) {
         throw new ApiError(400, 'Room ID, User ID, and Message are required');
     }
@@ -79,7 +79,7 @@ const sendMessageToCommunityRoom = asyncHandler(async (req, res) => {
     // Here, we assume you have a Message model where messages are stored
     const newMessage = {
         roomId,
-        userId,
+        sender: userId,
         message,
         timestamp: new Date(),
     };

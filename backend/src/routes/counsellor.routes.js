@@ -17,8 +17,8 @@ const router = express.Router();
 
 router.post("/request", user_verifyJWT, requestSession);
 router.post("/accept", counsellor_verifyJWT, acceptSession);
-router.post("/end", user_verifyJWT || counsellor_verifyJWT, endSession);
-router.get("/sessions/:counselorId", counsellor_verifyJWT, getActiveSessions);
+router.post("/end", counsellor_verifyJWT, endSession);
+router.get("/sessions", counsellor_verifyJWT, getActiveSessions);
 
 router.post("/register-counsellor", upload.array('certifications', 5), registerCounsellor);
 router.post("/send-otp", sendOTP);

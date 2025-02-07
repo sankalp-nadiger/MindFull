@@ -6,41 +6,34 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Session } from "../models/session.model.js";
 import { verifyOTP } from "./parent.controller.js";
-import twilio from "twilio";
-//import { Session } from "../models/session.model.js";
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const apiKeySid = process.env.TWILIO_API_KEY_SID;
-const apiKeySecret = process.env.TWILIO_API_KEY_SECRET;
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
-      const parent = await Counsellor.findById(userId);
-      if (!parent) {
-        throw new ApiError(404, "User not found");
+      const counsellor = await Counsellor.findById(userId);
+      if (!counsellor) {
+        throw new ApiError(404, "Counsellor not found");
       }
   
-      console.log("User found:", parent); // Log user to verify it's fetched correctly
+      console.log("Counsellor found:", counsellor);
   
-      const accessToken = parent.generateAccessToken();
-      const refreshToken = parent.generateRefreshToken();
+      const accessToken = counsellor.generateAccessToken();
+      const refreshToken = counsellor.generateRefreshToken();
   
-      console.log("Access token:", accessToken); // Log tokens for debugging
+      console.log("Access token:", accessToken);
       console.log("Refresh token:", refreshToken);
   
-      parent.refreshToken = refreshToken; // Store the refresh token in the user document
-      await parent.save({ validateBeforeSave: false });
+      counsellor.refreshToken = refreshToken;
+      await counsellor.save({ validateBeforeSave: false });
   
       return { accessToken, refreshToken };
     } catch (error) {
-      console.error("Error generating tokens:", error); // Log the error for debugging
-      throw new ApiError(
-        500,
-        "Something went wrong while generating refresh and access token"
-      );
+      console.error("Error generating tokens:", error);
+      throw new ApiError(500, "Something went wrong while generating refresh and access token");
     }
-  };
-export const requestSession = asyncHandler(async (req, res) => {
-    const { userId, issueDetails } = req.body;
+};
 
+export const requestSession = asyncHandler(async (req, res) => {
+    const { issueDetails } = req.body;
+    const userId=req.user._id;
     if (!userId || !issueDetails) {
         throw new ApiError(400, "User ID and issue details are required");
     }
@@ -68,10 +61,6 @@ export const requestSession = asyncHandler(async (req, res) => {
         status: "Pending"
     });
 
-    // Mark counselor as unavailable
-    counselor.isAvailable = false;
-    await counselor.save();
-
     res.status(201).json({
         success: true,
         message: "Session requested successfully",
@@ -88,21 +77,26 @@ export const requestSession = asyncHandler(async (req, res) => {
 
 // Accept Session (Counselor Side)
 export const acceptSession = asyncHandler(async (req, res) => {
-    const { sessionId, counselorId } = req.body;
-
+    const { sessionId } = req.body;
+    const counselorId= req.counsellor._id;
+    const counselor = await Counsellor.findById(counselorId);
     const session = await Session.findById(sessionId);
     if (!session) {
         throw new ApiError(404, "Session not found");
     }
 
-    if (session.counselor.toString() !== counselorId) {
-        throw new ApiError(403, "Not authorized to accept this session");
-    }
+    // if (session.counselor.toString() !== counselorId) {
+    //     throw new ApiError(403, "Not authorized to accept this session");
+    // }
 
     if (session.status !== "Pending") {
         throw new ApiError(400, "Session is not in pending state");
     }
-
+    session.counselor=counselorId;
+        // Mark counselor as unavailable
+        counselor.isAvailable = false;
+        await counselor.save();
+    
     session.status = "Active";
     await session.save();
 
@@ -119,18 +113,24 @@ export const acceptSession = asyncHandler(async (req, res) => {
 
 // End Session
 export const endSession = asyncHandler(async (req, res) => {
-    const { sessionId, userId } = req.body;
-
+    const { sessionId } = req.body;
+    let userId;
+    if(!req.isCounsellor){
+    userId= req.user._id;}
+    else{
+     userId= req.counsellor._id;
+    }
     const session = await Session.findById(sessionId);
     if (!session) {
         throw new ApiError(404, "Session not found");
     }
-
+    console.log(session.counselor.toString())
+    console.log(userId)
     // Verify that the user ending the session is either the counselor or the user
-    if (![session.counselor.toString(), session.user.toString()].includes(userId)) {
+    if (![session.counselor.toString(), session.user.toString()].includes(userId.toString())) {
         throw new ApiError(403, "Not authorized to end this session");
     }
-
+    
     session.status = "Completed";
     await session.save();
 
@@ -149,7 +149,7 @@ export const endSession = asyncHandler(async (req, res) => {
 
 // Get Active Sessions (Counselor Side)
 export const getActiveSessions = asyncHandler(async (req, res) => {
-    const { counselorId } = req.params;
+    const counselorId  = req.counsellor._id;
 
     const sessions = await Session.find({
         counselor: counselorId,
@@ -264,6 +264,8 @@ export const loginCounsellor = asyncHandler(async (req, res) => {
     if (!isPasswordValid) {
         throw new ApiError(401, "Invalid user credentials");
     }
+    counsellor.isAvailable = true;
+    await counsellor.save();
 
     const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(counsellor._id);
 

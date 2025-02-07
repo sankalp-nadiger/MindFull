@@ -13,6 +13,7 @@ import {
   calculateAverageMood,
   getWeeklyMoodData,
 } from "../controllers/user.controller.js";
+import { endSession } from "../controllers/counsellor.controller.js";
 import {upload} from "../middleware/multer.middleware.js"
 import { user_verifyJWT } from "../middleware/auth.middleware.js";
 import { User } from "../models/user.model.js";
@@ -27,7 +28,7 @@ router.post("/login", loginUser);
 router.post("/logout", user_verifyJWT, logoutUser);
 
 router.post("/refresh-token", refreshAccessToken);
-
+router.post("/end", user_verifyJWT, endSession);
 router.post("/change-password", user_verifyJWT, changeCurrentPassword);
 
 router.get("/current", user_verifyJWT, getCurrentUser); 
