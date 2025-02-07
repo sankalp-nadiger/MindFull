@@ -70,11 +70,13 @@ const CounselorSignIn = () => {
         email,
         password,
       });
-      
       if (response.status === 200) {
+        const { accessToken } = response.data.data;
+        sessionStorage.setItem("accessToken", accessToken);
         alert("Sign In successful!");
         navigate("/councellor");
       }
+
     } catch (error) {
       setOtpError(true);
       alert("Error during login: " + error.response?.data?.message || error.message);
