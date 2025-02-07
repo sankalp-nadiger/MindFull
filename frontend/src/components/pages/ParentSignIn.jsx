@@ -1,26 +1,24 @@
 import React, { useState } from "react";
-import axios from "axios"; // Import axios for making HTTP requests
-import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const ParentSignIn = () => {
-  const navigate = useNavigate(); // Initialize the navigate function
+  const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [otpError, setOtpError] = useState(false);
-  const [otpTimer, setOtpTimer] = useState(30); // OTP resend timer (in seconds)
+  const [otpTimer, setOtpTimer] = useState(30);
+  const [showPassword, setShowPassword] = useState(false); // State for password visibility
 
-  // Handle sending OTP
   const handleSendOtp = async () => {
     if (phoneNumber.length === 10) {
       try {
-        // Send OTP to the backend
         const response = await axios.post("http://localhost:8000/api/parent/send-otp", {
           mobileNumber: phoneNumber,
         });
-
         if (response.data.success) {
           setOtpSent(true);
           setOtpError(false);
@@ -35,7 +33,6 @@ const ParentSignIn = () => {
     }
   };
 
-  // Start the OTP timer
   const startOtpTimer = () => {
     let timer = 30;
     const intervalId = setInterval(() => {
@@ -47,26 +44,24 @@ const ParentSignIn = () => {
     }, 1000);
   };
 
-  // Handle resend OTP
   const handleResendOtp = () => {
     if (otpTimer === 0) {
-      setOtpTimer(30); // Reset timer if resend is available
+      setOtpTimer(30);
       handleSendOtp();
     } else {
       alert(`You can resend OTP after ${otpTimer} seconds.`);
     }
   };
 
-  // Handle form submission (Login)
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     if (otp.length !== 6) {
       setOtpError(true);
       alert("Invalid OTP.");
       return;
     }
-  
+
     try {
       const response = await axios.post("http://localhost:8000/api/parent/login", {
         fullName,
@@ -76,12 +71,10 @@ const ParentSignIn = () => {
       });
       console.log(response.data);
       if (response.status === 200) {
-        const { accessToken } = response.data.data; 
-  
-        sessionStorage.setItem("accessToken", accessToken); 
-  
+        const { accessToken } = response.data.data;
+        sessionStorage.setItem("accessToken", accessToken);
         alert("Login successful!");
-        navigate("/ParentDashboard"); 
+        navigate("/ParentDashboard");
       }
     } catch (error) {
       setOtpError(true);
@@ -94,14 +87,6 @@ const ParentSignIn = () => {
       <h1 className="text-4xl font-bold text-yellow-600 mb-6">Parent SignIn</h1>
 
       <div className="w-full max-w-md p-6 bg-gray-900 shadow-lg rounded-lg flex flex-col items-center">
-        <div className="mb-4">
-          <img
-            src="https://media.giphy.com/media/hvRJCLFzcasrR4ia7z/giphy.gif"
-            alt="Welcome GIF"
-            className="w-20 h-20"
-          />
-        </div>
-
         <form onSubmit={handleSubmit} className="w-full space-y-4">
           {!otpSent && (
             <div className="flex flex-col">
@@ -162,15 +147,24 @@ const ParentSignIn = () => {
           {otpSent && (
             <div className="flex flex-col">
               <label htmlFor="password" className="text-sm font-medium text-gray-300">Password</label>
-              <input
-                id="password"
-                type="password"
-                className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                required
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-300"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
             </div>
           )}
 

@@ -11,7 +11,7 @@ const CounsellorSignUp = () => {
     password: "",
     mobileNumber: "",
     otp: "",
-    specification: [""], // Changed from specifications to specification
+    specification: [""],
     availability: [
       { day: "Monday", slots: [] },
       { day: "Tuesday", slots: [] },
@@ -19,13 +19,14 @@ const CounsellorSignUp = () => {
       { day: "Thursday", slots: [] },
       { day: "Friday", slots: [] },
       { day: "Saturday", slots: [] },
-      { day: "Sunday", slots: [] }
+      { day: "Sunday", slots: [] },
     ],
     certifications: null,
-    yearExp: "", // Changed from yearExp to yearexp
+    yearExp: "",
   });
 
   const [otpSent, setOtpSent] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // Password visibility toggle
 
   const handleChange = (e) => {
     const value = e.target.type === "number" ? parseInt(e.target.value) || "" : e.target.value;
@@ -54,8 +55,6 @@ const CounsellorSignUp = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-
-      // Format the data to match the schema
       const submissionData = {
         ...formData,
         mobileNumber: parseInt(formData.mobileNumber),
@@ -68,40 +67,33 @@ const CounsellorSignUp = () => {
           }))
         })))
       };
-      
-      // Create FormData object
+
       const formDataObj = new FormData();
-      
-      // Append all fields to FormData
       Object.keys(submissionData).forEach((key) => {
         if (key === "certifications" && Array.isArray(submissionData[key]) && submissionData[key].length > 0) {
-          // Assuming certifications is an array of file objects
           submissionData[key].forEach(file => {
             formDataObj.append(key, file);
           });
         } else if (Array.isArray(submissionData[key]) || typeof submissionData[key] === "object") {
-          // Stringify the value if it's an array or object (like availability)
           formDataObj.append(key, JSON.stringify(submissionData[key]));
         } else {
           formDataObj.append(key, submissionData[key]);
         }
       });
-      
-      // Send request using axios with the correct content type for FormData
+
       const response = await axios.post(
         "http://localhost:8000/api/counsellor/register-counsellor",
         formDataObj,
         {
           headers: {
-            "Content-Type": "multipart/form-data",  // This header is automatically handled by FormData
+            "Content-Type": "multipart/form-data",
           },
         }
       );
-        
 
       if (response.status === 201) {
         alert("Counsellor Sign-up successful!");
-        navigate("/councellor");
+        navigate("/counsellor");
       }
     } catch (error) {
       console.error("Submission error:", error);
@@ -145,11 +137,11 @@ const CounsellorSignUp = () => {
       <h1 className="text-3xl font-bold text-blue-400 mb-4">Counsellor Sign-Up</h1>
       <form className="bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md" onSubmit={handleSubmit}>
         {/* Personal details */}
-        {["fullName", "email", "password", "mobileNumber"].map((field) => (
+        {["fullName", "email", "mobileNumber"].map((field) => (
           <div key={field} className="mb-4">
             <label className="block text-sm font-medium capitalize">{field}</label>
             <input
-              type={field === "password" ? "password" : field === "mobileNumber" ? "number" : "text"}
+              type={field === "mobileNumber" ? "number" : "text"}
               name={field}
               value={formData[field]}
               onChange={handleChange}
@@ -158,6 +150,28 @@ const CounsellorSignUp = () => {
             />
           </div>
         ))}
+
+        {/* Password Field with Toggle */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium">Password</label>
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              className="w-full p-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-2 text-sm text-gray-400"
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
+          </div>
+        </div>
 
         {/* Years of Experience */}
         <div className="mb-4">
@@ -236,56 +250,32 @@ const CounsellorSignUp = () => {
                 onClick={() => handleAddSlot(dayIndex)}
                 className="w-full mt-2 p-2 bg-blue-500 hover:bg-blue-600 rounded-md"
               >
-                Add Time Slot
+                Add Slot
               </button>
             </div>
           ))}
         </div>
 
-        {/* Upload Certification */}
+        {/* File Upload */}
         <div className="mb-4">
-          <label className="block text-sm font-medium">Upload Certification</label>
+          <label className="block text-sm font-medium">Certifications</label>
           <input
             type="file"
             name="certifications"
             onChange={handleFileChange}
             className="w-full p-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none"
-            required
           />
         </div>
 
-        {/* OTP */}
-        {otpSent && (
-          <div className="mb-4">
-            <label className="block text-sm font-medium">OTP</label>
-            <input
-              type="text"
-              name="otp"
-              value={formData.otp}
-              onChange={handleChange}
-              className="w-full p-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none"
-              required
-            />
-          </div>
-        )}
-
-        {/* Submit Buttons */}
-        {!otpSent ? (
-          <button
-            type="button"
-            onClick={handleSendOtp}
-            className="w-full p-2 bg-blue-500 hover:bg-blue-600 rounded-md"
-          >
-            Send OTP
-          </button>
-        ) : (
+        {/* Submit Button */}
+        <div className="mb-4">
           <button
             type="submit"
-            className="w-full p-2 bg-green-500 hover:bg-green-600 rounded-md"
+            className="w-full p-2 bg-blue-500 hover:bg-blue-600 rounded-md"
           >
-            Complete Sign-Up
+            Sign Up
           </button>
-        )}
+        </div>
       </form>
     </div>
   );

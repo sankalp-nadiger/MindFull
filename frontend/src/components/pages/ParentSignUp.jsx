@@ -1,26 +1,24 @@
 import React, { useState } from "react";
-import axios from "axios"; // Import axios for making HTTP requests
-import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const ParentSignUp = () => {
-  const navigate = useNavigate(); // Initialize the navigate function
-
-  const [name, setName] = useState(""); // State for full name
-  const [phone, setPhone] = useState(""); // State for phone number
-  const [password, setPassword] = useState(""); // State for password
-  const [otp, setOtp] = useState(""); // State for OTP
-  const [otpSent, setOtpSent] = useState(false); // Track if OTP is sent
+  const navigate = useNavigate();
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // State for password visibility
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // If OTP is not sent yet, send the OTP first
     if (!otpSent) {
       try {
-        // Send phone number to backend to generate and send OTP
         const response = await axios.post("http://localhost:8000/api/parent/send-otp", { mobileNumber: phone });
         if (response.data.success) {
-          setOtpSent(true); // Set OTP sent flag to true
+          setOtpSent(true);
           alert("OTP sent to your phone.");
         } else {
           alert("Failed to send OTP. Please try again.");
@@ -31,7 +29,6 @@ const ParentSignUp = () => {
       return;
     }
 
-    // If OTP is already sent, proceed with registration
     try {
       const response = await axios.post("http://localhost:8000/api/parent/register-parent", {
         fullName: name,
@@ -42,8 +39,7 @@ const ParentSignUp = () => {
 
       if (response.status === 201) {
         alert("Parent Sign-up successful!");
-        // Redirect to Parent Dashboard after successful sign-up
-        navigate("/parentDashboard"); // Navigate to dashboard page
+        navigate("/parentDashboard");
       } else {
         alert("Registration failed: " + response.data.message);
       }
@@ -52,36 +48,11 @@ const ParentSignUp = () => {
     }
   };
 
-  // Handle input changes
-  const handleNameChange = (e) => {
-    setName(e.target.value);
-  };
-
-  const handlePhoneChange = (e) => {
-    setPhone(e.target.value);
-  };
-
-  const handlePasswordChange = (e) => {
-    setPassword(e.target.value);
-  };
-
-  const handleOtpChange = (e) => {
-    setOtp(e.target.value);
-  };
-
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-black via-blue-950 to-black text-white px-6">
       <h1 className="text-4xl font-bold text-indigo-400 mb-6">Parent Sign Up</h1>
 
       <div className="w-full max-w-md p-6 bg-gray-900 shadow-lg rounded-lg flex flex-col items-center">
-        <div className="mb-4">
-          <img
-            src="https://media.giphy.com/media/hvRJCLFzcasrR4ia7z/giphy.gif"
-            alt="Welcome GIF"
-            className="w-20 h-20"
-          />
-        </div>
-
         <form onSubmit={handleSubmit} className="w-full space-y-4">
           <div className="flex flex-col">
             <label htmlFor="name" className="text-sm font-medium text-gray-300">Full Name</label>
@@ -91,22 +62,31 @@ const ParentSignUp = () => {
               className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               placeholder="Enter your full name"
               value={name}
-              onChange={handleNameChange}
+              onChange={(e) => setName(e.target.value)}
               required
             />
           </div>
 
           <div className="flex flex-col">
             <label htmlFor="password" className="text-sm font-medium text-gray-300">Password</label>
-            <input
-              type="password"
-              id="password"
-              className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              placeholder="Enter your password"
-              value={password}
-              onChange={handlePasswordChange}
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-300"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-col">
@@ -117,7 +97,7 @@ const ParentSignUp = () => {
               className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               placeholder="Enter your phone number"
               value={phone}
-              onChange={handlePhoneChange}
+              onChange={(e) => setPhone(e.target.value)}
               maxLength={10}
               required
             />
@@ -132,7 +112,7 @@ const ParentSignUp = () => {
                 className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 placeholder="Enter OTP sent to your phone"
                 value={otp}
-                onChange={handleOtpChange}
+                onChange={(e) => setOtp(e.target.value)}
                 maxLength={6}
                 required
               />

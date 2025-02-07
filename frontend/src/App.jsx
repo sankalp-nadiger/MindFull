@@ -30,6 +30,8 @@ import ActivityRecommendations from './components/pages/Activity';
 import Stories from './components/pages/FetchStory';
 import CreateStory from './components/pages/CreateStory';
 import SuccessStories from "./components/HomePage/SuccessStories"
+import VideoChat from "./components/Videochat/Videochat"
+import AIrecommendation from "./components/Materialrecommendation/AIrecommendation"
 
 function App() {
 
@@ -56,7 +58,7 @@ function App() {
         <Route path="/parent-signup" element={<ParentSignUp />} />
         <Route path="/counsellor-signup" element={<CounsellorSignUp />} />
           <Route path="/counsellorphase1" element={<Counsellorphase1/>}/>
-          { <Route path="/student-signin" element={<StudentSignIn/>}/> }
+          <Route path="/student-signin" element={<StudentSignIn/>}/> 
           <Route path="/student-signup" element={<StudentSignUp/>}/>
           <Route path="/result" element={<ResultPage/>}/>
          <Route path="/journals" element={<JournalEntryWithSuggestions/>}/>
@@ -65,6 +67,8 @@ function App() {
          <Route path="/createStory" element={<CreateStory/>}/>
          <Route path="/Leaderboard" element={<Leaderboard />} />
          <Route path="/SuccessStories" element={<SuccessStories />} />
+         <Route path="/video" element={<VideoChat />}/>
+         <Route path="/recommend" element={<AIrecommendation/>}/>
         </Routes>
       </Router>
     </>
