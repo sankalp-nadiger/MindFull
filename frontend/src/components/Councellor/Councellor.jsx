@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { io } from "socket.io-client";
+
+const socket = io("http://localhost:8000", {
+  transports: ["websocket"],
+  withCredentials: true
+});
 
 const Counsellor = () => {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [ending, setEnding] = useState(false);
-  const [activeRoom, setActiveRoom] = useState(null); // Store Jitsi room name
+  const [activeRoom, setActiveRoom] = useState(null);
 
   useEffect(() => {
-    // Fetch active sessions for the counselor
     const fetchActiveSessions = async () => {
       try {
         setLoading(true);
@@ -33,7 +38,6 @@ const Counsellor = () => {
     fetchActiveSessions();
   }, []);
 
-  // Accept the session
   const acceptSession = async (sessionId) => {
     try {
       setLoading(true);
@@ -49,14 +53,12 @@ const Counsellor = () => {
 
       alert(response.data.message);
 
-      // Update session status locally to 'Active' and set the Jitsi room
       setSessions((prevSessions) =>
         prevSessions.map((session) =>
           session._id === sessionId ? { ...session, status: 'Active' } : session
         )
       );
 
-      // Set Jitsi Room Name from response
       setActiveRoom(response.data.session.roomName);
     } catch (error) {
       alert("Failed to accept session.");
@@ -65,7 +67,6 @@ const Counsellor = () => {
     }
   };
 
-  // End the session (Counselor side)
   const endSession = async (sessionId) => {
     try {
       setEnding(true);
@@ -79,12 +80,12 @@ const Counsellor = () => {
         }
       );
 
+      // Backend will emit the socket event, no need to emit here
+      
       // Remove session from list
       setSessions((prevSessions) =>
         prevSessions.filter((session) => session._id !== sessionId)
       );
-
-      // Remove Jitsi iframe
       setActiveRoom(null);
       setError('');
     } catch (error) {
@@ -94,11 +95,32 @@ const Counsellor = () => {
     }
   };
 
+  // Listen for sessionEnded event via WebSockets
+  useEffect(() => {
+    const handleSessionEnd = ({ sessionId }) => {
+      setSessions((prevSessions) =>
+        prevSessions.filter((session) => session._id !== sessionId)
+      );
+      setActiveRoom(null);
+    };
+
+    // Listen for session end events for all active sessions
+    sessions.forEach(session => {
+      socket.on(`sessionEnded-${session._id}`, handleSessionEnd);
+    });
+
+    return () => {
+      // Cleanup listeners for all sessions
+      sessions.forEach(session => {
+        socket.off(`sessionEnded-${session._id}`, handleSessionEnd);
+      });
+    };
+  }, [sessions]);
+
   return (
     <div>
       <h1>Counselor Dashboard</h1>
 
-      {/* Show Error */}
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
       {loading ? (
@@ -108,7 +130,7 @@ const Counsellor = () => {
           {sessions.map((session) => (
             <li key={session._id}>
               <p>Issue: {session.issueDetails}</p>
-              <p>Student: {session.user.name}</p>
+              <p>Student: {session.user.username}</p>
 
               {session.status === 'Pending' && (
                 <button onClick={() => acceptSession(session._id)} disabled={loading}>
@@ -126,7 +148,6 @@ const Counsellor = () => {
         </ul>
       )}
 
-      {/* Show Jitsi Meet if active room is set */}
       {activeRoom && (
         <div>
           <h2>Live Video Session</h2>

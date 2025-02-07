@@ -12,6 +12,7 @@ import {
   userProgress,
   calculateAverageMood,
   getWeeklyMoodData,
+  getActiveSessions
 } from "../controllers/user.controller.js";
 import { endSession } from "../controllers/counsellor.controller.js";
 import {upload} from "../middleware/multer.middleware.js"
@@ -44,7 +45,7 @@ router.get("/progress", user_verifyJWT, userProgress);
 router.get("/month-avg-mood", user_verifyJWT, calculateAverageMood); 
 
 router.get("/week-mood-chart", user_verifyJWT, getWeeklyMoodData); 
-
+router.get("/sessions",user_verifyJWT,getActiveSessions)
 router.get('/generate-report', async (req, res) => {
   const userId = req.user.id;
 

@@ -12,7 +12,9 @@ import { Issue } from "../models/Issues.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import ApiResponse from "../utils/API_Response.js";
 import jwt from "jsonwebtoken";
+import { Session } from "../models/session.model.js";
 import Tesseract from 'tesseract.js';
+import {server,io} from "../index.js"
 
 const additionalActivities = [
   // Stress Relief
@@ -422,7 +424,19 @@ await user.save();
         }, "User logged in successfully"),
       );
   });
-  
+  export const getActiveSessions = asyncHandler(async (req, res) => {
+    const userId  = req.user._id;
+
+    const sessions = await Session.find({
+        user: userId,
+        status: { $in: ["Active"] }
+    }).populate('counselor', 'fullName');
+
+    res.status(200).json({
+        success: true,
+        sessions
+    });
+});
   const saveUserMood = async (userId, mood) => {
     try {
       // Validate mood input

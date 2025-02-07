@@ -6,6 +6,17 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Session } from "../models/session.model.js";
 import { verifyOTP } from "./parent.controller.js";
+import app from "../app.js"
+//  import { Server } from "socket.io";
+ import {server,io} from "../index.js"
+// import http from "http";
+// 
+// const io = new Server(server, {
+//     cors: {
+//         origin: "http://localhost:5173", // Your frontend URL
+//         methods: ["GET", "POST"]
+//     }
+// });
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
       const counsellor = await Counsellor.findById(userId);
@@ -106,7 +117,8 @@ export const acceptSession = asyncHandler(async (req, res) => {
         session: {
             _id: session._id,
             roomName: session.roomName,
-            status: "Active"
+            status: "Active",
+            
         }
     });
 });
@@ -133,7 +145,7 @@ export const endSession = asyncHandler(async (req, res) => {
     
     session.status = "Completed";
     await session.save();
-
+    io.emit(`sessionEnded-${sessionId}`, { sessionId });
     // Make counselor available again
     const counselor = await Counsellor.findById(session.counselor);
     if (counselor) {
@@ -154,7 +166,7 @@ export const getActiveSessions = asyncHandler(async (req, res) => {
     const sessions = await Session.find({
         counselor: counselorId,
         status: { $in: ["Pending", "Active"] }
-    }).populate('user', 'name');
+    }).populate('user', 'username');
 
     res.status(200).json({
         success: true,
