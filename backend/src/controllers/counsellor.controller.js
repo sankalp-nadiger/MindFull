@@ -7,137 +7,27 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Session } from "../models/session.model.js";
 import { verifyOTP } from "./parent.controller.js";
 import twilio from "twilio";
-
+//import { Session } from "../models/session.model.js";
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const apiKeySid = process.env.TWILIO_API_KEY_SID;
 const apiKeySecret = process.env.TWILIO_API_KEY_SECRET;
-
-const generateTwilioToken = (identity, roomName) => {
-    const AccessToken = twilio.jwt.AccessToken;
-    const VideoGrant = AccessToken.VideoGrant;
-
-    // Create Video grant for the token
-    const videoGrant = new VideoGrant({ room: roomName });
-
-    // Create access token
-    const token = new AccessToken(accountSid, apiKeySid, apiKeySecret, { identity });
-
-    // Add the Video grant
-    token.addGrant(videoGrant);
-
-    return token.toJwt();
-};
-
-// Request a session (Student Side)
-export const requestSession = asyncHandler(async (req, res) => {
-    const { studentId, issueDetails } = req.body;
-
-    // Validate request
-    if (!studentId || !issueDetails) {
-        throw new ApiError(400, "Student ID and issue details are required");
-    }
-
-    const student = await User.findById(studentId);
-    if (!student) {
-        throw new ApiError(404, "Student not found");
-    }
-
-    // Find an available counselor
-    const counselor = await Counsellor.findOne({ isAvailable: true });
-    if (!counselor) {
-        throw new ApiError(404, "No available counselors at the moment");
-    }
-
-    // Create a session
-    const roomName = `session-${studentId}-${counselor._id}-${Date.now()}`;
-    const session = await Session.create({
-        student: student._id,
-        counselor: counselor._id,
-        roomName,
-        issueDetails,
-        status: "Pending",
-    });
-
-    // Mark counselor as unavailable
-    counselor.isAvailable = false;
-    await counselor.save();
-
-    res.status(201).json({
-        message: "Session created successfully",
-        sessionId: session._id,
-        roomName,
-        counselor: {
-            id: counselor._id,
-            name: counselor.name,
-        },
-    });
-});
-
-// Generating Twilio Token (Student/Counselor)
-export const getTwilioToken = asyncHandler(async (req, res) => {
-    const { userId, sessionId } = req.body;
-
-    // Validating request
-    if (!userId || !sessionId) {
-        throw new ApiError(400, "User ID and Session ID are required");
-    }
-
-    const session = await Session.findById(sessionId);
-    if (!session) {
-        throw new ApiError(404, "Session not found");
-    }
-
-    // Ensure the user is part of the session
-    if (![session.student.toString(), session.counselor.toString()].includes(userId)) {
-        throw new ApiError(403, "You are not authorized for this session");
-    }
-
-    // Generate token
-    const identity = userId;
-    const token = generateTwilioToken(identity, session.roomName);
-
-    res.status(200).json({ token, roomName: session.roomName });
-});
-// End a session (Counselor Side)
-export const endSession = asyncHandler(async (req, res) => {
-    const { sessionId } = req.body;
-
-    const session = await Session.findById(sessionId);
-    if (!session) {
-        throw new ApiError(404, "Session not found");
-    }
-
-    // Mark session as completed
-    session.status = "Completed";
-    await session.save();
-
-    // Mark counselor as available again
-    const counsellor = await Counsellor.findById(session.counselor);
-    if (counsellor) {
-        counsellor.isAvailable = true;
-        await counsellor.save();
-    }
-
-    res.status(200).json({ message: "Session ended successfully" });
-});
-
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
-      const counsellor = await Counsellor.findById(userId);
-      if (!counsellor) {
+      const parent = await Counsellor.findById(userId);
+      if (!parent) {
         throw new ApiError(404, "User not found");
       }
   
-      console.log("User found:", counsellor); // Log user to verify it's fetched correctly
+      console.log("User found:", parent); // Log user to verify it's fetched correctly
   
-      const accessToken = counsellor.generateAccessToken();
-      const refreshToken = counsellor.generateRefreshToken();
+      const accessToken = parent.generateAccessToken();
+      const refreshToken = parent.generateRefreshToken();
   
       console.log("Access token:", accessToken); // Log tokens for debugging
       console.log("Refresh token:", refreshToken);
   
-      counsellor.refreshToken = refreshToken; // Store the refresh token in the user document
-      await counsellor.save({ validateBeforeSave: false });
+      parent.refreshToken = refreshToken; // Store the refresh token in the user document
+      await parent.save({ validateBeforeSave: false });
   
       return { accessToken, refreshToken };
     } catch (error) {
@@ -148,7 +38,129 @@ const generateAccessAndRefreshTokens = async (userId) => {
       );
     }
   };
+export const requestSession = asyncHandler(async (req, res) => {
+    const { userId, issueDetails } = req.body;
 
+    if (!userId || !issueDetails) {
+        throw new ApiError(400, "User ID and issue details are required");
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    // Find an available counselor
+    const counselor = await Counsellor.findOne({ isAvailable: true });
+    if (!counselor) {
+        throw new ApiError(404, "No available counselors at the moment");
+    }
+
+    // Create a unique room name
+    const roomName = `counseling-${userId}-${counselor._id}-${Date.now()}`;
+    
+    // Create a session
+    const session = await Session.create({
+        user: user._id,
+        counselor: counselor._id,
+        roomName,
+        issueDetails,
+        status: "Pending"
+    });
+
+    // Mark counselor as unavailable
+    counselor.isAvailable = false;
+    await counselor.save();
+
+    res.status(201).json({
+        success: true,
+        message: "Session requested successfully",
+        session: {
+            _id: session._id,
+            roomName,
+            counselorName: counselor.name,
+            counselorId: counselor._id,
+            status: "Pending",
+            issueDetails
+        }
+    });
+});
+
+// Accept Session (Counselor Side)
+export const acceptSession = asyncHandler(async (req, res) => {
+    const { sessionId, counselorId } = req.body;
+
+    const session = await Session.findById(sessionId);
+    if (!session) {
+        throw new ApiError(404, "Session not found");
+    }
+
+    if (session.counselor.toString() !== counselorId) {
+        throw new ApiError(403, "Not authorized to accept this session");
+    }
+
+    if (session.status !== "Pending") {
+        throw new ApiError(400, "Session is not in pending state");
+    }
+
+    session.status = "Active";
+    await session.save();
+
+    res.status(200).json({
+        success: true,
+        message: "Session accepted",
+        session: {
+            _id: session._id,
+            roomName: session.roomName,
+            status: "Active"
+        }
+    });
+});
+
+// End Session
+export const endSession = asyncHandler(async (req, res) => {
+    const { sessionId, userId } = req.body;
+
+    const session = await Session.findById(sessionId);
+    if (!session) {
+        throw new ApiError(404, "Session not found");
+    }
+
+    // Verify that the user ending the session is either the counselor or the user
+    if (![session.counselor.toString(), session.user.toString()].includes(userId)) {
+        throw new ApiError(403, "Not authorized to end this session");
+    }
+
+    session.status = "Completed";
+    await session.save();
+
+    // Make counselor available again
+    const counselor = await Counsellor.findById(session.counselor);
+    if (counselor) {
+        counselor.isAvailable = true;
+        await counselor.save();
+    }
+
+    res.status(200).json({
+        success: true,
+        message: "Session ended successfully"
+    });
+});
+
+// Get Active Sessions (Counselor Side)
+export const getActiveSessions = asyncHandler(async (req, res) => {
+    const { counselorId } = req.params;
+
+    const sessions = await Session.find({
+        counselor: counselorId,
+        status: { $in: ["Pending", "Active"] }
+    }).populate('user', 'name');
+
+    res.status(200).json({
+        success: true,
+        sessions
+    });
+});
 export const registerCounsellor = asyncHandler(async (req, res) => {
     if (typeof req.body.availability === 'string') {
         req.body.availability = JSON.parse(req.body.availability);

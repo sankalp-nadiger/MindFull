@@ -1,4 +1,5 @@
-import {Schema, model} from mongoose;
+import mongoose from 'mongoose';
+import {Schema, model} from 'mongoose';
 
 const communitySchema = new Schema({
     name:
@@ -8,10 +9,10 @@ const communitySchema = new Schema({
         unique: true
     },
     members:
-    {
+    [{
         type: Schema.Types.ObjectId,
         ref:"User"
-    },
+    }],
     posts:
     {
         type: Schema.Types.ObjectId,
@@ -21,7 +22,12 @@ const communitySchema = new Schema({
     {
         type: String,
         required: true
+    },
+    createdBy:
+    {
+        type: Schema.Types.ObjectId,
+        ref:"User"
     }
 })
 
-export const Community= mongoose.model("Community", communitySchemarSchema);
+export const Community= mongoose.model("Community", communitySchema);
