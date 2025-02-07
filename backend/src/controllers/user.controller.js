@@ -347,23 +347,28 @@ const addInterests = asyncHandler(async (req, res) => {
   
     // Streak logic
     const now = new Date();
-    const lastLogin = user.lastLoginDate;
-    const diffInHours = lastLogin ? (now - lastLogin) / (1000 * 60 * 60) : null;
-  
-    if (diffInHours !== null && diffInHours >= 24 && diffInHours < 48) {
-      user.streak += 1; // Continue streak
-    } else if (diffInHours !== null && diffInHours >= 48) {
-      user.streak = 1; // Reset streak
-    } else if (!lastLogin) {
-      user.streak = 1; // First login
-    }
-  
-    if (user.streak > user.maxStreak) {
-      user.maxStreak = user.streak; // Update max streak
-    }
-  
-    user.lastLoginDate = now;
-    await user.save();
+const lastLogin = user.lastLoginDate;
+
+if (!lastLogin) {
+  user.streak = 1; // First login
+} else {
+  // Difference in full days, not fractional hours
+  const diffInDays = Math.floor((now - lastLogin) / (1000 * 60 * 60 * 24));
+
+  if (diffInDays === 1) {
+    user.streak += 1; // Continue streak
+  } else if (diffInDays > 1) {
+    user.streak = 1; // Reset streak
+  }
+}
+
+// Update max streak
+user.maxStreak = Math.max(user.maxStreak, user.streak);
+
+// Update last login date
+user.lastLoginDate = now;
+await user.save();
+
   
     const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
   

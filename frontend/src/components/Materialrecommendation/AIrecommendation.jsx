@@ -18,13 +18,19 @@ const Recommendations = () => {
             "Content-Type": "application/json" 
           },
         });
-
         if (!response.ok) {
           throw new Error("Failed to fetch data");
         }
         
         const result = await response.json();
-        setData(result.data);
+        setData({
+          videos: result.data.filter(item => item.type === "video") || [],
+          books: result.data.filter(item => item.type === "book") || [],
+          blogs: result.data.filter(item => item.type === "blog") || [],
+          podcasts: result.data.filter(item => item.type === "podcast") || [],
+          events: result.data.filter(item => item.type === "event") || [],
+        });
+  
       } catch (err) {
         setError(err.message);
       }
@@ -66,7 +72,7 @@ const Recommendations = () => {
         {loading && <p className="text-center">Loading...</p>}
         {error && <p className="text-red-500 text-center">{error}</p>}
         <div className="space-y-8">
-          {data.videos.length > 0 && (
+           {data.videos.length > 0 && (
             <section>
               <h3 className="text-xl font-bold font-sans text-amber-600 mb-4">Videos</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -93,7 +99,7 @@ const Recommendations = () => {
               </div>
             </section>
           )}
-          {data.books.length > 0 && (
+         {data.books.length > 0 && (
             <section>
               <h3 className="text-xl font-bold font-sans text-amber-600 mb-4">Books</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -113,7 +119,7 @@ const Recommendations = () => {
               </div>
             </section>
           )}
-          {data.podcasts.length > 0 && (
+          {/* {data.podcasts.length > 0 && (
             <section>
               <h3 className="text-xl font-bold font-sans text-amber-600 mb-4">Podcasts</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -127,7 +133,7 @@ const Recommendations = () => {
                 ))}
               </div>
             </section>
-          )}
+          )} */}
         </div>
       </div>
     </div>

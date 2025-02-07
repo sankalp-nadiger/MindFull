@@ -97,7 +97,7 @@ const resourcesToSave = rankedResources.map(resource => ({
 
 async function fetchExternalResources(searchTerms) {
   const resources = [];
-  const maxResults = 5;
+  const maxResults = 3;
   console.log("Books API Key:", process.env.BOOKS_API_KEY);
 console.log("YouTube API Key:", process.env.YOUTUBE_API_KEY);
 console.log("Spotify API Key:", process.env.SPOTIFY_API_KEY);
