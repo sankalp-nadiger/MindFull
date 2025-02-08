@@ -12,9 +12,9 @@ export const createStory = async (req, res) => {
       return res.status(400).json({ message: "Invalid story type." });
     }
 
-    if (!content && !req.files?.content) {
-      return res.status(400).json({ message: "Content is required." });
-    }
+    // if (!content && !req.files?.content) {
+    //   return res.status(400).json({ message: "Content is required." });
+    // }
 
     let storyContent = content;
 
@@ -22,7 +22,7 @@ export const createStory = async (req, res) => {
     if (req.files?.content) {
       const file = req.files.content[0];  // Assuming single file upload
       const filePath = file.path;
-
+      console.log(filePath)
       // Upload the file to Cloudinary
       const cloudinaryResponse = await uploadOnCloudinary(filePath, { folder: 'Mindfull' });
 
@@ -33,6 +33,7 @@ export const createStory = async (req, res) => {
       // Get the Cloudinary URL of the uploaded file
       storyContent = cloudinaryResponse.url;
     }
+    console.log(storyContent)
 
     // Create and save the story
     const story = new Story({

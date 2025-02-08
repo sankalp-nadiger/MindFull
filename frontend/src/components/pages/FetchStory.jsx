@@ -52,17 +52,15 @@ const Stories = () => {
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-r from-black via-[#0a1f44] to-black text-white">
-      <div className="p-6 max-w-4xl w-full bg-[#1a1a2e] rounded-lg shadow-lg text-center">
+      <div className="p-6 max-w-4xl w-full bg-[#1a1a2e] rounded-lg shadow-lg text-center relative">
         <h2 className="text-2xl font-bold mb-4">Stories</h2>
-
-        {/* "+" button for adding a new story */}
         <button
           onClick={handleAddStory}
           className="absolute top-4 right-4 bg-red-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
         >
-      +
+          +
         </button>
-
+        
         {stories.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
             {stories.map((story) => (
@@ -71,19 +69,13 @@ const Stories = () => {
                 className="p-4 bg-[#252a34] rounded-lg shadow-md transition-transform transform hover:scale-105 hover:shadow-purple-500"
               >
                 {story.type === "image" ? (
-                  <img
-                    src={story.content}
-                    alt="Story"
-                    className="rounded-lg w-full"
-                  />
+                  <img src={story.content} alt="Story" className="rounded-lg w-full" />
                 ) : (
                   <iframe
                     className="rounded-lg w-full"
                     src={
                       story.content.includes("youtube.com/watch")
-                        ? `https://www.youtube.com/embed/${new URL(
-                            story.content
-                          ).searchParams.get("v")}`
+                        ? `https://www.youtube.com/embed/${new URL(story.content).searchParams.get("v")}`
                         : story.content
                     }
                     title="Video Player"

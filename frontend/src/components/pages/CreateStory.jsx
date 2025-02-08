@@ -14,26 +14,28 @@ const CreateStory = () => {
       setLoading(true);
 
       const formData = new FormData();
-      
+
       formData.append("type", type); 
+      
+      // Change 'file' to 'content' here
       if (type === "video" && method === "file" && file) {
-        formData.append("file", file);
+        formData.append("content", file);  // Use 'content' instead of 'file'
       } else if (type === "image" && method === "file" && file) {
-        formData.append("file", file);
+        formData.append("content", file);  // Use 'content' instead of 'file'
       } else if (type === "video" && method === "url" && content) {
         formData.append("content", content);
       } else if (type === "image" && method === "url" && content) {
         formData.append("content", content);
       }
-
+      
       const response = await fetch("http://localhost:8000/api/story/storiesCreate", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${sessionStorage.getItem("accessToken")}`,
-          body: formData,
         },
         body: formData,
       });
+      
 
       const data = await response.json();
 
