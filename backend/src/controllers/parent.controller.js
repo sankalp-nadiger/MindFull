@@ -119,7 +119,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
         email,
         mobileNumber,
         password,
-        studentID: user._id,
+        student: user._id,
     });
 
     user.parent = parent._id; // Assuming the `User` schema has a `parent` field
@@ -282,38 +282,57 @@ const getStudentReport = async (req, res) => {
     }
   };
 
- const getSessions= (async (req,res) =>{
-    const parentId=req.parent._id;
+  const getSessions = async (req, res) => {
+    const parentId = req.parent._id;
     try {
-        // Find the student (user) who has this parent
+        // Find the student (user) associated with this parent
         const student = await User.findOne({ parent: parentId });
 
         if (!student) {
-            return {
+            return res.status(404).json({
                 success: false,
                 message: "No student found for this parent",
-            };
+            });
         }
 
-        // Retrieve all sessions for this student's ID
-        const sessions = await Session.find({ student: student._id })
-            .populate("student", "name email")  // Populating student details
-            .populate("counselor", "name expertise")  // Populating counselor details
+        // Retrieve only "Completed" sessions for this student's ID
+        const sessions = await Session.find({ user: student._id, status: "Completed" })
+            .populate("counselor", "fullName specification") // Populate counselor details
             .exec();
 
-            res.status(200).json({
+        if (!sessions || sessions.length === 0) {
+            return res.status(200).json({
                 success: true,
-                sessions: sessions,
+                sessions: [],
             });
+        }
+
+        // Formatting session response
+        const formattedSessions = sessions.map(session => ({
+            _id: session._id,
+            counselorName: session.counselor?.fullName || "Unknown",
+            counselorSpecification: session.counselor?.specification || "N/A",
+            counselorFeedback: session.counselorFeedback || "No feedback",
+            issueDetails: session.issueDetails || "No details provided",
+            status: session.status,
+            createdAt: session.createdAt
+        }));
+
+        res.status(200).json({
+            success: true,
+            sessions: formattedSessions,
+        });
+
     } catch (error) {
         console.error("Error fetching sessions:", error);
-        return {
+        res.status(500).json({
             success: false,
             message: "Failed to fetch sessions",
             error: error.message,
-        };
+        });
     }
-})
+};
+
 
 const checkMoodAndNotifyParent = async (req,res) => {
     const parentId=req.parent._id;

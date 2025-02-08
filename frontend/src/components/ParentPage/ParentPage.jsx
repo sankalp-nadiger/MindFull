@@ -110,7 +110,7 @@ function ParentDashboard({ parentId }) {
         <h2 className="text-3xl font-bold text-center mb-6">Parent Dashboard</h2>
 
         <div className="flex items-center justify-center w-full gap-9 p-6 flex-wrap">
-          <div className="flex items-center justify-center bg-gray-800 w-full max-w-sm p-6 rounded-lg shadow-lg text-center">
+          <div className="flex items-center justify-center bg-gray-800 w-full max-w-sm p-6 rounded-lg shadow-lg text-center mb-6">
             <div className="w-full">
               <h2 className="text-2xl font-bold text-white mb-4">Mood Analysis</h2>
               <Bar data={{ labels: weekLabels, datasets: [{ label: "Mood Score", data: moodData, backgroundColor: ["#808080", "#FF6384", "#36A2EB", "#FFCE56", "#4CAF50", "#8E44AD", "#F39C12"], borderColor: "#ffffff", borderWidth: 1 }] }} 
@@ -118,7 +118,7 @@ function ParentDashboard({ parentId }) {
             </div>
           </div>
 
-          <div className="flex items-center justify-center bg-gray-800 w-full max-w-sm p-6 rounded-lg shadow-lg text-center">
+          <div className="flex items-center justify-center bg-gray-800 w-full max-w-sm p-6 rounded-lg shadow-lg text-center mb-6">
             <div className="w-full">
               <h2 className="text-2xl font-bold text-white mb-4">Activity Tracking</h2>
               <Line data={{ labels: weekLabels, datasets: [{ label: "Activities Completed", data: activityData, fill: false, borderColor: "rgb(75, 192, 192)", tension: 0.1 }] }} 
@@ -127,71 +127,72 @@ function ParentDashboard({ parentId }) {
           </div>
         </div>
 
-        <div className="max-w-5xl mx-auto">
-          <div className="grid gap-6">
-            <div className="bg-gray-800 p-6 rounded-lg shadow-md">
-              <h3 className="text-2xl font-semibold mb-4">Sessions</h3>
-              <ul className="space-y-2">
-                {sessions.map((session) => (
-                  <li key={session._id} className="border-b border-gray-600 pb-2">
-                    {session.student.name} - {session.counselor.name}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="bg-gray-800 p-6 rounded-lg shadow-md">
-    <h3 className="text-2xl font-semibold mb-4">Journals</h3>
-    {journals.length > 0 ? (
-        <ul className="space-y-4">
-            {journals.map((journal) => (
-                <li key={journal._id} className="border-b border-gray-600 pb-4">
-                    <div className="flex justify-between items-start mb-2">
-                        <h4 className="text-lg font-medium text-blue-400">
-                            {journal.topic || "Untitled Entry"}
-                        </h4>
-                        <span className="text-sm text-gray-400">
-                            {new Date(journal.entryDate).toLocaleDateString()}
-                        </span>
-                    </div>
-                    <p className="text-gray-300 whitespace-pre-wrap">
-                        {journal.entryText}
-                    </p>
-                    {journal.moodScore && (
-                        <div className="mt-2 text-sm text-gray-400">
-                            Mood Score: {journal.moodScore}
-                        </div>
-                    )}
+        {/* Sessions Section */}
+        <div className="bg-gray-800 p-6 rounded-lg shadow-md mb-6">
+          <h3 className="text-2xl font-semibold mb-4">Sessions</h3>
+          {sessions.length > 0 ? (
+            <ul className="space-y-4">
+              {sessions.map((session) => (
+                <li key={session._id} className="border-b border-gray-600 pb-4 last:pb-0">
+                  <p><span className="font-semibold">Counselor:</span> {session.counselorName}</p>
+                  <p><span className="font-semibold">Specialization:</span> {session.counselorSpecification}</p>
+                  <p><span className="font-semibold">Issue Details:</span> {session.issueDetails}</p>
                 </li>
-            ))}
-        </ul>
-    ) : (
-        <p className="text-gray-400">No journal entries found.</p>
-    )}
-</div>
-
-            <div className="bg-gray-800 p-6 rounded-lg shadow-md">
-              <h3 className="text-2xl font-semibold mb-4">Issues</h3>
-              <ul className="space-y-2">
-                {issues.map((issue) => (
-                  <li key={issue._id} className="border-b border-gray-600 pb-2">
-                    {issue.description}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {report ? (
-              <div className="bg-gray-800 p-6 rounded-lg shadow-md">
-                <h3 className="text-2xl font-semibold mb-4">Student Report</h3>
-                <p className="text-lg font-medium">Parent Name: {report.parentName || "N/A"}</p>
-                <p className="text-lg font-medium">Student Name: {report.studentName || "N/A"}</p>
-                <p><span className="font-semibold">Avg Mood:</span> {report.avgMood || "N/A"}</p>
-                <p><span className="font-semibold">Journals:</span> {report.totalJournals || "N/A"}</p>
-              </div>
-            ) : <p className="text-gray-500">No report available</p>}
-          </div>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-400">No sessions found.</p>
+          )}
         </div>
+
+        {/* Journals Section */}
+        <div className="bg-gray-800 p-6 rounded-lg shadow-md mb-6">
+          <h3 className="text-2xl font-semibold mb-4">Journals</h3>
+          {journals.length > 0 ? (
+            <ul className="space-y-4">
+              {journals.map((journal) => (
+                <li key={journal._id} className="border-b border-gray-600 pb-4 last:pb-0">
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="text-lg font-medium text-blue-400">{journal.topic || "Untitled Entry"}</h4>
+                    <span className="text-sm text-gray-400">{new Date(journal.entryDate).toLocaleDateString()}</span>
+                  </div>
+                  <p className="text-gray-300 whitespace-pre-wrap">{journal.entryText}</p>
+                  {journal.moodScore && (
+                    <div className="mt-2 text-sm text-gray-400">Mood Score: {journal.moodScore}</div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-400">No journal entries found.</p>
+          )}
+        </div>
+
+        {/* Issues Section */}
+        <div className="bg-gray-800 p-6 rounded-lg shadow-md mb-6">
+          <h3 className="text-2xl font-semibold mb-4">Issues</h3>
+          <ul className="space-y-2">
+            {issues.map((issue) => (
+              <li key={issue._id} className="border-b border-gray-600 pb-2 last:pb-0">
+                <p><span className="font-semibold">Issue Name:</span> {issue.illnessType}</p>
+                <p><span className="font-semibold">Severity:</span> {issue.severity}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Report Section */}
+        {report ? (
+          <div className="bg-gray-800 p-6 rounded-lg shadow-md mb-6">
+            <h3 className="text-2xl font-semibold mb-4">Student Report</h3>
+            <p className="text-lg font-medium">Parent Name: {report.parentName || "N/A"}</p>
+            <p className="text-lg font-medium">Student Name: {report.studentName || "N/A"}</p>
+            <p><span className="font-semibold">Avg Mood:</span> {report.avgMood || "N/A"}</p>
+            <p><span className="font-semibold">Journals:</span> {report.totalJournals || "N/A"}</p>
+          </div>
+        ) : (
+          <p className="text-gray-500">No report available</p>
+        )}
       </div>
     </div>
   );

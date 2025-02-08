@@ -14,7 +14,6 @@ export const createStory = async (req, res) => {
     if (!content) {
       return res.status(400).json({ message: "Content is required." });
     }
-
     const story = new Story({
       user: userId,
       type,
@@ -34,7 +33,7 @@ export const getStories = async (req, res) => {
   try {
     // Fetch all stories, populating user details
     const stories = await Story.find()
-      .populate("user", "name avatar") // Fetch user name and avatar for display
+      .populate("user", "username avatar") // Fetch user name and avatar for display
       .sort({ createdAt: -1 }); // Sort by most recent
 
     res.status(200).json({ stories });
