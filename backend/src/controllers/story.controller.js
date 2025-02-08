@@ -1,23 +1,44 @@
 import {Story} from "../models/stories.model.js"
 import { User } from "../models/user.model.js";
-
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 // Create a new story
 export const createStory = async (req, res) => {
   try {
     const { type, content } = req.body;
-    const userId= req.user._id
+    const userId = req.user._id;
+
     // Validate input
     if (!type || !["image", "video"].includes(type)) {
       return res.status(400).json({ message: "Invalid story type." });
     }
 
-    if (!content) {
+    if (!content && !req.files?.content) {
       return res.status(400).json({ message: "Content is required." });
     }
+
+    let storyContent = content;
+
+    // If content is a file (image or video)
+    if (req.files?.content) {
+      const file = req.files.content[0];  // Assuming single file upload
+      const filePath = file.path;
+
+      // Upload the file to Cloudinary
+      const cloudinaryResponse = await uploadOnCloudinary(filePath, { folder: 'Mindfull' });
+
+      if (!cloudinaryResponse) {
+        throw new Error('File upload to Cloudinary failed');
+      }
+
+      // Get the Cloudinary URL of the uploaded file
+      storyContent = cloudinaryResponse.url;
+    }
+
+    // Create and save the story
     const story = new Story({
       user: userId,
       type,
-      content,
+      content: storyContent,
     });
 
     await story.save();
