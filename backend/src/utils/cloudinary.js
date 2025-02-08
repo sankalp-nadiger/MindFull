@@ -25,7 +25,7 @@ export const uploadOnCloudinary = async (localFilePath, options = {}) => {
 
     // Set default options if not provided
     const uploadOptions = {
-      resource_type: "image",
+      resource_type: "auto",
       ...options,
     };
 
