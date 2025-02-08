@@ -6,7 +6,6 @@ import { fetchRecommendations } from './recommendations.controller.js';
 export const fetchResourceRecommendations = async (req, res) => {
   try {
     const userId = req.user._id;
-
     if (!userId) {
       return res.status(400).json({ message: 'Missing required fields.' });
     }
@@ -66,15 +65,15 @@ export const fetchResourceRecommendations = async (req, res) => {
 };
 export const markRecommendationAsWatched = async (req, res) => {
   try {
-    const userId= req.user._id;
-    const { recommendationId } = req.body;
+    const userId = req.user._id;
+    const { recommendationTitle } = req.body;  // Use title as identifier
 
-    if (!userId || !recommendationId) {
+    if (!userId || !recommendationTitle) {
       return res.status(400).json({ message: 'Missing required fields.' });
     }
 
     const recommendation = await Resource.findOneAndUpdate(
-      { user: userId, referenceId: recommendationId },
+      { user: userId, title: recommendationTitle },  // Use title to find the resource
       { watched: true },
       { new: true }
     );
@@ -92,4 +91,5 @@ export const markRecommendationAsWatched = async (req, res) => {
     res.status(500).json({ message: 'Error updating recommendation.', error: error.message });
   }
 };
+
 

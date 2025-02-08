@@ -5,8 +5,9 @@ const Recommendations = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [activeVideo, setActiveVideo] = useState(null);
+  const [players, setPlayers] = useState({});
   const token = sessionStorage.getItem("accessToken");
-
+  console.log(token)
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -19,7 +20,7 @@ const Recommendations = () => {
           },
         });
         if (!response.ok) {
-          throw new Error("Failed to fetch recommendations");
+          throw new Error("Failed to fetch data");
         }
         
         const result = await response.json();
@@ -30,7 +31,6 @@ const Recommendations = () => {
           podcasts: result.data.filter(item => item.type === "podcast") || [],
           events: result.data.filter(item => item.type === "event") || [],
         });
-  
       } catch (err) {
         setError(err.message);
       }
@@ -40,7 +40,8 @@ const Recommendations = () => {
     fetchData();
   }, []);
 
-  const markAsWatched = async (resource) => {
+  const markAsWatched = async (resourceTitle) => {
+    console.log(resourceTitle); // Check the title
     try {
       await fetch("http://localhost:8000/api/resources/watched", {
         method: "POST",
@@ -48,22 +49,64 @@ const Recommendations = () => {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ recommendationId: resource.id })
+        body: JSON.stringify({ recommendationTitle: resourceTitle })  // Send title
       });
     } catch (err) {
       console.error("Failed to mark resource as watched", err);
     }
   };
-  
-
-  const handleVideoPlay = (videoIndex, video) => {
-    if (activeVideo !== null && activeVideo !== videoIndex) {
-      const previousVideo = document.getElementById(`video-${activeVideo}`);
-      previousVideo?.pause();
+  // Function to handle YouTube video play and pause previous video
+  // Handle video play and mark as watched
+const handleVideoPlay = (videoIndex, video) => {
+  // Check if there's a previously active video
+  if (activeVideo !== null && activeVideo !== videoIndex) {
+    // Pause the previously active video
+    if (players[activeVideo]) {
+      players[activeVideo].pauseVideo();
     }
-    setActiveVideo(videoIndex);
-    markAsWatched({ id: video.id, type: "video" });
+  }
+
+  // Set the current active video index to the new one
+  setActiveVideo(videoIndex);
+
+  // Play the new video
+  if (players[videoIndex]) {
+    players[videoIndex].playVideo();
+  }
+
+  // Mark the video as watched
+  markAsWatched(video.title);
+};
+
+
+  // Function to initialize YouTube Player API
+  const onYouTubeIframeAPIReady = (videoIndex) => {
+    // Create a new player for the video using the YouTube Player API
+    const player = new YT.Player(`video-${videoIndex}`, {
+      events: {
+        onStateChange: (event) => {
+          if (event.data === YT.PlayerState.PLAYING) {
+            // Call handleVideoPlay when the video starts playing
+            handleVideoPlay(videoIndex, data.videos[videoIndex]);
+          }
+        },
+      },
+    });
+  
+    // Save the player instance in the players state
+    setPlayers((prev) => ({
+      ...prev,
+      [videoIndex]: player,
+    }));
   };
+  
+  
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://www.youtube.com/iframe_api";
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-black via-blue-900 to-black p-6">
@@ -72,7 +115,7 @@ const Recommendations = () => {
         {loading && <p className="text-center">Loading...</p>}
         {error && <p className="text-red-500 text-center">{error}</p>}
         <div className="space-y-8">
-           {data.videos.length > 0 && (
+          {data.videos.length > 0 && (
             <section>
               <h3 className="text-xl font-bold font-sans text-amber-600 mb-4">Videos</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -91,6 +134,7 @@ const Recommendations = () => {
                         allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
                         title={video.title}
+                        onLoad={() => onYouTubeIframeAPIReady(index)}
                         onClick={() => handleVideoPlay(index, video)}
                       />
                     </div>
@@ -99,7 +143,7 @@ const Recommendations = () => {
               </div>
             </section>
           )}
-         {data.books.length > 0 && (
+          {data.books.length > 0 && (
             <section>
               <h3 className="text-xl font-bold font-sans text-amber-600 mb-4">Books</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -112,28 +156,13 @@ const Recommendations = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-500 hover:underline mt-2"
-                      onClick={() => markAsWatched({ id: book.id, type: "book" })}
+                      onClick={() => markAsWatched(book.title)}
                     >Read More</a>
                   </div>
                 ))}
               </div>
             </section>
           )}
-          {/* {data.podcasts.length > 0 && (
-            <section>
-              <h3 className="text-xl font-bold font-sans text-amber-600 mb-4">Podcasts</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {data.podcasts.map((podcast, index) => (
-                  <div key={index} className="p-4 bg-gray-800 rounded-lg shadow-lg h-[200px] flex flex-col">
-                    <h4 className="text-lg font-medium mb-2 truncate">{podcast.title}</h4>
-                    <audio controls className="w-full" onPlay={() => markAsWatched({ id: podcast.id, type: "podcast" })}>
-                      <source src={podcast.url} type="audio/mp3" />
-                    </audio>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )} */}
         </div>
       </div>
     </div>

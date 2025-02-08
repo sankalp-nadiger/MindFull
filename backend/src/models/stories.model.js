@@ -9,7 +9,7 @@ const storySchema = new Schema({
   },
   type: {
     type: String,
-    enum: ["image", "video"], // Only allow types similar to Instagram stories
+    enum: ["image", "video"],
     required: true,
   },
   content: {

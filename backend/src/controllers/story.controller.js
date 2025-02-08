@@ -1,10 +1,11 @@
 import {Story} from "../models/stories.model.js"
+import { User } from "../models/user.model.js";
 
 // Create a new story
 export const createStory = async (req, res) => {
   try {
     const { type, content } = req.body;
-
+    const userId= req.user._id
     // Validate input
     if (!type || !["image", "video"].includes(type)) {
       return res.status(400).json({ message: "Invalid story type." });
@@ -15,7 +16,7 @@ export const createStory = async (req, res) => {
     }
 
     const story = new Story({
-      user: "678e87c5b00317631329f4c1", // Assuming req.user is populated by authentication middleware
+      user: userId,
       type,
       content,
     });
