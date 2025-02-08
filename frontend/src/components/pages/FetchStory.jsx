@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
 
 const Stories = () => {
   const [stories, setStories] = useState([]); // State to store stories
   const [loading, setLoading] = useState(true); // Loading state
   const [error, setError] = useState(null); // Error state
+  const navigate = useNavigate(); // Hook for navigation
 
   useEffect(() => {
     const fetchStories = async () => {
@@ -13,7 +15,7 @@ const Stories = () => {
         const response = await fetch("http://localhost:8000/api/story/stories", {
           method: "GET",
           headers: {
-            "Authorization": `Bearer ${localStorage.getItem("token")}`, // Add token from localStorage
+            "Authorization": `Bearer ${sessionStorage.getItem("accessToken")}`, // Add token from localStorage
             "Content-Type": "application/json",
           },
         });
@@ -35,6 +37,11 @@ const Stories = () => {
     fetchStories();
   }, []);
 
+  // Handle navigation to the CreateStory page
+  const handleAddStory = () => {
+    navigate("/createStory"); // Navigate to the "Create Story" page
+  };
+
   if (loading) {
     return <div className="text-center mt-10">Loading stories...</div>;
   }
@@ -47,6 +54,14 @@ const Stories = () => {
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-r from-black via-[#0a1f44] to-black text-white">
       <div className="p-6 max-w-4xl w-full bg-[#1a1a2e] rounded-lg shadow-lg text-center">
         <h2 className="text-2xl font-bold mb-4">Stories</h2>
+
+        {/* "+" button for adding a new story */}
+        <button
+          onClick={handleAddStory}
+          className="absolute top-4 right-4 bg-red-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+        >
+      +
+        </button>
 
         {stories.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
@@ -62,12 +77,24 @@ const Stories = () => {
                     className="rounded-lg w-full"
                   />
                 ) : (
-                  <video controls className="rounded-lg w-full">
-                    <source src={story.content} type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
+                  <iframe
+                    className="rounded-lg w-full"
+                    src={
+                      story.content.includes("youtube.com/watch")
+                        ? `https://www.youtube.com/embed/${new URL(
+                            story.content
+                          ).searchParams.get("v")}`
+                        : story.content
+                    }
+                    title="Video Player"
+                    width="100%"
+                    height="auto"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
                 )}
-                <div className="mt-2 text-gray-400 text-sm">By: {story.user.name}</div>
+                <div className="mt-2 text-gray-400 text-sm">By: {story.user.username}</div>
               </div>
             ))}
           </div>

@@ -106,15 +106,16 @@ export function HeroHighlightDemo() {
               +
             </div>
             <p className="text-sm">Add Story</p>
+            
           </div>
           {stories.map((story) => (
             <div key={story.id} className="flex flex-col items-center">
               <img
                 src={story.avatar}
-                alt={story.username}
+                alt={story.user.username}
                 className="w-16 h-16 rounded-full border-2 border-blue-500"
               />
-              <p className="text-sm">{story.username}</p>
+              <p className="text-sm">{story.user.username}</p>
             </div>
           ))}
         </div>
