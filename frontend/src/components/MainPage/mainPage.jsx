@@ -148,15 +148,27 @@ export function HeroHighlightDemo() {
 
       {/* New "To Do Today" Section */}
       {suggestedActivity && (
-        <div className="bg-gray-800 text-white p-6 my-8 rounded-lg">
-          <h2 className="text-3xl font-semibold mb-4">Your To-Do Today:</h2>
-          <h3 className="text-2xl font-medium">{suggestedActivity.title}</h3>
-          <p className="text-lg mt-2">{suggestedActivity.content}</p>
-          <div className="mt-4 text-lg text-gray-400">
-            Type: {suggestedActivity.type}
-          </div>
-        </div>
-      )}
+  <div className="flex justify-center items-center my-8">
+    <div className="bg-gray-800 text-white p-6 rounded-lg w-full max-w-lg">
+      <h2 className="text-3xl font-semibold mb-4">Your To-Do Today:</h2>
+      <h3 className="text-2xl font-medium">{suggestedActivity.title}</h3>
+      <p className="text-lg mt-2">{suggestedActivity.content}</p>
+      <div className="mt-4 text-lg text-gray-400">
+        Type: {suggestedActivity.type}
+      </div>
+      
+      <div className="mt-6 flex items-center">
+        <input
+          type="checkbox"
+          id="completed"
+          className="mr-2"
+          onChange={() => handleCompletedChange()}
+        />
+        <label htmlFor="completed" className="text-lg">Completed</label>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* Additional Sections */}
       <div className="bg-gray-200">

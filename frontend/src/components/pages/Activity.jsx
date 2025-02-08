@@ -35,35 +35,43 @@ const ActivityRecommendations = () => {
   }, []);
 
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading recommendations...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        Loading recommendations...
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="flex justify-center items-center h-screen text-red-600">Error: {error}</div>;
+    return (
+      <div className="flex justify-center items-center h-screen text-red-600">
+        Error: {error}
+      </div>
+    );
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto bg-gradient-to-b from-black via-blue-900 to-black">
-  <h2 className="text-3xl font-bold mb-6 text-center text-white">Recommended Activities</h2>
-  {recommendations.length > 0 ? (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {recommendations.map((rec, index) => (
-        <div
-          key={index}
-          className="bg-transparent text-white shadow-2xl rounded-lg p-6 border border-gray-700 hover:shadow-3xl transition-transform transform hover:scale-105"
-        >
-          <h3 className="text-2xl font-extrabold text-indigo-400 mb-4">{rec.title}</h3>
-          <p className="text-gray-400 text-sm mb-3">
-            <strong className="text-gray-300">Type:</strong> {rec.type}
-          </p>
-          <p className="text-gray-300">{rec.content}</p>
+    <div className="p-6 h-screen bg-gradient-to-b from-black via-blue-900 to-black">
+      <h2 className="text-3xl font-bold mb-6 text-center text-white">Recommended Activities</h2>
+      {recommendations.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {recommendations.map((rec, index) => (
+            <div
+              key={index}
+              className="bg-transparent text-white shadow-2xl rounded-lg p-6 border border-gray-700 hover:shadow-3xl transition-transform transform hover:scale-105"
+            >
+              <h3 className="text-2xl font-extrabold text-indigo-400 mb-4">{rec.title}</h3>
+              <p className="text-gray-400 text-sm mb-3">
+                <strong className="text-gray-300">Type:</strong> {rec.type}
+              </p>
+              <p className="text-gray-300">{rec.content}</p>
+            </div>
+          ))}
         </div>
-      ))}
+      ) : (
+        <div className="text-center text-gray-500">No recommendations available at the moment.</div>
+      )}
     </div>
-  ) : (
-    <div className="text-center text-gray-500">No recommendations available at the moment.</div>
-  )}
-</div>
   );
 };
 
