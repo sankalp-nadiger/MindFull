@@ -20,6 +20,7 @@ export function HeroHighlightDemo() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [stories, setStories] = useState([]);
   const [showStories, setShowStories] = useState(false);
+  const [suggestedActivity, setSuggestedActivity] = useState(null); // New state for storing the activity
 
   const token = sessionStorage.getItem("accessToken");
 
@@ -50,6 +51,14 @@ export function HeroHighlightDemo() {
     };
     fetchUsername();
   }, []);
+  
+  //setSuggestedActivity(activity)
+  useEffect(() => {
+    const activity = sessionStorage.getItem("activity");
+    setSuggestedActivity(activity)
+  }, []);
+  
+  
 
   const fetchStories = async () => {
     try {
@@ -113,30 +122,41 @@ export function HeroHighlightDemo() {
 
       {/* HeroHighlight Section */}
       <div style={{ height: "50vh", width: "100%" }}>
-      <HeroHighlight>
-  <div className="min-h-[50vh] flex flex-col justify-center items-center text-center">
-    <motion.h1 
-      initial={{ opacity: 0, y: 20 }} 
-      animate={{ opacity: 1, y: [20, -5, 0] }} 
-      transition={{ duration: 0.5, ease: [0.4, 0.0, 0.2, 1] }} 
-      className="text-5xl md:text-7xl lg:text-8xl font-bold text-neutral-700 dark:text-white flex items-center gap-4"
-    >
-      Welcome,
-      <Highlight
-        className="text-black dark:text-white inline-block px-3 py-1 text-4xl md:text-6xl lg:text-7xl bg-gradient-to-r from-purple-500 to-blue-500 rounded-md shadow-md whitespace-nowrap"
-      >
-        {loading ? "Loading..." : error ? `Error: ${error}` : username}
-      </Highlight>
-    </motion.h1>
+        <HeroHighlight>
+          <div className="min-h-[50vh] flex flex-col justify-center items-center text-center">
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: [20, -5, 0] }}
+              transition={{ duration: 0.5, ease: [0.4, 0.0, 0.2, 1] }}
+              className="text-5xl md:text-7xl lg:text-8xl font-bold text-neutral-700 dark:text-white flex items-center gap-4"
+            >
+              Welcome,
+              <Highlight
+                className="text-black dark:text-white inline-block px-3 py-1 text-4xl md:text-6xl lg:text-7xl bg-gradient-to-r from-purple-500 to-blue-500 rounded-md shadow-md whitespace-nowrap"
+              >
+                {loading ? "Loading..." : error ? `Error: ${error}` : username}
+              </Highlight>
+            </motion.h1>
 
-    {/* Ensure greeting is visible */}
-    <div className="block w-full text-center text-xl md:text-3xl lg:text-4xl mt-6 dark:text-white">
-      How's Your Day Today?
-    </div>
-  </div>
-</HeroHighlight>
-
+            {/* Ensure greeting is visible */}
+            <div className="block w-full text-center text-xl md:text-3xl lg:text-4xl mt-6 dark:text-white">
+              How's Your Day Today?
+            </div>
+          </div>
+        </HeroHighlight>
       </div>
+
+      {/* New "To Do Today" Section */}
+      {suggestedActivity && (
+        <div className="bg-gray-800 text-white p-6 my-8 rounded-lg">
+          <h2 className="text-3xl font-semibold mb-4">Your To-Do Today:</h2>
+          <h3 className="text-2xl font-medium">{suggestedActivity.title}</h3>
+          <p className="text-lg mt-2">{suggestedActivity.content}</p>
+          <div className="mt-4 text-lg text-gray-400">
+            Type: {suggestedActivity.type}
+          </div>
+        </div>
+      )}
 
       {/* Additional Sections */}
       <div className="bg-gray-200">
@@ -145,7 +165,7 @@ export function HeroHighlightDemo() {
       <div className="bg-black">
         <Stories />
       </div>
-      <Recommendations />
+      {/* <Recommendations /> */}
 
       <section className="text-white bg-black body-font">
         <div className="container px-3 py-24 mx-auto">

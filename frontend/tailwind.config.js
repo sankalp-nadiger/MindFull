@@ -7,9 +7,14 @@ const svgToDataUri = require("mini-svg-data-uri");
 export default {
   content: [ "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",],
-  theme: {
-    extend: {},
-  },
+    theme: {
+      extend: {
+        skew: {
+          '-10': '-10deg', // Skew left for the current user
+          '10': '10deg',   // Skew right for other users
+        },
+      },
+    },
   plugins: [
       addVariablesForColors,
       function ({

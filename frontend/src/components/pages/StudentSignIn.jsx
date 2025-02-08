@@ -38,14 +38,15 @@ const StudentSignIn = () => {
           response.data.data;
 
         console.log("Login successful:", response.data);
-
+        console.log(suggestedActivity)
         // Save user data and tokens
         sessionStorage.setItem("accessToken", accessToken);
         sessionStorage.setItem("user", JSON.stringify(user));
+        sessionStorage.setItem("activity", JSON.stringify(suggestedActivity));
 
         // Display streak and suggested activity
         alert(
-          `Welcome back, ${user.username}!\nYour streak: ${streak}\nMax streak: ${maxStreak}\nSuggested Activity: ${suggestedActivity}`
+          `Welcome back, ${user.username}!\nYour streak: ${streak}\nMax streak: ${maxStreak}\n`
         );
 
         // Redirect to dashboard

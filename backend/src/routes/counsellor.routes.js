@@ -8,7 +8,8 @@ import {
   loginCounsellor,
   acceptSession,
   logoutCounsellor,
-  getActiveSessions
+  getActiveSessions,
+  getCounselorStats
 } from "../controllers/counsellor.controller.js";
 import { sendOTP } from "../controllers/parent.controller.js";
 import { upload } from "../middleware/multer.middleware.js"
@@ -19,10 +20,11 @@ router.post("/request", user_verifyJWT, requestSession);
 router.post("/accept", counsellor_verifyJWT, acceptSession);
 router.post("/end", counsellor_verifyJWT, endSession);
 router.get("/sessions", counsellor_verifyJWT, getActiveSessions);
-
+//router.get('/counselors/:counselorId/stats', getCounselorStats);
 router.post("/register-counsellor", upload.array('certifications', 5), registerCounsellor);
 router.post("/send-otp", sendOTP);
 router.post("/login-counsellor", loginCounsellor);
+router.get('/stats', counsellor_verifyJWT, getCounselorStats);
 
 router.post("/logout-counsellor", counsellor_verifyJWT, logoutCounsellor);
 

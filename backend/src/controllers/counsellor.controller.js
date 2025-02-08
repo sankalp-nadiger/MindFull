@@ -85,6 +85,41 @@ export const requestSession = asyncHandler(async (req, res) => {
         }
     });
 });
+ // feedback 
+  // Import the counselor model
+
+// Controller to update feedback for a counselor
+// export const updateFeedback = async (req, res) => {
+//     try {
+//         const { counselorId, feedback } = req.body;
+
+//         // Check if the counselorId and feedback are provided
+//         if (!counselorId || !feedback) {
+//             return res.status(400).json({ message: "Counselor ID and feedback are required" });
+//         }
+
+//         // Find the counselor by their ID
+//         const counselor = await Counselor.findById(counselorId);
+        
+//         if (!counselor) {
+//             return res.status(404).json({ message: "Counselor not found" });
+//         }
+
+//         // Append the new feedback to the existing feedback array
+//         counselor.feedback.push(feedback);
+
+//         // Save the counselor document with the updated feedback
+//         await counselor.save();
+
+//         // Send a success response
+//         return res.status(200).json({ message: "Feedback updated successfully", counselor });
+//     } catch (err) {
+//         console.error(err);
+//         return res.status(500).json({ message: "Server error" });
+//     }
+// };
+
+
 
 // Accept Session (Counselor Side)
 export const acceptSession = asyncHandler(async (req, res) => {
@@ -360,6 +395,43 @@ export const updateFeedback = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, { feedback: counsellor.feedback }, "Feedback updated successfully"));
 });
+// getStats 
+export const getCounselorStats = async (req, res) => {
+    try {
+        const counselorId = req.counsellor._id  // counselorId is passed as a URL parameter
+
+        // Find the counselor by ID
+        const counselor = await Counsellor.findById(counselorId);
+        
+        if (!counselor) {
+            return res.status(404).json({ message: "Counselor not found" });
+        }
+
+        // Get the number of sessions the counselor has taken
+        const sessionsCount = await Session.countDocuments({ counselor: counselorId });
+
+        // Optionally, calculate other stats like total session duration (if you want to)
+        const sessions = await Session.find({ counselor: counselorId });
+        const totalSessionDuration = sessions.reduce((total, session) => {
+            const duration = new Date(session.endTime) - new Date(session.startTime);
+            return total + duration;
+        }, 0);
+
+        // Format total session duration to hours, minutes, etc.
+        const totalDurationHours = Math.floor(totalSessionDuration / 3600000);  // Convert ms to hours
+        const totalDurationMinutes = Math.floor((totalSessionDuration % 3600000) / 60000);  // Convert remaining ms to minutes
+
+        // Return the stats as a response
+        return res.status(200).json({
+            counselorName: counselor.fullName,
+            sessionsTaken: sessionsCount,
+            totalSessionDuration: `${totalDurationHours} hours ${totalDurationMinutes} minutes`
+        });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Server error" });
+    }
+};
 
 export const updateProfile = asyncHandler(async (req, res) => {
     const counsellorId= req.counsellor._id;

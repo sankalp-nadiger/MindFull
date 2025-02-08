@@ -1,11 +1,11 @@
 import asyncHandler from '../utils/asynchandler.utils.js';
 import { ApiError } from '../utils/API_Error.js';
 import { Community } from '../models/community.model.js';  // Import your Community model
-
+import { User } from '../models/user.model.js';
 // Create a Community Room (Group Chat)
 const createCommunityRoom = asyncHandler(async (req, res) => {
-    const { roomName, userId, description } = req.body;
-
+    const { roomName,  description } = req.body;
+    const userId=req.user._id;
     if (!roomName || !userId || !description) {
         throw new ApiError(400, 'Room name, userId, and description are required');
     }
@@ -36,7 +36,13 @@ const createCommunityRoom = asyncHandler(async (req, res) => {
 // Get all Community Rooms
 const getCommunityRooms = asyncHandler(async (req, res) => {
     const rooms = await Community.find({}); // Get all rooms
-    res.status(200).json({ rooms });
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new ApiError(404, 'User not found');
+    }
+
+    res.status(200).json({ rooms, senderUsername: user.username });
 });
 
 // Join a Community Room (Group Chat) - HTTP-based
@@ -46,7 +52,7 @@ const joinCommunityRoom = asyncHandler(async (req, res) => {
     if (!userId || !roomId) {
         throw new ApiError(400, 'User ID and Room ID are required');
     }
-
+    console.log(userId)
     // Find the room by roomId and add the user to the members array
     const room = await Community.findById(roomId);
     if (!room) {
@@ -59,7 +65,7 @@ const joinCommunityRoom = asyncHandler(async (req, res) => {
         await room.save();
     }
 
-    res.status(200).json({ message: `User ${userId} joined room ${roomId}` });
+    res.status(200).json({ message: `User ${userId} joined room ${roomId}`,userId: userId.toString(),})
 });
 
 // Send a Message to Community Room - HTTP-based
@@ -70,6 +76,8 @@ const sendMessageToCommunityRoom = asyncHandler(async (req, res) => {
         throw new ApiError(400, 'Room ID, User ID, and Message are required');
     }
 
+    // Find the user to get the username (Assuming you have a User model)
+    
     // Save the message in the database (or similar)
     const room = await Community.findById(roomId);
     if (!room) {

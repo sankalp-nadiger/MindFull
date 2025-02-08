@@ -33,6 +33,8 @@ import SuccessStories from "./components/HomePage/SuccessStories"
 import VideoChat from "./components/Videochat/Videochat"
 import AIrecommendation from "./components/Materialrecommendation/AIrecommendation"
 import CommunityChat from "./components/Community/Communitychat"
+import Session from "./components/Councellor/Session"
+// import CounselorStats from "./components/Councellor/Counselorstats"
 
 function App() {
 
@@ -71,6 +73,8 @@ function App() {
          <Route path="/video" element={<VideoChat />}/>
          <Route path="/recommend" element={<AIrecommendation/>}/>
          <Route path="/community" element={<CommunityChat/>}/>
+         <Route path="/sessions" element={<Session/>}/>
+          {/* <Route path="/stats" element={<CounselorStats/>}/>  */}
         </Routes>
       </Router>
     </>
