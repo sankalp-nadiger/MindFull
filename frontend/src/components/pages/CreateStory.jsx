@@ -14,6 +14,8 @@ const CreateStory = () => {
       setLoading(true);
 
       const formData = new FormData();
+      
+      formData.append("type", type); 
       if (type === "video" && method === "file" && file) {
         formData.append("file", file);
       } else if (type === "image" && method === "file" && file) {
@@ -27,7 +29,8 @@ const CreateStory = () => {
       const response = await fetch("http://localhost:8000/api/story/storiesCreate", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${sessionStorage.getItem("accessToken")}`, // Add token from localStorage
+          "Authorization": `Bearer ${sessionStorage.getItem("accessToken")}`,
+          body: formData,
         },
         body: formData,
       });
