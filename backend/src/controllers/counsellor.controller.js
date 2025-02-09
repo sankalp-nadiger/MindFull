@@ -7,16 +7,8 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Session } from "../models/session.model.js";
 import { verifyOTP } from "./parent.controller.js";
 import app from "../app.js"
-//  import { Server } from "socket.io";
- import {server,io} from "../index.js"
-// import http from "http";
-// 
-// const io = new Server(server, {
-//     cors: {
-//         origin: "http://localhost:5173", // Your frontend URL
-//         methods: ["GET", "POST"]
-//     }
-// });
+import {server,io} from "../index.js"
+
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
       const counsellor = await Counsellor.findById(userId);
@@ -85,41 +77,33 @@ export const requestSession = asyncHandler(async (req, res) => {
         }
     });
 });
- // feedback 
-  // Import the counselor model
+export const addNotesToSession = async (req, res) => {
+    const { sessionId, notes } = req.body;
 
-// Controller to update feedback for a counselor
-// export const updateFeedback = async (req, res) => {
-//     try {
-//         const { counselorId, feedback } = req.body;
+    if (!sessionId || !notes) {
+      return res.status(400).json({ message: "Session ID and notes are required." });
+    }
+  
+    try {
+      const session = await Session.findById(sessionId);
+  
+      if (!session) {
+        return res.status(404).json({ message: "Session not found." });
+      }
+  
+      if (session.status !== "Active") {
+        return res.status(400).json({ message: "Cannot add notes to a session that is not active." });
+      }
 
-//         // Check if the counselorId and feedback are provided
-//         if (!counselorId || !feedback) {
-//             return res.status(400).json({ message: "Counselor ID and feedback are required" });
-//         }
-
-//         // Find the counselor by their ID
-//         const counselor = await Counselor.findById(counselorId);
-        
-//         if (!counselor) {
-//             return res.status(404).json({ message: "Counselor not found" });
-//         }
-
-//         // Append the new feedback to the existing feedback array
-//         counselor.feedback.push(feedback);
-
-//         // Save the counselor document with the updated feedback
-//         await counselor.save();
-
-//         // Send a success response
-//         return res.status(200).json({ message: "Feedback updated successfully", counselor });
-//     } catch (err) {
-//         console.error(err);
-//         return res.status(500).json({ message: "Server error" });
-//     }
-// };
-
-
+      session.userNotes = notes;
+      await session.save();
+  
+      return res.status(200).json({ message: "Notes added successfully!" });
+    } catch (error) {
+      console.error("Error adding notes:", error);
+      return res.status(500).json({ message: "Failed to add notes. Please try again." });
+    }
+  };
 
 // Accept Session (Counselor Side)
 export const acceptSession = asyncHandler(async (req, res) => {

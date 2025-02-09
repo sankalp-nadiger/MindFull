@@ -29,6 +29,7 @@ import JournalEntryWithSuggestions from './components/pages/JournalPage';
 import ActivityRecommendations from './components/pages/Activity';
 import Stories from './components/pages/FetchStory';
 import CreateStory from './components/pages/CreateStory';
+import CreatePost from './components/pages/CreatePost';
 import SuccessStories from "./components/HomePage/SuccessStories"
 import VideoChat from "./components/Videochat/Videochat"
 import AIrecommendation from "./components/Materialrecommendation/AIrecommendation"
@@ -68,6 +69,7 @@ function App() {
          <Route path="/activity" element={<ActivityRecommendations/>}/>
          <Route path="/storyfetch" element={<Stories/>}/>
          <Route path="/createStory" element={<CreateStory/>}/>
+         <Route path="/createPost" element={<CreatePost/>}/>
          <Route path="/Leaderboard" element={<Leaderboard />} />
          <Route path="/SuccessStories" element={<SuccessStories />} />
          <Route path="/video" element={<VideoChat />}/>

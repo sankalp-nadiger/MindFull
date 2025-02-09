@@ -12,22 +12,20 @@ const CreateStory = () => {
     e.preventDefault();
     try {
       setLoading(true);
-
+  
       const formData = new FormData();
-
-      formData.append("type", type); 
-      
-      // Change 'file' to 'content' here
+      formData.append("type", type);
+  
       if (type === "video" && method === "file" && file) {
-        formData.append("content", file);  // Use 'content' instead of 'file'
+        formData.append("content", file);
       } else if (type === "image" && method === "file" && file) {
-        formData.append("content", file);  // Use 'content' instead of 'file'
+        formData.append("content", file);
       } else if (type === "video" && method === "url" && content) {
         formData.append("content", content);
       } else if (type === "image" && method === "url" && content) {
         formData.append("content", content);
       }
-      
+  
       const response = await fetch("http://localhost:8000/api/story/storiesCreate", {
         method: "POST",
         headers: {
@@ -35,23 +33,29 @@ const CreateStory = () => {
         },
         body: formData,
       });
-      
-
+  
       const data = await response.json();
-
+  
       if (!response.ok) {
         throw new Error(data.message || "Failed to create story");
       }
-
+  
       setMessage("Story created successfully!");
       setContent(""); // Clear content URL
       setFile(null); // Clear file
+  
+      // Redirect after 3 seconds
+      setTimeout(() => {
+        window.location.href = "/mainPage"; // Change to your main page URL if needed
+      }, 3000);
+  
     } catch (err) {
       setMessage(err.message);
     } finally {
       setLoading(false);
     }
   };
+  
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-black via-blue-900 to-black p-6">
@@ -70,30 +74,31 @@ const CreateStory = () => {
           </select>
 
           <div className="flex gap-4">
-            {/* URL or File method selection */}
-            <div className="w-1/2">
-              <label className="text-gray-300">URL</label>
-              <input
-                type="radio"
-                name="method"
-                value="url"
-                checked={method === "url"}
-                onChange={() => setMethod("url")}
-                className="mr-2"
-              />
-            </div>
-            <div className="w-1/2">
-              <label className="text-gray-300">File</label>
-              <input
-                type="radio"
-                name="method"
-                value="file"
-                checked={method === "file"}
-                onChange={() => setMethod("file")}
-                className="mr-2"
-              />
-            </div>
-          </div>
+  {/* URL or File method selection */}
+  <div className="w-1/2">
+    <label className="text-gray-300 mr-2">URL</label>
+    <input
+      type="radio"
+      name="method"
+      value="url"
+      checked={method === "url"}
+      onChange={() => setMethod("url")}
+      className="mr-2"
+    />
+  </div>
+  <div className="w-1/2">
+    <label className="text-gray-300 mr-2">File</label>
+    <input
+      type="radio"
+      name="method"
+      value="file"
+      checked={method === "file"}
+      onChange={() => setMethod("file")}
+      className="mr-2"
+    />
+  </div>
+</div>
+
 
           {/* Display content input based on type and selected method */}
           {type === "image" && method === "url" && (

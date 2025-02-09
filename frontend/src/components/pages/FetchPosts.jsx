@@ -1,0 +1,158 @@
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
+
+const Posts = () => {
+  const [gratitudePosts, setGratitudePosts] = useState([]); // State to store gratitude posts
+  const [loading, setLoading] = useState(true); // Loading state
+  const [error, setError] = useState(null); // Error state
+  const navigate = useNavigate(); // Hook for navigation
+
+  useEffect(() => {
+    const fetchGratitudePosts = async () => {
+      try {
+        setLoading(true);
+
+        const response = await fetch("http://localhost:8000/api/post/posts", {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${sessionStorage.getItem("accessToken")}`, // Add token from sessionStorage
+            "Content-Type": "application/json",
+          },
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to fetch gratitude posts");
+        }
+
+        setGratitudePosts(data.posts || []); // Save fetched gratitude posts
+      } catch (err) {
+        setError(err.message); // Set error state
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGratitudePosts();
+  }, []);
+
+  // Handle navigation to the Create Gratitude Post page
+  const handleAddGratitudePost = () => {
+    navigate("/createPost"); // Navigate to the "Create Gratitude Post" page
+  };
+
+  // Handle adding reactions
+  const handleAddReaction = async (postId, reactionType) => {
+    try {
+      console.log(postId)
+      const response = await fetch("http://localhost:8000/api/post/reaction", {
+        method: "PATCH",
+        headers: {
+          "Authorization": `Bearer ${sessionStorage.getItem("accessToken")}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          postId,
+          reactionType,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to update reaction.");
+      }
+
+      // Update the reactions for the post after success
+      setGratitudePosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post._id === postId
+            ? { ...post, reactions: { ...post.reactions, [reactionType]: (post.reactions[reactionType] || 0) + 1 } }
+            : post
+        )
+      );
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  if (loading) {
+    return <div className="text-center mt-10">Loading gratitude posts...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center mt-10 text-red-500">Error: {error}</div>;
+  }
+
+  return (
+    <div className="flex justify-center items-center min-h-screen bg-gradient-to-r from-black via-[#0a1f44] to-black text-white">
+      <div className="p-6 max-w-6xl w-full bg-[#1a1a2e] rounded-lg shadow-lg text-center relative">
+        {/* Fixed "Thank Someone" Text */}
+        <h2 className="text-3xl font-bold mb-4">Thank Someone Today!</h2>
+
+        {/* "+" Button to Add Gratitude Post */}
+        <button
+          onClick={handleAddGratitudePost}
+          className="absolute top-4 right-4 bg-red-600 text-white p-3 w-12 h-12 rounded-full shadow-lg hover:bg-blue-700 transition-colors text-3xl flex items-center justify-center"
+        >
+          +
+        </button>
+
+        {/* Display Gratitude Posts */}
+        {gratitudePosts.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+            {gratitudePosts.map((post, index) => (
+              <div
+                key={index}
+                className="p-4 bg-[#252a34] rounded-lg shadow-md transition-transform transform hover:scale-105 hover:shadow-purple-500"
+              >
+                <div className="flex items-center space-x-3 mb-4">
+                  {/* User Avatar */}
+                  {post.user?.avatar ? (
+                    <img
+                      src={post.user.avatar} // Assuming the avatar URL is stored here
+                      alt={`${post.user.username}'s avatar`}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gray-500 flex items-center justify-center text-white">
+                      {post.user?.username?.[0].toUpperCase()}
+                    </div>
+                  )}
+
+                  {/* Username */}
+                  <div>
+                    <p className="text-sm font-semibold text-white">{post.user?.username}</p>
+                  </div>
+                </div>
+
+                <p className="text-lg font-semibold text-white">{post.content}</p>
+
+                {/* Reactions Buttons */}
+                <div className="mt-4 flex justify-between items-center">
+                  <div className="flex space-x-4">
+                    {/* Reaction Buttons */}
+                    {["like", "support", "love"].map((reactionType) => (
+                      <button
+                        key={reactionType}
+                        onClick={() => handleAddReaction(post._id, reactionType)}
+                        className="px-4 py-2 bg-blue-500 hover:bg-blue-700 rounded-md text-white"
+                      >
+                        {reactionType} ({post.reactions[reactionType] || 0})
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-gray-500 text-lg">No gratitude posts available.</div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Posts;

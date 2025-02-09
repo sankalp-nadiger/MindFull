@@ -52,15 +52,15 @@ const Stories = () => {
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-r from-black via-[#0a1f44] to-black text-white">
-      <div className="p-6 max-w-4xl w-full bg-[#1a1a2e] rounded-lg shadow-lg text-center relative">
+      <div className="p-6 max-w-6xl w-full bg-[#1a1a2e] rounded-lg shadow-lg text-center relative">
         <h2 className="text-2xl font-bold mb-4">Stories</h2>
         <button
           onClick={handleAddStory}
-          className="absolute top-4 right-4 bg-red-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+          className="absolute top-4 right-4 bg-red-600 text-white p-2 w-12 h-12 rounded-full shadow-lg hover:bg-blue-700 transition-colors text-5xl flex items-center justify-center"
         >
           +
         </button>
-        
+
         {stories.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
             {stories.map((story) => (
@@ -86,7 +86,21 @@ const Stories = () => {
                     allowFullScreen
                   ></iframe>
                 )}
-                <div className="mt-2 text-gray-400 text-sm">By: {story.user.username}</div>
+                <div className="flex items-center space-x-3 mb-0 pt-6">
+                  {/* User Avatar */}
+                  {story.user?.avatar ? (
+                    <img
+                      src={story.user.avatar} // Assuming the avatar URL is stored here
+                      alt={`${story.user.username}'s avatar`}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gray-500 flex items-center justify-center text-white">
+                      {story.user?.username?.[0].toUpperCase()}
+                    </div>
+                  )}
+                  <div className="mt-2 text-gray-400 text-sm">By: {story.user.username}</div>
+                </div>
               </div>
             ))}
           </div>

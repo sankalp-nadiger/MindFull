@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { io } from "socket.io-client";
+import { io } from 'socket.io-client';
 import { motion } from 'framer-motion';
 
-const socket = io("http://localhost:8000", {
-  transports: ["websocket"],
-  withCredentials: true
+const socket = io('http://localhost:8000', {
+  transports: ['websocket'],
+  withCredentials: true,
 });
 
 const VideoChat = () => {
@@ -14,11 +14,13 @@ const VideoChat = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [ending, setEnding] = useState(false);
+  const [notes, setNotes] = useState(''); // State for notes
+  const [noteStatus, setNoteStatus] = useState(''); // Status of note submission (success/error)
 
   // Function to request a session
   const requestSession = async () => {
     if (!issueDetails.trim()) {
-      setError("Please provide issue details.");
+      setError('Please provide issue details.');
       return;
     }
 
@@ -36,7 +38,7 @@ const VideoChat = () => {
       setSession(response.data.session);
       setError('');
     } catch (error) {
-      setError("Failed to request session. Please try again.");
+      setError('Failed to request session. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -44,26 +46,23 @@ const VideoChat = () => {
 
   // Polling to check if session is accepted
   useEffect(() => {
-    if (!session || session.status === "Active") return;
+    if (!session || session.status === 'Active') return;
 
     const interval = setInterval(async () => {
       try {
-        const response = await axios.get(
-          'http://localhost:8000/api/users/sessions',
-          {
-            headers: {
-              Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
-            },
-          }
-        );
+        const response = await axios.get('http://localhost:8000/api/users/sessions', {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
+          },
+        });
 
         const updatedSession = response.data.sessions.find(s => s._id === session._id);
-        if (updatedSession && updatedSession.status === "Active") {
+        if (updatedSession && updatedSession.status === 'Active') {
           setSession(updatedSession);
           clearInterval(interval);
         }
       } catch (error) {
-        console.error("Failed to fetch active sessions.");
+        console.error('Failed to fetch active sessions.');
       }
     }, 5000);
 
@@ -88,7 +87,7 @@ const VideoChat = () => {
   // Updated function to end session
   const endSession = async () => {
     if (!session) {
-      setError("No active session to end.");
+      setError('No active session to end.');
       return;
     }
 
@@ -105,20 +104,44 @@ const VideoChat = () => {
       );
 
       // Emit socket event
-      socket.emit("endSession", { sessionId: session._id });
-      
+      socket.emit('endSession', { sessionId: session._id });
+
       setSession(null);
       setError('');
     } catch (error) {
-      setError("Failed to end session. Please try again.");
+      setError('Failed to end session. Please try again.');
     } finally {
       setEnding(false);
     }
   };
 
+  // Function to handle adding notes
+  const handleAddNotes = async () => {
+    if (!notes.trim()) {
+      setNoteStatus('Notes cannot be empty');
+      return;
+    }
+
+    try {
+      await axios.post(
+        'http://localhost:8000/api/counsellor/addNotes',
+        { sessionId: session._id, notes }, // Pass the session ID and notes
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
+          },
+        }
+      );
+      setNoteStatus('Notes added successfully!');
+      setNotes(''); // Clear the notes after submission
+    } catch (error) {
+      setNoteStatus('Failed to add notes. Please try again.');
+    }
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen w-full bg-gradient-to-r from-purple-500 to-blue-500">
-      <motion.div 
+      <motion.div
         className={`bg-white rounded-lg shadow-lg p-6 ${
           session?.status === 'Active' ? 'w-[95%]' : 'max-w-lg w-full'
         }`}
@@ -129,9 +152,9 @@ const VideoChat = () => {
         <h1 className="text-3xl font-semibold text-center mb-4 text-purple-800">
           Request a Counseling Session
         </h1>
-        
+
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-        
+
         {!session ? (
           <div className="space-y-4">
             <textarea
@@ -153,8 +176,8 @@ const VideoChat = () => {
           <div className="space-y-4">
             <h3 className="text-xl font-medium">Session Requested!</h3>
             <p>Status: {session.status}</p>
-            <p>Counselor: {session.counselor?.fullName || "Waiting for counselor..."}</p>
-            
+            <p>Counselor: {session.counselor?.fullName || 'Waiting for counselor...'}</p>
+
             {session.status === 'Active' && (
               <div className="w-full h-[500px] relative">
                 <iframe
@@ -166,16 +189,32 @@ const VideoChat = () => {
                 />
               </div>
             )}
-            
+
             <div className="space-y-4 mt-4">
+              <h4 className="text-lg font-semibold">Add Notes</h4>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Enter your notes here"
+                rows="4"
+                className="w-full p-3 border border-gray-300 rounded-md shadow-sm"
+              />
               <button
-                onClick={endSession}
-                className={`w-full p-3 bg-red-600 text-white rounded-md ${ending ? 'opacity-50' : ''}`}
-                disabled={ending}
+                onClick={handleAddNotes}
+                className="w-full p-3 bg-blue-600 text-white rounded-md"
               >
-                {ending ? 'Ending...' : 'End Session'}
+                Add Notes
               </button>
+              {noteStatus && <p className="text-center mt-2">{noteStatus}</p>}
             </div>
+
+            <button
+              onClick={endSession}
+              className={`w-full p-3 bg-red-600 text-white rounded-md ${ending ? 'opacity-50' : ''}`}
+              disabled={ending}
+            >
+              {ending ? 'Ending...' : 'End Session'}
+            </button>
           </div>
         )}
       </motion.div>

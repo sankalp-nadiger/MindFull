@@ -199,6 +199,8 @@ const registerUser = asyncHandler(async (req, res) => {
       });
 
       console.log("User successfully created:", user);
+      await user.assignRandomAvatar(); 
+      await user.save();
 
       // Generate tokens
       const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
@@ -207,7 +209,7 @@ const registerUser = asyncHandler(async (req, res) => {
       // Cookie options
       const options = {
           httpOnly: true,
-          secure: false, // Set `true` in production with HTTPS
+          secure: false,
           sameSite: "lax",
       };
 

@@ -12,9 +12,9 @@ export const createStory = async (req, res) => {
       return res.status(400).json({ message: "Invalid story type." });
     }
 
-    // if (!content && !req.files?.content) {
-    //   return res.status(400).json({ message: "Content is required." });
-    // }
+    if (!content && !req.files?.content) {
+      return res.status(400).json({ message: "Content is required." });
+    }
 
     let storyContent = content;
 

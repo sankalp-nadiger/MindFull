@@ -9,13 +9,14 @@ import {
   acceptSession,
   logoutCounsellor,
   getActiveSessions,
-  getCounselorStats
+  getCounselorStats,
+  addNotesToSession
 } from "../controllers/counsellor.controller.js";
 import { sendOTP } from "../controllers/parent.controller.js";
 import { upload } from "../middleware/multer.middleware.js"
 
 const router = express.Router();
-
+router.post('/addNotes', addNotesToSession);
 router.post("/request", user_verifyJWT, requestSession);
 router.post("/accept", counsellor_verifyJWT, acceptSession);
 router.post("/end", counsellor_verifyJWT, endSession);
