@@ -1,34 +1,32 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
+import { useNavigate } from "react-router-dom";
 
 const Stories = () => {
-  const [stories, setStories] = useState([]); // State to store stories
-  const [loading, setLoading] = useState(true); // Loading state
-  const [error, setError] = useState(null); // Error state
-  const navigate = useNavigate(); // Hook for navigation
+  const [stories, setStories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchStories = async () => {
       try {
         setLoading(true);
-
         const response = await fetch("http://localhost:8000/api/story/stories", {
           method: "GET",
           headers: {
-            "Authorization": `Bearer ${sessionStorage.getItem("accessToken")}`, // Add token from localStorage
+            "Authorization": `Bearer ${sessionStorage.getItem("accessToken")}`,
             "Content-Type": "application/json",
           },
         });
 
         const data = await response.json();
-
         if (!response.ok) {
           throw new Error(data.message || "Failed to fetch stories");
         }
 
-        setStories(data.stories || []); // Save fetched stories
+        setStories(data.stories || []);
       } catch (err) {
-        setError(err.message); // Set error state
+        setError(err.message);
       } finally {
         setLoading(false);
       }
@@ -37,9 +35,8 @@ const Stories = () => {
     fetchStories();
   }, []);
 
-  // Handle navigation to the CreateStory page
   const handleAddStory = () => {
-    navigate("/createStory"); // Navigate to the "Create Story" page
+    navigate("/createStory");
   };
 
   if (loading) {
@@ -68,29 +65,34 @@ const Stories = () => {
                 key={story._id}
                 className="p-4 bg-[#252a34] rounded-lg shadow-md transition-transform transform hover:scale-105 hover:shadow-purple-500"
               >
-                {story.type === "image" ? (
-                  <img src={story.content} alt="Story" className="rounded-lg w-full" />
-                ) : (
-                  <iframe
-                    className="rounded-lg w-full"
-                    src={
-                      story.content.includes("youtube.com/watch")
-                        ? `https://www.youtube.com/embed/${new URL(story.content).searchParams.get("v")}`
-                        : story.content
-                    }
-                    title="Video Player"
-                    width="100%"
-                    height="auto"
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  ></iframe>
-                )}
+                <div className="relative group">
+                  {story.type === "image" ? (
+                    <img
+                      src={story.content}
+                      alt="Story"
+                      className="rounded-lg w-full filter blur-md group-hover:blur-none transition-all duration-300"
+                    />
+                  ) : (
+                    <iframe
+                      className="rounded-lg w-full filter blur-md group-hover:blur-none transition-all duration-300"
+                      src={
+                        story.content.includes("youtube.com/watch")
+                          ? `https://www.youtube.com/embed/${new URL(story.content).searchParams.get("v")}`
+                          : story.content
+                      }
+                      title="Video Player"
+                      width="100%"
+                      height="auto"
+                      frameBorder="0"
+                      allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                  )}
+                </div>
                 <div className="flex items-center space-x-3 mb-0 pt-6">
-                  {/* User Avatar */}
                   {story.user?.avatar ? (
                     <img
-                      src={story.user.avatar} // Assuming the avatar URL is stored here
+                      src={story.user.avatar}
                       alt={`${story.user.username}'s avatar`}
                       className="w-10 h-10 rounded-full object-cover"
                     />
