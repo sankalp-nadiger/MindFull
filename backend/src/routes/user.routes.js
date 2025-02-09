@@ -12,7 +12,8 @@ import {
   userProgress,
   calculateAverageMood,
   getWeeklyMoodData,
-  getActiveSessions
+  getActiveSessions,
+  updateFeedback
 } from "../controllers/user.controller.js";
 import { endSession } from "../controllers/counsellor.controller.js";
 import {upload} from "../middleware/multer.middleware.js"
@@ -41,6 +42,7 @@ router.patch("/add-interests", user_verifyJWT, addInterests);
 router.post("/add-issues", user_verifyJWT, addIssues); 
 
 router.get("/progress", user_verifyJWT, userProgress); 
+router.post("/feedback",user_verifyJWT,updateFeedback)
 
 router.get("/month-avg-mood", user_verifyJWT, calculateAverageMood); 
 

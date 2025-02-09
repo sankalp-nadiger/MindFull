@@ -14,10 +14,14 @@ const VideoChat = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [ending, setEnding] = useState(false);
-  const [notes, setNotes] = useState(''); // State for notes
-  const [noteStatus, setNoteStatus] = useState(''); // Status of note submission (success/error)
+  const [notes, setNotes] = useState('');
+  const [noteStatus, setNoteStatus] = useState('');
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedback, setFeedback] = useState('');
+  const [feedbackStatus, setFeedbackStatus] = useState('');
+  const [rating, setRating] = useState(5);
 
-  // Function to request a session
+  // Previous functions remain the same...
   const requestSession = async () => {
     if (!issueDetails.trim()) {
       setError('Please provide issue details.');
@@ -44,7 +48,6 @@ const VideoChat = () => {
     }
   };
 
-  // Polling to check if session is accepted
   useEffect(() => {
     if (!session || session.status === 'Active') return;
 
@@ -69,7 +72,6 @@ const VideoChat = () => {
     return () => clearInterval(interval);
   }, [session]);
 
-  // Listen for sessionEnded event via WebSockets
   useEffect(() => {
     if (!session) return;
 
@@ -84,7 +86,30 @@ const VideoChat = () => {
     };
   }, [session]);
 
-  // Updated function to end session
+  const handleAddNotes = async () => {
+    if (!notes.trim()) {
+      setNoteStatus('Notes cannot be empty');
+      return;
+    }
+
+    try {
+      await axios.post(
+        'http://localhost:8000/api/counsellor/addNotes',
+        { sessionId: session._id, notes },
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
+          },
+        }
+      );
+      setNoteStatus('Notes added successfully!');
+      setNotes('');
+    } catch (error) {
+      setNoteStatus('Failed to add notes. Please try again.');
+    }
+  };
+
+  // Modified endSession function to show feedback form
   const endSession = async () => {
     if (!session) {
       setError('No active session to end.');
@@ -103,39 +128,45 @@ const VideoChat = () => {
         }
       );
 
-      // Emit socket event
       socket.emit('endSession', { sessionId: session._id });
-
-      setSession(null);
-      setError('');
+      setShowFeedback(true); // Show feedback form instead of clearing session
+      setEnding(false);
     } catch (error) {
       setError('Failed to end session. Please try again.');
-    } finally {
       setEnding(false);
     }
   };
 
-  // Function to handle adding notes
-  const handleAddNotes = async () => {
-    if (!notes.trim()) {
-      setNoteStatus('Notes cannot be empty');
+  // New function to handle feedback submission
+  const handleFeedbackSubmit = async () => {
+    if (!feedback.trim()) {
+      setFeedbackStatus('Please provide some feedback');
       return;
     }
 
     try {
       await axios.post(
-        'http://localhost:8000/api/counsellor/addNotes',
-        { sessionId: session._id, notes }, // Pass the session ID and notes
+        'http://localhost:8000/api/users/feedback',
+        {
+          sessionId: session._id,
+          feedback,
+          //rating
+        },
         {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
           },
         }
       );
-      setNoteStatus('Notes added successfully!');
-      setNotes(''); // Clear the notes after submission
+      setFeedbackStatus('Thank you for your feedback!');
+      setTimeout(() => {
+        setSession(null);
+        setShowFeedback(false);
+        setFeedback('');
+        setRating(5);
+      }, 2000);
     } catch (error) {
-      setNoteStatus('Failed to add notes. Please try again.');
+      setFeedbackStatus('Failed to submit feedback. Please try again.');
     }
   };
 
@@ -150,12 +181,12 @@ const VideoChat = () => {
         transition={{ duration: 0.5, ease: [0.4, 0.0, 0.2, 1] }}
       >
         <h1 className="text-3xl font-semibold text-center mb-4 text-purple-800">
-          Request a Counseling Session
+          {showFeedback ? 'Session Feedback' : 'Request a Counseling Session'}
         </h1>
 
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
-        {!session ? (
+        {!session && !showFeedback ? (
           <div className="space-y-4">
             <textarea
               value={issueDetails}
@@ -170,6 +201,45 @@ const VideoChat = () => {
               disabled={loading}
             >
               {loading ? 'Requesting...' : 'Request Session'}
+            </button>
+          </div>
+        ) : showFeedback ? (
+          <div className="space-y-4">
+            <div className="flex flex-col items-center space-y-2">
+              <p className="text-lg font-medium">Rate your experience (1-5):</p>
+              <div className="flex space-x-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => setRating(star)}
+                    className={`text-2xl ${
+                      star <= rating ? 'text-yellow-400' : 'text-gray-300'
+                    }`}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+            </div>
+            <textarea
+              value={feedback}
+              onChange={(e) => setFeedback(e.target.value)}
+              placeholder="Please share your feedback about the session"
+              rows="4"
+              className="w-full p-3 border border-gray-300 rounded-md shadow-sm"
+            />
+            {feedbackStatus && (
+              <p className={`text-center ${
+                feedbackStatus.includes('Thank you') ? 'text-green-600' : 'text-red-500'
+              }`}>
+                {feedbackStatus}
+              </p>
+            )}
+            <button
+              onClick={handleFeedbackSubmit}
+              className="w-full p-3 bg-purple-600 text-white rounded-md"
+            >
+              Submit Feedback
             </button>
           </div>
         ) : (

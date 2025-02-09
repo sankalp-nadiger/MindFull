@@ -232,7 +232,29 @@ const registerUser = asyncHandler(async (req, res) => {
       return res.status(500).json({ success: false, message: "Internal Server Error", error: error.message });
   }
 });
+// feedback
+export const updateFeedback = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const { feedback } = req.body;
 
+  // Validate inputs
+  if (!userId|| !feedback?.trim()) {
+      throw new ApiError(400, "User ID and feedback are required");
+  }
+
+  // Find the counsellor and update feedback
+  const user = await User.findById(userId);
+  if (!user) {
+      throw new ApiError(404, "user not found");
+  }
+
+ user.feedback.push(feedback);
+  await user.save();
+
+  return res
+      .status(200)
+      .json(new ApiResponse(200, { feedback:user.feedback }, "Feedback updated successfully"));
+});
   
 const addInterests = asyncHandler(async (req, res) => {
   const { selected_interests, goal } = req.body;
