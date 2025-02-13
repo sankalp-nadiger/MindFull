@@ -66,7 +66,7 @@ export const getPosts = async (req, res) => {
 // Add or update reactions to a post
 export const updateReactions = async (req, res) => {
   try {
-    const { postId, reactionType } = req.body;
+    const { postId, reactionType, remove } = req.body;
 
     // Validate input
     if (!postId || !reactionType) {
@@ -75,6 +75,7 @@ export const updateReactions = async (req, res) => {
         message: "Post ID and reaction type are required.",
       });
     }
+
     // Check if the post exists
     const post = await Post.findById(postId);
     if (!post) {
@@ -84,20 +85,31 @@ export const updateReactions = async (req, res) => {
       });
     }
 
-    // Initialize reactions if not present
+    // Initialize reactions map if not present
+    if (!post.reactions) {
+      post.reactions = new Map();
+    }
+
+    // Initialize reaction type count if not present
     if (!post.reactions.has(reactionType)) {
       post.reactions.set(reactionType, 0);
     }
 
-    // Increment the reaction count
-    post.reactions.set(reactionType, post.reactions.get(reactionType) + 1);
+    if (remove) {
+      // Decrease reaction count if the user wants to remove it
+      const currentCount = post.reactions.get(reactionType);
+      post.reactions.set(reactionType, Math.max(currentCount - 1, 0)); // Ensure count doesn't go below 0
+    } else {
+      // Increase reaction count when adding
+      post.reactions.set(reactionType, post.reactions.get(reactionType) + 1);
+    }
 
     // Save the post with the updated reactions
     await post.save();
 
     res.status(200).json({
       success: true,
-      message: `Reaction '${reactionType}' updated successfully.`,
+      message: `Reaction '${reactionType}' ${remove ? "removed" : "added"} successfully.`,
       post,
     });
   } catch (error) {
@@ -108,3 +120,4 @@ export const updateReactions = async (req, res) => {
     });
   }
 };
+

@@ -6,6 +6,19 @@ const Posts = () => {
   const [loading, setLoading] = useState(true); // Loading state
   const [error, setError] = useState(null); // Error state
   const navigate = useNavigate(); // Hook for navigation
+  const [userReaction, setUserReaction] = useState(null);
+
+  const handleToggleReaction = (postId, type) => {
+    if (userReaction === type) {
+      // If the user clicks the same reaction again, remove it (dislike)
+      setUserReaction(null);
+      handleRemoveReaction(postId, type);
+    } else {
+      // Otherwise, add the new reaction
+      setUserReaction(type);
+      handleAddReaction(postId, type);
+    }
+  };
 
   useEffect(() => {
     const fetchGratitudePosts = async () => {
@@ -41,7 +54,47 @@ const Posts = () => {
   const handleAddGratitudePost = () => {
     navigate("/createPost"); // Navigate to the "Create Gratitude Post" page
   };
-
+  const handleRemoveReaction = async (postId, reactionType) => {
+    try {
+      console.log(postId);
+      const response = await fetch("http://localhost:8000/api/post/reaction", {
+        method: "PATCH",
+        headers: {
+          "Authorization": `Bearer ${sessionStorage.getItem("accessToken")}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          postId,
+          reactionType,
+          remove: true,
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to remove reaction.");
+      }
+  
+      // Update the reactions for the post after success
+      setGratitudePosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post._id === postId
+            ? {
+                ...post,
+                reactions: {
+                  ...post.reactions,
+                  [reactionType]: Math.max((post.reactions[reactionType] || 1) - 1, 0), // Ensure it doesn't go below 0
+                },
+              }
+            : post
+        )
+      );
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+  
   // Handle adding reactions
   const handleAddReaction = async (postId, reactionType) => {
     try {
@@ -129,22 +182,31 @@ const Posts = () => {
 
                 <p className="text-lg font-semibold text-white">{post.content}</p>
 
-                {/* Reactions Buttons */}
-                <div className="mt-4 flex justify-between items-center">
-                  <div className="flex space-x-4">
-                    {/* Reaction Buttons */}
-                    {["like", "support", "love"].map((reactionType) => (
-                      <button
-                        key={reactionType}
-                        onClick={() => handleAddReaction(post._id, reactionType)}
-                        className="px-4 py-2 bg-blue-500 hover:bg-blue-700 rounded-md text-white"
-                      >
-                        {reactionType} ({post.reactions[reactionType] || 0})
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
+               {/* Reactions Buttons */}
+<div className="mt-4 flex justify-between items-center">
+  {/* Reactions Buttons */}
+  <div className="flex space-x-4">
+      {/* Reaction Buttons */}
+      {[
+        { type: "like", emoji: "👍" },
+        { type: "support", emoji: "🤝" },
+        { type: "love", emoji: "❤️" },
+      ].map(({ type, emoji }) => (
+        <button
+          key={type}
+          onClick={() => handleToggleReaction(post._id, type)}
+          className={`px-4 py-2 rounded-md text-white flex items-center space-x-2 ${
+            userReaction === type ? "bg-green-500" : "bg-blue-500 hover:bg-blue-700"
+          }`}
+        >
+          <span>{emoji}</span>
+          <span>{post.reactions[type] || 0}</span>
+        </button>
+      ))}
+    </div>
+
+</div>
+</div>
             ))}
           </div>
         ) : (
