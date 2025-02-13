@@ -109,40 +109,102 @@ function ParentDashboard({ parentId }) {
       <div className="p-6">
         <h2 className="text-3xl font-bold text-center mb-6">Parent Dashboard</h2>
 
-        <div className="flex items-center justify-center w-full gap-9 p-6 flex-wrap">
-          <div className="flex items-center justify-center bg-gray-800 w-full max-w-sm p-6 rounded-lg shadow-lg text-center mb-6">
-            <div className="w-full">
-              <h2 className="text-2xl font-bold text-white mb-4">Mood Analysis</h2>
-              <Bar data={{ labels: weekLabels, datasets: [{ label: "Mood Score", data: moodData, backgroundColor: ["#808080", "#FF6384", "#36A2EB", "#FFCE56", "#4CAF50", "#8E44AD", "#F39C12"], borderColor: "#ffffff", borderWidth: 1 }] }} 
-                   options={{ plugins: { legend: { labels: { color: "white" } } }, scales: { x: { ticks: { color: "white" } }, y: { ticks: { color: "white", stepSize: 1, min: 0, max: moodLabels.length - 1, callback: (value) => moodLabels[value] || "" }, title: { display: true, text: "Mood Score", color: "white" } } } }} />
-            </div>
-          </div>
+        <div className="flex items-center justify-around h-full w-full gap-5 p-6 flex-wrap">
+          <div className="flex items-center justify-center bg-violet-600  w-full max-w-sm p-6 rounded-lg shadow-lg text-center mb-6">
+    <div className="w-full">
+    <h2 className="text-2xl  font-bold text-white mb-4">Mood Analysis</h2>
+    <div className="w-full max-w-[500px] h-auto overflow-hidden">
+    <Bar 
+      data={{ 
+        labels: weekLabels, 
+        datasets: [{ 
+          label: "Mood Score",
+          labels: moodLabels,
+          data: moodData,
+          backgroundColor: ["#808080", "#FF6384", "#36A2EB", "#FFCE56", "#4CAF50", "#8E44AD", "#F39C12"],
+          borderColor: "#ffffff", 
+          borderWidth: 1 
+        }] 
+      }}
+      options={{ 
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { 
+          legend: { 
+            labels: { color: "white" } 
+          } 
+        }, 
+        scales: { 
+          x: { 
+            ticks: { color: "white" } 
+          }, 
+          y: { 
+            ticks: { 
+              color: "white", 
+              stepSize: 1, 
+              min: 0, 
+              max: moodLabels.length - 1, 
+              callback: (value) => moodLabels[value] || "",
+              autoSkip: false 
+            }, 
+            title: { 
+              display: true, 
+              text: "Mood Score", 
+              color: "white" 
+            } 
+          } 
+        } 
+      }} 
+    />
+  </div>
+</div>
+</div>
 
-          <div className="flex items-center justify-center bg-gray-800 w-full max-w-sm p-6 rounded-lg shadow-lg text-center mb-6">
+
+          <div className="flex items-center justify-center bg-violet-600  w-full max-w-sm p-6 rounded-lg  shadow-lg text-center mb-6">
             <div className="w-full">
               <h2 className="text-2xl font-bold text-white mb-4">Activity Tracking</h2>
+              <div className="w-full max-w-[1000px] h-auto overflow-hidden">
               <Line data={{ labels: weekLabels, datasets: [{ label: "Activities Completed", data: activityData, fill: false, borderColor: "rgb(75, 192, 192)", tension: 0.1 }] }} 
                     options={{ plugins: { legend: { labels: { color: "white" } } }, scales: { x: { ticks: { color: "white" } }, y: { ticks: { color: "white", beginAtZero: true } } } }} />
+            </div>
             </div>
           </div>
         </div>
 
         {/* Sessions Section */}
-        <div className="bg-gray-800 p-6 rounded-lg shadow-md mb-6">
-          <h3 className="text-2xl font-semibold mb-4">Sessions</h3>
-          {sessions.length > 0 ? (
-            <ul className="space-y-4">
-              {sessions.map((session) => (
-                <li key={session._id} className="border-b border-gray-600 pb-4 last:pb-0">
-                  <p><span className="font-semibold">Counselor:</span> {session.counselorName}</p>
-                  <p><span className="font-semibold">Specialization:</span> {session.counselorSpecification}</p>
-                  <p><span className="font-semibold">Issue Details:</span> {session.issueDetails}</p>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-gray-400">No sessions found.</p>
-          )}
+        <div className="bg-transparent bg-[repeating-linear-gradient(45deg,_rgba(255,255,255,0.05)_0px,_rgba(255,255,255,0.05)_10px,_transparent_10px,_transparent_20px)]  p-6 rounded-lg shadow-md mb-6">
+        <h3 className="relative text-3xl sm:text-4xl font-bold uppercase tracking-wide text-white mb-6 p-3 
+    bg-[repeating-linear-gradient(45deg,_rgba(255,255,255,0.1)_0px,_rgba(255,255,255,0.1)_10px,_transparent_10px,_transparent_20px)] 
+    rounded-lg shadow-lg sm:px-6 sm:py-3 text-center">
+  
+  <span className="absolute inset-0 -z-10 blur-md opacity-40 text-gray-700">
+    Sessions
+  </span>
+  
+  Sessions
+</h3>
+
+{sessions.length > 0 ? (
+    <ul className="space-y-6">
+      {sessions.map((session) => (
+        <li key={session._id} className="bg-purple-950 p-4 rounded-lg shadow-lg border border-white
+             hover:shadow-xl transition-shadow">
+          <p className="text-lg text-gray-300">
+            <span className="text-white font-semibold uppercase tracking-wider">Counselor:</span> {session.counselorName}
+          </p>
+          <p className="text-lg text-gray-300">
+            <span className="text-white font-semibold uppercase tracking-wider">Specialization:</span> {session.counselorSpecification}
+          </p>
+          <p className="text-lg text-gray-300">
+            <span className="text-white font-semibold uppercase tracking-wider">Issue Details:</span> {session.issueDetails}
+          </p>
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <p className="text-gray-400 text-center text-lg">No sessions found.</p>
+  )}
         </div>
 
         {/* Journals Section */}

@@ -87,10 +87,7 @@ function Contactus(){
       >
         Submit
       </button>
-      <p className="text-xs text-gray-400 text-opacity-90 mt-3">
-        Chicharrones blog helvetica normcore iceland tousled brook viral
-        artisan.
-      </p>
+      
       {status && <p className="mt-3 text-sm text-gray-300">{status}</p>}
     </form>
     )
