@@ -26,7 +26,7 @@ router.post("/register-counsellor", upload.array('certifications', 5), registerC
 router.post("/send-otp", sendOTP);
 router.post("/login-counsellor", loginCounsellor);
 router.get('/stats', counsellor_verifyJWT, getCounselorStats);
-
+router.get('/feedback', counsellor_verifyJWT, getCounselorStats);
 router.post("/logout-counsellor", counsellor_verifyJWT, logoutCounsellor);
 
 export default router;

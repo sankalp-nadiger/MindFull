@@ -9,6 +9,7 @@ import { Parent } from "../models/parent.model.js";
 import { Mood } from "../models/mood.model.js";
 import { Interest } from "../models/interests.models.js";
 import { Issue } from "../models/Issues.model.js";
+import { Counsellor } from "../models/counsellor.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import ApiResponse from "../utils/API_Response.js";
 import jwt from "jsonwebtoken";
@@ -235,26 +236,28 @@ const registerUser = asyncHandler(async (req, res) => {
 // feedback
 export const updateFeedback = asyncHandler(async (req, res) => {
   const userId = req.user._id;
-  const { feedback } = req.body;
-
+  const { feedback, sessionId } = req.body;
   // Validate inputs
-  if (!userId|| !feedback?.trim()) {
-      throw new ApiError(400, "User ID and feedback are required");
+  if (!userId || !feedback?.trim() || !sessionId) {
+      throw new ApiError(400, "User ID, counsellor ID, and feedback are required");
   }
 
-  // Find the counsellor and update feedback
+  // Find the user
   const user = await User.findById(userId);
   if (!user) {
-      throw new ApiError(404, "user not found");
+      throw new ApiError(404, "User not found");
   }
+  // Find the counsellor and update feedback
+  const session = await Session.findById(sessionId).populate('counselor');;
 
- user.feedback.push(feedback);
-  await user.save();
+  session.counselor.feedback.push({ userId, feedback });
+  await session.counselor.save();
 
   return res
       .status(200)
-      .json(new ApiResponse(200, { feedback:user.feedback }, "Feedback updated successfully"));
+      .json(new ApiResponse(200, { feedback: session.counselor.feedback }, "Feedback updated successfully"));
 });
+
   
 const addInterests = asyncHandler(async (req, res) => {
   const { selected_interests, goal } = req.body;
@@ -577,28 +580,68 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 });
 
 const getCurrentUser = asyncHandler(async (req, res) => {
+  if (!req.user) {
+    return res
+      .status(401)
+      .json(new ApiResponse(401, null, "User not authenticated"));
+  }
+
+  // Populate interests (fetching their name & goal) and journals (fetching their topic)
+  const user = await User.findById(req.user._id)
+    .populate({
+      path: "interests",
+      select: "name isGoal",
+    })
+    .populate({
+      path: "journals",
+      select: "topic",
+    })
+    .select("-password"); // Exclude password for security
+
+  if (!user) {
+    return res.status(404).json(new ApiResponse(404, null, "User not found"));
+  }
+
+  // Format the response to include `goal` instead of `isGoal`
+  const formattedUser = {
+    ...user.toObject(),
+    interests: user.interests.map((interest) => ({
+      name: interest.name,
+      goal: interest.isGoal, // Renaming isGoal to goal
+    })),
+    journals: user.journals.map((journal) => ({
+      topic: journal.topic,
+    })),
+  };
+
   return res
     .status(200)
-    .json(new ApiResponse(200, req.user, "User fetched successfully"));
+    .json(new ApiResponse(200, formattedUser, "User fetched successfully"));
 });
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
-  const { fullName, email } = req.body;
-
-  if (!fullName || !email) {
-    throw new ApiError(400, "All fields are required");
-  }
+  const { fullName, email, interests,age, gender, username } = req.body;
 
   const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
         fullName,
-        email: email,
+        email,
+        username,
+        gender,
+        age,
+        interests: interests || [],
+         // Only update if provided
+          
       },
     },
-    { new: true },
-  ).select("-password");
+    { new: true }
+  ).select("-password -journals -streak -maxStreak -lastLogin");
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
 
   return res
     .status(200)
@@ -714,9 +757,6 @@ const getWeeklyMoodData = async (req, res) => {
     });
   }
 };
-
-
-
 
 const calculateAverageMood = async (req,res) => {
   const userId=req.user.selected_interestsid;

@@ -85,7 +85,7 @@ function Navbar() {
                 AI Chatbot <Bot size={24} />
               </button>
               {/* Profile Avatar */}
-              <a href="/profile" className="ml-4 cursor-pointer">
+              <a href="/userprofile" className="ml-4 cursor-pointer">
                 <User size={28} className="text-gray-300 hover:text-gray-500" />
               </a>
               {/* Logout Button */}

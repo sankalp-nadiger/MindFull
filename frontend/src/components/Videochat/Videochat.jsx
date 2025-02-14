@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { motion } from 'framer-motion';
@@ -9,9 +10,12 @@ const socket = io('http://localhost:8000', {
 });
 
 const VideoChat = () => {
+  const navigate = useNavigate();
+  
   const [issueDetails, setIssueDetails] = useState('');
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [endedSession, setEndedSession] = useState(null);
   const [error, setError] = useState('');
   const [ending, setEnding] = useState(false);
   const [notes, setNotes] = useState('');
@@ -21,7 +25,6 @@ const VideoChat = () => {
   const [feedbackStatus, setFeedbackStatus] = useState('');
   const [rating, setRating] = useState(5);
 
-  // Previous functions remain the same...
   const requestSession = async () => {
     if (!issueDetails.trim()) {
       setError('Please provide issue details.');
@@ -39,7 +42,18 @@ const VideoChat = () => {
           },
         }
       );
-      setSession(response.data.session);
+      
+      const newSession = response.data.session;
+      setSession(newSession);
+      
+      // Emit socket event for new session request
+      socket.emit('sessionRequested', {
+        sessionId: newSession._id,
+        issueDetails: issueDetails,
+        userId: newSession.userId, // Assuming this is available in the session object
+        timestamp: new Date().toISOString()
+      });
+      
       setError('');
     } catch (error) {
       setError('Failed to request session. Please try again.');
@@ -72,11 +86,16 @@ const VideoChat = () => {
     return () => clearInterval(interval);
   }, [session]);
 
+  // Updated useEffect to handle session end from either side
   useEffect(() => {
     if (!session) return;
 
-    const handleSessionEnd = () => {
+    const handleSessionEnd = (data) => {
+      // Store the session before clearing it
+      setEndedSession(session);
       setSession(null);
+      // Show feedback form regardless of who ended the session
+      setShowFeedback(true);
     };
 
     socket.on(`sessionEnded-${session._id}`, handleSessionEnd);
@@ -94,13 +113,8 @@ const VideoChat = () => {
 
     try {
       await axios.post(
-        'http://localhost:8000/api/counsellor/addNotes',
+        'http://localhost:8000/api/users/addNotes',
         { sessionId: session._id, notes },
-        {
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
-          },
-        }
       );
       setNoteStatus('Notes added successfully!');
       setNotes('');
@@ -109,13 +123,12 @@ const VideoChat = () => {
     }
   };
 
-  // Modified endSession function to show feedback form
   const endSession = async () => {
     if (!session) {
       setError('No active session to end.');
       return;
     }
-
+  
     try {
       setEnding(true);
       await axios.post(
@@ -127,61 +140,85 @@ const VideoChat = () => {
           },
         }
       );
-
+  
       socket.emit('endSession', { sessionId: session._id });
-      setShowFeedback(true); // Show feedback form instead of clearing session
+      setEndedSession(session);
+      setSession(null);
+      setShowFeedback(true);
       setEnding(false);
     } catch (error) {
       setError('Failed to end session. Please try again.');
       setEnding(false);
     }
-  };
+  };  
 
-  // New function to handle feedback submission
   const handleFeedbackSubmit = async () => {
-    if (!feedback.trim()) {
-      setFeedbackStatus('Please provide some feedback');
+    if (!endedSession || !endedSession._id) {
+      setFeedbackStatus("Session information missing.");
       return;
     }
-
+  
+    if (!feedback.trim()) {
+      setFeedbackStatus("Please provide some feedback");
+      return;
+    }
+  
     try {
       await axios.post(
         'http://localhost:8000/api/users/feedback',
         {
-          sessionId: session._id,
           feedback,
-          //rating
+          rating,
+          sessionId: endedSession._id
         },
         {
           headers: {
-            Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
+            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
           },
         }
       );
-      setFeedbackStatus('Thank you for your feedback!');
-      setTimeout(() => {
-        setSession(null);
-        setShowFeedback(false);
-        setFeedback('');
-        setRating(5);
-      }, 2000);
+  
+      setFeedbackStatus("Thank you for your feedback!");
+      handleFeedbackComplete();
     } catch (error) {
-      setFeedbackStatus('Failed to submit feedback. Please try again.');
+      setFeedbackStatus("Failed to submit feedback. Please try again.");
     }
+  };
+
+  // New function to handle feedback skip
+  const handleSkipFeedback = () => {
+    handleFeedbackComplete();
+  };
+
+  // New function to handle cleanup after feedback submission or skip
+  const handleFeedbackComplete = () => {
+    setTimeout(() => {
+      setShowFeedback(false);
+      setFeedback('');
+      setRating(5);
+      setEndedSession(null);
+      setFeedbackStatus('');
+    }, 1000);
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen w-full bg-gradient-to-r from-purple-500 to-blue-500">
+      {/* Back Button */}
+      <button 
+        onClick={() => navigate('/MainPage')}
+        className="absolute top-4 left-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+      >
+        Back To Main Page
+      </button>
+
       <motion.div
-        className={`bg-white rounded-lg shadow-lg p-6 ${
-          session?.status === 'Active' ? 'w-[95%]' : 'max-w-lg w-full'
-        }`}
+        className={`bg-white rounded-lg shadow-lg p-6 ${session?.status === 'Active' ? 'w-[95%]' : 'max-w-lg w-full'}`}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: [20, -5, 0] }}
         transition={{ duration: 0.5, ease: [0.4, 0.0, 0.2, 1] }}
       >
         <h1 className="text-3xl font-semibold text-center mb-4 text-purple-800">
-          {showFeedback ? 'Session Feedback' : 'Request a Counseling Session'}
+          {showFeedback ? 'Give a Feedback to the Counsellor' : 'Request a Counseling Session'}
         </h1>
 
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
@@ -212,9 +249,7 @@ const VideoChat = () => {
                   <button
                     key={star}
                     onClick={() => setRating(star)}
-                    className={`text-2xl ${
-                      star <= rating ? 'text-yellow-400' : 'text-gray-300'
-                    }`}
+                    className={`text-2xl ${star <= rating ? 'text-yellow-400' : 'text-gray-300'}`}
                   >
                     ★
                   </button>
@@ -229,18 +264,24 @@ const VideoChat = () => {
               className="w-full p-3 border border-gray-300 rounded-md shadow-sm"
             />
             {feedbackStatus && (
-              <p className={`text-center ${
-                feedbackStatus.includes('Thank you') ? 'text-green-600' : 'text-red-500'
-              }`}>
+              <p className={`text-center ${feedbackStatus.includes('Thank you') ? 'text-green-600' : 'text-red-500'}`}>
                 {feedbackStatus}
               </p>
             )}
-            <button
-              onClick={handleFeedbackSubmit}
-              className="w-full p-3 bg-purple-600 text-white rounded-md"
-            >
-              Submit Feedback
-            </button>
+            <div className="flex space-x-4">
+              <button
+                onClick={handleFeedbackSubmit}
+                className="flex-1 p-3 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
+              >
+                Submit Feedback
+              </button>
+              <button
+                onClick={handleSkipFeedback}
+                className="flex-1 p-3 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+              >
+                Skip
+              </button>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
