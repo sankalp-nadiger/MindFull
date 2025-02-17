@@ -21,7 +21,7 @@ import ParentSignUp from "./components/pages/ParentSignUp"; // Parent sign-up pa
 import CounsellorSignUp from "./components/pages/CounsellorSignUp"; // Counselor sign-up page
 import Counsellorphase1 from "./components/pages/Counsellorphase1";
 import StudentSignIn from './components/pages/StudentSignIn';
-import Dashboard from './components/pages/DashBoard';
+//import Dashboard from './components/pages/DashBoard';
 import StudentSignUp from './components/pages/StudentSignUp';
 import JournalPage from './components/pages/JournalPage';
 import ResultPage from './components/pages/ResultPage';
