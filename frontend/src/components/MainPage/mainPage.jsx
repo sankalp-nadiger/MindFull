@@ -13,8 +13,14 @@ import Stories from "../pages/FetchStory";
 import Footer from "../Footer/Footer";
 import Suggestion from "./activity"
 import Posts from "../pages/FetchPosts"
+import ExerciseCards from "../Exercises/exercise";
 
 export function HeroHighlightDemo() {
+
+  
+ 
+
+
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(true);
@@ -94,6 +100,11 @@ export function HeroHighlightDemo() {
     }
   };
 
+
+  const handleclick = () => {
+    navigate("/Musicplayer");
+  };
+
   return (
     <>
       <Navbar onStoryClick={handleStoryClick} />
@@ -164,6 +175,39 @@ export function HeroHighlightDemo() {
         <Posts />
       </div>
       <Recommendations />
+
+
+      <div className="min-h-screen bg-gradient-to-b from-black via-violet-700 to-black text-gray-100 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="flex flex-col lg:flex-row items-center justify-between max-w-7xl mx-auto">
+        {/* Left Section */}
+        <div className="text-center lg:text-left space-y-6 max-w-md lg:max-w-xl">
+          <h1 className="text-5xl font-bold text-white">
+            Welcome to Your Music World
+          </h1>
+          <p className="text-xl text-white">
+            Dive into a world of soothing melodies and rhythmic beats. Explore our mindfull library of music and let the tunes play on.
+          </p>
+          <button
+            onClick={handleclick}
+            className="px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white font-semibold rounded-full transition duration-300"
+          >
+            Open Music Player
+          </button>
+        </div>
+
+        {/* Right Section (Image) */}
+        <div className="mt-12 lg:mt-0 lg:w-1/2">
+          <img
+            src="music.jpg"
+            alt="Music"
+            className="w-full h-auto rounded-lg shadow-lg object-cover"
+          />
+        </div>
+      </div>
+    </div>
+
+
+<ExerciseCards/>
 
       <section className="text-white bg-black body-font">
         <div className="container px-3 py-24 mx-auto">

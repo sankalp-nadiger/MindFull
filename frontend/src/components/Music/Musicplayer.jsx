@@ -65,7 +65,7 @@ export default function MusicPlayerApp() {
       <div className="w-full lg:w-1/2">
         <h1 className="text-5xl font-bold mb-6 text-center lg:text-left">Mood-Based Music Player</h1>
         <p class="text-lg sm:text-xl md:text-2xl py-2 font-mono text-gray-800 dark:text-gray-300 leading-relaxed tracking-wide">
-        How are you feeling TODAY ? We have carefully curated a these songs to make you feel good. Choose your mood...
+        How are you feeling TODAY ? We have carefully curated these songs according to your mood.
         </p>
         
         <div className="flex gap-3 mb-6 justify-center lg:justify-start">

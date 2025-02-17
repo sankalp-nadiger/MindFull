@@ -49,13 +49,13 @@ const items = [
   {
     title: "SudokuGame",
     description: "Having a bad day ? Try a Su Do Ku Game",
-    header: <img style={{height:"100%",width:"100%",overflow:"hidden",borderRadius:"10px"}} src="game2.jpg"/>,
+    header: <img style={{height:"100%",width:"100%",overflow:"hidden",borderRadius:"10px"}} src="sudoku.jpg"/>,
     btn: "Play",
     btnSubmit:"SudokuGame",
     bgcolor:"linear-gradient(to right, #010332, #100328, #29011C,#43000D,#530005)",
   },
   {
-    title: "Game 3",
+    title: "Word Puzzle",
     description: "Discover the beauty of thoughtful and functional design.",
     header: <img style={{height:"100%",width:"100%",overflow:"hidden",borderRadius:"10px"}} src="game3.jpg"/>,
     btn: "Play",

@@ -39,6 +39,7 @@ import UserProfile from "./components/Profiles/userprofile"
 import CounsellorProfile from "./components/Profiles/Councellorprofile"
 import ChatBox from "./components/pages/Chatbot"
 import MusicPlayerApp from "./components/Music/Musicplayer"
+import Breathingexercise from "./components/Exercises/Breathing"
 // import CounselorStats from "./components/Councellor/Counselorstats"
 
 function App() {
@@ -84,6 +85,7 @@ function App() {
          <Route path="/userprofile" element={<UserProfile/>}/>
          <Route path="/Councellorprofile" element={<CounsellorProfile/>}/>
          <Route path="/Musicplayer" element={<MusicPlayerApp/>}/>
+         <Route path="/Breathingexercise" element={<Breathingexercise/>}/>
           {/* <Route path="/stats" element={<CounselorStats/>}/>  */}
         </Routes>
       </Router>
