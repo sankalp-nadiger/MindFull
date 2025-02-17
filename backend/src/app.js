@@ -19,7 +19,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-    origin: '*', // Adjust the frontend URL as needed
+    origin: ['http://localhost:5173','https://mindfullweb.netlify.app'],// Adjust the frontend URL as needed
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
 }));
