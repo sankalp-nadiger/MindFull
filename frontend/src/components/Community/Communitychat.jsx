@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import Navbar from '../Navbar/Navbar';
 
 const CommunityChat = () => {
   const [rooms, setRooms] = useState([]);
@@ -190,6 +191,7 @@ const CommunityChat = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-blue-950 to-black text-white p-6">
+      <Navbar/>
       <div className="max-w-6xl mx-auto my-10 p-6 bg-gradient-to-br from-indigo-800 to-purple-600 rounded-lg shadow-lg">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-white">Community Chat</h2>
