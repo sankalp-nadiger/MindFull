@@ -1,6 +1,7 @@
 import React from 'react';
 import { Trophy, Flame, Medal, Crown, Activity } from 'lucide-react';
 import { dummyUsers } from './data';
+import Navbar from '../Navbar/Navbar';
 
 function Leaderboard() {
   const [users, setUsers] = React.useState([]);
@@ -62,10 +63,11 @@ function Leaderboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-purple-800 to-black p-8">
+    <div className="min-h-screen bg-gradient-to-b from-black via-blue-950 to-black to-black p-8">
+      <Navbar/>
       <div className="max-w-3xl mx-auto">
         <div className="bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
-          <div className="p-6 bg-gradient-to-r from-blue-900 to-purple-900">
+          <div className="p-6 bg-gradient-to-b from-black via-purple-800">
             <h1 className="text-3xl font-bold text-white flex items-center gap-3">
               <Trophy className="w-8 h-8 text-yellow-400" />
               Leaderboard

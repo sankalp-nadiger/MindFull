@@ -15,7 +15,7 @@ import {
   getActiveSessions,
   updateFeedback
 } from "../controllers/user.controller.js";
-import { endSession } from "../controllers/counsellor.controller.js";
+import { addNotesToSession, endSession } from "../controllers/counsellor.controller.js";
 import {upload} from "../middleware/multer.middleware.js"
 import { user_verifyJWT } from "../middleware/auth.middleware.js";
 import { User } from "../models/user.model.js";
@@ -40,6 +40,7 @@ router.post("/update", user_verifyJWT, updateAccountDetails);
 router.patch("/add-interests", user_verifyJWT, addInterests); 
 
 router.post("/add-issues", user_verifyJWT, addIssues); 
+router.post("/addNotes", addNotesToSession); 
 
 router.get("/progress", user_verifyJWT, userProgress); 
 router.post("/feedback",user_verifyJWT,updateFeedback)

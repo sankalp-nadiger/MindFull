@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const JournalApp = () => {
+  const navigate = useNavigate();
   const [entryText, setEntryText] = useState('');
   const [topic, setTopic] = useState('');
   const [moodScore, setMoodScore] = useState(5);
@@ -95,6 +97,12 @@ const JournalApp = () => {
 
   return (
     <div className="flex align-middle justify-center bg-gradient-to-b from-black via-blue-950 to-black p-6 max-w-full mx-auto">
+            <button 
+        onClick={() => navigate('/MainPage')}
+        className="absolute top-4 left-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+      >
+        Back To Main Page
+      </button>
       <div className="bg-gray-800 center text-white shadow-lg rounded-lg">
         {/* Header */}
         <div className="border-b border-gray-700 p-4">

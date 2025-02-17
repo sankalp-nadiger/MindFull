@@ -91,7 +91,6 @@ export default function Activity(){
 
     return(
         <>
-        <Navbar/>
         <section className="text-yellow-400 body-font bg-gray-900">
       <div className="container px-5 py-24 mx-auto flex flex-wrap">
         {activities1.map((activity, index) => (

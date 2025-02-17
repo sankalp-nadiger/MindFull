@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Navbar from "../Navbar/Navbar";
 
 const ActivityRecommendations = () => {
   const [recommendations, setRecommendations] = useState([]); // Store activity recommendations
@@ -52,6 +53,7 @@ const ActivityRecommendations = () => {
 
   return (
     <div className="p-6 h-screen bg-gradient-to-b from-black via-blue-900 to-black">
+      <Navbar/>
       <h2 className="text-3xl font-bold mb-6 text-center text-white">Recommended Activities</h2>
       {recommendations.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

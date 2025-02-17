@@ -13,8 +13,8 @@ const sessionSchema = new mongoose.Schema({
     counselorFeedback: { type: String, default: "" },
     userNotes: {type: String, default: ""},
     createdAt: { type: Date, default: Date.now },
-    startTime: { type: Date, required: true },
-    endTime: { type: Date, required: true },
+    //startTime: { type: Date, required: true },
+    //endTime: { type: Date, required: true },
 
 });
 

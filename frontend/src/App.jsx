@@ -37,6 +37,7 @@ import CommunityChat from "./components/Community/Communitychat"
 import Session from "./components/Councellor/Session"
 import UserProfile from "./components/Profiles/userprofile"
 import CounsellorProfile from "./components/Profiles/Councellorprofile"
+import ChatBox from "./components/pages/Chatbot"
 import MusicPlayerApp from "./components/Music/Musicplayer"
 // import CounselorStats from "./components/Councellor/Counselorstats"
 
@@ -58,6 +59,7 @@ function App() {
         <Route path="/phase1" element={<OnBoardphase1 />} />
         <Route path="/phase2" element={<OnBoardphase2 />} />
         <Route path="/phase3" element={<OnBoardphase3/>}/>
+        <Route path="/Chatbot" element={<ChatBox/>}/>
         <Route path="/role-selection" element={<RoleSelection />} />
         <Route path="/student-signup" element={<StudentSignUp />} />
         <Route path="/parent-signin" element={<ParentSignIn />} />

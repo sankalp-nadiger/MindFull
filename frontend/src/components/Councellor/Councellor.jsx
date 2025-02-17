@@ -66,7 +66,7 @@ function Councellor() {
                   <span>Dashboard</span>
                 </button>
                 <button
-                  onClick={() => setActiveTab('notifications')}
+                  onClick={() => navigate('/notifications')}
                   className={`flex items-center space-x-3 w-full p-2 rounded ${
                     activeTab === 'notifications' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600'
                   }`}
@@ -82,7 +82,7 @@ function Councellor() {
                   <span>Sessions</span>
                 </button>
                 <button
-                  onClick={() => setActiveTab('schedule')}
+                  onClick={() => navigate('/schedule')}
                   className={`flex items-center space-x-3 w-full p-2 rounded ${
                     activeTab === 'schedule' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600'
                   }`}
@@ -91,13 +91,13 @@ function Councellor() {
                   <span>Schedule</span>
                 </button>
                 <button
-                  onClick={() => setActiveTab('settings')}
+                  onClick={() => navigate('/Councellorprofile')}
                   className={`flex items-center space-x-3 w-full p-2 rounded ${
-                    activeTab === 'settings' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600'
+                    activeTab === 'profile' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600'
                   }`}
                 >
                   <Settings className="h-5 w-5" />
-                  <span>Settings</span>
+                  <span>Profile</span>
                 </button>
                 <button className="flex items-center space-x-3 w-full p-2 rounded text-red-600 hover:bg-red-50">
                   <LogOut className="h-5 w-5" />

@@ -5,7 +5,7 @@ function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   
   const handleBot = () => {
-    window.location.href = 'https://fda5defddbb8db552a.gradio.live/';
+    location.href = "/Chatbot";
   };
 
   const handleLogout = async () => {
@@ -44,7 +44,7 @@ function Navbar() {
         <header className="text-gray-200 body-font">
           <div className="container mx-auto flex flex-wrap p-5 flex-col md:flex-row items-center">
             {/* Logo */}
-            <a className="flex title-font font-medium items-center text-gray-900 mb-4 md:mb-0" href="/">
+            <a className="flex title-font font-medium items-center text-gray-900 mb-4 md:mb-0" href="/MainPage">
               <img src="plant.png" alt="Logo" style={{ height: "30px", width: "30px" }} />
               <span className="ml-3 text-xl text-blue-400">MindFull</span>
             </a>
@@ -86,7 +86,7 @@ function Navbar() {
                 AI Chatbot <Bot size={24} />
               </button>
               {/* Profile Avatar */}
-              <a href="/profile" className="ml-4 cursor-pointer">
+              <a href="/userprofile" className="ml-4 cursor-pointer">
                 <User size={28} className="text-gray-300 hover:text-gray-500" />
               </a>
               {/* Logout Button */}

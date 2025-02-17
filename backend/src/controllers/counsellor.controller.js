@@ -359,7 +359,7 @@ export const logoutCounsellor = asyncHandler(async (req, res) => {
 
 export const updateFeedback = asyncHandler(async (req, res) => {
     const counsellorId = req.counsellor._id;
-    const { feedback } = req.body;
+    const { feedback, sessionId } = req.body;
 
     // Validate inputs
     if (!counsellorId || !feedback?.trim()) {
@@ -371,13 +371,13 @@ export const updateFeedback = asyncHandler(async (req, res) => {
     if (!counsellor) {
         throw new ApiError(404, "Counsellor not found");
     }
-
-    counsellor.feedback.push(feedback);
-    await counsellor.save();
+    const session=Session.findById(sessionId);
+    session.counsellorFeedback.push(feedback);
+    await session.save();
 
     return res
         .status(200)
-        .json(new ApiResponse(200, { feedback: counsellor.feedback }, "Feedback updated successfully"));
+        .json(new ApiResponse(200, { feedback: session.counsellorFeedback }, "Feedback updated successfully"));
 });
 // getStats 
 export const getCounselorStats = async (req, res) => {
