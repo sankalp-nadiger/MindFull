@@ -26,7 +26,7 @@ const StudentSignIn = () => {
 
     try {
       // API call to backend login endpoint
-      const response = await axios.post("http://localhost:8000/api/users/login", {
+      const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/users/login`, {
         username,
         password,
         email,

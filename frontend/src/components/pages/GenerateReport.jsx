@@ -18,7 +18,7 @@ const GenerateReports = () => {
         return;
       }
 
-      const response = await axios.get("http://localhost:8000/api/generate-report", {
+      const response = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/generate-report`, {
         params: { userId },
       });
 

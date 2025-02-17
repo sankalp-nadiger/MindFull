@@ -54,7 +54,7 @@ function ParentDashboard({ parentId }) {
         ];
 
         const requests = urls.map(({ url }) =>
-          fetch(`http://localhost:8000${url}`, {
+          fetch(`${import.meta.env.VITE_BASE_API_URL}${url}`, {
             method: "GET",
             headers: {
               Authorization: `Bearer ${token}`,

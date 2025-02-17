@@ -34,7 +34,7 @@ const VideoChat = () => {
     try {
       setLoading(true);
       const response = await axios.post(
-        'http://localhost:8000/api/counsellor/request',
+        `${import.meta.env.VITE_BASE_API_URL}/counsellor/request`,
         { issueDetails },
         {
           headers: {
@@ -67,7 +67,7 @@ const VideoChat = () => {
 
     const interval = setInterval(async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/users/sessions', {
+        const response = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/users/sessions`, {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
           },
@@ -113,7 +113,7 @@ const VideoChat = () => {
 
     try {
       await axios.post(
-        'http://localhost:8000/api/users/addNotes',
+        `${import.meta.env.VITE_BASE_API_URL}/users/addNotes`,
         { sessionId: session._id, notes },
       );
       setNoteStatus('Notes added successfully!');
@@ -132,7 +132,7 @@ const VideoChat = () => {
     try {
       setEnding(true);
       await axios.post(
-        'http://localhost:8000/api/users/end',
+        `${import.meta.env.VITE_BASE_API_URL}/users/end`,
         { sessionId: session._id },
         {
           headers: {
@@ -165,7 +165,7 @@ const VideoChat = () => {
   
     try {
       await axios.post(
-        'http://localhost:8000/api/users/feedback',
+        `${import.meta.env.VITE_BASE_API_URL}/users/feedback`,
         {
           feedback,
           rating,

@@ -11,7 +11,7 @@ const ActivityRecommendations = () => {
       try {
         setLoading(true); // Set loading to true before fetching data
 
-        const response = await fetch("http://localhost:8000/api/activity/recommendations", {
+        const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/activity/recommendations`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",

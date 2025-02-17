@@ -47,7 +47,7 @@ const OnboardPhase3 = () => {
       }));
     
     try {
-      const response = await fetch("http://localhost:8000/api/users/add-issues", {
+      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/users/add-issues`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

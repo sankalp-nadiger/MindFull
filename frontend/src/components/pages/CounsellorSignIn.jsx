@@ -15,7 +15,7 @@ const CounselorSignIn = () => {
   const handleSendOtp = async () => {
     if (phoneNumber.length === 10 && email) {
       try {
-        const response = await axios.post("http://localhost:8000/api/counsellor/send-otp", {
+        const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/counsellor/send-otp`, {
           mobileNumber: phoneNumber,
           email: email,
         });
@@ -64,7 +64,7 @@ const CounselorSignIn = () => {
     }
 
     try {
-      const response = await axios.post("http://localhost:8000/api/counsellor/login-counsellor", {
+      const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/counsellor/login-counsellor`, {
         mobileNumber: phoneNumber,
         otp,
         email,

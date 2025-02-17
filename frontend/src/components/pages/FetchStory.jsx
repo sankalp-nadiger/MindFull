@@ -11,7 +11,7 @@ const Stories = () => {
     const fetchStories = async () => {
       try {
         setLoading(true);
-        const response = await fetch("http://localhost:8000/api/story/stories", {
+        const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/story/stories`, {
           method: "GET",
           headers: {
             "Authorization": `Bearer ${sessionStorage.getItem("accessToken")}`,

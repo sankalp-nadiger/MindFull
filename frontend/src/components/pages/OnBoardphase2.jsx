@@ -55,7 +55,7 @@ const OnBoardingPhase = () => {
   
       // API call to save user goals and interests
       const response = await axios.patch(
-        "http://localhost:8000/api/users/add-interests", 
+        `${import.meta.env.VITE_BASE_API_URL}/users/add-interests`, 
         userData, 
         { 
           headers: { 

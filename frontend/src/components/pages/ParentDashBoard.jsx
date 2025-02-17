@@ -9,7 +9,7 @@ const ParentStudentDetails = ({ parentId }) => {
   // Fetch Sessions
   const fetchSessions = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/api/parent/parent_Id/sessions`);
+      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/parent/parent_Id/sessions`);
       if (!response.ok) throw new Error("Failed to fetch sessions");
       const data = await response.json();
       setSessions(data.sessions);
@@ -21,7 +21,7 @@ const ParentStudentDetails = ({ parentId }) => {
   // Fetch Journals
   const fetchJournals = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/api/parent/parent/${parentId}/journals`);
+      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/parent/parent/${parentId}/journals`);
       if (!response.ok) throw new Error("Failed to fetch journals");
       const data = await response.json();
       setJournals(data.journals);
@@ -33,7 +33,7 @@ const ParentStudentDetails = ({ parentId }) => {
   // Fetch Issues
   const fetchIssues = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/api/parent/parent/${parentId}/issues`);
+      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/parent/parent/${parentId}/issues`);
       if (!response.ok) throw new Error("Failed to fetch issues");
       const data = await response.json();
       setIssues(data.issues);
@@ -45,7 +45,7 @@ const ParentStudentDetails = ({ parentId }) => {
   // Fetch Student Report
   const fetchStudentReport = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/api/parent/parent/${parentId}/report`);
+      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/parent/parent/${parentId}/report`);
       if (!response.ok) throw new Error("Failed to fetch student report");
       const data = await response.json();
       setReport(data);

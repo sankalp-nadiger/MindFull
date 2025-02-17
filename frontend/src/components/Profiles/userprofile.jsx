@@ -21,7 +21,7 @@ export default function UserProfile() {
           return;
         }
 
-        const response = await fetch("http://localhost:8000/api/users/current", {
+        const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/users/current`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -56,7 +56,7 @@ export default function UserProfile() {
 
       try {
         const accessToken = sessionStorage.getItem("accessToken");
-        const response = await fetch("http://localhost:8000/api/users/update-avatar", {
+        const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/users/update-avatar`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -96,7 +96,7 @@ export default function UserProfile() {
         return;
       }
   
-      const response = await fetch("http://localhost:8000/api/users/add-interests", {
+      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/users/add-interests`, {
         method: "PATCH",
         headers: {
           "Authorization": `Bearer ${accessToken}`,
@@ -151,7 +151,7 @@ export default function UserProfile() {
     });
 
     try {
-      const response = await fetch("http://localhost:8000/api/users/update", {
+      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/users/update`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,

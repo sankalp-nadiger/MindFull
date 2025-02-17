@@ -25,7 +25,7 @@ const ChatBox = ({ onClose }) => {
     setLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:8000/api/chat", {
+      const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/chat`, {
         message: userMessage,
       });
 

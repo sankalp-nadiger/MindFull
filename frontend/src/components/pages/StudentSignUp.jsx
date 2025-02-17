@@ -79,7 +79,7 @@ const StudentSignUp = () => {
     if (idCardFile) formData.append("idCardFile", idCardFile);
 
     try {
-      const response = await axios.post("http://localhost:8000/api/users/register", formData, {
+      const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/users/register`, formData, {
         headers: {
           "Content-Type": "multipart/form-data", // Important for file uploads
         },

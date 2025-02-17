@@ -8,7 +8,7 @@ const SaveMood = () => {
   const handleSaveMood = async () => {
     try {
       const userId = "678f778d957045a1f369bdec" // Assuming userId is stored in localStorage
-      const response = await axios.post("http://localhost:8000/api/mood", {
+      const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/mood`, {
         userId,
         mood,
       });

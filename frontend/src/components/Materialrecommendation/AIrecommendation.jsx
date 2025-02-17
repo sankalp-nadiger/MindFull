@@ -12,7 +12,7 @@ const Recommendations = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await fetch("http://localhost:8000/api/resources/create-resource", {
+        const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/resources/create-resource`, {
           method: "GET",
           headers: { 
             Authorization: `Bearer ${token}`,
@@ -43,7 +43,7 @@ const Recommendations = () => {
   const markAsWatched = async (resourceTitle) => {
     console.log(resourceTitle); // Check the title
     try {
-      await fetch("http://localhost:8000/api/resources/watched", {
+      await fetch(`${import.meta.env.VITE_BASE_API_URL}/resources/watched`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

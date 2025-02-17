@@ -39,7 +39,7 @@ const CounsellorSignUp = () => {
 
   const handleSendOtp = async () => {
     try {
-      const response = await axios.post("http://localhost:8000/api/counsellor/send-otp", {
+      const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/counsellor/send-otp`, {
         mobileNumber: parseInt(formData.mobileNumber),
       });
       if (response.data.success) {
@@ -82,7 +82,7 @@ const CounsellorSignUp = () => {
       });
 
       const response = await axios.post(
-        "http://localhost:8000/api/counsellor/register-counsellor",
+        `${import.meta.env.VITE_BASE_API_URL}/counsellor/register-counsellor`,
         formDataObj,
         {
           headers: {

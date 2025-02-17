@@ -25,7 +25,7 @@ const CommunityChat = () => {
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/community/rooms', {
+        const response = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/community/rooms`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -52,7 +52,7 @@ const CommunityChat = () => {
     if (joinedRoom) {
       interval = setInterval(async () => {
         try {
-          const response = await axios.get(`http://localhost:8000/api/community/rooms`, {
+          const response = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/community/rooms`, {
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
@@ -82,7 +82,7 @@ const CommunityChat = () => {
     try {
       let response;
       response= await axios.post(
-        'http://localhost:8000/api/community/join',
+        `${import.meta.env.VITE_BASE_API_URL}/community/join`,
         { roomId },
         {
           headers: {
@@ -98,7 +98,7 @@ const CommunityChat = () => {
       setShowJoinRoomModal(false);
       
       // Fetch initial messages
-      response = await axios.get(`http://localhost:8000/api/community/rooms`, {
+      response = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/community/rooms`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -121,7 +121,7 @@ const CommunityChat = () => {
 
     try {
       await axios.post(
-        'http://localhost:8000/api/community/message',
+        `${import.meta.env.VITE_BASE_API_URL}/community/message`,
         {
           roomId: joinedRoom,
           message: message.trim()
@@ -137,7 +137,7 @@ const CommunityChat = () => {
       setMessage('');
       
       // Fetch updated messages
-      const response = await axios.get(`http://localhost:8000/api/community/rooms`, {
+      const response = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/community/rooms`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -155,7 +155,7 @@ const CommunityChat = () => {
   const createRoom = async () => {
     try {
       const response = await axios.post(
-        'http://localhost:8000/api/community/create',
+        `${import.meta.env.VITE_BASE_API_URL}/community/create`,
         {
           roomName: newRoomName,
           description: newRoomDescription
@@ -168,7 +168,7 @@ const CommunityChat = () => {
       );
       
       // Fetch updated rooms list
-      const roomsResponse = await axios.get('http://localhost:8000/api/community/rooms', {
+      const roomsResponse = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/community/rooms`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },

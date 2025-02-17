@@ -13,7 +13,7 @@ function Councellor() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/counsellor/stats', {
+        const response = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/counsellor/stats`, {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`, // Assuming token is stored in localStorage
           },

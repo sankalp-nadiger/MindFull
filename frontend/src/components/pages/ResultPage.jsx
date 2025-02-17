@@ -13,7 +13,7 @@ const ResultPage = () => {
       try {
         // Assuming userId is available
         const userId = "678eb93145dd095192be902d"; // Replace with actual user ID
-        const response = await axios.post("http://localhost:8000/api/create-resource", {
+        const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/create-resource`, {
           userId,
           // Include other necessary fields like interests, goals, etc.
         });

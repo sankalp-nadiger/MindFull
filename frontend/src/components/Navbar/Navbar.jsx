@@ -13,7 +13,7 @@ function Navbar() {
     if (!token) return;
   
     try {
-      const response = await fetch("http://localhost:8000/api/users/logout", {
+      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/users/logout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

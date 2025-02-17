@@ -16,7 +16,7 @@ const ParentSignUp = () => {
 
     if (!otpSent) {
       try {
-        const response = await axios.post("http://localhost:8000/api/parent/send-otp", { mobileNumber: phone });
+        const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/parent/send-otp`, { mobileNumber: phone });
         if (response.data.success) {
           setOtpSent(true);
           alert("OTP sent to your phone.");
@@ -30,7 +30,7 @@ const ParentSignUp = () => {
     }
 
     try {
-      const response = await axios.post("http://localhost:8000/api/parent/register-parent", {
+      const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/parent/register-parent`, {
         fullName: name,
         password,
         mobileNumber: phone,

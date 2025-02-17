@@ -16,7 +16,7 @@ const JournalApp = () => {
   const createEntry = async () => {
     try {
       setLoadingSave(true); // Set loading state for save entry
-      const response = await fetch('http://localhost:8000/api/journals/create', {
+      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/journals/create`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -47,7 +47,7 @@ const JournalApp = () => {
   const getAiAssistance = async () => {
     try {
       setLoadingAI(true); // Set loading state for AI assistance
-      const response = await fetch('http://localhost:8000/api/journals/assist', {
+      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/journals/assist`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -71,7 +71,7 @@ const JournalApp = () => {
   const getSuggestedTopics = async () => {
     try {
       setLoadingTopics(true); // Set loading state for topic ideas
-      const response = await fetch('http://localhost:8000/api/journals/suggest', {
+      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/journals/suggest`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

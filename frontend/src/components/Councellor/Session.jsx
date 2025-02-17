@@ -24,7 +24,7 @@ const Session = () => {
       try {
         setLoading(true);
         const response = await axios.get(
-          `http://localhost:8000/api/counsellor/sessions`,
+          `${import.meta.env.VITE_BASE_API_URL}/counsellor/sessions`,
           {
             headers: {
               Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
@@ -62,7 +62,7 @@ const Session = () => {
     try {
       setLoading(true);
       const response = await axios.post(
-        'http://localhost:8000/api/counsellor/accept',
+        `${import.meta.env.VITE_BASE_API_URL}/counsellor/accept`,
         { sessionId },
         {
           headers: {
@@ -89,7 +89,7 @@ const Session = () => {
     try {
       setEnding(true);
       await axios.post(
-        'http://localhost:8000/api/counsellor/end',
+        `${import.meta.env.VITE_BASE_API_URL}/counsellor/end`,
         { sessionId },
         {
           headers: {

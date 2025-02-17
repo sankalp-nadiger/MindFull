@@ -25,7 +25,7 @@ const Posts = () => {
       try {
         setLoading(true);
 
-        const response = await fetch("http://localhost:8000/api/post/posts", {
+        const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/post/posts`, {
           method: "GET",
           headers: {
             "Authorization": `Bearer ${sessionStorage.getItem("accessToken")}`, // Add token from sessionStorage
@@ -57,7 +57,7 @@ const Posts = () => {
   const handleRemoveReaction = async (postId, reactionType) => {
     try {
       console.log(postId);
-      const response = await fetch("http://localhost:8000/api/post/reaction", {
+      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/post/reaction`, {
         method: "PATCH",
         headers: {
           "Authorization": `Bearer ${sessionStorage.getItem("accessToken")}`,
@@ -99,7 +99,7 @@ const Posts = () => {
   const handleAddReaction = async (postId, reactionType) => {
     try {
       console.log(postId)
-      const response = await fetch("http://localhost:8000/api/post/reaction", {
+      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/post/reaction`, {
         method: "PATCH",
         headers: {
           "Authorization": `Bearer ${sessionStorage.getItem("accessToken")}`,

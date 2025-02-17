@@ -35,7 +35,7 @@ export function HeroHighlightDemo() {
   useEffect(() => {
     const fetchUsername = async () => {
       try {
-        const response = await fetch("http://localhost:8000/api/users/current", {
+        const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/users/current`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -70,7 +70,7 @@ export function HeroHighlightDemo() {
 
   const fetchStories = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/users/stories");
+      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/users/stories`);
       if (!response.ok) throw new Error("Failed to fetch stories");
       const data = await response.json();
       setStories(data);
@@ -88,7 +88,7 @@ export function HeroHighlightDemo() {
     const formData = new FormData();
     formData.append("content", "Your story content"); // Replace with actual file input
     try {
-      const response = await fetch("http://localhost:8000/api/users/addStory", {
+      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/users/addStory`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,

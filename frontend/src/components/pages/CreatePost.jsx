@@ -18,7 +18,7 @@ const CreatePost = () => {
       formData.append("content", content);
       formData.append("isAnonymous", isAnonymous);
 
-      const response = await fetch("http://localhost:8000/api/post/postsCreate", {
+      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/post/postsCreate`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${sessionStorage.getItem("accessToken")}`, // Add token from sessionStorage

@@ -702,58 +702,109 @@ const moodScores = {
   Angry: 0,
 };
 const getWeeklyMoodData = async (req, res) => {
-  let userId;
-
   try {
+    // Debug logging
+    console.log("Request type:", req.isParent ? "Parent" : "User");
+    console.log("Request ID:", req.isParent ? req.parent._id : req.user._id);
+
+    let userId;
     if (req.isParent) {
-      // Find the user (child) associated with the parent
+      // Find the linked user with detailed logging
       const linkedUser = await User.findOne({ parent: req.parent._id });
+      console.log("Linked user search result:", linkedUser ? `Found user ${linkedUser._id}` : "No user found");
+      
       if (!linkedUser) {
         return res.status(404).json({
           success: false,
-          message: "No linked user found for this parent",
+          message: "No linked user found for this parent"
         });
       }
-      userId = linkedUser._id; // Use the child's user ID
+      userId = linkedUser._id;
     } else {
-      userId = req.user._id; // If request is from a regular user
+      userId = req.user._id;
     }
 
-    // Get today's date
+    // Get current date in user's timezone (or use UTC consistently)
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset time to midnight
-
-    // Get the start of the week (Monday)
+    today.setHours(0, 0, 0, 0);
+    
+    // Calculate start of week (Monday)
     const startOfWeek = new Date(today);
-    const dayOfWeek = today.getDay() === 0 ? 6 : today.getDay() - 1; // Handle Sunday as last day
+    const dayOfWeek = today.getDay() === 0 ? 6 : today.getDay() - 1;
     startOfWeek.setDate(today.getDate() - dayOfWeek);
+    
+    // Calculate end of week (Sunday)
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
 
-    // Fetch mood data for the user
-    const weeklyMoods = await Mood.find({
-      user: userId,
-      timestamp: { $gte: startOfWeek },
+    console.log("Date range:", {
+      startOfWeek: startOfWeek.toISOString(),
+      endOfWeek: endOfWeek.toISOString()
     });
 
-    // Initialize array to hold daily mood scores
-    const dailyMoodData = Array(7).fill(null); // Default null for days without data
+    // Fetch mood data with proper date range
+    const weeklyMoods = await Mood.find({
+      user: userId,
+      timestamp: {
+        $gte: startOfWeek,
+        $lte: endOfWeek
+      }
+    }).sort({ timestamp: 1 }); // Sort by timestamp
 
-    // Populate mood scores for respective days
+    console.log("Found moods:", weeklyMoods.length);
+
+    // Initialize arrays for mood data and activities
+    const dailyMoodData = Array(7).fill(null);
+    const activitiesCompleted = Array(7).fill(0);
+
+    // Process each mood entry
     weeklyMoods.forEach((entry) => {
-      const dayIndex = Math.floor((entry.timestamp - startOfWeek) / (24 * 60 * 60 * 1000)); // Day index
+      const entryDate = new Date(entry.timestamp);
+      const dayIndex = Math.floor((entryDate - startOfWeek) / (24 * 60 * 60 * 1000));
+      
+      console.log("Processing entry:", {
+        date: entryDate,
+        dayIndex,
+        mood: entry.mood,
+        score: moodScores[entry.mood]
+      });
+
       if (dayIndex >= 0 && dayIndex < 7) {
         dailyMoodData[dayIndex] = moodScores[entry.mood];
+        // If you're tracking activities, increment the counter
+        if (entry.activitiesCompleted) {
+          activitiesCompleted[dayIndex] = entry.activitiesCompleted;
+        }
       }
     });
 
-    res.status(200).json({
+    // Log final data before sending
+    console.log("Final mood data:", dailyMoodData);
+    console.log("Activities completed:", activitiesCompleted);
+
+    return res.status(200).json({
       success: true,
       data: dailyMoodData,
+      activitiesCompleted,
+      metadata: {
+        userId,
+        startOfWeek: startOfWeek.toISOString(),
+        endOfWeek: endOfWeek.toISOString(),
+        totalEntries: weeklyMoods.length
+      }
     });
+
   } catch (error) {
-    console.error("Error fetching weekly mood data:", error);
-    res.status(500).json({
+    console.error("Error in getWeeklyMoodData:", {
+      error: error.message,
+      stack: error.stack
+    });
+
+    return res.status(500).json({
       success: false,
       message: "Failed to fetch weekly mood data",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };

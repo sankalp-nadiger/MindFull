@@ -26,7 +26,7 @@ const CreateStory = () => {
         formData.append("content", content);
       }
   
-      const response = await fetch("http://localhost:8000/api/story/storiesCreate", {
+      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/story/storiesCreate`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${sessionStorage.getItem("accessToken")}`,
