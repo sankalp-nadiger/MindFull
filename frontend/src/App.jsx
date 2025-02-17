@@ -37,6 +37,7 @@ import CommunityChat from "./components/Community/Communitychat"
 import Session from "./components/Councellor/Session"
 import UserProfile from "./components/Profiles/userprofile"
 import CounsellorProfile from "./components/Profiles/Councellorprofile"
+import MusicPlayerApp from "./components/Music/Musicplayer"
 // import CounselorStats from "./components/Councellor/Counselorstats"
 
 function App() {
@@ -80,6 +81,7 @@ function App() {
          <Route path="/sessions" element={<Session/>}/>
          <Route path="/userprofile" element={<UserProfile/>}/>
          <Route path="/Councellorprofile" element={<CounsellorProfile/>}/>
+         <Route path="/Musicplayer" element={<MusicPlayerApp/>}/>
           {/* <Route path="/stats" element={<CounselorStats/>}/>  */}
         </Routes>
       </Router>

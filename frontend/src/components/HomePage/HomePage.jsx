@@ -2,8 +2,14 @@ import React, { useState } from "react";
 import { BackgroundBeamsWithCollisionDemo } from './hero'
 import Footer from "../Footer/Footer";
 import Contactus from "./Contact";
+import { useEffect } from "react";
 function HomePage(){
   
+ 
+
+
+
+
     
     return(
         <>
@@ -69,6 +75,10 @@ function HomePage(){
     </div>
   </div>
 </div>
+
+
+
+
 
 
 <section className="text-white body-font overflow-hidden bg-gradient-to-b from-black via-green-800 to-black">
