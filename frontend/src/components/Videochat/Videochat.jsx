@@ -202,7 +202,7 @@ const VideoChat = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen w-full bg-gradient-to-r from-purple-500 to-blue-500">
+    <div className="flex flex-col items-center justify-center min-h-screen w-full bg-gradient-to-b from-black via-blue-950 to-black">
       {/* Back Button */}
       <button 
         onClick={() => navigate('/MainPage')}
