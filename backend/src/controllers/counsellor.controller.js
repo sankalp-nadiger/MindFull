@@ -63,7 +63,7 @@ export const requestSession = asyncHandler(async (req, res) => {
         issueDetails,
         status: "Pending"
     });
-    io.emit(`sessionRequested`, { sessionId: session._id });
+    io.emit(`sessionRequested`, { sessionId: session._id, issueDetails, userId: user.username, timestamp: new Date().toISOString() });
     res.status(201).json({
         success: true,
         message: "Session requested successfully",
