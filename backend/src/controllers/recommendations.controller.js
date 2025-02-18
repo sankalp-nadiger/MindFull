@@ -2,12 +2,6 @@ import axios from 'axios';
 import {Resource} from '../models/resource.model.js';
 import dotenv from 'dotenv';
 dotenv.config();
-
-import axios from 'axios';
-import {Resource} from '../models/resource.model.js';
-import dotenv from 'dotenv';
-dotenv.config();
-
 export const fetchRecommendations = async (req, res) => {
   try {
     const { userId, watchedUrls, userPreferences } = req.body;
