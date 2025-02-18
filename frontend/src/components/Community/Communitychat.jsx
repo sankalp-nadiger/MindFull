@@ -17,11 +17,22 @@ const CommunityChat = () => {
   const [currentRoom, setCurrentRoom] = useState(null);
   const messagesEndRef = useRef(null);
   const [userId, setUserId] = useState(null);
+  const chatContainerRef = useRef(null);
   
   const accessToken = sessionStorage.getItem('accessToken');
-  //const userId = sessionStorage.getItem('userId');
 
-  // Fetch rooms initially
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      const chatContainer = chatContainerRef.current;
+      const isScrolledToBottom = chatContainer && 
+        (chatContainer.scrollHeight - chatContainer.scrollTop <= chatContainer.clientHeight + 100);
+
+      if (isScrolledToBottom) {
+        messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }
+    }
+  };
+
   useEffect(() => {
     const fetchRooms = async () => {
       try {
@@ -46,11 +57,10 @@ const CommunityChat = () => {
     }
   }, [accessToken]);
 
-  // Poll for new messages
   useEffect(() => {
     let interval;
     if (joinedRoom) {
-      interval = setInterval(async () => {
+      const pollMessages = async () => {
         try {
           const response = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/community/rooms`, {
             headers: {
@@ -59,29 +69,34 @@ const CommunityChat = () => {
           });
           const currentRoomData = response.data.rooms.find(room => room._id === joinedRoom);
           if (currentRoomData && currentRoomData.messages) {
-            setMessages(currentRoomData.messages);
+            setMessages(prev => {
+              if (JSON.stringify(prev) !== JSON.stringify(currentRoomData.messages)) {
+                return currentRoomData.messages;
+              }
+              return prev;
+            });
           }
         } catch (error) {
           console.error('Error fetching messages:', error);
         }
-      }, 1000); // Poll every second
+      };
+
+      pollMessages();
+      interval = setInterval(pollMessages, 1000);
     }
     return () => clearInterval(interval);
   }, [joinedRoom, accessToken]);
 
-  // Scroll to bottom when new messages arrive
   useEffect(() => {
-    scrollToBottom();
+    if (messages.length > 0) {
+      scrollToBottom();
+    }
   }, [messages]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
 
   const joinRoom = async (roomId) => {
     try {
       let response;
-      response= await axios.post(
+      response = await axios.post(
         `${import.meta.env.VITE_BASE_API_URL}/community/join`,
         { roomId },
         {
@@ -91,13 +106,12 @@ const CommunityChat = () => {
         }
       );
       setUserId(response.data.userId);
-        localStorage.setItem("userId", response.data.userId);
+      localStorage.setItem("userId", response.data.userId);
       const room = rooms.find(r => r._id === roomId);
       setCurrentRoom(room);
       setJoinedRoom(roomId);
       setShowJoinRoomModal(false);
       
-      // Fetch initial messages
       response = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/community/rooms`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -107,7 +121,6 @@ const CommunityChat = () => {
       const currentRoomData = response.data.rooms.find(r => r._id === roomId);
       if (currentRoomData && currentRoomData.messages) {
         setMessages(currentRoomData.messages);
-        
       }
     } catch (error) {
       console.error('Error joining room:', error);
@@ -133,10 +146,8 @@ const CommunityChat = () => {
         }
       );
 
-      // Clear input after sending
       setMessage('');
       
-      // Fetch updated messages
       const response = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/community/rooms`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -167,7 +178,6 @@ const CommunityChat = () => {
         }
       );
       
-      // Fetch updated rooms list
       const roomsResponse = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/community/rooms`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -179,7 +189,6 @@ const CommunityChat = () => {
       setNewRoomName('');
       setNewRoomDescription('');
       
-      // Join the newly created room
       if (response.data.room._id) {
         await joinRoom(response.data.room._id);
       }
@@ -213,7 +222,6 @@ const CommunityChat = () => {
           )}
         </div>
 
-        {/* Room list view */}
         {!joinedRoom && !loading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {rooms.map((room) => (
@@ -234,7 +242,6 @@ const CommunityChat = () => {
           </div>
         )}
 
-        {/* Chat room view */}
         {joinedRoom && currentRoom && (
           <div className="bg-gray-900 rounded-lg p-4">
             <div className="flex justify-between items-center mb-4">
@@ -251,36 +258,35 @@ const CommunityChat = () => {
               </button>
             </div>
             
-            <div className="bg-gray-800 rounded-lg h-96 overflow-auto p-4 mb-4">
-  {messages?.map((msg, idx) => {
-    const storedUserId = userId || localStorage.getItem("userId"); // Ensure userId is never null
-    const isCurrentUser = msg.sender && storedUserId && msg.sender.toString() === storedUserId.toString();
-    //console.log(senderUsername)
+            <div ref={chatContainerRef} className="bg-gray-800 rounded-lg h-96 overflow-auto p-4 mb-4">
+              {messages?.map((msg, idx) => {
+                const storedUserId = userId || localStorage.getItem("userId");
+                const isCurrentUser = msg.sender && storedUserId && msg.sender.toString() === storedUserId.toString();
 
-    return (
-      <div key={idx} className={`flex w-full mb-2 ${isCurrentUser ? "justify-end" : "justify-start"}`}>
-        <div
-          className={`p-3 max-w-[70%] rounded-xl shadow-md ${
-            isCurrentUser ? "bg-green-500 text-white rounded-br-none" : "bg-gray-200 text-black rounded-bl-none"
-          }`}
-        >
-          <p className="text-xs font-medium mb-0.5 text-opacity-80">
-            {isCurrentUser ? "You" : `${senderUsername}`}
-          </p>
-          <p className="text-sm">{msg.message}</p>
-          <p className="text-[11px] text-opacity-80 text-right mt-0.5">
-            {new Date(msg.timestamp).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: true,
-            })}
-          </p>
-        </div>
-      </div>
-    );
-  })}
-  <div ref={messagesEndRef} />
-</div>
+                return (
+                  <div key={idx} className={`flex w-full mb-2 ${isCurrentUser ? "justify-end" : "justify-start"}`}>
+                    <div
+                      className={`p-3 max-w-[70%] rounded-xl shadow-md ${
+                        isCurrentUser ? "bg-green-500 text-white rounded-br-none" : "bg-gray-200 text-black rounded-bl-none"
+                      }`}
+                    >
+                      <p className="text-xs font-medium mb-0.5 text-opacity-80">
+                        {isCurrentUser ? "You" : `${senderUsername}`}
+                      </p>
+                      <p className="text-sm">{msg.message}</p>
+                      <p className="text-[11px] text-opacity-80 text-right mt-0.5">
+                        {new Date(msg.timestamp).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+              <div ref={messagesEndRef} />
+            </div>
 
             <form onSubmit={sendMessage} className="flex gap-2">
               <input
@@ -300,7 +306,6 @@ const CommunityChat = () => {
           </div>
         )}
 
-        {/* Create Room Modal */}
         {showCreateRoomModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
             <div className="bg-gray-800 p-6 rounded-lg shadow-lg w-96">
@@ -336,7 +341,6 @@ const CommunityChat = () => {
           </div>
         )}
 
-        {/* Join Room Modal */}
         {showJoinRoomModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
             <div className="bg-gray-800 p-6 rounded-lg shadow-lg w-96">
