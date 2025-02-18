@@ -120,12 +120,12 @@ const Session = () => {
     };
 
     sessions.forEach(session => {
-      socket.on(`sessionEnded-${session._id}`, handleSessionEnd);
+      socket.on(`endSession-${session._id}`, handleSessionEnd);
     });
 
     return () => {
       sessions.forEach(session => {
-        socket.off(`sessionEnded-${session._id}`, handleSessionEnd);
+        socket.off(`endSession-${session._id}`, handleSessionEnd);
       });
     };
   }, [sessions]);
