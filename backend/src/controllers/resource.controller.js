@@ -44,12 +44,15 @@ export const fetchResourceRecommendations = async (req, res) => {
       body: recommendationData,
       user: req.user
     }, res);
-    console.log(recommendations)
+
     if (res.headersSent) return;
+
+    // Take only the top 3 recommendations
+    const topRecommendations = recommendations.slice(0, 3);
 
     res.status(200).json({
       message: "Resources fetched successfully.",
-      data: recommendations
+      data: topRecommendations
     });
 
   } catch (error) {
@@ -59,7 +62,6 @@ export const fetchResourceRecommendations = async (req, res) => {
         message: "Error fetching resources.", 
         error: error.message 
       });
-      console.log(error.message)
     }
   }
 };

@@ -3,6 +3,11 @@ import {Resource} from '../models/resource.model.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
+import axios from 'axios';
+import {Resource} from '../models/resource.model.js';
+import dotenv from 'dotenv';
+dotenv.config();
+
 export const fetchRecommendations = async (req, res) => {
   try {
     const { userId, watchedUrls, userPreferences } = req.body;
@@ -14,27 +19,22 @@ export const fetchRecommendations = async (req, res) => {
       });
     }
 
-    // Combine all user preferences for search
     const searchTerms = [
       ...(interests || []).map(i => i.name || ""),
       ...(goals || []).map(g => g.name || ""),
       ...(issues || []).map(i => i.name || "")
     ].filter(Boolean);
-    console.log("Search terms:", searchTerms);
-if (searchTerms.length === 0) {
-  console.error("No valid search terms available.");
-  return res.status(400).json({ message: "No valid search terms provided." });
-}
-    // Get resources for all preferences combined
-    const allResources = await fetchExternalResources(searchTerms);
 
-    // Remove watched resources
-    const newResources = allResources.filter(resource => 
-      !watchedUrls.includes(resource.url)
-    );
+    if (searchTerms.length === 0) {
+      console.error("No valid search terms available.");
+      return res.status(400).json({ message: "No valid search terms provided." });
+    }
+
+    // Fetch more resources initially to account for filtering
+    const allResources = await fetchExternalResources(searchTerms, watchedUrls);
 
     // Score resources based on relevance to all user preferences
-    const scoredResources = newResources.map(resource => ({
+    const scoredResources = allResources.map(resource => ({
       ...resource,
       user: userId,
       relevanceScores: {
@@ -55,7 +55,7 @@ if (searchTerms.length === 0) {
     }))
     .sort((a, b) => b.finalScore - a.finalScore);
 
-const resourcesToSave = rankedResources.map(resource => ({
+    const resourcesToSave = rankedResources.map(resource => ({
       title: resource.title,
       description: resource.description || "No description available",
       url: resource.url,
@@ -64,23 +64,27 @@ const resourcesToSave = rankedResources.map(resource => ({
       watched: false,
       relevanceScore: resource.finalScore || 0,
       related_interest: [
-        ...(interests || []).map(i => i?._id).filter(Boolean),  // Ensures valid interest IDs
-        ...(goals || []).map(g => g?._id).filter(Boolean)       // Ensures valid goal IDs
+        ...(interests || []).map(i => i?._id).filter(Boolean),
+        ...(goals || []).map(g => g?._id).filter(Boolean)
       ],
-      related_issues: (issues || []).map(i => i?._id).filter(Boolean)  // Ensures valid issue IDs
+      related_issues: (issues || []).map(i => i?._id).filter(Boolean)
     }));
     
+    // Save new resources to database
     for (let resource of resourcesToSave) {
-      const existingResource = await Resource.findOne({ url: resource.url });
-      if (existingResource) {
-        console.log(`Resource with URL ${resource.url} already exists, skipping insert.`);
-      } else {
-        await Resource.create(resource);
-        console.log(`Resource with URL ${resource.url} saved.`);
+      try {
+        const existingResource = await Resource.findOne({ url: resource.url });
+        if (!existingResource) {
+          await Resource.create(resource);
+          console.log(`Resource with URL ${resource.url} saved.`);
+        }
+      } catch (error) {
+        console.error(`Error saving resource ${resource.url}:`, error);
+        // Continue with the loop even if one save fails
       }
     }
     
-    return resourcesToSave;
+    // Send response with the recommendations
     res.status(200).json({
       message: 'Recommendations fetched successfully.',
       data: resourcesToSave
@@ -95,38 +99,38 @@ const resourcesToSave = rankedResources.map(resource => ({
   }
 };
 
-async function fetchExternalResources(searchTerms) {
+async function fetchExternalResources(searchTerms, watchedUrls) {
   const resources = [];
-  const maxResults = 3;
-  console.log("Books API Key:", process.env.BOOKS_API_KEY);
-console.log("YouTube API Key:", process.env.YOUTUBE_API_KEY);
-console.log("Spotify API Key:", process.env.SPOTIFY_API_KEY);
+  // Increase maxResults to account for watched resources that will be filtered
+  const maxResults = 10;  // Increased from 3 to 10
 
   for (const term of searchTerms) {
     try {
       // Fetch books
       const bookResponse = await axios.get(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(term)}&maxResults=${maxResults}&key=${process.env.BOOKS_API_KEY}`);
-      (bookResponse.data.items || []).forEach(book => {
-        resources.push({
+      const bookResources = (bookResponse.data.items || [])
+        .filter(book => !watchedUrls.includes(book.volumeInfo.infoLink))
+        .map(book => ({
           title: book.volumeInfo.title,
           description: book.volumeInfo.description || '',
           url: book.volumeInfo.infoLink,
           type: 'book',
           searchTerm: term
-        });
-      });
+        }));
+      resources.push(...bookResources);
 
       // Fetch videos
       const videoResponse = await axios.get(`https://youtube.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(term)}&maxResults=${maxResults}&type=video&key=${process.env.YOUTUBE_API_KEY}`);
-      (videoResponse.data.items || []).forEach(video => {
-        resources.push({
+      const videoResources = (videoResponse.data.items || [])
+        .filter(video => !watchedUrls.includes(`https://www.youtube.com/watch?v=${video.id.videoId}`))
+        .map(video => ({
           title: video.snippet.title,
           description: video.snippet.description || '',
           url: `https://www.youtube.com/watch?v=${video.id.videoId}`,
           type: 'video',
           searchTerm: term
-        });
-      });
+        }));
+      resources.push(...videoResources);
 
       // Fetch blogs
       /*const blogResponse = await axios.get(`https://api.rss2json.com/v1/api.json?rss_url=https://medium.com/feed/tag/${encodeURIComponent(term)}&count=${maxResults}&api_key=${process.env.MEDIUM_API_KEY}`);
