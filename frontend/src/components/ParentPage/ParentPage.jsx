@@ -46,11 +46,11 @@ function ParentDashboard({ parentId }) {
     const fetchData = async () => {
       try {
         const urls = [
-          { key: "mood", url: "/api/parent/week-mood-chart" },
-          { key: "sessions", url: `/api/parent/parent/sessions` },
-          { key: "journals", url: `/api/parent/parent/journals` },
-          { key: "issues", url: `/api/parent/parent/issues` },
-          { key: "report", url: `/api/parent/parent/report` },
+          { key: "mood", url: "/parent/week-mood-chart" },
+          { key: "sessions", url: `/parent/parent/sessions` },
+          { key: "journals", url: `/parent/parent/journals` },
+          { key: "issues", url: `/parent/parent/issues` },
+          { key: "report", url: `/parent/parent/report` },
         ];
 
         const requests = urls.map(({ url }) =>
