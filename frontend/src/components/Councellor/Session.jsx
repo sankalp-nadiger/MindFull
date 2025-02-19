@@ -98,7 +98,7 @@ const Session = () => {
         }
       );
 
-      socket.emit('endSession', { sessionId });
+      socket.emit('sessionEnded', { sessionId });
       setSessions((prevSessions) =>
         prevSessions.filter((session) => session._id !== sessionId)
       );
@@ -120,12 +120,12 @@ const Session = () => {
     };
 
     sessions.forEach(session => {
-      socket.on(`endSession-${session._id}`, handleSessionEnd);
+      socket.on(`sessionEnded-${session._id}`, handleSessionEnd);
     });
 
     return () => {
       sessions.forEach(session => {
-        socket.off(`endSession-${session._id}`, handleSessionEnd);
+        socket.off(`sessionEnded-${session._id}`, handleSessionEnd);
       });
     };
   }, [sessions]);
