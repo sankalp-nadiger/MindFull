@@ -47,9 +47,6 @@ export const fetchResourceRecommendations = async (req, res) => {
 
     if (res.headersSent) return;
 
-    // Take only the top 3 recommendations
-    const topRecommendations = recommendations.slice(0, 3);
-
     res.status(200).json({
       message: "Resources fetched successfully.",
       data: topRecommendations

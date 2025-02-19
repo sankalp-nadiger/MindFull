@@ -95,8 +95,7 @@ export const fetchRecommendations = async (req, res) => {
 
 async function fetchExternalResources(searchTerms, watchedUrls) {
   const resources = [];
-  // Increase maxResults to account for watched resources that will be filtered
-  const maxResults = 10;  // Increased from 3 to 10
+  const maxResults = 3;
 
   for (const term of searchTerms) {
     try {
