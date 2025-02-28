@@ -100,6 +100,7 @@ const userSchema = new Schema( {
           type: Number,
           default: 0,
         },    
+        fcmToken: String,
         refreshToken: String,
         achievements: String
 }, { timestamps: true})

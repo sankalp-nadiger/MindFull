@@ -40,6 +40,8 @@ import CounsellorProfile from "./components/Profiles/Councellorprofile"
 import ChatBox from "./components/pages/Chatbot"
 import MusicPlayerApp from "./components/Music/Musicplayer"
 import Breathingexercise from "./components/Exercises/Breathing"
+import ToDoListPage from "./components/pages/Todolist"
+import TodoListPage from "./components/pages/Todolist"
 // import CounselorStats from "./components/Councellor/Counselorstats"
 
 function App() {
@@ -86,6 +88,7 @@ function App() {
          <Route path="/Councellorprofile" element={<CounsellorProfile/>}/>
          <Route path="/Musicplayer" element={<MusicPlayerApp/>}/>
          <Route path="/Breathingexercise" element={<Breathingexercise/>}/>
+         <Route path="/todo" element={<TodoListPage/>}/>
           {/* <Route path="/stats" element={<CounselorStats/>}/>  */}
         </Routes>
       </Router>

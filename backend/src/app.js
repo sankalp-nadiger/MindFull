@@ -16,6 +16,7 @@ import journalRouter from "./routes/journal.routes.js";
 import parentRouter from "./routes/parent.routes.js";
 import storyRouter from "./routes/story.routes.js";
 import postsRouter from "./routes/posts.routes.js";
+import taskRouter from "./routes/task.route.js";
 import recomendations from "./routes/recommendations.route.js";
 
 const app = express();
@@ -25,6 +26,7 @@ app.use(cors({
     origin: ['http://localhost:5173','https://mindfullweb.netlify.app'],// Adjust the frontend URL as needed
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'] 
 }));
 app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
@@ -42,6 +44,7 @@ app.use("/api/dm_chat", dm_chatRouter);
 app.use("/api/parent", parentRouter);
 app.use("/api/story", storyRouter);
 app.use("/api/post", postsRouter);
+app.use("/api/tasks", taskRouter);
 app.use("/api/recommendations", recomendations);
 
 app.post("/api/chat", async (req, res) => {
