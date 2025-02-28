@@ -48,7 +48,7 @@ const Stories = () => {
   }
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gradient-to-r from-black via-[#0a1f44] to-black text-white">
+    
       <div className="p-6 max-w-6xl w-full bg-[#1a1a2e] rounded-lg shadow-lg text-center relative">
         <h2 className="text-2xl font-bold mb-4">Stories</h2>
         <button
@@ -110,7 +110,7 @@ const Stories = () => {
           <div className="text-gray-500 text-lg">No stories available.</div>
         )}
       </div>
-    </div>
+
   );
 };
 
