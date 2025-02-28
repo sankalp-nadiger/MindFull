@@ -139,7 +139,7 @@ const Posts = () => {
   }
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gradient-to-r from-black via-[#0a1f44] to-black text-white">
+  
       <div className="p-6 max-w-6xl w-full bg-[#1a1a2e] rounded-lg shadow-lg text-center relative">
         {/* Fixed "Thank Someone" Text */}
         <h2 className="text-3xl font-bold mb-4">Thank Someone Today!</h2>
@@ -213,7 +213,6 @@ const Posts = () => {
           <div className="text-gray-500 text-lg">No gratitude posts available.</div>
         )}
       </div>
-    </div>
   );
 };
 

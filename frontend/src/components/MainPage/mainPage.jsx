@@ -1,4 +1,5 @@
 "use client";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { HeroHighlight, Highlight } from "./HeroHighlight";
@@ -167,11 +168,27 @@ export function HeroHighlightDemo() {
 <div className="bg-black ">
 <Suggestion />
 </div>
+<div className="shadow-[4px_4px_0_rgba(0,0,0,0.3)] hover:shadow-[6px_6px_0_rgba(0,0,0,0.4)] transition duration-300 p-6 bg-black w-full">
+  <div className="max-w-[85rem] text-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto backdrop-blur-lg bg-gray-900 p-8 rounded-lg shadow-lg shadow-red-500/50 hover:shadow-blue-500/50 transition-shadow flex flex-col items-center text-center">
+    <h2 className="text-2xl md:text-3xl font-bold">
+      TaskMaster: Your Smart To-Do List Assistant
+    </h2>
+    <p className="mt-2 text-gray-300 text-sm md:text-lg">
+      Organize, prioritize, and complete your tasks efficiently. 
+      Keep track of progress, manage deadlines, and stay on top of your goals.
+    </p>
+    <Link
+      to="/todo"
+      className="mt-4 bg-violet-600 hover:bg-blue-600 text-white py-2 px-6 rounded-lg font-medium transition"
+    >
+      View Tasks
+    </Link>
+  </div>
+</div>
 
-      <div className="bg-black ">
+<div className="min-h-screen bg-gradient-to-b from-black via-violet-700 to-black text-gray-100 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <Stories />
-      </div>
-      <div className="bg-black ">
+        <div className="mt-8"></div>
         <Posts />
       </div>
       <Recommendations />
