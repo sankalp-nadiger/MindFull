@@ -730,14 +730,35 @@ const VisionBoardDraw = () => {
   };
 
   // Save the current canvas as an image
-  const saveCanvas = () => {
+  const downloadCanvas = () => {
     const uri = stageRef.current.toDataURL();
     const link = document.createElement("a");
     link.download = "vision-board.png";
     link.href = uri;
     link.click();
   };
-
+  const saveCanvas = async () => {
+    const uri = stageRef.current.toDataURL(); // Convert canvas to image data
+    const blob = await (await fetch(uri)).blob(); // Convert data URL to Blob
+    const formData = new FormData();
+    formData.append("file", blob, "vision-board.png"); // Append as a file
+  
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/visionboard/saveCanvas`, {
+        method: "POST",
+        body: formData,
+      });
+  
+      if (response.ok) {
+        console.log("Canvas saved successfully!");
+      } else {
+        console.error("Error saving canvas");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+  
   // Handle clicks outside the text editor more carefully
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -772,6 +793,9 @@ const VisionBoardDraw = () => {
         </button>
         <button onClick={undoLastElement} className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
           Undo
+        </button>
+        <button onClick={downloadCanvas} className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-800">
+          Download Board
         </button>
         <button onClick={saveCanvas} className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-800">
           Save Board

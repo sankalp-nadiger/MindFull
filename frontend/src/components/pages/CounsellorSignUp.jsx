@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import "./StudentSignIn.css"
 
 const CounsellorSignUp = () => {
   const navigate = useNavigate();
@@ -26,7 +27,8 @@ const CounsellorSignUp = () => {
   });
 
   const [otpSent, setOtpSent] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); // Password visibility toggle
+  const [showPassword, setShowPassword] = useState(false);
+  const [fileName, setFileName] = useState("No file chosen");
 
   const handleChange = (e) => {
     const value = e.target.type === "number" ? parseInt(e.target.value) || "" : e.target.value;
@@ -35,6 +37,7 @@ const CounsellorSignUp = () => {
 
   const handleFileChange = (e) => {
     setFormData({ ...formData, certifications: e.target.files[0] });
+    setFileName(e.target.files[0]?.name || "No file chosen");
   };
 
   const handleSendOtp = async () => {
@@ -133,150 +136,215 @@ const CounsellorSignUp = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-6">
-      <h1 className="text-3xl font-bold text-blue-400 mb-4">Counsellor Sign-Up</h1>
-      <form className="bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md" onSubmit={handleSubmit}>
-        {/* Personal details */}
-        {["fullName", "email", "mobileNumber"].map((field) => (
-          <div key={field} className="mb-4">
-            <label className="block text-sm font-medium capitalize">{field}</label>
+    <div className="auth-container">
+      <h1 className="app-title">Mental Health Support</h1>
+      <div className="auth-card">
+        <div className="card-header">
+          <h2 className="card-title">Counsellor Sign-Up</h2>
+          <p>Join our platform to support students and parents</p>
+        </div>
+        
+        <form className="form-container" onSubmit={handleSubmit}>
+          {/* Personal details */}
+          <div className="form-group">
+            <label className="form-label">Full Name</label>
             <input
-              type={field === "mobileNumber" ? "number" : "text"}
-              name={field}
-              value={formData[field]}
+              type="text"
+              name="fullName"
+              value={formData.fullName}
               onChange={handleChange}
-              className="w-full p-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none"
+              className="form-input"
               required
             />
           </div>
-        ))}
-
-        {/* Password Field with Toggle */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium">Password</label>
-          <div className="relative">
+          
+          <div className="form-group">
+            <label className="form-label">Email</label>
             <input
-              type={showPassword ? "text" : "password"}
-              name="password"
-              value={formData.password}
+              type="email"
+              name="email"
+              value={formData.email}
               onChange={handleChange}
-              className="w-full p-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none"
+              className="form-input"
               required
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-2 text-sm text-gray-400"
-            >
-              {showPassword ? "Hide" : "Show"}
-            </button>
           </div>
-        </div>
-
-        {/* Years of Experience */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium">Years of Experience</label>
-          <input
-            type="number"
-            name="yearExp"
-            value={formData.yearExp}
-            onChange={handleChange}
-            className="w-full p-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none"
-            required
-          />
-        </div>
-
-        {/* Specifications */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium">Specifications</label>
-          {formData.specification.map((spec, index) => (
-            <div key={index} className="flex space-x-4 mb-2">
+          
+          <div className="form-group">
+            <label className="form-label">Mobile Number</label>
+            <div className="otp-container">
+              <input
+                type="number"
+                name="mobileNumber"
+                value={formData.mobileNumber}
+                onChange={handleChange}
+                className="form-input otp-input"
+                required
+              />
+              <button
+                type="button"
+                onClick={handleSendOtp}
+                className="action-button"
+                disabled={!formData.mobileNumber}
+              >
+                Send OTP
+              </button>
+            </div>
+          </div>
+          
+          {otpSent && (
+            <div className="form-group">
+              <label className="form-label">OTP</label>
               <input
                 type="text"
-                value={spec}
-                onChange={(e) => handleSpecificationChange(e, index)}
-                className="w-full p-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none"
+                name="otp"
+                value={formData.otp}
+                onChange={handleChange}
+                className="form-input"
                 required
               />
             </div>
-          ))}
-          <button
-            type="button"
-            onClick={handleAddSpecification}
-            className="w-full p-2 bg-blue-500 hover:bg-blue-600 rounded-md"
-          >
-            Add Specification
-          </button>
-        </div>
+          )}
 
-        {/* Availability */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium">Availability</label>
-          {formData.availability.map((day, dayIndex) => (
-            <div key={dayIndex} className="mb-4 p-4 border border-gray-600 rounded-md">
-              <select
-                value={day.day}
-                onChange={(e) => handleDayChange(e, dayIndex)}
-                className="w-full p-2 mb-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none"
-              >
-                {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
-
-              {day.slots.map((slot, slotIndex) => (
-                <div key={slotIndex} className="flex space-x-4 mb-2">
-                  <input
-                    type="time"
-                    value={slot.startTime}
-                    onChange={(e) => handleAvailabilityChange(e, dayIndex, slotIndex, "startTime")}
-                    className="w-full p-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none"
-                    required
-                  />
-                  <input
-                    type="time"
-                    value={slot.endTime}
-                    onChange={(e) => handleAvailabilityChange(e, dayIndex, slotIndex, "endTime")}
-                    className="w-full p-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none"
-                    required
-                  />
-                </div>
-              ))}
-
+          <div className="form-group">
+            <label className="form-label">Password</label>
+            <div className="input-with-button">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className="form-input"
+                required
+              />
               <button
                 type="button"
-                onClick={() => handleAddSlot(dayIndex)}
-                className="w-full mt-2 p-2 bg-blue-500 hover:bg-blue-600 rounded-md"
+                onClick={() => setShowPassword(!showPassword)}
+                className="input-button"
               >
-                Add Slot
+                {showPassword ? "Hide" : "Show"}
               </button>
             </div>
-          ))}
-        </div>
+          </div>
 
-        {/* File Upload */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium">Certifications</label>
-          <input
-            type="file"
-            name="certifications"
-            onChange={handleFileChange}
-            className="w-full p-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none"
-          />
-        </div>
+          <div className="form-group">
+            <label className="form-label">Years of Experience</label>
+            <input
+              type="number"
+              name="yearExp"
+              value={formData.yearExp}
+              onChange={handleChange}
+              className="form-input"
+              required
+            />
+          </div>
 
-        {/* Submit Button */}
-        <div className="mb-4">
+          {/* Specifications */}
+          <div className="form-group">
+            <label className="form-label">Specifications</label>
+            {formData.specification.map((spec, index) => (
+              <div key={index} className="mb-3">
+                <input
+                  type="text"
+                  value={spec}
+                  onChange={(e) => handleSpecificationChange(e, index)}
+                  className="form-input"
+                  placeholder="e.g., Anxiety, Depression, etc."
+                  required
+                />
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={handleAddSpecification}
+              className="secondary-button"
+            >
+              Add Specification
+            </button>
+          </div>
+
+          {/* Availability */}
+          <div className="form-group">
+            <label className="form-label">Availability</label>
+            {formData.availability.map((day, dayIndex) => (
+              <div key={dayIndex} className="mb-4 p-4 border border-gray-200 rounded-md">
+                <select
+                  value={day.day}
+                  onChange={(e) => handleDayChange(e, dayIndex)}
+                  className="form-input select-input mb-3"
+                >
+                  {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+
+                {day.slots.map((slot, slotIndex) => (
+                  <div key={slotIndex} className="flex gap-2 mb-2">
+                    <input
+                      type="time"
+                      value={slot.startTime}
+                      onChange={(e) => handleAvailabilityChange(e, dayIndex, slotIndex, "startTime")}
+                      className="form-input"
+                      required
+                    />
+                    <input
+                      type="time"
+                      value={slot.endTime}
+                      onChange={(e) => handleAvailabilityChange(e, dayIndex, slotIndex, "endTime")}
+                      className="form-input"
+                      required
+                    />
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => handleAddSlot(dayIndex)}
+                  className="secondary-button"
+                >
+                  Add Time Slot
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* File Upload */}
+          <div className="form-group">
+            <label className="form-label">Certifications</label>
+            <div className="file-input-container">
+              <label className="file-input-label">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <span className="file-input-text">{fileName}</span>
+                <input
+                  type="file"
+                  name="certifications"
+                  onChange={handleFileChange}
+                  className="file-input"
+                  accept=".pdf,.doc,.docx"
+                />
+              </label>
+            </div>
+          </div>
+
+          {/* Submit Button */}
           <button
             type="submit"
-            className="w-full p-2 bg-blue-500 hover:bg-blue-600 rounded-md"
+            className="primary-button"
           >
-            Sign Up
+            Sign Up as Counsellor
           </button>
-        </div>
-      </form>
+          
+          <div className="auth-links">
+            Already have an account? <a href="/counsellor-signin" className="auth-link">Login here</a>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
-
+import "./StudentSignIn.css";
 const StudentSignUp = () => {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -12,35 +12,35 @@ const StudentSignUp = () => {
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
   const [idCardFile, setIdCardFile] = useState(null);
-  const [location, setLocation] = useState(null); // For storing latitude and longitude
-  const [showPassword, setShowPassword] = useState(false); // For toggling password visibility
-  const [showIdUpload, setShowIdUpload] = useState(false);
+  const [idCardFileName, setIdCardFileName] = useState("No file chosen");
+  const [location, setLocation] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const navigate = useNavigate(); // Hook for navigation
+  const navigate = useNavigate();
 
-  // Function to get the user's geolocation
   const getLocation = () => {
     if (navigator.geolocation) {
+      setIsLocating(true);
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
+          const address = "Sample Address";
 
-          // Assuming you can obtain the address, if not, you can use reverse geocoding API like Google Maps API or OpenStreetMap.
-          const address = "Sample Address";  // Replace with reverse geocoding logic if necessary
-
-          // Construct the proper JSON format expected by the backend
           const locationData = {
-            type: "Point",  // Assuming GeoJSON format for coordinates
-            coordinates: [longitude, latitude], // [longitude, latitude] format
-            address: address // Address should be retrieved via reverse geocoding
+            type: "Point",
+            coordinates: [longitude, latitude],
+            address: address
           };
 
-          // Send the location data to the backend
           setLocation(locationData);
           toast.success("Location retrieved successfully!");
+          setIsLocating(false);
         },
         (error) => {
           toast.error("Unable to retrieve your location. Please enable geolocation.");
+          setIsLocating(false);
         }
       );
     } else {
@@ -51,13 +51,11 @@ const StudentSignUp = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate required fields
     if ([fullName, email, username, password].some((field) => field.trim() === "")) {
       toast.error("Please fill out all required fields.");
       return;
     }
 
-    // Age validation
     if (parseInt(age, 10) < 18 && !idCardFile) {
       toast.error("ID card upload is required for users under 18.");
       return;
@@ -68,6 +66,8 @@ const StudentSignUp = () => {
       return;
     }
 
+    setIsSubmitting(true);
+
     const formData = new FormData();
     formData.append("fullName", fullName);
     formData.append("email", email);
@@ -75,25 +75,24 @@ const StudentSignUp = () => {
     formData.append("password", password);
     formData.append("age", age);
     formData.append("gender", gender);
-    formData.append("location", JSON.stringify(location)); // Add location to form data
+    formData.append("location", JSON.stringify(location));
     if (idCardFile) formData.append("idCardFile", idCardFile);
 
     try {
-      const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/users/register`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data", // Important for file uploads
-        },
-        withCredentials: true, // Ensures cookies (accessToken, refreshToken) are included if using HTTP-only cookies
-      });
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_API_URL}/users/register`, 
+        formData, 
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+          withCredentials: true,
+        }
+      );
 
-      // Extract data from response
       if (response.status === 201) {
-        console.log(response.data)
-        const { accessToken, createdUser } = response.data.data || {}; // Ensure correct response structure
+        const { accessToken, createdUser } = response.data.data || {};
 
         toast.success("User registered successfully!");
 
-        // Store accessToken and user data only if they exist
         if (accessToken) {
           sessionStorage.setItem("accessToken", accessToken);
         }
@@ -102,7 +101,6 @@ const StudentSignUp = () => {
           sessionStorage.setItem("user", JSON.stringify(createdUser));
         }
 
-        // Navigate only after storing data
         navigate("/phase1");
       } else {
         toast.error("Unexpected response from server.");
@@ -110,26 +108,37 @@ const StudentSignUp = () => {
     } catch (error) {
       console.error("Registration failed:", error);
       toast.error(error.response?.data?.message || "Error during registration");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleIdCardUpload = (e) => {
-    setIdCardFile(e.target.files[0]);
-    toast.success("ID card uploaded successfully!");
+    const file = e.target.files[0];
+    if (file) {
+      setIdCardFile(file);
+      setIdCardFileName(file.name);
+      toast.success("ID card uploaded successfully!");
+    }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen  bg-gradient-to-b from-black via-blue-950 to-black text-white px-6">
-      <h1 className="text-4xl font-bold text-blue-500 mb-6">Sign Up</h1>
+    <div className="auth-container">
+      <h1 className="app-title student">MindFull</h1>
 
-      <div className="w-full max-w-md p-6 bg-gray-900 shadow-lg rounded-lg">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="fullName" className="block text-gray-300">Full Name</label>
+      <div className="auth-card">
+        <div className="card-header">
+          <h2 className="card-title">Student Sign Up</h2>
+          <p>Create your account to get started</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="form-container">
+          <div className="form-group">
+            <label htmlFor="fullName" className="form-label">Full Name</label>
             <input
               type="text"
               id="fullName"
-              className="w-full px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="form-input"
               placeholder="Enter your full name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
@@ -137,12 +146,12 @@ const StudentSignUp = () => {
             />
           </div>
 
-          <div>
-            <label htmlFor="email" className="block text-gray-300">Email</label>
+          <div className="form-group">
+            <label htmlFor="email" className="form-label">Email</label>
             <input
               type="email"
               id="email"
-              className="w-full px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="form-input"
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -150,34 +159,34 @@ const StudentSignUp = () => {
             />
           </div>
 
-          <div>
-            <label htmlFor="username" className="block text-gray-300">Username</label>
+          <div className="form-group">
+            <label htmlFor="username" className="form-label">Username</label>
             <input
               type="text"
               id="username"
-              className="w-full px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="Enter your username"
+              className="form-input"
+              placeholder="Choose a username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
             />
           </div>
 
-          <div>
-            <label htmlFor="password" className="block text-gray-300">Password</label>
-            <div className="relative">
+          <div className="form-group">
+            <label htmlFor="password" className="form-label">Password</label>
+            <div className="input-with-button">
               <input
                 type={showPassword ? "text" : "password"}
                 id="password"
-                className="w-full px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Enter your password"
+                className="form-input"
+                placeholder="Create a password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
               <button
                 type="button"
-                className="absolute top-1/2 right-3 transform -translate-y-1/2"
+                className="input-button"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? "Hide" : "Show"}
@@ -185,24 +194,26 @@ const StudentSignUp = () => {
             </div>
           </div>
 
-          <div>
-            <label htmlFor="age" className="block text-gray-300">Age</label>
+          <div className="form-group">
+            <label htmlFor="age" className="form-label">Age</label>
             <input
               type="number"
               id="age"
-              className="w-full px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="form-input"
               placeholder="Enter your age"
               value={age}
               onChange={(e) => setAge(e.target.value)}
+              min="13"
+              max="99"
               required
             />
           </div>
 
-          <div>
-            <label htmlFor="gender" className="block text-gray-300">Gender</label>
+          <div className="form-group">
+            <label htmlFor="gender" className="form-label">Gender</label>
             <select
               id="gender"
-              className="w-full px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="form-input select-input"
               value={gender}
               onChange={(e) => setGender(e.target.value)}
               required
@@ -214,38 +225,83 @@ const StudentSignUp = () => {
             </select>
           </div>
 
-          <div className="flex justify-center">
+          <div className="form-group">
+            <label className="form-label">Location</label>
             <button 
               type="button" 
-              className="px-4 py-2 font-semibold bg-blue-500 rounded-md hover:bg-blue-600 transition-all"
+              className="action-button"
               onClick={getLocation}
+              disabled={isLocating}
             >
-              Get Location
+              {isLocating ? "Getting Location..." : location ? "Location Received ✓" : "Get Location"}
             </button>
+            {location && (
+              <div className="mt-2 text-sm text-gray-600">
+                Location data received successfully
+              </div>
+            )}
           </div>
 
           {parseInt(age, 10) < 18 && (
-            <div>
-              <label htmlFor="idCard" className="block text-gray-300">Upload ID Card</label>
-              <input
-                type="file"
-                id="idCard"
-                className="w-full px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                onChange={handleIdCardUpload}
-              />
+            <div className="form-group">
+              <label htmlFor="idCard" className="form-label">Upload ID Card (Required for users under 18)</label>
+              <div className="file-input-container">
+                <div className="file-input-label">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                  </svg>
+                  <span className="file-input-text">{idCardFileName}</span>
+                </div>
+                <input
+                  type="file"
+                  id="idCard"
+                  className="file-input"
+                  onChange={handleIdCardUpload}
+                  accept="image/*,.pdf"
+                />
+              </div>
             </div>
           )}
 
           <button 
-            className="w-full py-2 text-lg font-bold text-white bg-indigo-500 rounded-md hover:bg-indigo-600 transition-all"
+            className="primary-button"
             type="submit"
+            disabled={isSubmitting}
           >
-            Sign Up
+            {isSubmitting ? "Creating Account..." : "Sign Up"}
           </button>
         </form>
+
+        <div className="auth-links">
+          <p>
+            Already have an account?{" "}
+            <Link to="/student-signin" className="auth-link">
+              Sign in here
+            </Link>
+          </p>
+          <p>
+            Not a student?{" "}
+            <Link to="/role-selection" className="auth-link">
+              Select your role
+            </Link>
+          </p>
+        </div>
       </div>
 
-      <ToastContainer />
+      <ToastContainer 
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        className="toast-container"
+      />
     </div>
   );
 };

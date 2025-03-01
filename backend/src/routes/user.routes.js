@@ -13,6 +13,7 @@ import {
   calculateAverageMood,
   getWeeklyMoodData,
   getActiveSessions,
+  getJournals,
   updateFeedback,
   getUserSessions
 } from "../controllers/user.controller.js";
@@ -37,6 +38,7 @@ router.post("/change-password", user_verifyJWT, changeCurrentPassword);
 router.get("/current", user_verifyJWT, getCurrentUser); 
 router.get('/counseling-sessions', user_verifyJWT, getUserSessions);
 router.post("/update", user_verifyJWT, updateAccountDetails); 
+router.get("/journal-entries", user_verifyJWT, getJournals);
 
 router.patch("/add-interests", user_verifyJWT, addInterests); 
 
@@ -51,7 +53,7 @@ router.get("/month-avg-mood", user_verifyJWT, calculateAverageMood);
 router.get("/week-mood-chart", user_verifyJWT, getWeeklyMoodData); 
 router.get("/sessions",user_verifyJWT,getActiveSessions)
 router.get('/generate-report', async (req, res) => {
-  const userId = req.user.id;
+  const userId = req.user._id;
 
   try {
     // Fetch user data

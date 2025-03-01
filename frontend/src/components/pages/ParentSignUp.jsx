@@ -1,6 +1,7 @@
 import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import "./StudentSignIn.css"; // Using the same CSS file as StudentSignIn
 
 const ParentSignUp = () => {
   const navigate = useNavigate();
@@ -9,22 +10,39 @@ const ParentSignUp = () => {
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); // State for password visibility
+  const [loading, setLoading] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [otpTimer, setOtpTimer] = useState(0);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     if (!otpSent) {
       try {
         const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/parent/send-otp`, { mobileNumber: phone });
         if (response.data.success) {
           setOtpSent(true);
+          // Start a 60-second timer for OTP expiration
+          setOtpTimer(60);
+          const interval = setInterval(() => {
+            setOtpTimer(prevTimer => {
+              if (prevTimer <= 1) {
+                clearInterval(interval);
+                return 0;
+              }
+              return prevTimer - 1;
+            });
+          }, 1000);
+          
           alert("OTP sent to your phone.");
         } else {
           alert("Failed to send OTP. Please try again.");
         }
       } catch (error) {
         alert("Error sending OTP: " + error.message);
+      } finally {
+        setLoading(false);
       }
       return;
     }
@@ -45,21 +63,62 @@ const ParentSignUp = () => {
       }
     } catch (error) {
       alert("Error during registration: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resendOtp = async () => {
+    if (otpTimer > 0) return;
+    
+    setLoading(true);
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/parent/send-otp`, { mobileNumber: phone });
+      if (response.data.success) {
+        setOtpTimer(60);
+        const interval = setInterval(() => {
+          setOtpTimer(prevTimer => {
+            if (prevTimer <= 1) {
+              clearInterval(interval);
+              return 0;
+            }
+            return prevTimer - 1;
+          });
+        }, 1000);
+        
+        alert("OTP resent to your phone.");
+      } else {
+        alert("Failed to resend OTP. Please try again.");
+      }
+    } catch (error) {
+      alert("Error resending OTP: " + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-black via-blue-950 to-black text-white px-6">
-      <h1 className="text-4xl font-bold text-indigo-400 mb-6">Parent Sign Up</h1>
+    <div className="auth-container">
+      <h1 className="app-title parent">Mindfull</h1>
 
-      <div className="w-full max-w-md p-6 bg-gray-900 shadow-lg rounded-lg flex flex-col items-center">
-        <form onSubmit={handleSubmit} className="w-full space-y-4">
-          <div className="flex flex-col">
-            <label htmlFor="name" className="text-sm font-medium text-gray-300">Full Name</label>
+      <div className="auth-card">
+        <div className="card-header">
+          <img
+            src="https://media.giphy.com/media/hvRJCLFzcasrR4ia7z/giphy.gif"
+            alt="Welcome GIF"
+            className="welcome-animation"
+          />
+          <h2 className="card-title">Parent Sign Up</h2>
+        </div>
+
+        <form onSubmit={handleSubmit} className="form-container">
+          <div className="form-group">
+            <label htmlFor="name" className="form-label">Full Name</label>
             <input
               type="text"
               id="name"
-              className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              name="name"
+              className="form-input"
               placeholder="Enter your full name"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -67,34 +126,13 @@ const ParentSignUp = () => {
             />
           </div>
 
-          <div className="flex flex-col">
-            <label htmlFor="password" className="text-sm font-medium text-gray-300">Password</label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <button
-                type="button"
-                className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-300"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? "Hide" : "Show"}
-              </button>
-            </div>
-          </div>
-
-          <div className="flex flex-col">
-            <label htmlFor="phone" className="text-sm font-medium text-gray-300">Phone Number</label>
+          <div className="form-group">
+            <label htmlFor="phone" className="form-label">Phone Number</label>
             <input
               type="tel"
               id="phone"
-              className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              name="phone"
+              className="form-input"
               placeholder="Enter your phone number"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
@@ -103,29 +141,83 @@ const ParentSignUp = () => {
             />
           </div>
 
-          {otpSent && (
-            <div className="flex flex-col">
-              <label htmlFor="otp" className="text-sm font-medium text-gray-300">OTP</label>
+          <div className="form-group">
+            <label htmlFor="password" className="form-label">Password</label>
+            <div className="input-with-button">
               <input
-                type="text"
-                id="otp"
-                className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                placeholder="Enter OTP sent to your phone"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                maxLength={6}
+                type={passwordVisible ? "text" : "password"}
+                id="password"
+                name="password"
+                className="form-input"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              <button
+                type="button"
+                onClick={() => setPasswordVisible(!passwordVisible)}
+                className="input-button"
+              >
+                {passwordVisible ? "Hide" : "Show"}
+              </button>
+            </div>
+          </div>
+
+          {otpSent && (
+            <div className="form-group">
+              <label htmlFor="otp" className="form-label">OTP</label>
+              <div className="otp-container">
+                <input
+                  type="text"
+                  id="otp"
+                  name="otp"
+                  className="form-input otp-input"
+                  placeholder="Enter OTP sent to your phone"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  maxLength={6}
+                  required
+                />
+                {otpTimer > 0 ? (
+                  <div className="otp-timer">Resend in {otpTimer}s</div>
+                ) : (
+                  <button 
+                    type="button" 
+                    onClick={resendOtp} 
+                    className="secondary-button"
+                    style={{ marginTop: 0, width: 'auto', padding: '0.5rem 1rem' }}
+                  >
+                    Resend
+                  </button>
+                )}
+              </div>
             </div>
           )}
 
           <button
             type="submit"
-            className="w-full px-4 py-2 font-semibold bg-green-500 text-white rounded-md hover:bg-green-600 transition-all disabled:opacity-50"
+            className="primary-button parent-button"
+            disabled={loading}
           >
-            {otpSent ? "Complete Sign-Up" : "Send OTP"}
+            {loading ? "Processing..." : (otpSent ? "Complete Sign-Up" : "Send OTP")}
           </button>
         </form>
+
+        <div className="auth-links">
+          <p>
+            Already have an account?{" "}
+            <Link to="/parent-signin" className="auth-link parent">
+              Sign in here
+            </Link>
+          </p>
+          <p>
+            Not a parent?{" "}
+            <Link to="/role-selection" className="auth-link parent">
+              Select your role
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

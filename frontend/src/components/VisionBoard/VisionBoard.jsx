@@ -94,7 +94,10 @@ const VisionBoard = ({ userId }) => {
       <FileUpload userId={userId} fetchVisionBoards={fetchVisionBoards} />
 
       {/* Add Drawing Feature */}
-      <DrawingBoard />
+      <div className="text-center text-2xl font-bold mb-5">
+  <h2>Create your Vision Board using the canvas</h2>
+  <DrawingBoard />
+</div>
 
       {/* Info Button */}
       <button
