@@ -7,6 +7,7 @@ import Activity from "./components/Activities/activity"
 import Councellor from "./components/Councellor/Councellor"
 //import CommunityChat from "./components/Community/Communitychat"
 import Quiz from "./components/Games/quizgame"
+import VisionBoard from "./components/VisionBoard/VisionBoard";
 import SudokuGame from "./components/Games/sudoku"
 import CrosswordGame from "./components/Games/Crosswords"
 import Leaderboard from "./components/Badges and Leaderboard/Leaderboard"
@@ -89,6 +90,7 @@ function App() {
          <Route path="/Musicplayer" element={<MusicPlayerApp/>}/>
          <Route path="/Breathingexercise" element={<Breathingexercise/>}/>
          <Route path="/todo" element={<TodoListPage/>}/>
+         <Route path="/vision-board" element={<VisionBoard />} />
           {/* <Route path="/stats" element={<CounselorStats/>}/>  */}
         </Routes>
       </Router>

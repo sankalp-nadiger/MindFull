@@ -13,7 +13,8 @@ import {
   calculateAverageMood,
   getWeeklyMoodData,
   getActiveSessions,
-  updateFeedback
+  updateFeedback,
+  getUserSessions
 } from "../controllers/user.controller.js";
 import { addNotesToSession, endSession } from "../controllers/counsellor.controller.js";
 import {upload} from "../middleware/multer.middleware.js"
@@ -34,7 +35,7 @@ router.post("/end", user_verifyJWT, endSession);
 router.post("/change-password", user_verifyJWT, changeCurrentPassword);
 
 router.get("/current", user_verifyJWT, getCurrentUser); 
-
+router.get('/counseling-sessions', user_verifyJWT, getUserSessions);
 router.post("/update", user_verifyJWT, updateAccountDetails); 
 
 router.patch("/add-interests", user_verifyJWT, addInterests); 

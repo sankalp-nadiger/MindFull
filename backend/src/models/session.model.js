@@ -5,6 +5,7 @@ const sessionSchema = new mongoose.Schema({
     counselor: { type: mongoose.Schema.Types.ObjectId, ref: "Counsellor", required: true },
     roomName: { type: String, required: true },
     issueDetails: { type: String, required: true },
+    rating: { type: Number, default: 0 },
     status: { 
         type: String, 
         enum: ["Pending", "Active", "Completed"], // added "Active" status for when session is ongoing

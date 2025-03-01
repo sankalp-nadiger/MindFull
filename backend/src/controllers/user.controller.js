@@ -233,6 +233,41 @@ const registerUser = asyncHandler(async (req, res) => {
       return res.status(500).json({ success: false, message: "Internal Server Error", error: error.message });
   }
 });
+
+const getUserSessions = async (req, res) => {
+  try {
+    const userId = req.user._id; // Assuming you have authentication middleware
+        // Find all sessions where this user is the client
+    const sessions = await Session.find({ user: userId })
+      .populate('counselor', 'fullName specialization email') // Populate counselor details
+      .sort({ createdAt: -1 }) // Sort by most recent first
+      .lean(); // Convert to plain JS object for better performance
+    
+    // Format the sessions for frontend consumption
+    const formattedSessions = sessions.map(session => ({
+      _id: session._id,
+      status: session.status,
+      issueDetails: session.issueDetails,
+      createdAt: session.createdAt,
+      endedAt: session.endedAt,
+      notes: session.notes,
+      feedback: session.feedback,
+      rating: session.rating,
+      counselor: session.counselor ? {
+        _id: session.counselor._id,
+        fullName: session.counselor.fullName,
+        specialization: session.counselor.specialization,
+        email: session.counselor.email
+      } : null,
+    }));
+    
+    return res.status(200).json(formattedSessions);
+  } catch (error) {
+    console.error('Error fetching user sessions:', error);
+    return res.status(500).json({ message: 'Failed to fetch sessions', error: error.message });
+  }
+};
+
 // feedback
 export const updateFeedback = asyncHandler(async (req, res) => {
   const userId = req.user._id;
@@ -862,5 +897,5 @@ export {
   getCurrentUser,
   updateAccountDetails,
   addInterests, userProgress, calculateAverageMood,
-  getWeeklyMoodData
+  getWeeklyMoodData, getUserSessions
 };

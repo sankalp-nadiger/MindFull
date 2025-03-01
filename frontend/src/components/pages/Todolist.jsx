@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../Navbar/Navbar';
+import { Clock, X } from 'lucide-react';
 import { ArrowUp, ArrowDown, Check, Plus, Award, Lightbulb, ChevronRight, Trash, Save } from 'lucide-react';
 
 const TodoListPage = () => {
@@ -10,12 +11,18 @@ const TodoListPage = () => {
   const [maxStreak, setMaxStreak] = useState(0);
   const [aiInsights, setAiInsights] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showDeadlineForm, setShowDeadlineForm] = useState(false);
+const [deadlineTasks, setDeadlineTasks] = useState([]);
+const [deadlineTaskName, setDeadlineTaskName] = useState('');
+const [deadlineTaskDescription, setDeadlineTaskDescription] = useState('');
+const [deadlineDate, setDeadlineDate] = useState('');
 
   // Fetch initial data
   useEffect(() => {
     fetchTasks();
     fetchStreaks();
     fetchAiInsights();
+    fetchDeadlineTasks();
   }, []);
 
   const fetchTasks = async () => {
@@ -144,7 +151,68 @@ const TodoListPage = () => {
       console.error('Error deleting task:', error);
     }
   };
-
+  
+  const fetchDeadlineTasks = async () => {
+    try {
+      const res = await axios.get('/api/deadline-tasks');
+      setDeadlineTasks(res.data);
+    } catch (err) {
+      console.error('Error fetching deadline tasks:', err);
+    }
+  };
+  
+  const handleAddDeadlineTask = async () => {
+    if (!deadlineTaskName || !deadlineDate) {
+      // Show an error notification
+      return;
+    }
+    
+    try {
+      const res = await axios.post('/api/deadline-tasks', {
+        title: deadlineTaskName,
+        description: deadlineTaskDescription,
+        dueDate: deadlineDate
+      });
+      
+      // Add the new task to the state
+      setDeadlineTasks([...deadlineTasks, res.data]);
+      
+      // Clear form
+      setDeadlineTaskName('');
+      setDeadlineTaskDescription('');
+      setDeadlineDate('');
+      setShowDeadlineForm(false);
+    } catch (err) {
+      console.error('Error adding deadline task:', err);
+      // Show error notification
+    }
+  };
+  
+  const handleDeleteDeadlineTask = async (taskId) => {
+    try {
+      await axios.delete(`/api/deadline-tasks/${taskId}`);
+      
+      // Update state by removing the deleted task
+      setDeadlineTasks(deadlineTasks.filter(task => task._id !== taskId));
+    } catch (err) {
+      console.error('Error deleting deadline task:', err);
+      // Show error notification
+    }
+  };
+  
+  const handleCompleteDeadlineTask = async (taskId) => {
+    try {
+      const res = await axios.put(`/api/deadline-tasks/${taskId}/complete`);
+      
+      // Update the task in state
+      setDeadlineTasks(deadlineTasks.map(task => 
+        task._id === taskId ? res.data : task
+      ));
+    } catch (err) {
+      console.error('Error completing deadline task:', err);
+      // Show error notification
+    }
+  };
   const adoptAiRecommendation = async (recommendationId) => {
     try {
       // Replace with actual API call
@@ -188,31 +256,126 @@ const TodoListPage = () => {
           <div className="w-full md:w-2/3 bg-gray-800 rounded-lg p-6">
             <h2 className="text-2xl font-bold text-green-400 mb-6">My Tasks</h2>
             
-            {/* Add new task */}
-            <div className="mb-8 bg-gray-700 p-4 rounded-lg">
-              <h3 className="text-lg font-medium text-green-400 mb-4">Add New Task</h3>
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Task name"
-                  className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                  value={newTaskName}
-                  onChange={(e) => setNewTaskName(e.target.value)}
-                />
-                <textarea
-                  placeholder="Task description"
-                  className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                  value={newTaskDescription}
-                  onChange={(e) => setNewTaskDescription(e.target.value)}
-                  rows="2"
-                />
-                <button
-                  className="px-4 py-2 bg-green-500 text-white rounded-lg flex items-center justify-center"
-                  onClick={handleAddTask}
+            {/* Deadline Tasks Section */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-yellow-400">Upcoming Deadlines</h3>
+                <button 
+                  className="text-sm text-yellow-400 hover:underline flex items-center"
+                  onClick={() => setShowDeadlineForm(!showDeadlineForm)}
                 >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Task
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Deadline
                 </button>
+              </div>
+              
+              {/* Deadline Task Form */}
+              {showDeadlineForm && (
+                <div className="mb-6 bg-gray-700 p-4 rounded-lg">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input
+                      type="text"
+                      placeholder="Task name"
+                      className="px-4 py-2 bg-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                      value={deadlineTaskName}
+                      onChange={(e) => setDeadlineTaskName(e.target.value)}
+                    />
+                    <input
+                      type="datetime-local"
+                      className="px-4 py-2 bg-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                      value={deadlineDate}
+                      onChange={(e) => setDeadlineDate(e.target.value)}
+                    />
+                    <textarea
+                      placeholder="Task description"
+                      className="md:col-span-2 px-4 py-2 bg-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                      value={deadlineTaskDescription}
+                      onChange={(e) => setDeadlineTaskDescription(e.target.value)}
+                      rows="2"
+                    />
+                    <div className="md:col-span-2 flex justify-end">
+                      <button
+                        className="px-4 py-2 bg-yellow-500 text-white rounded-lg flex items-center"
+                        onClick={handleAddDeadlineTask}
+                      >
+                        <Clock className="w-4 h-4 mr-2" />
+                        Add Deadline Task
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Horizontal Deadline Tasks Display */}
+              <div className="overflow-x-auto pb-2">
+                <div className="flex space-x-4">
+                  {deadlineTasks.length > 0 ? (
+                    deadlineTasks.map((task) => {
+                      const dueDate = new Date(task.dueDate);
+                      const now = new Date();
+                      const daysLeft = Math.ceil((dueDate - now) / (1000 * 60 * 60 * 24));
+                      
+                      let bgColor = "bg-gray-700";
+                      let borderColor = "border-gray-600";
+                      
+                      if (daysLeft <= 1) {
+                        bgColor = "bg-red-900";
+                        borderColor = "border-red-500";
+                      } else if (daysLeft <= 3) {
+                        bgColor = "bg-yellow-900";
+                        borderColor = "border-yellow-500";
+                      }
+                      
+                      return (
+                        <div 
+                          key={task._id} 
+                          className={`flex-shrink-0 w-64 ${bgColor} border-l-4 ${borderColor} rounded-lg p-4 shadow-lg`}
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-bold text-white">{task.title}</h4>
+                            <button 
+                              className="text-gray-400 hover:text-red-400"
+                              onClick={() => handleDeleteDeadlineTask(task._id)}
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                          
+                          <div className="flex items-center text-sm text-yellow-400 mb-2">
+                            <Clock className="w-4 h-4 mr-1" />
+                            <span>
+                              {dueDate.toLocaleDateString()} {dueDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          
+                          <p className="text-sm text-gray-300 mb-3 line-clamp-2">{task.description}</p>
+                          
+                          <div className="flex justify-between items-center">
+                            <span className={`text-xs px-2 py-1 rounded ${
+                              daysLeft <= 1 ? 'bg-red-800 text-red-200' : 
+                              daysLeft <= 3 ? 'bg-yellow-800 text-yellow-200' : 
+                              'bg-gray-600 text-gray-300'
+                            }`}>
+                              {daysLeft <= 0 ? 'Due today' : `${daysLeft} day${daysLeft !== 1 ? 's' : ''} left`}
+                            </span>
+                            
+                            <button
+                              className="text-sm text-green-400 hover:text-green-300 flex items-center"
+                              onClick={() => handleCompleteDeadlineTask(task._id)}
+                            >
+                              <Check className="w-4 h-4 mr-1" />
+                              Done
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="w-full text-center py-6 text-gray-400">
+                      <p>No deadline tasks. Add some to stay on schedule!</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             
@@ -299,6 +462,34 @@ const TodoListPage = () => {
                     <p>No tasks yet. Add some tasks to get started!</p>
                   </div>
                 )}
+                
+                {/* Add new task - moved below the list */}
+                <div className="mt-8 bg-gray-700 p-4 rounded-lg">
+                  <h3 className="text-lg font-medium text-green-400 mb-4">Add New Task</h3>
+                  <div className="space-y-4">
+                    <input
+                      type="text"
+                      placeholder="Task name"
+                      className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                      value={newTaskName}
+                      onChange={(e) => setNewTaskName(e.target.value)}
+                    />
+                    <textarea
+                      placeholder="Task description"
+                      className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                      value={newTaskDescription}
+                      onChange={(e) => setNewTaskDescription(e.target.value)}
+                      rows="2"
+                    />
+                    <button
+                      className="px-4 py-2 bg-green-500 text-white rounded-lg flex items-center justify-center"
+                      onClick={handleAddTask}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Task
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
