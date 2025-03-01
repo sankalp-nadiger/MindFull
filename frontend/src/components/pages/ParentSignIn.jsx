@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
-
+import { useNavigate, Link } from "react-router-dom";
+import "./StudentSignIn.css";
 const ParentSignIn = () => {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
@@ -11,10 +11,13 @@ const ParentSignIn = () => {
   const [otpSent, setOtpSent] = useState(false);
   const [otpError, setOtpError] = useState(false);
   const [otpTimer, setOtpTimer] = useState(30);
-  const [showPassword, setShowPassword] = useState(false); // State for password visibility
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSendOtp = async () => {
     if (phoneNumber.length === 10) {
+      setIsSendingOtp(true);
       try {
         const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/parent/send-otp`, {
           mobileNumber: phoneNumber,
@@ -26,7 +29,9 @@ const ParentSignIn = () => {
           startOtpTimer();
         }
       } catch (error) {
-        alert("Error sending OTP: " + error.response.data.error);
+        alert("Error sending OTP: " + error.response?.data?.error || "Please try again");
+      } finally {
+        setIsSendingOtp(false);
       }
     } else {
       alert("Please enter a valid phone number.");
@@ -48,8 +53,6 @@ const ParentSignIn = () => {
     if (otpTimer === 0) {
       setOtpTimer(30);
       handleSendOtp();
-    } else {
-      alert(`You can resend OTP after ${otpTimer} seconds.`);
     }
   };
 
@@ -58,10 +61,11 @@ const ParentSignIn = () => {
 
     if (otp.length !== 6) {
       setOtpError(true);
-      alert("Invalid OTP.");
+      alert("Please enter a valid 6-digit OTP.");
       return;
     }
 
+    setIsSubmitting(true);
     try {
       const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/parent/login`, {
         fullName,
@@ -69,7 +73,7 @@ const ParentSignIn = () => {
         otp,
         password,
       });
-      console.log(response.data);
+      
       if (response.status === 200) {
         const { accessToken } = response.data.data;
         sessionStorage.setItem("accessToken", accessToken);
@@ -78,23 +82,30 @@ const ParentSignIn = () => {
       }
     } catch (error) {
       setOtpError(true);
-      alert("Error during login: " + error.response.data.message);
+      alert("Error during login: " + (error.response?.data?.message || "Please try again"));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-black via-blue-950 to-black text-white px-6">
-      <h1 className="text-4xl font-bold text-yellow-600 mb-6">Parent SignIn</h1>
+    <div className="auth-container">
+      <h1 className="app-title parent">MindFull</h1>
 
-      <div className="w-full max-w-md p-6 bg-gray-900 shadow-lg rounded-lg flex flex-col items-center">
-        <form onSubmit={handleSubmit} className="w-full space-y-4">
+      <div className="auth-card">
+        <div className="card-header">
+          <h2 className="card-title">Parent Sign In</h2>
+          <p>Access your account to track progress</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="form-container">
           {!otpSent && (
-            <div className="flex flex-col">
-              <label htmlFor="fullName" className="text-sm font-medium text-gray-300">Full Name</label>
+            <div className="form-group">
+              <label htmlFor="fullName" className="form-label">Full Name</label>
               <input
                 id="fullName"
                 type="text"
-                className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                className="form-input"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Enter your full name"
@@ -104,54 +115,62 @@ const ParentSignIn = () => {
           )}
 
           {!otpSent && (
-            <div className="flex flex-col">
-              <label htmlFor="phoneNumber" className="text-sm font-medium text-gray-300">Phone Number</label>
+            <div className="form-group">
+              <label htmlFor="phoneNumber" className="form-label">Phone Number</label>
               <input
                 id="phoneNumber"
                 type="tel"
-                className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                className="form-input"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="Enter your phone number"
+                placeholder="Enter your 10-digit phone number"
                 maxLength={10}
                 required
               />
               <button
                 type="button"
-                className="mt-3 px-4 py-2 font-semibold bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition-all disabled:opacity-50"
+                className="action-button parent-button mt-3"
                 onClick={handleSendOtp}
-                disabled={phoneNumber.length !== 10 || !fullName}
+                disabled={phoneNumber.length !== 10 || !fullName || isSendingOtp}
               >
-                Send OTP
+                {isSendingOtp ? "Sending..." : "Send OTP"}
               </button>
             </div>
           )}
 
           {otpSent && (
-            <div className="flex flex-col">
-              <label htmlFor="otp" className="text-sm font-medium text-gray-300">OTP</label>
+            <div className="form-group">
+              <label htmlFor="otp" className="form-label">OTP Verification</label>
               <input
                 id="otp"
                 type="text"
-                className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                className={`form-input ${otpError ? 'error' : ''}`}
                 value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                placeholder="Enter OTP"
+                onChange={(e) => {
+                  setOtp(e.target.value);
+                  if (otpError) setOtpError(false);
+                }}
+                placeholder="Enter 6-digit OTP"
                 maxLength={6}
                 required
               />
-              {otpError && <span className="text-red-500 text-sm">Invalid OTP. Please try again.</span>}
+              {otpError && (
+                <div className="error-message">Invalid OTP. Please try again.</div>
+              )}
+              {otpTimer > 0 && (
+                <div className="otp-timer">Resend available in {otpTimer} seconds</div>
+              )}
             </div>
           )}
 
           {otpSent && (
-            <div className="flex flex-col">
-              <label htmlFor="password" className="text-sm font-medium text-gray-300">Password</label>
-              <div className="relative">
+            <div className="form-group">
+              <label htmlFor="password" className="form-label">Password</label>
+              <div className="input-with-button">
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  className="form-input"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
@@ -159,7 +178,7 @@ const ParentSignIn = () => {
                 />
                 <button
                   type="button"
-                  className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-300"
+                  className="input-button"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? "Hide" : "Show"}
@@ -168,30 +187,39 @@ const ParentSignIn = () => {
             </div>
           )}
 
-          <button
-            type="submit"
-            className="w-full px-4 py-2 font-semibold bg-green-500 text-white rounded-md hover:bg-green-600 transition-all disabled:opacity-50"
-            disabled={!otpSent || !otp || !password || otp.length !== 6}
-          >
-            Sign In
-          </button>
+          {otpSent && (
+            <button
+              type="submit"
+              className="primary-button parent-button"
+              disabled={!otp || !password || otp.length !== 6 || isSubmitting}
+            >
+              {isSubmitting ? "Signing In..." : "Sign In"}
+            </button>
+          )}
 
           {otpSent && (
             <button
               type="button"
-              className="w-full px-4 py-2 font-semibold bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-all disabled:opacity-50"
+              className="secondary-button"
               onClick={handleResendOtp}
               disabled={otpTimer > 0}
             >
-              Resend OTP ({otpTimer}s)
+              Resend OTP {otpTimer > 0 ? `(${otpTimer}s)` : ''}
             </button>
           )}
         </form>
 
-        <div className="mt-4">
-          <a href="/parent-signup" className="text-indigo-400 hover:underline">
-            Don't have an account? Sign Up
-          </a>
+        <div className="auth-links">
+          <p>
+            <Link to="/parent-signup" className="auth-link parent">
+              Don't have an account? Sign Up
+            </Link>
+          </p>
+          <p>
+            <Link to="/role-selection" className="auth-link parent">
+              Return to role selection
+            </Link>
+          </p>
         </div>
       </div>
     </div>

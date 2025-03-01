@@ -9,7 +9,7 @@ const FileUpload = ({ userId, fetchVisionBoards }) => {
     const formData = new FormData();
     formData.append("image", file);
 
-    const response = await axios.post("http://localhost:5000/api/upload", formData);
+    const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/visionboard/upload`, formData);
     await updateVisionBoard(userId, { items: [{ type: "image", content: response.data.imageUrl }] });
 
     fetchVisionBoards();

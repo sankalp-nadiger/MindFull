@@ -5,7 +5,7 @@ import asyncHandler from "../utils/asynchandler.utils.js";
 import {ApiError} from "../utils/API_Error.js";
 import { User } from "../models/user.model.js";
 import { Resource } from "../models/resource.model.js";
-import { Parent } from "../models/parent.model.js";
+import { Journal } from "../models/journal.model.js";
 import { Mood } from "../models/mood.model.js";
 import { Interest } from "../models/interests.models.js";
 import { Issue } from "../models/Issues.model.js";
@@ -886,6 +886,32 @@ const extractMobileNumber = async (imagePath, user) => {
       return null;
   }
 };
+const getJournals = async (req, res) => {
+  try {
+      const  userId = req.user._id;
+      console.log("User ID:", userId);
+      // Fetch journals directly for the given userId
+      const journals = await Journal.find({ user: userId });
+
+      if (!journals.length) {
+          return res.status(404).json({
+              success: false,
+              message: "No journals found for this user",
+          });
+      }
+
+      res.status(200).json({
+          journals
+      });
+  } catch (error) {
+      console.error("Error fetching journal entries:", error);
+      res.status(500).json({
+          success: false,
+          message: "Failed to fetch journal entries",
+          error: error.message,
+      });
+  }
+};
 
 export {
   registerUser, extractMobileNumber,
@@ -894,7 +920,7 @@ export {
   generateAccessAndRefreshTokens,
   refreshAccessToken,
   changeCurrentPassword,
-  getCurrentUser,
+  getCurrentUser, getJournals,
   updateAccountDetails,
   addInterests, userProgress, calculateAverageMood,
   getWeeklyMoodData, getUserSessions

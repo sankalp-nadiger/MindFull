@@ -12,16 +12,12 @@ import BadgesCorner from "../Badges and Leaderboard/Badges";
 import Recommendations from "../Materialrecommendation/AIrecommendation";
 import Stories from "../pages/FetchStory";
 import Footer from "../Footer/Footer";
-import Suggestion from "./activity"
-import Posts from "../pages/FetchPosts"
+import Suggestion from "./activity";
+import Posts from "../pages/FetchPosts";
 import ExerciseCards from "../Exercises/exercise";
+import MoodBasedMemories from "../pages/MoodBasedMemories";
 
 export function HeroHighlightDemo() {
-
-  
- 
-
-
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(true);
@@ -29,7 +25,8 @@ export function HeroHighlightDemo() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [stories, setStories] = useState([]);
   const [showStories, setShowStories] = useState(false);
-  const [suggestedActivity, setSuggestedActivity] = useState(null); // New state for storing the activity
+  const [suggestedActivity, setSuggestedActivity] = useState(null);
+  const [userMood, setUserMood] = useState(null); // New state for user mood
 
   const token = sessionStorage.getItem("accessToken");
 
@@ -61,13 +58,17 @@ export function HeroHighlightDemo() {
     fetchUsername();
   }, []);
   
-  //setSuggestedActivity(activity)
+  // Get activity from sessionStorage
   useEffect(() => {
     const activity = sessionStorage.getItem("activity");
-    setSuggestedActivity(activity)
+    setSuggestedActivity(activity);
   }, []);
   
-  
+  // Get user mood from sessionStorage
+  useEffect(() => {
+    const mood = sessionStorage.getItem("mood");
+    setUserMood(mood);
+  }, []);
 
   const fetchStories = async () => {
     try {
@@ -100,7 +101,6 @@ export function HeroHighlightDemo() {
       console.error(err.message);
     }
   };
-
 
   const handleclick = () => {
     navigate("/Musicplayer");
@@ -138,7 +138,7 @@ export function HeroHighlightDemo() {
       {/* HeroHighlight Section - Remove fixed height */}
 <div className="w-full"> {/* Removed fixed height style */}
   <HeroHighlight>
-    <div className="min-h-[40vh] flex flex-col justify-center items-center text-center"> {/* Reduced min-height */}
+      <div className="min-h-[40vh] flex flex-col justify-center items-center text-center"> {/* Reduced min-height */}
       <motion.h1
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: [20, -5, 0] }}
@@ -159,7 +159,6 @@ export function HeroHighlightDemo() {
     </div>
   </HeroHighlight>
 </div>
-
       {/* Additional Sections */}
       <div className="bg-gray-200">
         <Getquotes />
@@ -168,8 +167,11 @@ export function HeroHighlightDemo() {
 <div className="bg-black ">
 <Suggestion />
 </div>
+<div className="bg-black ">
+  <MoodBasedMemories />
+  </div>
 <div className="shadow-[4px_4px_0_rgba(0,0,0,0.3)] hover:shadow-[6px_6px_0_rgba(0,0,0,0.4)] transition duration-300 p-6 bg-black w-full">
-  <div className="max-w-[85rem] text-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto backdrop-blur-lg bg-gray-900 p-8 rounded-lg shadow-lg shadow-red-500/50 hover:shadow-blue-500/50 transition-shadow flex flex-col items-center text-center">
+  <div className="max-w-[85rem] text-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto backdrop-blur-lg bg-gray-900 p-8 rounded-lg shadow-lg shadow-purple-500/50 hover:shadow-green-500/50 transition-shadow flex flex-col items-center text-center">
     <h2 className="text-2xl md:text-3xl font-bold">
       TaskMaster: Your Smart To-Do List Assistant
     </h2>
@@ -209,7 +211,7 @@ export function HeroHighlightDemo() {
         <div className="mt-8"></div>
         <Posts />
       </div>
-      <Recommendations />
+      {/* <Recommendations /> */}
 
 
       <div className="min-h-screen bg-gradient-to-b from-black via-violet-700 to-black text-gray-100 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">

@@ -83,94 +83,153 @@ const CounselorSignIn = () => {
     }
   };
 
+  const navigateHome = () => {
+    navigate("/");
+  };
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-black via-blue-950 to-black text-white px-6">
-      <h1 className="text-4xl font-bold text-indigo-400 mb-6">Counselor Sign In</h1>
-      <div className="w-full max-w-md p-6 bg-gray-900 shadow-lg rounded-lg flex flex-col items-center">
-        <form onSubmit={handleSubmit} className="w-full space-y-4">
-          {!otpSent && (
-            <>
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-300">Email</label>
-                <input
-                  type="email"
-                  className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  required
+    <div className="auth-container">
+      <h1 className="app-title">Counselor Sign In</h1>
+      <div className="auth-card">
+        <div className="card-header">
+          <div className="welcome-animation">
+            {/* Namaste Icon SVG */}
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+              <circle cx="40" cy="40" r="40" fill="#6157ff" opacity="0.1" />
+              <g transform="translate(20, 15)">
+                <path d="M20,0 C25,10 30,20 30,30 C30,20 35,10 40,0" 
+                      fill="none" 
+                      stroke="#6157ff" 
+                      strokeWidth="2.5" 
+                      strokeLinecap="round" />
+                <path d="M20,50 C15,40 10,30 0,25 C10,20 15,10 20,0" 
+                      fill="none" 
+                      stroke="#6157ff" 
+                      strokeWidth="2.5" 
+                      strokeLinecap="round" />
+                <path d="M20,50 C25,40 30,30 40,25 C30,20 25,10 20,0" 
+                      fill="none" 
+                      stroke="#6157ff" 
+                      strokeWidth="2.5" 
+                      strokeLinecap="round" />
+                <animateTransform 
+                  attributeName="transform"
+                  type="scale"
+                  from="0.95"
+                  to="1.05"
+                  begin="0s"
+                  dur="2s"
+                  repeatCount="indefinite"
+                  additive="sum"
                 />
-              </div>
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-300">Phone Number</label>
-                <input
-                  type="tel"
-                  className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder="Enter your phone number"
-                  maxLength={10}
-                  required
-                />
+              </g>
+            </svg>
+          </div>
+          <h2 className="card-title">Welcome Back</h2>
+          <p>Please log in to access your counselor dashboard</p>
+        </div>
+        
+        <div className="form-container">
+          <form onSubmit={handleSubmit}>
+            {!otpSent ? (
+              <>
+                <div className="form-group">
+                  <label className="form-label">Email</label>
+                  <input
+                    type="email"
+                    className="form-input"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Phone Number</label>
+                  <input
+                    type="tel"
+                    className="form-input"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder="Enter your phone number"
+                    maxLength={10}
+                    required
+                  />
+                </div>
+                
                 <button
                   type="button"
-                  className="mt-3 px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600"
+                  className="primary-button"
                   onClick={handleSendOtp}
                   disabled={phoneNumber.length !== 10 || !email}
                 >
                   Send OTP
                 </button>
-              </div>
-            </>
-          )}
-          {otpSent && (
-            <>
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-300">OTP</label>
-                <input
-                  type="text"
-                  className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  placeholder="Enter OTP"
-                  maxLength={6}
-                  required
-                />
-                {otpError && <span className="text-red-500 text-sm">Invalid OTP. Please try again.</span>}
-              </div>
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-300">Password</label>
-                <input
-                  type="password"
-                  className="mt-1 p-2 w-full bg-gray-800 text-white border border-gray-700 rounded-md"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
-                disabled={!otpSent || !otp || !password || otp.length !== 6}
-              >
-                Sign In
-              </button>
-              <button
-                type="button"
-                className="w-full px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600"
-                onClick={handleResendOtp}
-                disabled={otpTimer > 0}
-              >
-                Resend OTP ({otpTimer}s)
-              </button>
-            </>
-          )}
-        </form>
-        <div className="mt-4">
-          <a href="/counsellor-signup" className="text-indigo-400 hover:underline">
-            Don't have an account? Sign Up
-          </a>
+              </>
+            ) : (
+              <>
+                <div className="form-group">
+                  <label className="form-label">OTP</label>
+                  <div className="otp-container">
+                    <input
+                      type="text"
+                      className={`form-input otp-input ${otpError ? 'error' : ''}`}
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      placeholder="Enter OTP"
+                      maxLength={6}
+                      required
+                    />
+                  </div>
+                  {otpError && <div className="error-message">Invalid OTP. Please try again.</div>}
+                  <div className="otp-timer">
+                    Resend OTP in {otpTimer} seconds
+                  </div>
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Password</label>
+                  <input
+                    type="password"
+                    className="form-input"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    required
+                  />
+                </div>
+                
+                <button
+                  type="submit"
+                  className="primary-button"
+                  disabled={!otpSent || !otp || !password || otp.length !== 6}
+                >
+                  Sign In
+                </button>
+                
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={handleResendOtp}
+                  disabled={otpTimer > 0}
+                >
+                  Resend OTP
+                </button>
+              </>
+            )}
+          </form>
+          
+          <div className="auth-links">
+            <p>
+              Don't have an account? <a href="/counsellor-signup" className="auth-link">Sign Up</a>
+            </p>
+            <p>
+              <a href="/" className="auth-link" onClick={(e) => { e.preventDefault(); navigateHome(); }}>
+                Back to Home Page
+              </a>
+            </p>
+          </div>
         </div>
       </div>
     </div>

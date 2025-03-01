@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import "./StudentSignIn.css"; // Make sure to create this file with the CSS content
 
 const StudentSignIn = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [passwordVisible, setPasswordVisible] = useState(false); // State for password visibility toggle
+  const [passwordVisible, setPasswordVisible] = useState(false);
 
   const handleSignIn = async (event) => {
     event.preventDefault();
@@ -22,7 +23,7 @@ const StudentSignIn = () => {
       return;
     }
 
-    setLoading(true); // Show loading state during login
+    setLoading(true);
 
     try {
       // API call to backend login endpoint
@@ -38,10 +39,11 @@ const StudentSignIn = () => {
           response.data.data;
 
         console.log("Login successful:", response.data);
-        console.log(suggestedActivity)
+        
         // Save user data and tokens
         sessionStorage.setItem("accessToken", accessToken);
         sessionStorage.setItem("user", JSON.stringify(user));
+        sessionStorage.setItem("mood", mood);
         sessionStorage.setItem("activity", JSON.stringify(suggestedActivity));
 
         // Display streak and suggested activity
@@ -60,77 +62,76 @@ const StudentSignIn = () => {
         error.response?.data?.message || "An error occurred during login. Please try again."
       );
     } finally {
-      setLoading(false); // Hide loading state
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-black via-blue-950 to-black text-white px-6">
-      <h1 className="text-4xl font-bold text-green-600 mb-6">Welcome to Mindfull</h1>
+    <div className="auth-container">
+      <h1 className="app-title student">MindFull</h1>
 
-      <div className="w-full max-w-md p-6 bg-gray-900 shadow-lg rounded-lg">
-        <div className="flex justify-center mb-4">
+      <div className="auth-card">
+        <div className="card-header">
           <img
             src="https://media.giphy.com/media/hvRJCLFzcasrR4ia7z/giphy.gif"
             alt="Welcome GIF"
-            className="w-16 h-16"
+            className="welcome-animation"
           />
+          <h2 className="card-title">Student Sign In</h2>
         </div>
 
-        <h2 className="text-2xl font-semibold text-center text-indigo-300 mb-4">Student Sign In</h2>
-
-        <form onSubmit={handleSignIn} className="space-y-4">
-          <div>
-            <label htmlFor="username" className="block text-gray-300">Username</label>
+        <form onSubmit={handleSignIn} className="form-container">
+          <div className="form-group">
+            <label htmlFor="username" className="form-label">Username</label>
             <input
               type="text"
               id="username"
               name="username"
-              className="w-full px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="form-input"
               placeholder="Enter your username"
             />
           </div>
 
-          <div>
-            <label htmlFor="password" className="block text-gray-300">Password</label>
-            <div className="relative">
+          <div className="form-group">
+            <label htmlFor="email" className="form-label">Email</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              className="form-input"
+              placeholder="Enter your email"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="password" className="form-label">Password</label>
+            <div className="input-with-button">
               <input
-                type={passwordVisible ? "text" : "password"} // Toggle password visibility
+                type={passwordVisible ? "text" : "password"}
                 id="password"
                 name="password"
-                className="w-full px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="form-input"
                 placeholder="Enter your password"
               />
               <button
                 type="button"
-                onClick={() => setPasswordVisible(!passwordVisible)} // Toggle visibility
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                onClick={() => setPasswordVisible(!passwordVisible)}
+                className="input-button"
               >
                 {passwordVisible ? "Hide" : "Show"}
               </button>
             </div>
           </div>
 
-          <div>
-            <label htmlFor="email" className="block text-gray-300">Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              className="w-full px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="Enter your email"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="mood" className="block text-gray-300">Mood</label>
+          <div className="form-group">
+            <label htmlFor="mood" className="form-label">How are you feeling today?</label>
             <select
               id="mood"
               name="mood"
-              className="w-full px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="form-input select-input"
               required
             >
-              <option value="">Select Mood</option>
+              <option value="">Select your mood</option>
               <option value="Happy">😊 Happy</option>
               <option value="Sad">😢 Sad</option>
               <option value="Excited">🤩 Excited</option>
@@ -141,23 +142,23 @@ const StudentSignIn = () => {
 
           <button
             type="submit"
-            className="w-full py-2 text-lg font-bold text-white bg-indigo-500 rounded-md hover:bg-indigo-600 transition-all disabled:opacity-50"
+            className="primary-button"
             disabled={loading}
           >
             {loading ? "Signing In..." : "Sign In"}
           </button>
         </form>
 
-        <div className="mt-4 text-center text-gray-400">
+        <div className="auth-links">
           <p>
             Don't have an account?{" "}
-            <Link to="/student-signup" className="text-indigo-400 hover:underline">
-              Click here to sign up
+            <Link to="/student-signup" className="auth-link">
+              Sign up here
             </Link>
           </p>
-          <p className="mt-2">
+          <p>
             Not a student?{" "}
-            <Link to="/role-selection" className="text-indigo-400 hover:underline">
+            <Link to="/role-selection" className="auth-link">
               Select your role
             </Link>
           </p>
