@@ -1,0 +1,526 @@
+/* Main container with background gradient */
+.vision-board-container {
+  padding: 30px 20px;
+  text-align: center;
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: linear-gradient(120deg, rgba(238, 174, 202, 0.2), rgba(148, 187, 233, 0.2));
+  border-radius: 20px;
+}
+
+/* Stylish heading */
+.vision-board-container h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 30px;
+  background: linear-gradient(90deg, #8a2be2, #4169e1);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  display: inline-block;
+  padding: 0 20px;
+}
+
+/* Decorative elements for heading */
+.vision-board-container h1::before,
+.vision-board-container h1::after {
+  content: "✨";
+  position: absolute;
+  font-size: 1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.vision-board-container h1::before {
+  left: -10px;
+}
+
+.vision-board-container h1::after {
+  right: -10px;
+}
+
+/* Main boards container */
+.vision-board {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  padding: 25px;
+  margin-bottom: 30px;
+  border: none;
+  transition: transform 0.3s ease;
+}
+
+.vision-board:hover {
+  transform: translateY(-5px);
+}
+
+/* Board title */
+.vision-board h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #333;
+  text-align: left;
+  margin-bottom: 15px;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 10px;
+}
+
+/* Items grid */
+.vision-items {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 15px;
+  padding: 15px 0;
+  background: #fcfcfc;
+  border-radius: 12px;
+  margin-bottom: 15px;
+}
+
+.vision-item {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  padding: 15px;
+  transition: all 0.2s ease;
+  border: 1px solid #f0f0f0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.vision-item:hover {
+  transform: scale(1.03);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Delete button */
+.vision-board button {
+  background: #ff5a5f;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  display: inline-block;
+}
+
+.vision-board button:hover {
+  background: #ff7e82;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 90, 95, 0.2);
+}
+
+/* AI Recommendation section */
+.ai-recommendation {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+  padding: 25px;
+  margin: 30px auto;
+  max-width: 800px;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-recommendation::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background: linear-gradient(90deg, #8a2be2, #4169e1);
+}
+
+.ai-recommendation h2,
+.ai-recommendation h3 {
+  color: #333;
+  margin-bottom: 15px;
+}
+
+/* AI Suggestion inputs and buttons layout fix */
+.ai-recommendation .input-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.ai-recommendation input[type="text"] {
+  flex: 1;
+  min-width: 200px;
+  border: 2px solid #eaeaea;
+  border-radius: 8px;
+  padding: 12px 15px;
+  font-size: 1rem;
+  transition: border 0.2s ease;
+}
+
+.ai-recommendation input[type="text"]:focus {
+  border-color: #4169e1;
+  outline: none;
+}
+
+.ai-recommendation button {
+  background: linear-gradient(90deg, #8a2be2, #4169e1);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ai-recommendation button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(90, 103, 216, 0.2);
+}
+
+/* File Upload section */
+.file-upload {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+  padding: 25px;
+  margin: 30px auto;
+  max-width: 800px;
+  text-align: center;
+  position: relative;
+}
+
+.file-upload::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background: linear-gradient(90deg, #ff9a9e, #fad0c4);
+}
+
+.file-upload h3 {
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.file-upload input[type="file"] {
+  display: none;
+}
+
+.file-upload label.file-label {
+  display: inline-block;
+  padding: 12px 20px;
+  background: #f5f5f5;
+  border: 2px dashed #d0d0d0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 15px;
+}
+
+.file-upload label.file-label:hover {
+  background: #fafafa;
+  border-color: #4169e1;
+}
+
+.file-upload button {
+  background: linear-gradient(90deg, #ff9a9e, #fad0c4);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.file-upload button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 154, 158, 0.2);
+}
+
+/* Drawing Board section */
+.drawing-board {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+  margin: 30px auto;
+  max-width: 800px;
+  overflow: hidden;
+}
+
+.drawing-board-header {
+  background: #f8f9fa;
+  padding: 15px;
+  border-bottom: 1px solid #eaeaea;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.drawing-board-header button {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  background: #f0f0f0;
+  color: #333;
+}
+
+.drawing-board-header button:hover {
+  background: #e0e0e0;
+  transform: translateY(-2px);
+}
+
+.drawing-board-header button.add-text {
+  background: #4169e1;
+  color: white;
+}
+
+.drawing-board-header button.add-image {
+  background: #2ecc71;
+  color: white;
+}
+
+.drawing-board-header button.add-flow-line {
+  background: #9b59b6;
+  color: white;
+}
+
+.drawing-board-header button.undo {
+  background: #34495e;
+  color: white;
+}
+
+.drawing-board-header button.save-board {
+  background: #16a085;
+  color: white;
+}
+
+.drawing-board canvas {
+  width: 100%;
+  min-height: 300px;
+  background: white;
+  border: none;
+}
+
+/* Info button and sidebar */
+button.fixed {
+  background: linear-gradient(135deg, #8a2be2, #4169e1);
+  border: none;
+  transition: all 0.2s ease;
+  z-index: 100;
+}
+
+button.fixed:hover {
+  transform: rotate(15deg) scale(1.1);
+  box-shadow: 0 5px 15px rgba(65, 105, 225, 0.3);
+}
+
+.info-sidebar {
+  background: white;
+  z-index: 1000;
+  animation: slideIn 0.3s ease;
+  border-left: 5px solid #4169e1;
+}
+
+.info-sidebar h1 {
+  background: none;
+  color: #333;
+  text-shadow: none;
+  margin-top: 30px;
+}
+
+.info-sidebar h1::before,
+.info-sidebar h1::after {
+  display: none;
+}
+
+.info-sidebar h2 {
+  color: #333;
+  font-weight: 700;
+  margin-top: 20px;
+  position: relative;
+}
+
+.info-sidebar h2::after {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 40px;
+  height: 3px;
+  background: linear-gradient(90deg, #8a2be2, #4169e1);
+}
+
+.info-sidebar p, 
+.info-sidebar div,
+.info-sidebar li {
+  color: #555;
+  line-height: 1.6;
+}
+
+.info-sidebar button.mt-6 {
+  background: linear-gradient(90deg, #8a2be2, #4169e1);
+  color: white;
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.info-sidebar button.mt-6:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(65, 105, 225, 0.2);
+}
+
+/* Animation */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* More specific fixes for UI components */
+/* Fix for buttons in the drawing tool area */
+.drawing-board-header {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 15px;
+}
+
+.drawing-board-header button {
+  border-radius: 8px;
+  padding: 10px 15px;
+  font-weight: 600;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Fix for the AI suggestion section */
+.ai-powered-section {
+  text-align: center;
+  padding: 20px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+  margin: 30px auto;
+  max-width: 800px;
+}
+
+.ai-powered-section h3 {
+  margin-bottom: 15px;
+  color: #333;
+  font-weight: 700;
+}
+
+.ai-input-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+.ai-input-group input {
+  flex: 1;
+  min-width: 200px;
+  padding: 12px 15px;
+  border: 2px solid #eaeaea;
+  border-radius: 8px;
+}
+
+.ai-input-group button {
+  background: linear-gradient(90deg, #8a2be2, #4169e1);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-weight: 600;
+}
+
+/* Upload section specific fixes */
+.upload-section {
+  text-align: center;
+  padding: 20px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+  margin: 30px auto;
+  max-width: 800px;
+}
+
+.upload-section h3 {
+  margin-bottom: 15px;
+  color: #333;
+  font-weight: 700;
+}
+
+.file-input-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin: 15px 0;
+}
+
+.file-input-group button {
+  background: #ff9a9e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-weight: 600;
+}
+
+/* Canvas area styling */
+.canvas-container {
+  width: 100%;
+  height: 300px;
+  background: white;
+  border-radius: 8px;
+  border: 2px solid #f0f0f0;
+  margin-top: 20px;
+}
+
+/* Media queries for responsiveness */
+@media (max-width: 768px) {
+  .vision-board-container h1 {
+    font-size: 2rem;
+  }
+  
+  .vision-items {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+  
+  .ai-input-group, 
+  .file-input-group {
+    flex-direction: column;
+  }
+  
+  .drawing-board-header {
+    flex-direction: column;
+  }
+  
+  .info-sidebar {
+    width: 100%;
+  }
+}

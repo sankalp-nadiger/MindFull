@@ -186,6 +186,24 @@ export function HeroHighlightDemo() {
   </div>
 </div>
 
+<div className="shadow-[4px_4px_0_rgba(0,0,0,0.3)] hover:shadow-[6px_6px_0_rgba(0,0,0,0.4)] transition duration-300 p-6 bg-black w-full">
+  <div className="max-w-[85rem] text-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto backdrop-blur-lg bg-gray-900 p-8 rounded-lg shadow-lg shadow-purple-500/50 hover:shadow-green-500/50 transition-shadow flex flex-col items-center text-center">
+    <h2 className="text-2xl md:text-3xl font-bold">
+      VisionFull: Visualize Your Dreams Into Reality
+    </h2>
+    <p className="mt-2 text-gray-300 text-sm md:text-lg">
+      Create digital vision boards that inspire and motivate. 
+      Collect images, quotes, and aspirations that help manifest your goals and dreams.
+    </p>
+    <Link
+      to="/vision-board"
+      className="mt-4 bg-violet-600 hover:bg-blue-600 text-white py-2 px-6 rounded-lg font-medium transition"
+    >
+      View Vision Boards
+    </Link>
+  </div>
+</div>
+
 <div className="min-h-screen bg-gradient-to-b from-black via-violet-700 to-black text-gray-100 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <Stories />
         <div className="mt-8"></div>
