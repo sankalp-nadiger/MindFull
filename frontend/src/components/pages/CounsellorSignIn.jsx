@@ -88,6 +88,7 @@ const CounselorSignIn = () => {
   };
 
   return (
+    <div className="auth-page">
     <div className="auth-container">
       <h1 className="app-title">Counselor Sign In</h1>
       <div className="auth-card">
@@ -232,6 +233,7 @@ const CounselorSignIn = () => {
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 };

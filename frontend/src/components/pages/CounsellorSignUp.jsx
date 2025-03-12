@@ -136,6 +136,7 @@ const CounsellorSignUp = () => {
   };
 
   return (
+    <div className="auth-page">
     <div className="auth-container">
       <h1 className="app-title">Mental Health Support</h1>
       <div className="auth-card">
@@ -345,6 +346,7 @@ const CounsellorSignUp = () => {
           </div>
         </form>
       </div>
+    </div>
     </div>
   );
 };

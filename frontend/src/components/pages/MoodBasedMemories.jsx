@@ -71,37 +71,36 @@ const MoodBasedMemories = () => {
   }
 
   return (
-<div className="max-w-4xl mx-auto my-8 p-6 backdrop-blur-lg bg-opacity-80 rounded-lg shadow-lg shadow-blue-500/50 hover:shadow-green-500/50 transition-shadow">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-        <h2 className="text-3xl font-bold text-white mb-6">
+      <div className="w-full">
+        <h2 className="text-3xl font-bold text-white text-center mb-2">
           {isNegativeMood ? "Revisit Some Happy Memories" : "More Joyful Moments Like Today"}
         </h2>
-
+        
         {journalEntries.length === 0 ? (
-          <p className="text-xl text-gray-300">No journal entries found yet.</p>
+          <p className="text-xl text-gray-300 text-center">No journal entries found yet.</p>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
               {(showAll ? journalEntries : getRandomEntries(journalEntries, 3)).map((entry, index) => (
                 <motion.div
                   key={entry.id || index}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="bg-gray-800 p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow"
+                  className="bg-gray-800 p-4 rounded-lg h-full flex flex-col"
                 >
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-gray-400">{new Date(entry.entryDate).toLocaleDateString()}</span>
-                    <span className="text-2xl">
+                    <span className="text-xl">
                       {entry.moodScore <= 3 ? '😔' : entry.moodScore <= 5 ? '😐' : entry.moodScore <= 7 ? '🙂' : entry.moodScore <= 9 ? '😊' : '🤩'}
                     </span>
                   </div>
-                  <h3 className="text-xl font-semibold text-white mb-2">{entry.topic}</h3>
-                  <p className="text-gray-300">
-                    {expandedEntry === index ? entry.entryText : `${entry.entryText.substring(0, 150)}...`}
+                  <h3 className="text-lg font-semibold text-white mb-2">{entry.topic}</h3>
+                  <p className="text-gray-300 text-sm flex-grow">
+                    {expandedEntry === index ? entry.entryText : `${entry.entryText.substring(0, 120)}...`}
                   </p>
                   <button
-                    className="mt-4 text-violet-400 hover:text-violet-300 font-medium"
+                    className="mt-3 text-violet-400 hover:text-violet-300 text-sm font-medium self-start"
                     onClick={() => setExpandedEntry(expandedEntry === index ? null : index)}
                   >
                     {expandedEntry === index ? "Show Less" : "Read Full Memory"}
@@ -109,17 +108,19 @@ const MoodBasedMemories = () => {
                 </motion.div>
               ))}
             </div>
-            <button
-              className="mt-6 bg-violet-600 hover:bg-blue-600 text-white py-2 px-6 rounded-lg font-medium transition"
-              onClick={() => setShowAll(!showAll)}
-            >
-              {showAll ? "Show Fewer Memories" : "View All Journals"}
-            </button>
+            <div className="flex justify-center mt-6">
+              <button
+                className="bg-violet-600 hover:bg-violet-700 text-white py-2 px-6 rounded-md font-medium transition"
+                onClick={() => setShowAll(!showAll)}
+              >
+                {showAll ? "Show Fewer Memories" : "View All Journals"}
+              </button>
+            </div>
           </>
         )}
-      </motion.div>
-    </div>
+      </div>
   );
 };
+
 
 export default MoodBasedMemories;

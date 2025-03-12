@@ -8,11 +8,11 @@ export const updateVisionBoard = (boardId, data) => axios.put(`${API_URL}/update
 export const deleteVisionBoard = (boardId) => axios.delete(`${API_URL}/delete/${boardId}`);
 
 export const getAIImage = async (category) => {
-  const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/visionboard/ai-image`, { category });
+  const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/visionBoard/ai-image`, { category });
   return response.data.imageUrl;
 };
 
 export const getAIQuote = async (category) => {
-  const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/visionboard/ai-quote`, { category });
+  const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/visionBoard/ai-quote`, { category });
   return response.data.quote;
 };

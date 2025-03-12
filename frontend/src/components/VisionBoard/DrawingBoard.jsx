@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Stage, Layer, Text, Image, Line, Circle, Group, Transformer } from "react-konva";
+import { Stage, Layer, Text, Image, Line, Circle, Group, Transformer, Rect } from "react-konva";
 import useImage from "use-image";
+import SaveCanvasModal from "./SaveCanvasModal";
 
 // Component to render an image element using its URL with resizing capability
 const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize }) => {
@@ -210,32 +211,92 @@ const FlowLine = ({ element, onDragEnd, onSelect, isSelected }) => {
   );
 };
 
+// Helper function to determine if a color is dark
+const isDarkColor = (hexColor) => {
+  // Remove the # if it exists
+  const hex = hexColor.replace('#', '');
+  
+  // Convert to RGB
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  
+  // Calculate relative luminance
+  // Using the formula: 0.299*R + 0.587*G + 0.114*B
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  
+  // Return true if the color is dark (luminance is less than 0.5)
+  return luminance < 0.5;
+};
+
+// Function to get contrast color (black for light backgrounds, white for dark)
+const getContrastColor = (bgColor) => {
+  return isDarkColor(bgColor) ? "#FFFFFF" : "#000000";
+};
+
 const VisionBoardDraw = () => {
   const [elements, setElements] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [selectedTextId, setSelectedTextId] = useState(null);
   const [editingTextValue, setEditingTextValue] = useState("");
+  const [showSaveModal, setShowSaveModal] = useState(false);
+const [canvasImageUri, setCanvasImageUri] = useState(null);
   const stageRef = useRef(null);
   const fileInputRef = useRef(null);
   const textInputRef = useRef(null);
   const textEditorDivRef = useRef(null);
   
-  // Text styling options
+  // Board background color state
+  const [boardColor, setBoardColor] = useState("#FFFFFF");
+  
+  // Text styling options - now dependent on board color
   const [textStyle, setTextStyle] = useState({
     fontSize: 20,
-    fill: "black",
+    fill: "#000000", // Will be updated based on board color
     fontStyle: "normal", // normal, bold, italic
     fontFamily: "Arial" // Added font family option
   });
   
-  // Line styling options
+  // Line styling options - now dependent on board color
   const [lineStyle, setLineStyle] = useState({
-    color: "blue",
+    color: "#000000", // Will be updated based on board color
     strokeWidth: 2
   });
 
   // In-place text editor position state
   const [textEditorPos, setTextEditorPos] = useState({ x: 0, y: 0 });
+
+  // Update default colors when board color changes
+  useEffect(() => {
+    const contrastColor = getContrastColor(boardColor);
+    
+    // Update text style with appropriate contrast color
+    setTextStyle(prev => ({
+      ...prev,
+      fill: contrastColor
+    }));
+    
+    // Update line style with appropriate contrast color
+    setLineStyle(prev => ({
+      ...prev,
+      color: contrastColor
+    }));
+    
+    // Update existing elements if needed for better contrast
+    setElements(prevElements => 
+      prevElements.map(el => {
+        // For text elements without explicitly set color, update to contrast color
+        if (el.type === "text" && !el.hasOwnProperty("fill")) {
+          return { ...el, fill: contrastColor };
+        }
+        // For line elements without explicitly set color, update to contrast color
+        if (el.type === "line" && !el.hasOwnProperty("color")) {
+          return { ...el, color: contrastColor };
+        }
+        return el;
+      })
+    );
+  }, [boardColor]);
 
   // Add a new text element
   const addText = () => {
@@ -329,19 +390,15 @@ const VisionBoardDraw = () => {
   const positionTextEditor = (textElement) => {
     if (!stageRef.current) return { x: 0, y: 0 };
     
+    // Get the stage container's position
     const stageBox = stageRef.current.container().getBoundingClientRect();
     
-    // Calculate position to place text editor near the text element
-    let x = stageBox.left + textElement.x;
-    let y = stageBox.top + textElement.y;
+    // Calculate position with fixed offsets from the text element
+    // Use the actual text position within the stage plus the stage's position on the page
+    const x = stageBox.left + textElement.x;
     
-    // Check if we would go outside the right edge of the stage
-    const stageWidth = stageBox.width;
-    const editorWidth = 300; // Increased editor width to give more space
-    if (x + editorWidth > stageBox.left + stageWidth) {
-      // Place it to the left of the text if it would go off the right edge
-      x = x - editorWidth - 10;
-    }
+    // Position slightly below the text (10px offset)
+    const y = stageBox.top + textElement.y + 30;
     
     return { x, y };
   };
@@ -451,6 +508,11 @@ const VisionBoardDraw = () => {
     }
   };
 
+  // Handle board color change
+  const handleBoardColorChange = (e) => {
+    setBoardColor(e.target.value);
+  };
+
   // Render an HTML input near the text for editing
   const renderTextEditor = () => {
     if (!selectedTextId) return null;
@@ -467,18 +529,20 @@ const VisionBoardDraw = () => {
       <div
         ref={textEditorDivRef}
         className="text-editor-overlay"
-        style={{
-          position: "absolute",
-          top: textEditorPos.y,
-          left: textEditorPos.x,
-          zIndex: 1000,
-          backgroundColor: "white",
-          border: "1px solid #ccc",
-          borderRadius: "4px",
-          padding: "10px",
-          boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-          width: "280px" // Fixed width to ensure enough space
-        }}
+        // Within renderTextEditor function, update the outer div's style:
+style={{
+  position: "absolute",
+  top: textEditorPos.y,
+  left: textEditorPos.x,
+  zIndex: 1000,
+  backgroundColor: "white",
+  border: "1px solid #ccc",
+  borderRadius: "4px",
+  padding: "8px",
+  boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+  width: "auto", // Let it size to content
+  minWidth: "240px" // Ensure minimum width
+}}
         // Stop propagation to prevent unwanted focus loss
         onClick={(e) => e.stopPropagation()}
       >
@@ -588,16 +652,16 @@ const VisionBoardDraw = () => {
               </button>
               
               {/* Color Picker - given more space and using onMouseDown instead of onChange */}
-              <input
-                type="color"
-                value={element.fill || textStyle.fill}
-                className="w-8 h-8 border rounded cursor-pointer"
-                onMouseDown={(e) => e.stopPropagation()}
-                onChange={(e) => {
-                  e.stopPropagation();
-                  updateTextStyle("fill", e.target.value);
-                }}
-              />
+<input
+  type="color"
+  value={element.fill || textStyle.fill}
+  className="w-6 h-6 border rounded cursor-pointer"
+  onMouseDown={(e) => e.stopPropagation()}
+  onChange={(e) => {
+    e.stopPropagation();
+    updateTextStyle("fill", e.target.value);
+  }}
+/>
             </div>
           </div>
           
@@ -737,27 +801,60 @@ const VisionBoardDraw = () => {
     link.href = uri;
     link.click();
   };
-  const saveCanvas = async () => {
-    const uri = stageRef.current.toDataURL(); // Convert canvas to image data
-    const blob = await (await fetch(uri)).blob(); // Convert data URL to Blob
-    const formData = new FormData();
-    formData.append("file", blob, "vision-board.png"); // Append as a file
-  
-    try {
-      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/visionboard/saveCanvas`, {
-        method: "POST",
-        body: formData,
-      });
-  
-      if (response.ok) {
-        console.log("Canvas saved successfully!");
-      } else {
-        console.error("Error saving canvas");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-    }
+
+  const saveCanvas = () => {
+    const uri = stageRef.current.toDataURL();
+    setCanvasImageUri(uri);
+    setShowSaveModal(true);
   };
+  
+  // Add this function to handle the actual saving
+  const handleSaveWithMetadata = async (metadata) => {
+    const blob = await (await fetch(canvasImageUri)).blob();
+    const formData = new FormData();
+    
+    // Get user ID from session storage
+    const userId = JSON.parse(sessionStorage.getItem("user"))?._id;
+    if (!userId) {
+      throw new Error("User not logged in");
+    }
+    
+    // Append all data to form
+    formData.append("file", blob, "vision-board.png");
+    formData.append("title", metadata.title);
+    formData.append("content", metadata.content);
+    formData.append("category", metadata.category);
+    formData.append("userId", userId);
+    
+    const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/visionBoard/add`, {
+      method: "POST",
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Error saving canvas: ${errorText}`);
+    }
+    
+    console.log("Canvas saved successfully!");
+    // You could add a success notification here
+  };
+  
+  // Predefined background color options
+  const backgroundColorOptions = [
+    { name: "White", value: "#FFFFFF" },
+    { name: "Light Gray", value: "#F0F0F0" },
+    { name: "Black", value: "#000000" },
+    { name: "Dark Blue", value: "#1A365D" },
+    { name: "Navy", value: "#0F172A" },
+    { name: "Dark Purple", value: "#2E1065" },
+    { name: "Forest Green", value: "#064E3B" },
+    { name: "Crimson", value: "#7F1D1D" },
+    { name: "Pastel Blue", value: "#DBEAFE" },
+    { name: "Pastel Green", value: "#DCFCE7" },
+    { name: "Pastel Pink", value: "#FCE7F3" },
+    { name: "Cream", value: "#FFFBEB" }
+  ];
   
   // Handle clicks outside the text editor more carefully
   useEffect(() => {
@@ -806,17 +903,48 @@ const VisionBoardDraw = () => {
           </button>
         )}
       </div>
-      
+<div className="mb-4">
+  <label htmlFor="boardColor" className="block text-sm font-medium mb-1">
+    Board Background:
+  </label>
+  <div className="flex flex-wrap gap-2">
+    {backgroundColorOptions.map((color) => (
+      <div 
+        key={color.value}
+        className={`w-8 h-8 rounded-full cursor-pointer border ${
+          boardColor === color.value ? 'ring-2 ring-blue-500 ring-offset-2' : 'border-gray-300'
+        }`}
+        style={{ backgroundColor: color.value }}
+        onClick={() => setBoardColor(color.value)}
+        title={color.name}
+      />
+    ))}
+    <input
+      type="color"
+      id="boardColor"
+      value={boardColor}
+      onChange={handleBoardColorChange}
+      className="w-8 h-8 cursor-pointer"
+      title="Custom color"
+    />
+  </div>
+</div>
+
       <div className="relative mb-5">
-        <Stage
-          width={800}
-          height={600}
-          ref={stageRef}
-          onMouseDown={checkDeselect}
-          onTouchStart={checkDeselect}
-          style={{ border: "1px solid #ddd", borderRadius: "8px" }}
-        >
+      <Stage
+  width={800}
+  height={600}
+  ref={stageRef}
+  onMouseDown={checkDeselect}
+  onTouchStart={checkDeselect}
+  style={{ 
+    border: "1px solid #ddd", 
+    borderRadius: "8px",
+    backgroundColor: boardColor 
+  }}
+>
           <Layer>
+          <Rect width={800} height={600} fill={boardColor} />
             {elements.map((el) => {
               if (el.type === "text") {
                 return (
@@ -875,6 +1003,14 @@ const VisionBoardDraw = () => {
         style={{ display: "none" }}
         onChange={handleFileChange}
       />
+      {showSaveModal && (
+  <SaveCanvasModal
+    isOpen={showSaveModal}
+    onClose={() => setShowSaveModal(false)}
+    onSave={handleSaveWithMetadata}
+    imageUri={canvasImageUri}
+  />
+)}
     </div>
   );
 };
