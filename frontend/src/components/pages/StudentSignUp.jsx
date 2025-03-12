@@ -123,6 +123,7 @@ const StudentSignUp = () => {
   };
 
   return (
+    <div className="auth-page">
     <div className="auth-container">
       <h1 className="app-title student">MindFull</h1>
 
@@ -289,7 +290,7 @@ const StudentSignUp = () => {
           </p>
         </div>
       </div>
-
+      </div>
       <ToastContainer 
         position="top-right"
         autoClose={5000}

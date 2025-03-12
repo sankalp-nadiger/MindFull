@@ -89,6 +89,7 @@ const ParentSignIn = () => {
   };
 
   return (
+    <div className="auth-page">
     <div className="auth-container">
       <h1 className="app-title parent">MindFull</h1>
 
@@ -222,6 +223,7 @@ const ParentSignIn = () => {
           </p>
         </div>
       </div>
+    </div>
     </div>
   );
 };

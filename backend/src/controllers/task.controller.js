@@ -1,27 +1,50 @@
 import Task from "../models/task.model.js";
 import {User} from "../models/user.model.js";
 import { sendNotification } from "../utils/firebase.js";
+import mongoose from "mongoose";
 
 // Create Task
 export const createTask = async (req, res) => {
-  const userId = req.user._id; 
-  const { name, description, completed } = req.body; // Match frontend fields
-
   try {
-    const task = new Task({ 
-      userId, 
-      title: name, // Rename 'name' to 'title' to fit your schema 
-      description, 
-      completed // Include 'completed' field 
+    const userId = req.user._id;
+
+    console.log("Request Body:", req.body); // Debugging step
+
+    const { title, description, completed = false, startTime, endTime } = req.body;
+
+    if (!title) {
+      return res.status(400).json({ error: "Title is required" });
+    }
+
+    // Convert time strings to Date objects (assuming today’s date)
+    const today = new Date();
+    
+    const parseTime = (timeStr) => {
+      if (!timeStr) return null;
+      const [hours, minutes] = timeStr.split(":").map(Number);
+      return new Date(today.getFullYear(), today.getMonth(), today.getDate(), hours, minutes);
+    };
+
+    const formattedStartTime = parseTime(startTime);
+    const formattedEndTime = parseTime(endTime);
+    console.log(formattedStartTime, formattedEndTime);
+
+    const task = new Task({
+      userId,
+      title,
+      description,
+      startTime: formattedStartTime,
+      endTime: formattedEndTime,
+      completed
     });
 
     await task.save();
     res.status(201).json(task);
   } catch (error) {
+    console.error("Error creating task:", error);
     res.status(500).json({ error: "Error creating task", details: error.message });
   }
 };
-
 
 // Get User's Tasks
 export const getTasks = async (req, res) => {
@@ -35,7 +58,7 @@ export const getTasks = async (req, res) => {
     const userId = req.user._id;
     const tasks = await Task.find({ userId });
 
-    console.log("Fetched Tasks:", tasks); // Debugging
+    //console.log("Fetched Tasks:", tasks); // Debugging
 
     if (tasks.length === 0) {
       return res.status(404).json({ message: "No tasks found for this user" });
@@ -109,15 +132,11 @@ export const createDeadlineTask = async (req, res) => {
   }
 };
 
-/**
- * Get all deadline tasks for logged in user
- * @route GET /api/deadline-tasks
- * @access Private
- */
 export const getDeadlineTasks = async (req, res) => {
   try {
     const deadlineTasks = await Task.find({ 
-      userId: req.user._id 
+      userId: req.user._id, 
+      dueDate: { $ne: null }  // Only select tasks with a dueDate
     }).sort({ dueDate: 1 }); // Sort by due date ascending
     
     res.json(deadlineTasks);
@@ -126,6 +145,7 @@ export const getDeadlineTasks = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 export const updateDeadlineTask = async (req, res) => {
   try {
     const { id } = req.params;
@@ -182,8 +202,8 @@ export const deleteDeadlineTask = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Validate ObjectId
-    if (!validateObjectId(id)) {
+    // Validate ObjectId using Mongoose's built-in method
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: 'Invalid task ID' });
     }
     
@@ -195,12 +215,12 @@ export const deleteDeadlineTask = async (req, res) => {
     }
     
     // Check task ownership
-    if (task.userId.toString() !== req.user._id) {
+    if (task.userId.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'User not authorized' });
     }
     
     // Delete task
-    await task.remove();
+    await Task.findByIdAndDelete(id);
     
     res.json({ message: 'Task removed' });
   } catch (error) {
@@ -213,8 +233,8 @@ export const completeDeadlineTask = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Validate ObjectId
-    if (!validateObjectId(id)) {
+    // Validate ObjectId using Mongoose's built-in method
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: 'Invalid task ID' });
     }
     
@@ -227,7 +247,7 @@ export const completeDeadlineTask = async (req, res) => {
     }
     
     // Check task ownership
-    if (task.userId.toString() !== req.user._id) {
+    if (task.userId.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'User not authorized' });
     }
     
@@ -294,5 +314,84 @@ export const triggerReminders = async (req, res) => {
     res.status(200).json({ message: "Reminders triggered" });
   } catch (error) {
     res.status(500).json({ error: "Error triggering reminders" });
+  }
+};
+
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models";
+import axios from "axios";
+
+export const analyzeAndOptimizeSchedule = async (tasks) => {
+  try {
+    // Check if tasks array is empty
+    if (!tasks || tasks.length === 0) {
+      console.log("No tasks provided for analysis");
+      return { insights: [] };
+    }
+    
+    console.log("Analyzing tasks:", tasks);
+    
+    const response = await axios.post(
+      `${GEMINI_API_URL}/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        contents: [
+          {
+            parts: [
+              {
+                text: `
+                Analyze the following task schedule and provide structured insights for better productivity.
+                Tasks: ${JSON.stringify(tasks, null, 2)}
+                
+                Return the response in JSON format with the following structure:
+                {
+                  "insights": [
+                    {
+                      "id": "",
+                      "title": "",
+                      "description": "",
+                      "recommendedTasks": [
+                        "",
+                        "",
+                        ""
+                      ]
+                    }
+                  ]
+                }
+                `
+              }
+            ]
+          }
+        ]
+      }
+    );
+    
+    let aiResponse = response.data.candidates[0]?.content?.parts[0]?.text;
+    
+    if (!aiResponse) {
+      throw new Error("Empty response from AI service");
+    }
+    
+    console.log("Raw AI response:", aiResponse);
+    
+    // Clean up the response - remove markdown code blocks if present
+    aiResponse = aiResponse.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+    
+    try {
+      // Parse the cleaned JSON
+      return JSON.parse(aiResponse);
+    } catch (jsonError) {
+      console.error("JSON parsing error:", jsonError);
+      // Fallback for malformed JSON
+      return { 
+        insights: [{
+          id: "error-1",
+          title: "AI Analysis Error",
+          description: "Could not generate insights at this time. Please try again later.",
+          recommendedTasks: []
+        }] 
+      };
+    }
+  } catch (error) {
+    console.error("Error analyzing schedule:", error.response?.data || error.message);
+    return { insights: [] };
   }
 };

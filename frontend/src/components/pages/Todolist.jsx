@@ -1,21 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../Navbar/Navbar';
-import { Clock, X } from 'lucide-react';
+import { Clock, X, Calendar } from 'lucide-react';
 import { ArrowUp, ArrowDown, Check, Plus, Award, Lightbulb, ChevronRight, Trash, Save } from 'lucide-react';
+import axios from 'axios';
 
 const TodoListPage = () => {
   const [tasks, setTasks] = useState([]);
   const [newTaskName, setNewTaskName] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
+  const [newTaskStartTime, setNewTaskStartTime] = useState(''); // Start time
+  const [newTaskEndTime, setNewTaskEndTime] = useState(''); // End time
   const [currentStreak, setCurrentStreak] = useState(0);
   const [maxStreak, setMaxStreak] = useState(0);
   const [aiInsights, setAiInsights] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showDeadlineForm, setShowDeadlineForm] = useState(false);
-const [deadlineTasks, setDeadlineTasks] = useState([]);
-const [deadlineTaskName, setDeadlineTaskName] = useState('');
-const [deadlineTaskDescription, setDeadlineTaskDescription] = useState('');
-const [deadlineDate, setDeadlineDate] = useState('');
+  const [deadlineTasks, setDeadlineTasks] = useState([]);
+  const [deadlineTaskName, setDeadlineTaskName] = useState('');
+  const [deadlineTaskDescription, setDeadlineTaskDescription] = useState('');
+  const [deadlineDate, setDeadlineDate] = useState('');
+  const [productivityMessage, setProductivityMessage] = useState('');
 
   // Fetch initial data
   useEffect(() => {
@@ -23,46 +27,116 @@ const [deadlineDate, setDeadlineDate] = useState('');
     fetchStreaks();
     fetchAiInsights();
     fetchDeadlineTasks();
+    generateProductivityMessage();
   }, []);
+
+  // Generate motivational productivity message based on tasks and streaks
+  const generateProductivityMessage = () => {
+    const messages = [
+      "Focus on completing 3 important tasks today to boost your productivity!",
+      "Break down complex tasks into smaller steps for better progress.",
+      "You're making great progress! Keep the momentum going.",
+      "Time blocking your tasks can help you achieve more throughout the day.",
+      "Remember to take short breaks between tasks to maintain focus."
+    ];
+    
+    // Select message based on streak or randomly if no streak
+    if (currentStreak > 5) {
+      setProductivityMessage("You're on fire with a " + currentStreak + "-day streak! Incredible consistency!");
+    } else if (currentStreak > 2) {
+      setProductivityMessage("Your " + currentStreak + "-day streak shows great dedication. Keep it up!");
+    } else {
+      const randomIndex = Math.floor(Math.random() * messages.length);
+      setProductivityMessage(messages[randomIndex]);
+    }
+  };
 
   const fetchTasks = async () => {
     setIsLoading(true);
     try {
-      // Replace with actual API call
       const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/tasks/`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${sessionStorage.getItem('accessToken')}`,
-        },});
+        },
+      });
+  
+      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+  
       const data = await response.json();
-      setTasks(data || []);
+      setTasks(Array.isArray(data) ? data : []); // Ensures it's always an array
     } catch (error) {
       console.error('Error fetching tasks:', error);
+      setTasks([]); // Fallback to an empty array in case of an error
     } finally {
       setIsLoading(false);
     }
   };
-
+  
   const fetchStreaks = async () => {
     try {
-      // Replace with actual API call
-      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/tasks/streaks`);
+      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/tasks/streak`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${sessionStorage.getItem("accessToken")}`,
+          "Content-Type": "application/json",
+        },
+      });
+  
       const data = await response.json();
-      setCurrentStreak(data.currentStreak || 0);
+      setCurrentStreak(data.streakCount || 0); // ✅ Matches backend response
       setMaxStreak(data.maxStreak || 0);
     } catch (error) {
-      console.error('Error fetching streaks:', error);
+      console.error("Error fetching streaks:", error);
     }
   };
-
   const fetchAiInsights = async () => {
     try {
-      // Replace with actual API call
-      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/tasks/ai-insights`);
+      // Get all tasks - both saved and unsaved ones in the UI
+      const allTasks = [...tasks];
+      
+      // Check if there are any tasks to analyze
+      if (allTasks.length === 0) {
+        setAiInsights([]);
+        return;
+      }
+      
+      // Ensure each task has necessary properties for analysis
+      const formattedTasks = allTasks.map(task => {
+        // Create a properly formatted task object
+        return {
+          _id: task._id || `temp-${Math.random().toString(36).substr(2, 9)}`,
+          title: task.title || task.name || "Untitled Task",
+          description: task.description || "",
+          completed: !!task.completed,
+          startTime: task.startTime || null,
+          endTime: task.endTime || null,
+          // Add any other necessary fields
+        };
+      });
+      
+      console.log("Sending tasks for analysis:", formattedTasks);
+      
+      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/tasks/ai-insights`, {
+        method: "POST", 
+        headers: {
+          "Content-Type": "application/json",
+          'Authorization': `Bearer ${sessionStorage.getItem('accessToken')}`,
+        },
+        body: JSON.stringify({ tasks: formattedTasks })
+      });
+      
       const data = await response.json();
       setAiInsights(data.insights || []);
     } catch (error) {
-      console.error('Error fetching AI insights:', error);
+      console.error("Error fetching AI insights:", error);
+      // Show a user-friendly error message
+      setAiInsights([{
+        id: "error",
+        title: "Couldn't generate insights",
+        description: "There was a problem analyzing your tasks. Please try again later.",
+        recommendedTasks: []
+      }]);
     }
   };
 
@@ -70,25 +144,37 @@ const [deadlineDate, setDeadlineDate] = useState('');
     if (!newTaskName.trim()) return;
     
     try {
-      console.log(sessionStorage.getItem('accessToken'))
       // Replace with actual API call
-      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/tasks/add`, {
+      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/tasks/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${sessionStorage.getItem('accessToken')}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: newTaskName,
+          title: newTaskName, // Changed from name to title for consistency
           description: newTaskDescription,
+          startTime: newTaskStartTime,
+          endTime: newTaskEndTime,
           completed: false,
         }),
       });
       
       const data = await response.json();
-      setTasks([...tasks, data]);
+      
+      // Normalize the task data to ensure consistent property names
+      const normalizedTask = {
+        ...data,
+        title: data.title || data.name, // Handle both name and title
+        startTime: data.startTime,
+        endTime: data.endTime
+      };
+      
+      setTasks([...tasks, normalizedTask]);
       setNewTaskName('');
       setNewTaskDescription('');
+      setNewTaskStartTime('');
+      setNewTaskEndTime('');
     } catch (error) {
       console.error('Error adding task:', error);
     }
@@ -132,7 +218,7 @@ const [deadlineDate, setDeadlineDate] = useState('');
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ taskIds: newTasks.map(task => task.id) }),
+        body: JSON.stringify({ taskIds: newTasks.map(task => task._id) }),
       });
     } catch (error) {
       console.error('Error reordering tasks:', error);
@@ -154,7 +240,12 @@ const [deadlineDate, setDeadlineDate] = useState('');
   
   const fetchDeadlineTasks = async () => {
     try {
-      const res = await axios.get('/api/deadline-tasks');
+      const accessToken = sessionStorage.getItem('accessToken');
+      const res = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/tasks/dead`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
       setDeadlineTasks(res.data);
     } catch (err) {
       console.error('Error fetching deadline tasks:', err);
@@ -166,17 +257,26 @@ const [deadlineDate, setDeadlineDate] = useState('');
       // Show an error notification
       return;
     }
-    
+  
     try {
-      const res = await axios.post('/api/deadline-tasks', {
-        title: deadlineTaskName,
-        description: deadlineTaskDescription,
-        dueDate: deadlineDate
-      });
-      
+      const accessToken = sessionStorage.getItem('accessToken');
+      const res = await axios.post(
+        `${import.meta.env.VITE_BASE_API_URL}/tasks/dead`,
+        {
+          title: deadlineTaskName,
+          description: deadlineTaskDescription,
+          dueDate: deadlineDate
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        }
+      );
+  
       // Add the new task to the state
       setDeadlineTasks([...deadlineTasks, res.data]);
-      
+  
       // Clear form
       setDeadlineTaskName('');
       setDeadlineTaskDescription('');
@@ -190,8 +290,13 @@ const [deadlineDate, setDeadlineDate] = useState('');
   
   const handleDeleteDeadlineTask = async (taskId) => {
     try {
-      await axios.delete(`/api/deadline-tasks/${taskId}`);
-      
+      const accessToken = sessionStorage.getItem('accessToken');
+      await axios.delete(`${import.meta.env.VITE_BASE_API_URL}/tasks/dead/${taskId}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+  
       // Update state by removing the deleted task
       setDeadlineTasks(deadlineTasks.filter(task => task._id !== taskId));
     } catch (err) {
@@ -202,8 +307,17 @@ const [deadlineDate, setDeadlineDate] = useState('');
   
   const handleCompleteDeadlineTask = async (taskId) => {
     try {
-      const res = await axios.put(`/api/deadline-tasks/${taskId}/complete`);
-      
+      const accessToken = sessionStorage.getItem('accessToken');
+      const res = await axios.post(
+        `${import.meta.env.VITE_BASE_API_URL}/tasks/dead/${taskId}/complete`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        }
+      );
+  
       // Update the task in state
       setDeadlineTasks(deadlineTasks.map(task => 
         task._id === taskId ? res.data : task
@@ -213,6 +327,7 @@ const [deadlineDate, setDeadlineDate] = useState('');
       // Show error notification
     }
   };
+  
   const adoptAiRecommendation = async (recommendationId) => {
     try {
       // Replace with actual API call
@@ -230,21 +345,41 @@ const [deadlineDate, setDeadlineDate] = useState('');
     }
   };
 
+  // Format time for display
+  const formatTime = (time) => {
+    if (!time) return "N/A";
+    
+    const date = new Date(time); // Ensure it's a Date object
+    if (isNaN(date.getTime())) return "Invalid Date"; // Handle incorrect formats
+  
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true });
+  };
+  
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <Navbar />
-      {/* Streak info banner */}
-      <div className="bg-gray-800 py-2 px-4 shadow-md">
-        <div className="container mx-auto flex justify-between items-center">
-          <h2 className="text-xl font-bold text-purple-400">TaskMaster</h2>
-          <div className="flex items-center space-x-6">
-            <div className="flex items-center">
-              <Award className="w-5 h-5 mr-2 text-yellow-400" />
-              <span className="text-sm">Current Streak: {currentStreak} days</span>
+      {/* Expanded header with TaskMaster and productivity message */}
+      <div className="bg-gradient-to-r from-gray-800 to-gray-900 py-6 px-4 shadow-lg">
+        <div className="container mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="flex items-center mb-4 md:mb-0">
+              <h1 className="text-3xl font-bold text-purple-400">TaskMaster</h1>
+              <span className="ml-3 px-3 py-1 bg-purple-900 text-purple-200 text-xs rounded-full">Pro</span>
             </div>
-            <div className="flex items-center">
-              <Award className="w-5 h-5 mr-2 text-purple-400" />
-              <span className="text-sm">Max Streak: {maxStreak} days</span>
+            
+            <div className="text-center md:text-right">
+              <p className="text-gray-200 text-lg mb-2">{productivityMessage}</p>
+              <div className="flex items-center justify-center md:justify-end space-x-6">
+                <div className="flex items-center">
+                  <Award className="w-5 h-5 mr-2 text-yellow-400" />
+                  <span className="text-sm">Current Streak: {currentStreak} days</span>
+                </div>
+                <div className="flex items-center">
+                  <Award className="w-5 h-5 mr-2 text-purple-400" />
+                  <span className="text-sm">Max Streak: {maxStreak} days</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -269,25 +404,28 @@ const [deadlineDate, setDeadlineDate] = useState('');
                 </button>
               </div>
               
-              {/* Deadline Task Form */}
+              {/* Deadline Task Form - Updated with better placeholders */}
               {showDeadlineForm && (
                 <div className="mb-6 bg-gray-700 p-4 rounded-lg">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <input
                       type="text"
-                      placeholder="Task name"
+                      placeholder="Deadline task name"
                       className="px-4 py-2 bg-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
                       value={deadlineTaskName}
                       onChange={(e) => setDeadlineTaskName(e.target.value)}
                     />
-                    <input
-                      type="datetime-local"
-                      className="px-4 py-2 bg-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                      value={deadlineDate}
-                      onChange={(e) => setDeadlineDate(e.target.value)}
-                    />
+                    <div className="relative">
+                      <input
+                        type="datetime-local"
+                        className="px-4 py-2 bg-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 w-full"
+                        value={deadlineDate}
+                        onChange={(e) => setDeadlineDate(e.target.value)}
+                        placeholder="Deadline date and time"
+                      />
+                    </div>
                     <textarea
-                      placeholder="Task description"
+                      placeholder="Deadline task description"
                       className="md:col-span-2 px-4 py-2 bg-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
                       value={deadlineTaskDescription}
                       onChange={(e) => setDeadlineTaskDescription(e.target.value)}
@@ -298,7 +436,6 @@ const [deadlineDate, setDeadlineDate] = useState('');
                         className="px-4 py-2 bg-yellow-500 text-white rounded-lg flex items-center"
                         onClick={handleAddDeadlineTask}
                       >
-                        <Clock className="w-4 h-4 mr-2" />
                         Add Deadline Task
                       </button>
                     </div>
@@ -342,7 +479,6 @@ const [deadlineDate, setDeadlineDate] = useState('');
                           </div>
                           
                           <div className="flex items-center text-sm text-yellow-400 mb-2">
-                            <Clock className="w-4 h-4 mr-1" />
                             <span>
                               {dueDate.toLocaleDateString()} {dueDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
@@ -386,7 +522,7 @@ const [deadlineDate, setDeadlineDate] = useState('');
             ) : (
               <div className="space-y-6">
                 {tasks.map((task, index) => (
-                  <div key={task.id} className="flex relative pb-8 sm:items-center">
+                  <div key={task._id || index} className="flex relative pb-8 sm:items-center">
                     <div className="h-full w-6 absolute inset-0 flex items-center justify-center">
                       <div className="h-full w-1 bg-gray-600 pointer-events-none"></div>
                     </div>
@@ -414,11 +550,24 @@ const [deadlineDate, setDeadlineDate] = useState('');
                       
                       <div className="flex-grow sm:pl-6 mt-6 sm:mt-0">
                         <h2 className={`font-medium title-font mb-1 text-xl ${task.completed ? 'text-gray-500 line-through' : 'text-green-400'}`}>
-                          {task.title}
+                          {task.title || task.name} {/* Handle both name and title */}
                         </h2>
                         <p className={`leading-relaxed ${task.completed ? 'text-gray-600' : 'text-gray-300'}`}>
                           {task.description}
                         </p>
+                        
+                        {/* Display both start and end times if available */}
+                        {(task.startTime || task.endTime) && (
+  <div className="flex items-center mt-2 mb-3">
+    <Clock className="w-4 h-4 text-yellow-400 mr-2" />
+    <span className="text-sm text-yellow-400">
+      {task.startTime && formatTime(new Date(task.startTime).toISOString())}
+      {task.startTime && task.endTime && " - "}
+      {task.endTime && formatTime(new Date(task.endTime).toISOString())}
+    </span>
+  </div>
+)}
+
                         
                         <div className="mt-4 flex space-x-3">
                           <button
@@ -463,8 +612,8 @@ const [deadlineDate, setDeadlineDate] = useState('');
                   </div>
                 )}
                 
-                {/* Add new task - moved below the list */}
-                <div className="mt-8 bg-gray-700 p-4 rounded-lg">
+                {/* Updated add new task form with start and end time */}
+                <div className="mt-8 bg-gray-700 p-6 rounded-lg">
                   <h3 className="text-lg font-medium text-green-400 mb-4">Add New Task</h3>
                   <div className="space-y-4">
                     <input
@@ -481,11 +630,39 @@ const [deadlineDate, setDeadlineDate] = useState('');
                       onChange={(e) => setNewTaskDescription(e.target.value)}
                       rows="2"
                     />
+                    
+                    {/* Improved time selection with start and end times */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="relative">
+                        <label className="block text-gray-300 text-sm mb-1">Start Time</label>
+                        <div className="relative">
+                          <input
+                            type="time"
+                            className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                            value={newTaskStartTime}
+                            onChange={(e) => setNewTaskStartTime(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="relative">
+                        <label className="block text-gray-300 text-sm mb-1">End Time</label>
+                        <div className="relative">
+                          <input
+                            type="time"
+                            className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                            value={newTaskEndTime}
+                            onChange={(e) => setNewTaskEndTime(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    
                     <button
-                      className="px-4 py-2 bg-green-500 text-white rounded-lg flex items-center justify-center"
+                      className="w-full px-4 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg flex items-center justify-center transition"
                       onClick={handleAddTask}
                     >
-                      <Plus className="w-4 h-4 mr-2" />
+                      <Plus className="w-5 h-5 mr-2" />
                       Add Task
                     </button>
                   </div>

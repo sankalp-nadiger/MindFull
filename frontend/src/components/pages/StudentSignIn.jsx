@@ -67,6 +67,7 @@ const StudentSignIn = () => {
   };
 
   return (
+    <div className="auth-page">
     <div className="auth-container">
       <h1 className="app-title student">MindFull</h1>
 
@@ -164,6 +165,7 @@ const StudentSignIn = () => {
           </p>
         </div>
       </div>
+    </div>
     </div>
   );
 };

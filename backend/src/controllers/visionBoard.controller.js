@@ -1,20 +1,52 @@
-import VisionBoard from "../models/VisionBoard.js";
-
-// ✅ Create a new vision board
+import VisionBoard from "../models/visionBoard.model.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import axios from "axios";
+import dotenv from "dotenv";
+dotenv.config();
 export const createVisionBoard = async (req, res) => {
   try {
-    const { userId, title, category, privacy, items } = req.body;
-
-    const newBoard = new VisionBoard({ userId, title, category, privacy, items });
+    // Handle image upload first
+    if (!req.file) {
+      return res.status(400).json({ message: "No image file provided" });
+    }
+    
+    // Construct the URL to the uploaded file
+    const imageUrl = req.file?.path; // For single file upload
+const boardImg = await uploadOnCloudinary(imageUrl, { folder: 'Mindfull' });
+console.log(boardImg.url)
+    // Get vision board data from request body
+    const { userId, title, category, type } = req.body
+    
+    // Validate required fields
+    if (!userId || !title) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+      
+    // Create and save the vision board
+    const newBoard = new VisionBoard({
+      userId,
+      title,
+      category,
+      type,
+      content: boardImg.url
+    });
+    
     await newBoard.save();
-
-    res.status(201).json({ message: "Vision board created successfully", board: newBoard });
+    
+    res.status(201).json({
+      message: "Vision board created successfully with uploaded image",
+      board: newBoard,
+      uploadedImageUrl: boardImg
+    });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error });
+    console.error("Error creating vision board with image:", error);
+    res.status(500).json({
+      message: "Server error",
+      error: error.message
+    });
   }
 };
 
-// ✅ Get all vision boards for a user
 export const getUserVisionBoards = async (req, res) => {
   try {
     const boards = await VisionBoard.find({ userId: req.params.userId });
@@ -24,7 +56,7 @@ export const getUserVisionBoards = async (req, res) => {
   }
 };
 
-// ✅ Get a single vision board by ID
+//Get a single vision board by ID
 export const getVisionBoardById = async (req, res) => {
   try {
     const board = await VisionBoard.findById(req.params.boardId);
@@ -67,45 +99,51 @@ export const deleteVisionBoard = async (req, res) => {
   }
 };
 
-const getAISuggestedImage = async (category) => {
-    try {
-      const response = await axios.post(
-        "https://api.openai.com/v1/chat/completions",
-        {
-          model: "gpt-4",
-          messages: [
-            { role: "system", content: "You are an AI that suggests motivational images for vision boards." },
-            { role: "user", content: `Suggest a suitable image URL for the category: ${category}.` },
-          ],
-        },
-        { headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` } }
-      );
-  
-      return response.data.choices[0].message.content.trim();
-    } catch (error) {
-      console.error("AI Image Suggestion Error:", error);
-      return null;
-    }
-  };
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models";
+export const getAISuggestedImage = async (category) => {
+  try {
+    const response = await axios.post(
+      `${GEMINI_API_URL}/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        contents: [{ parts: [{ text: `Generate a motivational image related to ${category}. It is for a mental wellness platform vision board feature` }] }]
+      }
+    );
 
-  const getAISuggestedQuote = async (category) => {
-    try {
-      const response = await axios.post(
-        "https://api.openai.com/v1/chat/completions",
-        {
-          model: "gpt-4",
-          messages: [
-            { role: "system", content: "You are an AI that provides motivational quotes." },
-            { role: "user", content: `Give me an inspiring quote for the category: ${category}.` },
-          ],
-        },
-        { headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` } }
-      );
-  
-      return response.data.choices[0].message.content.trim();
-    } catch (error) {
-      console.error("AI Quote Suggestion Error:", error);
-      return "Stay positive and work hard!";
+    const imageData = response.data.candidates[0]?.content?.parts[0]?.inlineData;
+    if (imageData) {
+      return `data:image/png;base64,${imageData.data}`;
     }
-  };
+
+    throw new Error("No image generated.");
+  } catch (error) {
+    console.error("Error fetching AI image:", error.response?.data || error.message);
+    return null;
+  }
+};
+
+/**
+ * Fetch AI-generated motivational quote using Google Gemini API.
+ */
+export const getAISuggestedQuote = async (category) => {
+  try {
+    const response = await axios.post(
+      `${GEMINI_API_URL}/gemini-1.5-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        contents: [
+          {
+            parts: [
+              { text: `You are an AI that provides motivational quotes for using in a vision board creation feature for a mental wellness platform. 
+                Give an inspiring quote for the category: ${category}. Keep it short` }
+            ]
+          }
+        ]
+      }
+    );
+
+    return response.data.candidates[0]?.content?.parts[0]?.text.trim() || "Stay positive and work hard!";
+  } catch (error) {
+    console.error("AI Quote Suggestion Error:", error);
+    return "Stay positive and work hard!";
+  }
+};
   

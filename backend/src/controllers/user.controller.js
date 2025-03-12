@@ -416,8 +416,11 @@ const lastLogin = user.lastLoginDate;
 if (!lastLogin) {
   user.streak = 1; // First login
 } else {
-  // Difference in full days, not fractional hours
-  const diffInDays = Math.floor((now - lastLogin) / (1000 * 60 * 60 * 24));
+  // Convert to UTC midnight timestamps to ensure full-day difference calculation
+  const lastLoginDay = new Date(lastLogin).setHours(0, 0, 0, 0);
+  const today = new Date(now).setHours(0, 0, 0, 0);
+
+  const diffInDays = (today - lastLoginDay) / (1000 * 60 * 60 * 24);
 
   if (diffInDays === 1) {
     user.streak += 1; // Continue streak
@@ -426,13 +429,12 @@ if (!lastLogin) {
   }
 }
 
-// Update max streak
-user.maxStreak = Math.max(user.maxStreak, user.streak);
+// Update max streak if needed
+user.maxStreak = Math.max(user.maxStreak || 0, user.streak);
 
 // Update last login date
 user.lastLoginDate = now;
 await user.save();
-
   
     const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
   

@@ -18,7 +18,7 @@ import storyRouter from "./routes/story.routes.js";
 import postsRouter from "./routes/posts.routes.js";
 import taskRouter from "./routes/task.route.js";
 import recomendations from "./routes/recommendations.route.js";
-
+import visionRouter from "./routes/visionboard.routes.js";
 const app = express();
 
 // Middleware
@@ -44,6 +44,7 @@ app.use("/api/dm_chat", dm_chatRouter);
 app.use("/api/parent", parentRouter);
 app.use("/api/story", storyRouter);
 app.use("/api/post", postsRouter);
+app.use("/api/visionBoard", visionRouter);
 app.use("/api/tasks", taskRouter);
 app.use("/api/recommendations", recomendations);
 
