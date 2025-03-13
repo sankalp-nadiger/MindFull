@@ -145,7 +145,7 @@ export const getDeadlineTasks = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
-const reorderTasks = async (req, res) => {
+export const reorderTasks = async (req, res) => {
   try {
     const { taskIds } = req.body;
     
