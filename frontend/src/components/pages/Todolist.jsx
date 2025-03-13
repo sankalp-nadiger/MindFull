@@ -214,7 +214,7 @@ const TodoListPage = () => {
     try {
       // Replace with actual API call
       await fetch(`${import.meta.env.VITE_BASE_API_URL}/tasks/reorder`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },

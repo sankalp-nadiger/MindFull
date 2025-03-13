@@ -2,7 +2,7 @@ import express from "express";
 import { createTask, getTasks, deleteTask, completeTask, triggerReminders, analyzeAndOptimizeSchedule } from "../controllers/task.controller.js";
 import { user_verifyJWT } from "../middleware/auth.middleware.js";
 import Task from "../models/task.model.js";
-import { createDeadlineTask, getDeadlineTasks, updateDeadlineTask, deleteDeadlineTask, completeDeadlineTask, getOverdueTasks } from "../controllers/task.controller.js";
+import { createDeadlineTask, getDeadlineTasks, reorderTasks, updateDeadlineTask, deleteDeadlineTask, completeDeadlineTask, getOverdueTasks } from "../controllers/task.controller.js";
 const router = express.Router();
 
 router.post("/", user_verifyJWT, createTask);
@@ -12,7 +12,7 @@ router.delete('/:taskId/delete', deleteTask);
 router.get("/trigger-reminders", triggerReminders);
 // Create a new deadline task
 router.post('/dead', user_verifyJWT, createDeadlineTask);
-
+router.patch('/tasks/reorder', reorderTasks);
 // Get all deadline tasks for the authenticated user
 router.get('/dead', user_verifyJWT, getDeadlineTasks);
 

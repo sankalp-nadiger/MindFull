@@ -8,7 +8,6 @@ import fs from 'fs'
 // admin.initializeApp({
 //   credential: admin.credential.cert(serviceAccount),
 // });
-
 export const sendNotification = async (fcmToken, title, body) => {
   if (!fcmToken) return;
   const message = {

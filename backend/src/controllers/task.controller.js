@@ -145,6 +145,39 @@ export const getDeadlineTasks = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+const reorderTasks = async (req, res) => {
+  try {
+    const { taskIds } = req.body;
+    
+    if (!taskIds || !Array.isArray(taskIds)) {
+      return res.status(400).json({ message: 'Invalid task order data' });
+    }
+
+    // Fetch tasks in their current order (based on creation time)
+    const tasks = await Task.find({ _id: { $in: taskIds } }).sort({ createdAt: 1 });
+    
+    // Create a mapping of new positions
+    const taskOrderMap = new Map(taskIds.map((id, index) => [id, index]));
+
+    // Sort tasks based on provided order
+    tasks.sort((a, b) => taskOrderMap.get(a._id.toString()) - taskOrderMap.get(b._id.toString()));
+
+    // Update tasks in bulk with new order
+    const bulkOperations = tasks.map((task, index) => ({
+      updateOne: {
+        filter: { _id: task._id },
+        update: { $set: { createdAt: new Date(Date.now() + index) } },
+      },
+    }));
+
+    await Task.bulkWrite(bulkOperations);
+
+    res.status(200).json({ message: 'Tasks reordered successfully' });
+  } catch (error) {
+    console.error('Error reordering tasks:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
 
 export const updateDeadlineTask = async (req, res) => {
   try {
