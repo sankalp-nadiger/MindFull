@@ -1,0 +1,22 @@
+name: Netlify Deployment Status
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Notify GitHub of Deploy Status
+        uses: peter-evans/commit-status@v2
+        with:
+          sha: ${{ github.sha }}
+          state: success  # or 'error' for failed deploys
+          target_url: https://mindfullweb.netlify.app/  
+          description: "Netlify Deployment"
+          context: "Netlify"
