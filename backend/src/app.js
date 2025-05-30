@@ -47,7 +47,9 @@ app.use("/api/post", postsRouter);
 app.use("/api/visionBoard", visionRouter);
 app.use("/api/tasks", taskRouter);
 app.use("/api/recommendations", recomendations);
-
+app.get('/health', (req, res) => {
+  res.status(200).send("OK");
+});
 app.post("/api/chat", async (req, res) => {
     try {
         const { message } = req.body;
