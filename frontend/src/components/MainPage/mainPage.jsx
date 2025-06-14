@@ -10,12 +10,10 @@ import { BentoGridDemo } from "./BentoGridDemo";
 import Getquotes from "./quotes";
 import BadgesCorner from "../Badges and Leaderboard/Badges";
 import Recommendations from "../Materialrecommendation/AIrecommendation";
-import Stories from "../pages/FetchStory";
 import Footer from "../Footer/Footer";
 import Suggestion from "./activity";
-import Posts from "../pages/FetchPosts";
+import DynamicCarousel from "../pages/FetchPosts";
 import ExerciseCards from "../Exercises/exercise";
-import MoodBasedMemories from "../pages/MoodBasedMemories";
 
 export function HeroHighlightDemo() {
   const navigate = useNavigate();
@@ -68,37 +66,6 @@ export function HeroHighlightDemo() {
     setUserMood(mood);
   }, []);
 
-  const fetchStories = async () => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/users/stories`);
-      if (!response.ok) throw new Error("Failed to fetch stories");
-      const data = await response.json();
-      setStories(data);
-    } catch (err) {
-      console.error(err.message);
-    }
-  };
-
-  const handleStoryClick = () => {
-    setShowStories(!showStories);
-    if (!showStories) fetchStories();
-  };
-
-  const handleAddStory = async () => {
-    const formData = new FormData();
-    formData.append("content", "Your story content");
-    try {
-      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/users/addStory`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
-      if (!response.ok) throw new Error("Failed to add story");
-      fetchStories();
-    } catch (err) {
-      console.error(err.message);
-    }
-  };
 
   const handleclick = () => {
     navigate("/Musicplayer");
@@ -107,32 +74,9 @@ export function HeroHighlightDemo() {
   return (
     // Add overflow-x-hidden to the main container to prevent horizontal scrolling
     <div className="overflow-x-hidden w-full">
-      <Navbar onStoryClick={handleStoryClick} />
+      <Navbar />
 
-      {showStories && (
-        <div className="flex overflow-x-auto p-4 bg-gray-900 text-white gap-4">
-          <div
-            className="flex flex-col items-center cursor-pointer"
-            onClick={handleAddStory}
-          >
-            <div className="w-16 h-16 rounded-full bg-gray-400 flex items-center justify-center text-black">
-              +
-            </div>
-            <p className="text-sm">Add Story</p>
-          </div>
-          {stories.map((story) => (
-            <div key={story.id} className="flex flex-col items-center">
-              <img
-                src={story.avatar}
-                alt={story.user.username}
-                className="w-16 h-16 rounded-full border-2 border-blue-500"
-              />
-              <p className="text-sm">{story.user.username}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
+      
       <div className="w-full">
         <HeroHighlight>
           <div className="min-h-[40vh] flex flex-col justify-center items-center text-center px-4">
@@ -167,7 +111,7 @@ export function HeroHighlightDemo() {
 
       <div className="p-6 bg-black w-full">
       <div className="max-w-[85rem] text-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto backdrop-blur-lg bg-gray-900 p-8 rounded-lg shadow-lg shadow-blue-500/50 hover:shadow-green-500/50 transition-shadow flex flex-col items-center text-center">
-    <MoodBasedMemories />
+    <DynamicCarousel />
   </div>
 </div>
 
@@ -208,11 +152,6 @@ export function HeroHighlightDemo() {
         </div>
       </div>
 
-      <div className="bg-gradient-to-b from-black via-violet-700 to-black text-gray-100 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 w-full">
-        <Stories />
-        <div className="mt-8"></div>
-        <Posts />
-      </div>
 
       <div className="bg-gradient-to-b from-black via-violet-700 to-black text-gray-100 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 w-full">
         <div className="flex flex-col lg:flex-row items-center justify-between max-w-7xl mx-auto w-full">
