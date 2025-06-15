@@ -1,21 +1,36 @@
 import React, { useState } from "react";
 import { getAIImage, getAIQuote, updateVisionBoard } from "../../services/visionBoardAPI";
+import { Sparkles } from "lucide-react";
 
-const AIRecommendation = ({ userId, fetchVisionBoards }) => {
+const AIRecommendation = ({ userId, fetchVisionBoards, darkMode, themeClasses }) => {
   const [category, setCategory] = useState("");
   const [suggestedImage, setSuggestedImage] = useState("");
   const [suggestedQuote, setSuggestedQuote] = useState("");
   const [includeImage, setIncludeImage] = useState(false);
   const [includeQuote, setIncludeQuote] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const fetchAIContent = async () => {
-    if (includeImage) {
-      const image = await getAIImage(category);
-      setSuggestedImage(image);
+    if (!category.trim()) {
+      alert("Please enter a goal category");
+      return;
     }
-    if (includeQuote) {
-      const quote = await getAIQuote(category);
-      setSuggestedQuote(quote);
+
+    setLoading(true);
+    try {
+      if (includeImage) {
+        const image = await getAIImage(category);
+        setSuggestedImage(image);
+      }
+      if (includeQuote) {
+        const quote = await getAIQuote(category);
+        setSuggestedQuote(quote);
+      }
+    } catch (error) {
+      console.error("Error fetching AI content:", error);
+      alert("Failed to generate AI suggestions. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -25,61 +40,147 @@ const AIRecommendation = ({ userId, fetchVisionBoards }) => {
     if (suggestedQuote) items.push({ type: "quote", content: suggestedQuote });
 
     if (items.length > 0) {
-      await updateVisionBoard(userId, { items });
-      fetchVisionBoards();
+      try {
+        await updateVisionBoard(userId, { items });
+        fetchVisionBoards();
+        // Clear suggestions after adding
+        setSuggestedImage("");
+        setSuggestedQuote("");
+        setCategory("");
+        setIncludeImage(false);
+        setIncludeQuote(false);
+      } catch (error) {
+        console.error("Error adding to vision board:", error);
+        alert("Failed to add to vision board. Please try again.");
+      }
     }
   };
 
   return (
-    <div className="ai-recommendation flex flex-col space-y-4 p-4">
-      <h3 className="text-lg font-semibold">AI-Powered Vision Board Suggestions</h3>
-  
+  <div className={`ai-recommendation rounded-xl shadow-lg p-6 mb-8 w-full max-w-4xl mx-auto ${themeClasses.card}`}>
+    <h3 className={`text-xl font-semibold mb-5 ${themeClasses.text} flex items-center`}>
+      <Sparkles className="mr-2 w-5 h-5" />
+      AI-Powered Vision Board Suggestions
+    </h3>
+
+    <div className="space-y-4">
       <input
         type="text"
-        placeholder="Enter goal category"
+        placeholder="Enter goal category (e.g., Health, Career, Finance)"
         value={category}
         onChange={(e) => setCategory(e.target.value)}
-        className="p-2 border border-gray-300 rounded-md w-full"
+        className={`p-3 border rounded-lg w-full focus:outline-none focus:ring-2 transition-colors text-sm ${
+          darkMode 
+            ? 'border-slate-600 bg-slate-700 text-slate-200 placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500' 
+            : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500'
+        }`}
       />
-  
-      <div className="flex flex-col space-y-2">
-        <label className="flex items-center space-x-2">
+
+      <div className="flex flex-col space-y-3">
+        <label className="flex items-center space-x-3 cursor-pointer">
           <input
             type="checkbox"
             checked={includeImage}
             onChange={() => setIncludeImage(!includeImage)}
+            className={`w-4 h-4 rounded focus:ring-2 transition-colors ${
+              darkMode
+                ? 'bg-slate-700 border-slate-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-slate-800'
+                : 'bg-white border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-white'
+            }`}
           />
-          <span>Include AI-Generated Image</span>
+          <span className={`${themeClasses.text} select-none`}>Include AI-Generated Image</span>
         </label>
-        <label className="flex items-center space-x-2">
+        <label className="flex items-center space-x-3 cursor-pointer">
           <input
             type="checkbox"
             checked={includeQuote}
             onChange={() => setIncludeQuote(!includeQuote)}
+            className={`w-4 h-4 rounded focus:ring-2 transition-colors ${
+              darkMode
+                ? 'bg-slate-700 border-slate-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-slate-800'
+                : 'bg-white border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-white'
+            }`}
           />
-          <span>Include AI-Generated Quote</span>
+          <span className={`${themeClasses.text} select-none`}>Include AI-Generated Quote</span>
         </label>
       </div>
-  
+
       <button
         onClick={fetchAIContent}
-        className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition"
+        disabled={loading || (!includeImage && !includeQuote)}
+        className={`w-full py-3 px-4 rounded-md font-medium transition-all duration-200 text-white disabled:cursor-not-allowed ${
+          darkMode
+            ? 'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500 disabled:bg-slate-600 disabled:text-slate-400'
+            : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 disabled:bg-gray-400 disabled:text-gray-200'
+        } focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+          darkMode ? 'focus:ring-offset-slate-800' : 'focus:ring-offset-white'
+        }`}
       >
-        Generate AI Suggestions
+        {loading ? (
+          <span className="flex items-center justify-center">
+            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Generating...
+          </span>
+        ) : (
+          "Generate AI Suggestions"
+        )}
       </button>
-  
-      {suggestedImage && <img src={suggestedImage} alt="AI Suggestion" className="rounded-md shadow-md" />}
-      {suggestedQuote && <p className="text-gray-700 font-medium">{suggestedQuote}</p>}
-  
-      <button
-        onClick={addToVisionBoard}
-        className="bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition"
-      >
-        Add to Vision Board
-      </button>
+
+      {/* AI Generated Content Display */}
+      {(suggestedImage || suggestedQuote) && (
+        <div className={`rounded-lg p-4 space-y-4 border ${
+          darkMode 
+            ? 'bg-slate-800/50 border-slate-600' 
+            : 'bg-gray-50 border-gray-200'
+        }`}>
+          <h4 className={`font-medium ${themeClasses.text}`}>AI Suggestions:</h4>
+          
+          {suggestedImage && (
+            <div className="space-y-2">
+              <p className={`text-sm font-medium ${themeClasses.textSecondary}`}>Generated Image:</p>
+              <div className={`rounded-md overflow-hidden border ${
+                darkMode ? 'border-slate-600' : 'border-gray-200'
+              }`}>
+                <img 
+                  src={suggestedImage} 
+                  alt="AI Generated Suggestion" 
+                  className="w-full max-w-md mx-auto shadow-sm"
+                />
+              </div>
+            </div>
+          )}
+          
+          {suggestedQuote && (
+            <div className="space-y-2">
+              <p className={`text-sm font-medium ${themeClasses.textSecondary}`}>Generated Quote:</p>
+              <blockquote className={`text-lg font-medium italic ${themeClasses.text} border-l-4 pl-4 ${
+                darkMode ? 'border-indigo-400' : 'border-blue-500'
+              }`}>
+                "{suggestedQuote}"
+              </blockquote>
+            </div>
+          )}
+        </div>
+      )}
+
+      {(suggestedImage || suggestedQuote) && (
+        <button
+          onClick={addToVisionBoard}
+          className={`w-full py-3 px-4 rounded-md font-medium transition-all duration-200 text-white focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+            darkMode
+              ? 'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500 focus:ring-offset-slate-800'
+              : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 focus:ring-offset-white'
+          }`}
+        >
+          Add to Vision Board
+        </button>
+      )}
     </div>
-  );
-  
+  </div>
+);
 };
 
 export default AIRecommendation;

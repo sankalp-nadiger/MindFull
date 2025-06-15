@@ -179,7 +179,7 @@ const DynamicCarousel = () => {
         Capture your precious moments and experiences.
       </p>
       <button
-        onClick={() => navigate('/journal')}
+        onClick={() => navigate('/journals')}
         className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center space-x-2"
       >
         <BookOpen size={16} />
@@ -355,7 +355,7 @@ const DynamicCarousel = () => {
         <div className="text-red-400 text-xl mb-4">Couldn't load your content</div>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <button
-            onClick={() => navigate('/journal')}
+            onClick={() => navigate('/journals')}
             className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:scale-105 transform"
           >
             <BookOpen size={20} />

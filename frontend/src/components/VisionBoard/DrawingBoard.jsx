@@ -1213,7 +1213,11 @@ const ToolBar = () => {
 
         {/* Rest of toolbar content */}
         {!isToolboxMinimized && (
-          <div className="overflow-y-auto custom-scrollbar max-h-[calc(100vh-8rem)]">
+          <div className={`${
+  tool === 'text' 
+    ? 'overflow-visible' 
+    : 'overflow-y-auto custom-scrollbar max-h-[calc(100vh-8rem)]'
+}`}>
             <div className="p-4 space-y-4">
               {/* Canvas Controls */}
               <div className="flex gap-2 justify-end">
@@ -1647,12 +1651,12 @@ const ToolBar = () => {
   };
 
   return (
-    <div className="relative">
-      <div className="relative" ref={containerRef}>
+    <div className="relative ">
+      <div ref={containerRef}>
     <Stage
   ref={stageRef}
   width={dimensions.width}
-  height={dimensions.height}
+  height={Math.max(dimensions.height, window.innerHeight)} // Ensure minimum height of viewport
   onMouseDown={handleMouseDown}
   onMouseMove={handleMouseMove}
   onMouseUp={handleMouseUp}
@@ -1684,7 +1688,7 @@ const ToolBar = () => {
   x={-stagePos.x / scale}
   y={-stagePos.y / scale}
   width={dimensions.width / scale}
-  height={dimensions.height / scale}
+  height={Math.max(dimensions.height, window.innerHeight) / scale} // Updated to match Stage height
   fill={canvasBackground}
   listening={true} // Changed to true to capture background clicks
 />
