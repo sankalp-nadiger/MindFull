@@ -7,6 +7,7 @@ import {
   ZoomIn, ZoomOut, Palette, Upload, Bold, Italic, AlignLeft, Trash2, Move,
   Save, Download, Minimize2, Maximize2, CornerRightDown
 } from 'lucide-react';
+import { X } from 'lucide-react'; 
 
 const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) => {
   const [img] = useImage(element.src);
@@ -416,88 +417,110 @@ const ContextMenu = ({ selectedElement, position, onClose, onUpdateElement, onDe
 
   return (
     <div 
-      className="absolute bg-white rounded-lg shadow-xl border border-gray-200 p-2 z-50"
+      className="absolute bg-white/90 backdrop-blur-md rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50 animate-fadeIn"
       style={{ 
         top: `${position.y}px`, 
         left: `${position.x}px`,
-        minWidth: '200px'
+        minWidth: '220px',
+        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
       }}
     >
-      <div className="p-2 text-sm font-medium text-gray-700 border-b border-gray-200">
-        {selectedElement.type.charAt(0).toUpperCase() + selectedElement.type.slice(1)} Options
+      <div className="p-3 bg-white/70 border-b border-gray-200 flex justify-between items-center">
+        <h3 className="text-sm font-semibold text-gray-700">
+          {selectedElement.type === 'text' ? 'Text Options' : 
+           selectedElement.type === 'flowLine' ? 'Line Options' : 
+           `${selectedElement.type.charAt(0).toUpperCase()}${selectedElement.type.slice(1)} Settings`}
+        </h3>
+        <button 
+          onClick={onClose}
+          className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+        >
+          <X className="w-4 h-4 text-gray-500" />
+        </button>
       </div>
       
-      {(selectedElement.type === 'text' || selectedElement.type === 'flowLine') && (
-        <div className="p-2 space-y-3">
-          <div className="space-y-2">
-            <label className="text-xs text-gray-600">Color</label>
-            <ColorPalette
-              currentColor={selectedElement.color || '#000000'}
-              onColorSelect={(color) => onUpdateElement({ ...selectedElement, color })}
-            />
-          </div>
-          
-          {selectedElement.type === 'text' && (
-            <>
-              <div className="space-y-1">
-                <label className="text-xs text-gray-600">Font Size</label>
-                <input
-                  type="number"
-                  value={selectedElement.fontSize || 24}
-                  onChange={(e) => onUpdateElement({ 
-                    ...selectedElement, 
-                    fontSize: parseInt(e.target.value) 
-                  })}
-                  className="w-full px-2 py-1 border rounded text-sm"
-                  min="8"
-                  max="72"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs text-gray-600">Font Family</label>
-                <select
-                  value={selectedElement.fontFamily || 'Arial'}
-                  onChange={(e) => onUpdateElement({ 
-                    ...selectedElement, 
-                    fontFamily: e.target.value 
-                  })}
-                  className="w-full px-2 py-1 border rounded text-sm"
-                >
-                  <option value="Arial">Arial</option>
-                  <option value="Times New Roman">Times New Roman</option>
-                  <option value="Courier New">Courier New</option>
-                </select>
-              </div>
-            </>
-          )}
-          
-          {selectedElement.type === 'flowLine' && (
-            <div className="space-y-1">
-              <label className="text-xs text-gray-600">Line Width</label>
-              <input
-                type="range"
-                min="1"
-                max="10"
-                value={selectedElement.strokeWidth || 2}
-                onChange={(e) => onUpdateElement({
-                  ...selectedElement,
-                  strokeWidth: parseInt(e.target.value)
-                })}
-                className="w-full"
+      <div className="p-3 space-y-4">
+        {(selectedElement.type === 'text' || selectedElement.type === 'flowLine') && (
+          <>
+            <div>
+              <label className="text-xs font-medium text-gray-500 mb-2 block">Color</label>
+              <ColorPalette
+                currentColor={selectedElement.color || '#000000'}
+                onColorSelect={(color) => onUpdateElement({ ...selectedElement, color })}
               />
             </div>
-          )}
-        </div>
-      )}
+            
+            {selectedElement.type === 'text' && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-gray-500 mb-1 block">Size</label>
+                  <input
+                    type="number"
+                    value={selectedElement.fontSize || 24}
+                    onChange={(e) => onUpdateElement({ 
+                      ...selectedElement, 
+                      fontSize: parseInt(e.target.value) 
+                    })}
+                    className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 outline-none transition-all"
+                    min="8"
+                    max="72"
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-xs font-medium text-gray-500 mb-1 block">Font</label>
+                  <select
+                    value={selectedElement.fontFamily || 'Arial'}
+                    onChange={(e) => onUpdateElement({ 
+                      ...selectedElement, 
+                      fontFamily: e.target.value 
+                    })}
+                    className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 outline-none transition-all"
+                  >
+                    <option value="Arial">Arial</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Courier New">Courier New</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Verdana">Verdana</option>
+                  </select>
+                </div>
+              </div>
+            )}
+            
+            {selectedElement.type === 'flowLine' && (
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-xs font-medium text-gray-500">Width</label>
+                  <span className="text-xs text-gray-500">{selectedElement.strokeWidth || 2}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  value={selectedElement.strokeWidth || 2}
+                  onChange={(e) => onUpdateElement({
+                    ...selectedElement,
+                    strokeWidth: parseInt(e.target.value)
+                  })}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                />
+              </div>
+            )}
+          </>
+        )}
 
-      <div className="p-2 space-y-2">
-        <button
-          onClick={() => onDelete(selectedElement.id)}
-          className="w-full px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-md flex items-center gap-2"
-        >
-          <Trash2 className="w-4 h-4" />
-          Delete
-        </button>
+        <div className="pt-2">
+          <button
+            onClick={() => {
+              onDelete(selectedElement.id);
+              onClose();
+            }}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete Element
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -724,10 +747,15 @@ const DrawingBoard = ({ onSave }) => {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [tool, setTool] = useState("select");
   const [penColor, setPenColor] = useState("#000000");
+  const initialToolbarPosRef = useRef({ x: 40, y: 40 });
+const initialMousePosRef = useRef({ x: 0, y: 0 });
   const [penWidth, setPenWidth] = useState(2);
   const [lines, setLines] = useState([]);  
   const [undoStack, setUndoStack] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
+  const [toolbarPos, setToolbarPos] = useState({ x: 40, y: 40 });
+const [isDraggingToolbar, setIsDraggingToolbar] = useState(false);
+const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [text, setText] = useState({ 
     content: "", 
     fontSize: 24, // Changed from 16 to 24
@@ -792,6 +820,28 @@ useEffect(() => {
   };
 }, [isPlacingElement, tool]);
 
+useEffect(() => {
+  const handleMouseMove = (e) => {
+    if (isDraggingToolbar) {
+      setToolbarPos({
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDraggingToolbar(false);
+  };
+
+  window.addEventListener('mousemove', handleMouseMove);
+  window.addEventListener('mouseup', handleMouseUp);
+
+  return () => {
+    window.removeEventListener('mousemove', handleMouseMove);
+    window.removeEventListener('mouseup', handleMouseUp);
+  };
+}, [isDraggingToolbar, dragStart]);
   // Cursor effect for different tools
   useEffect(() => {
     let cursorStyle = 'default';
@@ -861,6 +911,33 @@ const handleImageUpload = (e) => {
     reader.readAsDataURL(file);
   }
 };
+useEffect(() => {
+  const handleMouseMove = (e) => {
+    if (isDraggingToolbar) {
+      const dx = e.clientX - initialMousePosRef.current.x;
+      const dy = e.clientY - initialMousePosRef.current.y;
+      
+      setToolbarPos({
+        x: initialToolbarPosRef.current.x + dx,
+        y: initialToolbarPosRef.current.y + dy
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDraggingToolbar(false);
+  };
+
+  if (isDraggingToolbar) {
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  }
+
+  return () => {
+    window.removeEventListener('mousemove', handleMouseMove);
+    window.removeEventListener('mouseup', handleMouseUp);
+  };
+}, [isDraggingToolbar]);
 
   // Render element handlers
  const handleElementUpdate = (id, newProps) => {
@@ -961,24 +1038,25 @@ const handleMouseDown = (e) => {
       }
       break;
 
-    case 'flowLine':
-      isDrawing.current = true;
-      const newLine = {
-        id: Date.now().toString(),
-        type: 'flowLine',
-        points: [actualPos.x, actualPos.y, actualPos.x + 100, actualPos.y],
-        color: penColor,
-        strokeWidth: penWidth
-      };
-      setFlowLine(newLine);
-      break;
+   case 'flowLine':
+  isDrawing.current = true;
+  const newLine = {
+    id: Date.now().toString(),
+    type: 'flowLine',
+    points: [actualPos.x, actualPos.y, actualPos.x + 100, actualPos.y],
+    color: penColor,
+    strokeWidth: penWidth,
+    style: lineStyle  // Add this line
+  };
+  setFlowLine(newLine);
+  break;
   }
 };
 
- const handleMouseUp = () => {
+const handleMouseUp = () => {
   if (tool === 'pen' && isDrawing.current && penPoints.length > 0) {
     const lastLine = penPoints[penPoints.length - 1];
-    if (lastLine && lastLine.points.length > 2) {
+    if (lastLine && lastLine.points.length >= 4) { // At least 2 points (4 coordinates)
       const newElement = {
         id: Date.now().toString(),
         type: 'drawing',
@@ -1029,10 +1107,11 @@ const handleMouseDown = (e) => {
       ]);
     }
   } else if (tool === 'flowLine' && flowLine && isDrawing.current) {
-    setFlowLine({
-      ...flowLine,
-      points: [flowLine.points[0], flowLine.points[1], actualPos.x, actualPos.y]
-    });
+  setFlowLine({
+    ...flowLine,
+    points: [flowLine.points[0], flowLine.points[1], actualPos.x, actualPos.y]
+  });
+
   } else if (tool === 'eraser' && isErasing) {
     handleEraser(e);
   }
@@ -1075,15 +1154,53 @@ const ActionButtons = () => (
   </div>
 );
 
-  const ToolBar = () => (
-    <div className={`absolute top-4 left-4 z-40 transition-all duration-300 ${
-      isToolboxMinimized ? 'w-12' : tool === 'text' ? 'w-[400px]' : 'w-[300px]'
-    }`}>
+const ToolBar = () => {
+  const handleToolbarMouseDown = (e) => {
+    // Skip if clicking on interactive elements
+    const interactiveElements = ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'];
+    if (
+      interactiveElements.includes(e.target.tagName) ||
+      e.target.closest('button') ||
+      e.target.closest('input') ||
+      e.target.closest('select') ||
+      e.target.closest('textarea')
+    ) {
+      return;
+    }
+    
+    // Store initial positions
+    initialMousePosRef.current = { 
+      x: e.clientX, 
+      y: e.clientY 
+    };
+    initialToolbarPosRef.current = { ...toolbarPos };
+    
+    setIsDraggingToolbar(true);
+  };
+
+  return (
+    <div 
+      className={`absolute z-40 transition-all duration-300 ${
+        isToolboxMinimized ? 'w-12' : tool === 'text' ? 'w-[400px]' : 'w-[300px]'
+      }`}
+      style={{
+        left: `${toolbarPos.x}px`,
+        top: `${toolbarPos.y}px`,
+        cursor: isDraggingToolbar ? 'grabbing' : 'grab'
+      }}
+      onMouseDown={handleToolbarMouseDown}
+    >
       <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200 overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
+        {/* Toolbar Header */}
+        <div 
+          className="p-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0 select-none"
+        >
           {!isToolboxMinimized && <h3 className="text-lg font-semibold text-gray-800">Tools</h3>}
           <button
-            onClick={() => setIsToolboxMinimized(!isToolboxMinimized)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsToolboxMinimized(!isToolboxMinimized);
+            }}
             className="h-8 w-8 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
           >
             {isToolboxMinimized ? (
@@ -1094,6 +1211,7 @@ const ActionButtons = () => (
           </button>
         </div>
 
+        {/* Rest of toolbar content */}
         {!isToolboxMinimized && (
           <div className="overflow-y-auto custom-scrollbar max-h-[calc(100vh-8rem)]">
             <div className="p-4 space-y-4">
@@ -1101,7 +1219,7 @@ const ActionButtons = () => (
               <div className="flex gap-2 justify-end">
                 <button
                   onClick={handleUndo}
-                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 cursor-pointer"
                   disabled={elements.length === 0}
                   title="Undo (Ctrl+Z)"
                 >
@@ -1112,7 +1230,7 @@ const ActionButtons = () => (
                 </button>
                 <button
                   onClick={handleRedo}
-                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 cursor-pointer"
                   disabled={redoStack.length === 0}
                   title="Redo (Ctrl+Y)"
                 >
@@ -1124,31 +1242,31 @@ const ActionButtons = () => (
 
                 <button
                   onClick={() => handleZoom('out')}
-                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200"
+                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 cursor-pointer"
                   title="Zoom Out"
                 >
                   <ZoomOut className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => handleZoom('in')}
-                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200"
+                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 cursor-pointer"
                   title="Zoom In"
                 >
                   <ZoomIn className="w-4 h-4" />
                 </button>
                 <button
-  onClick={() => {
-    setElements([]);
-    setSelectedId(null);
-    setPenPoints([]);
-    setUndoStack([]);
-    setRedoStack([]);
-  }}
-  className="p-2 rounded-lg bg-red-100 hover:bg-red-200 text-red-600"
-  title="Clear Board"
->
-  <Trash2 className="w-4 h-4" />
-</button>
+                  onClick={() => {
+                    setElements([]);
+                    setSelectedId(null);
+                    setPenPoints([]);
+                    setUndoStack([]);
+                    setRedoStack([]);
+                  }}
+                  className="p-2 rounded-lg bg-red-100 hover:bg-red-200 text-red-600 cursor-pointer"
+                  title="Clear Board"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
 
               {/* Canvas Background */}
@@ -1166,122 +1284,122 @@ const ActionButtons = () => (
               </div>
 
               {/* Tool Selection */}
-             <div className="grid grid-cols-2 gap-2">
-  <button
-    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-      tool === 'select' 
-        ? 'bg-indigo-500 text-white shadow-md' 
-        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-    }`}
-    onClick={() => setTool('select')}
-  >
-    <MousePointer className="w-4 h-4" />
-    <span>Select</span>
-  </button>
-  <button
-    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-      tool === 'pen' 
-        ? 'bg-indigo-500 text-white shadow-md' 
-        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-    }`}
-    onClick={() => setTool('pen')}
-  >
-    <Pen className="w-4 h-4" />
-    <span>Pen</span>
-  </button>
-  <button
-    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-      tool === 'text' 
-        ? 'bg-indigo-500 text-white shadow-md' 
-        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-    }`}
-    onClick={() => setTool('text')}
-  >
-    <Type className="w-4 h-4" />
-    <span>Text</span>
-  </button>
-  <button
-    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-      tool === 'eraser' 
-        ? 'bg-indigo-500 text-white shadow-md' 
-        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-    }`}
-    onClick={() => setTool('eraser')}
-  >
-    <Trash2 className="w-4 h-4" />
-    <span>Eraser</span>
-  </button>
-  <button
-    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-      tool === 'flowLine' 
-        ? 'bg-indigo-500 text-white shadow-md' 
-        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-    }`}
-    onClick={() => setTool('flowLine')}
-  >
-    <CornerRightDown className="w-4 h-4" />
-    <span>Flow Line</span>
-  </button>
-  <button
-    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-      tool === 'image' 
-        ? 'bg-indigo-500 text-white shadow-md' 
-        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-    }`}
-    onClick={() => setTool('image')}
-  >
-    <ImageIcon className="w-4 h-4" />
-    <span>Image</span>
-  </button>
-</div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all cursor-pointer ${
+                    tool === 'select' 
+                      ? 'bg-indigo-500 text-white shadow-md' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  onClick={() => setTool('select')}
+                >
+                  <MousePointer className="w-4 h-4" />
+                  <span>Select</span>
+                </button>
+                <button
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all cursor-pointer ${
+                    tool === 'pen' 
+                      ? 'bg-indigo-500 text-white shadow-md' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  onClick={() => setTool('pen')}
+                >
+                  <Pen className="w-4 h-4" />
+                  <span>Pen</span>
+                </button>
+                <button
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all cursor-pointer ${
+                    tool === 'text' 
+                      ? 'bg-indigo-500 text-white shadow-md' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  onClick={() => setTool('text')}
+                >
+                  <Type className="w-4 h-4" />
+                  <span>Text</span>
+                </button>
+                <button
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all cursor-pointer ${
+                    tool === 'eraser' 
+                      ? 'bg-indigo-500 text-white shadow-md' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  onClick={() => setTool('eraser')}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Eraser</span>
+                </button>
+                <button
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all cursor-pointer ${
+                    tool === 'flowLine' 
+                      ? 'bg-indigo-500 text-white shadow-md' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  onClick={() => setTool('flowLine')}
+                >
+                  <CornerRightDown className="w-4 h-4" />
+                  <span>Flow Line</span>
+                </button>
+                <button
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all cursor-pointer ${
+                    tool === 'image' 
+                      ? 'bg-indigo-500 text-white shadow-md' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  onClick={() => setTool('image')}
+                >
+                  <ImageIcon className="w-4 h-4" />
+                  <span>Image</span>
+                </button>
+              </div>
 
               {/* Tool-specific options */}
               {tool === 'text' && (
                 <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
                   <div className="grid grid-cols-2 gap-3">
-          <div className="col-span-2">
-  <input
-    type="text"
-    placeholder="Enter text..."
-    value={text.content}
-    onChange={(e) => setText({ ...text, content: e.target.value })}
-    onKeyDown={(e) => {
-      if (e.key === 'Enter' && text.content.trim()) {
-        e.preventDefault();
-        // Auto-place text in center when Enter is pressed
-        const centerX = (dimensions.width / 2 / scale) - 50;
-        const centerY = (dimensions.height / 2 / scale) - 10;
-        
-        const newText = {
-          id: Date.now().toString(),
-          type: 'text',
-          x: centerX,
-          y: centerY,
-          text: text.content,
-          content: text.content,
-          fontSize: text.fontSize,
-          fontFamily: text.fontFamily,
-          fill: text.color,
-          color: text.color,
-          fontStyle: `${text.isBold ? 'bold' : ''} ${text.isItalic ? 'italic' : ''}`.trim() || 'normal',
-          draggable: true
-        };
-        setElements(prevElements => [...prevElements, newText]);
-        setSelectedId(newText.id);
-        setText({ ...text, content: '' });
-      }
-    }}
-    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-    autoFocus={tool === 'text'}
-  />
-  <p className="text-xs text-gray-500 mt-1">
-    Press Enter to add text to center, or click canvas after typing
-  </p>
-</div>
+                    <div className="col-span-2">
+                      <input
+                        type="text"
+                        placeholder="Enter text..."
+                        value={text.content}
+                        onChange={(e) => setText({ ...text, content: e.target.value })}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && text.content.trim()) {
+                            e.preventDefault();
+                            // Auto-place text in center when Enter is pressed
+                            const centerX = (dimensions.width / 2 / scale) - 50;
+                            const centerY = (dimensions.height / 2 / scale) - 10;
+                            
+                            const newText = {
+                              id: Date.now().toString(),
+                              type: 'text',
+                              x: centerX,
+                              y: centerY,
+                              text: text.content,
+                              content: text.content,
+                              fontSize: text.fontSize,
+                              fontFamily: text.fontFamily,
+                              fill: text.color,
+                              color: text.color,
+                              fontStyle: `${text.isBold ? 'bold' : ''} ${text.isItalic ? 'italic' : ''}`.trim() || 'normal',
+                              draggable: true
+                            };
+                            setElements(prevElements => [...prevElements, newText]);
+                            setSelectedId(newText.id);
+                            setText({ ...text, content: '' });
+                          }
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-text"
+                        autoFocus={tool === 'text'}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Press Enter to add text to center, or click canvas after typing
+                      </p>
+                    </div>
                     <select
                       value={text.fontFamily}
                       onChange={(e) => setText({ ...text, fontFamily: e.target.value })}
-                      className="px-3 py-2 border rounded-lg"
+                      className="px-3 py-2 border rounded-lg cursor-pointer"
                     >
                       <option value="Arial">Arial</option>
                       <option value="Times New Roman">Times New Roman</option>
@@ -1293,7 +1411,7 @@ const ActionButtons = () => (
                       type="number"
                       value={text.fontSize}
                       onChange={(e) => setText({ ...text, fontSize: parseInt(e.target.value) })}
-                      className="px-3 py-2 border rounded-lg"
+                      className="px-3 py-2 border rounded-lg cursor-text"
                       min="8"
                       max="72"
                       placeholder="Font size"
@@ -1307,19 +1425,19 @@ const ActionButtons = () => (
                   </div>
                   <div className="flex gap-2">
                     <button
-                      className={`p-2 rounded ${text.isBold ? 'bg-indigo-500 text-white' : 'bg-gray-200'}`}
+                      className={`p-2 rounded cursor-pointer ${text.isBold ? 'bg-indigo-500 text-white' : 'bg-gray-200'}`}
                       onClick={() => setText({ ...text, isBold: !text.isBold })}
                     >
                       <Bold className="w-4 h-4" />
                     </button>
                     <button
-                      className={`p-2 rounded ${text.isItalic ? 'bg-indigo-500 text-white' : 'bg-gray-200'}`}
+                      className={`p-2 rounded cursor-pointer ${text.isItalic ? 'bg-indigo-500 text-white' : 'bg-gray-200'}`}
                       onClick={() => setText({ ...text, isItalic: !text.isItalic })}
                     >
                       <Italic className="w-4 h-4" />
                     </button>
                   </div>
-                 <p className="text-sm text-gray-600">Click on canvas to place text</p>
+                  <p className="text-sm text-gray-600">Click on canvas to place text</p>
                 </div>
               )}
 
@@ -1334,7 +1452,7 @@ const ActionButtons = () => (
                   />
                   <button
                     onClick={() => fileInputRef.current.click()}
-                    className="w-full px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 flex items-center justify-center gap-2"
+                    className="w-full px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Upload className="w-4 h-4" />
                     Choose Image
@@ -1360,14 +1478,14 @@ const ActionButtons = () => (
                       max="10"
                       value={penWidth}
                       onChange={(e) => setPenWidth(parseInt(e.target.value))}
-                      className="w-full"
+                      className="w-full cursor-pointer"
                     />
                   </div>
                   <div className="flex gap-2">
                     {['straight', 'curved'].map((style) => (
                       <button
                         key={style}
-                        className={`px-3 py-2 rounded-lg text-sm ${
+                        className={`px-3 py-2 rounded-lg text-sm cursor-pointer ${
                           lineStyle === style 
                             ? 'bg-indigo-500 text-white' 
                             : 'bg-gray-200 text-gray-700'
@@ -1378,26 +1496,26 @@ const ActionButtons = () => (
                       </button>
                     ))}
                   </div>
-                 
                 </div>
               )}
 
-{tool === 'eraser' && (
-  <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
-    <p className="text-sm text-gray-600">Click and drag to erase drawings</p>
-    <div className="space-y-2">
-      <label className="text-sm font-medium text-gray-700">Eraser Size: {penWidth * 3}px</label>
-      <input
-        type="range"
-        min="1"
-        max="10"
-        value={penWidth}
-        onChange={(e) => setPenWidth(parseInt(e.target.value))}
-        className="w-full"
-      />
-    </div>
-  </div>
-)}
+              {tool === 'eraser' && (
+                <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600">Click and drag to erase drawings</p>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Eraser Size: {penWidth * 3}px</label>
+                    <input
+                      type="range"
+                      min="1"
+                      max="10"
+                      value={penWidth}
+                      onChange={(e) => setPenWidth(parseInt(e.target.value))}
+                      className="w-full cursor-pointer"
+                    />
+                  </div>
+                </div>
+              )}
+
               {tool === 'pen' && (
                 <div className="space-y-4 p-3 bg-gray-50 rounded-lg">
                   <div className="space-y-2">
@@ -1415,7 +1533,7 @@ const ActionButtons = () => (
                       max="20"
                       value={penWidth}
                       onChange={(e) => setPenWidth(parseInt(e.target.value))}
-                      className="w-full"
+                      className="w-full cursor-pointer"
                     />
                   </div>
                 </div>
@@ -1426,9 +1544,9 @@ const ActionButtons = () => (
       </div>
     </div>
   );
-
+};
   // Enhanced eraser functionality
-  const handleEraser = (e) => {
+ const handleEraser = (e) => {
   if (tool !== 'eraser') return;
   
   const stage = e.target.getStage();
@@ -1443,35 +1561,34 @@ const ActionButtons = () => (
   
   const eraserRadius = penWidth * 3;
 
-  // Erase from elements array (drawings)
+  // Erase from elements array (finished drawings)
   setElements(prevElements => {
     return prevElements.filter(element => {
       if (element.type === 'drawing') {
         const points = element.points;
-        let shouldKeep = true;
         
+        // Check if any point in the drawing is within eraser radius
         for (let i = 0; i < points.length; i += 2) {
           const dx = points[i] - actualPos.x;
           const dy = points[i + 1] - actualPos.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
           
           if (distance < eraserRadius) {
-            shouldKeep = false;
-            break;
+            return false; // Remove this element
           }
         }
-        return shouldKeep;
       }
-      return true; // Keep non-drawing elements
+      return true; // Keep non-drawing elements and drawings not touched by eraser
     });
   });
 
-  // Erase from pen points (current drawing)
+  // Erase from pen points (currently being drawn)
   setPenPoints(prevPoints => {
     return prevPoints.map(line => {
-      const newPoints = [];
       const points = [...line.points];
+      const newPoints = [];
 
+      // Filter out points that are within eraser radius
       for (let i = 0; i < points.length; i += 2) {
         const dx = points[i] - actualPos.x;
         const dy = points[i + 1] - actualPos.y;
@@ -1486,28 +1603,26 @@ const ActionButtons = () => (
         ...line,
         points: newPoints
       };
-    }).filter(line => line.points.length > 0);
+    }).filter(line => line.points.length >= 4); // Keep lines with at least 2 points (4 coordinates)
   });
 };
 
   useEffect(() => {
-    const handleKeyboard = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-        if (e.shiftKey) {
-          handleRedo();
-        } else {
-          handleUndo();
-        }
-      } else if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
-        handleRedo();
-      } else if (e.key === 'Delete' && selectedId) {
-        handleElementDelete(selectedId);
-      }
-    };
+  const handleKeyboard = (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+      e.preventDefault();
+      handleUndo();
+    } else if (((e.ctrlKey || e.metaKey) && e.key === 'y') || ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z')) {
+      e.preventDefault();
+      handleRedo();
+    } else if (e.key === 'Delete' && selectedId) {
+      handleElementDelete(selectedId);
+    }
+  };
 
-    window.addEventListener('keydown', handleKeyboard);
-    return () => window.removeEventListener('keydown', handleKeyboard);
-  }, [selectedId]);
+  window.addEventListener('keydown', handleKeyboard);
+  return () => window.removeEventListener('keydown', handleKeyboard);
+}, [selectedId, elements, redoStack]);
 
   const handleUndo = () => {
     if (elements.length === 0) return;
@@ -1672,17 +1787,17 @@ const ActionButtons = () => (
 
           {/* Draw flow line preview */}
           {tool === 'flowLine' && flowLine && (
-            <Line
-              points={flowLine.points}
-              stroke={penColor}
-              strokeWidth={penWidth}
-              tension={0.5}
-              lineCap="round"
-              lineJoin="round"
-              dash={[10, 5]}
-              globalCompositeOperation="source-over"
-            />
-          )}
+  <Line
+    points={flowLine.points}
+    stroke={penColor}
+    strokeWidth={penWidth}
+    tension={lineStyle === 'curved' ? 0.5 : 0} // Add tension for preview
+    lineCap="round"
+    lineJoin="round"
+    dash={[10, 5]}
+    globalCompositeOperation="source-over"
+  />
+)}
         </Layer>
       </Stage>
       </div>
