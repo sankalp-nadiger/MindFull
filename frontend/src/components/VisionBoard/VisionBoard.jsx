@@ -407,20 +407,18 @@ useEffect(() => {
 </div>
 
   {/* FileUpload and AIRecommendation components */}
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <FileUpload 
-      userId={userId} 
-      fetchVisionBoards={fetchVisionBoards} 
-      darkMode={darkMode}
-      themeClasses={themeClasses}
-    />
-    <AIRecommendation 
-      userId={userId} 
-      fetchVisionBoards={fetchVisionBoards}
-      darkMode={darkMode}
-      themeClasses={themeClasses}
-    />
-  </div>
+<div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+  <FileUpload 
+    userId={userId} 
+    fetchVisionBoards={fetchVisionBoards} 
+    darkMode={darkMode}  // Changed to pass only darkMode
+  />
+  <AIRecommendation 
+    userId={userId} 
+    fetchVisionBoards={fetchVisionBoards}
+    darkMode={darkMode}  // Changed to pass only darkMode
+  />
+</div>
 
         {/* Drawing Board Section */}
  <div id="drawing-board-section" className="relative py-12">

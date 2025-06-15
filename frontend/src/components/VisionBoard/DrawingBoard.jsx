@@ -412,12 +412,40 @@ const ColorPalette = ({ onColorSelect, currentColor }) => {
   );
 };
 
-const ContextMenu = ({ selectedElement, position, onClose, onUpdateElement, onDelete }) => {
-  if (!selectedElement) return null;
+const ContextMenu = ({ elementId, elements, position, onClose, onUpdateElement, onDelete }) => {
+  // Safeguard against undefined elements
+  const elementList = elements || [];
+  const element = elementList.find(el => el.id === elementId);
+  
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (e.target.closest('.context-menu') === null) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [onClose]);
+
+  if (!element) return null;
+  
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (e.target.closest('.context-menu') === null) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [onClose]);
+
+  if (!element) return null;
 
   return (
     <div 
-      className="absolute bg-white/90 backdrop-blur-md rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50 animate-fadeIn"
+      className="context-menu absolute bg-white/90 backdrop-blur-md rounded-xl shadow-xl border border-gray-200 overflow-hidden z-[1000] animate-fadeIn"
       style={{ 
         top: `${position.y}px`, 
         left: `${position.x}px`,
@@ -427,9 +455,9 @@ const ContextMenu = ({ selectedElement, position, onClose, onUpdateElement, onDe
     >
       <div className="p-3 bg-white/70 border-b border-gray-200 flex justify-between items-center">
         <h3 className="text-sm font-semibold text-gray-700">
-          {selectedElement.type === 'text' ? 'Text Options' : 
-           selectedElement.type === 'flowLine' ? 'Line Options' : 
-           `${selectedElement.type.charAt(0).toUpperCase()}${selectedElement.type.slice(1)} Settings`}
+          {element.type === 'text' ? 'Text Options' : 
+           element.type === 'flowLine' ? 'Line Options' : 
+           `${element.type.charAt(0).toUpperCase()}${element.type.slice(1)} Settings`}
         </h3>
         <button 
           onClick={onClose}
@@ -440,41 +468,39 @@ const ContextMenu = ({ selectedElement, position, onClose, onUpdateElement, onDe
       </div>
       
       <div className="p-3 space-y-4">
-        {(selectedElement.type === 'text' || selectedElement.type === 'flowLine') && (
+        {(element.type === 'text' || element.type === 'flowLine') && (
           <>
             <div>
               <label className="text-xs font-medium text-gray-500 mb-2 block">Color</label>
               <ColorPalette
-                currentColor={selectedElement.color || '#000000'}
-                onColorSelect={(color) => onUpdateElement({ ...selectedElement, color })}
-              />
+  currentColor={element.color || '#000000'}
+  onColorSelect={(color) => onUpdateElement(element.id, { color })}
+/>
             </div>
-            
-            {selectedElement.type === 'text' && (
+
+            {element.type === 'text' && (
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-medium text-gray-500 mb-1 block">Size</label>
-                  <input
-                    type="number"
-                    value={selectedElement.fontSize || 24}
-                    onChange={(e) => onUpdateElement({ 
-                      ...selectedElement, 
-                      fontSize: parseInt(e.target.value) 
-                    })}
-                    className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 outline-none transition-all"
-                    min="8"
-                    max="72"
-                  />
+<input
+  type="number"
+  value={element.fontSize || 24}
+  onChange={(e) => onUpdateElement(element.id, { 
+    fontSize: parseInt(e.target.value) 
+  })}
+  className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 outline-none transition-all"
+  min="8"
+  max="72"
+/>
                 </div>
                 
                 <div>
                   <label className="text-xs font-medium text-gray-500 mb-1 block">Font</label>
                   <select
-                    value={selectedElement.fontFamily || 'Arial'}
-                    onChange={(e) => onUpdateElement({ 
-                      ...selectedElement, 
-                      fontFamily: e.target.value 
-                    })}
+                    value={element.fontFamily || 'Arial'}
+                    onChange={(e) => onUpdateElement(element.id, { 
+  fontFamily: e.target.value 
+})}
                     className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 outline-none transition-all"
                   >
                     <option value="Arial">Arial</option>
@@ -486,22 +512,21 @@ const ContextMenu = ({ selectedElement, position, onClose, onUpdateElement, onDe
                 </div>
               </div>
             )}
-            
-            {selectedElement.type === 'flowLine' && (
+
+            {element.type === 'flowLine' && (
               <div>
                 <div className="flex justify-between items-center mb-1">
                   <label className="text-xs font-medium text-gray-500">Width</label>
-                  <span className="text-xs text-gray-500">{selectedElement.strokeWidth || 2}px</span>
+                  <span className="text-xs text-gray-500">{element.strokeWidth || 2}px</span>
                 </div>
                 <input
                   type="range"
                   min="1"
                   max="10"
-                  value={selectedElement.strokeWidth || 2}
-                  onChange={(e) => onUpdateElement({
-                    ...selectedElement,
-                    strokeWidth: parseInt(e.target.value)
-                  })}
+                  value={element.strokeWidth || 2}
+                  onChange={(e) => onUpdateElement(element.id, {
+  strokeWidth: parseInt(e.target.value)
+})}
                   className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-500"
                 />
               </div>
@@ -512,7 +537,7 @@ const ContextMenu = ({ selectedElement, position, onClose, onUpdateElement, onDe
         <div className="pt-2">
           <button
             onClick={() => {
-              onDelete(selectedElement.id);
+              onDelete(element.id);
               onClose();
             }}
             className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
@@ -677,13 +702,13 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
   return (
     <Group>
       <KonvaText
-        ref={textRef}
-        text={text.text || text.content}
-        x={text.x}
-        y={text.y}
-        fontSize={text.fontSize || 24}
-        fontFamily={text.fontFamily || 'Arial'}
-        fill={text.color || text.fill || '#000000'}
+  ref={textRef}
+  text={text.text || text.content}
+  x={text.x}
+  y={text.y}
+  fontSize={text.fontSize || 24}
+  fontFamily={text.fontFamily || 'Arial'}
+  fill={text.color || text.fill || '#000000'}
         draggable={false} // Always false, we handle dragging manually
         rotation={text.rotation || 0}
         fontStyle={text.fontStyle || 'normal'}
@@ -765,9 +790,9 @@ const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
     isItalic: false
 });
   const [dimensions, setDimensions] = useState({
-    width: window.innerWidth - 48,
-    height: window.innerHeight - 160
-  });
+  width: window.innerWidth,
+  height: window.innerHeight
+});
   const [canvasBackground, setCanvasBackground] = useState("#FFFFFF");
   const containerRef = useRef();
   const stageRef = useRef();
@@ -777,12 +802,39 @@ const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
 const [penPoints, setPenPoints] = useState([]);
 const [flowLine, setFlowLine] = useState(null);
-const [contextMenu, setContextMenu] = useState({ show: false, position: { x: 0, y: 0 }, element: null });
+// Replace the existing contextMenu state
+const [contextMenu, setContextMenu] = useState({
+  show: false,
+  position: { x: 0, y: 0 },
+  elementId: null  // Changed from 'element' to 'elementId'
+});
 const [isToolboxMinimized, setIsToolboxMinimized] = useState(false);
 const [lineStyle, setLineStyle] = useState('straight');
 const [isPlacingElement, setIsPlacingElement] = useState(false);
 const [elementToPlace, setElementToPlace] = useState(null);
 const [isErasing, setIsErasing] = useState(false);
+ const addElementWithHistory = (element) => {
+    setUndoStack(prev => [...prev, elements]);
+    setElements(prev => [...prev, element]);
+    setRedoStack([]);
+    setSelectedId(element.id);
+  };
+  // Add this function inside DrawingBoard
+const updateElementWithHistory = (action, element, newProps = null) => {
+  setUndoStack(prev => [...prev, { action, element }]);
+  
+  if (action === 'create') {
+    setElements(prev => [...prev, element]);
+    setSelectedId(element.id);
+  } 
+  else if (action === 'update') {
+    setElements(prev => 
+      prev.map(el => el.id === element.id ? { ...el, ...newProps } : el)
+    );
+  }
+  
+  setRedoStack([]);
+};
   // Handle canvas resize with fixed width
 useEffect(() => {
   const handleResize = () => {
@@ -902,7 +954,7 @@ const handleImageUpload = (e) => {
           originalHeight: img.height,
           rotation: 0
         };
-        setElements(prevElements => [...prevElements, imageElement]);
+       addElementWithHistory(imageElement);
         setSelectedId(imageElement.id);
         // Force tool to select for immediate interaction
         setTool('select');
@@ -939,24 +991,43 @@ useEffect(() => {
   };
 }, [isDraggingToolbar]);
 
-  // Render element handlers
- const handleElementUpdate = (id, newProps) => {
-  setElements(prevElements => 
-    prevElements.map((el) => 
-      el.id === id ? { ...el, ...newProps } : el
-    )
-  );
+  // Replace the existing handleElementUpdate with this
+const handleElementUpdate = (id, newProps) => {
+  const element = elements.find(el => el.id === id);
+  if (element) {
+    // Save to undo stack
+    setUndoStack(prev => [...prev, {
+      action: 'update',
+      element: {...element},  // Original element before update
+      updatedElement: {...element, ...newProps}  // Element after update
+    }]);
+    
+    // Clear redo stack
+    setRedoStack([]);
+    
+    // Update the element
+    setElements(prev => 
+      prev.map(el => el.id === id ? {...el, ...newProps} : el)
+    );
+  }
 };
 
  const handleElementSelect = (id) => {
   setSelectedId(id);
   setContextMenu({ ...contextMenu, show: false });
 };
-  const handleElementDelete = (id) => {
-    updateElementsWithHistory(elements.filter(el => el.id !== id));
-    setContextMenu({ ...contextMenu, show: false });
+// Update handleElementDelete
+const handleElementDelete = (id) => {
+  const elementToDelete = elements.find(el => el.id === id);
+  
+  if (elementToDelete) {
+    updateElementWithHistory('delete', elementToDelete);
+    setElements(prev => prev.filter(el => el.id !== id));
     setSelectedId(null);
-  };
+  }
+  
+  setContextMenu({ ...contextMenu, show: false });
+};
 
   // Mouse event handlers
 const handleMouseDown = (e) => {
@@ -1015,28 +1086,29 @@ const handleMouseDown = (e) => {
       handleEraser(e);
       break;
 
-    case 'text':
-      if (text.content.trim()) {
-        const newText = {
-          id: Date.now().toString(),
-          type: 'text',
-          x: actualPos.x,
-          y: actualPos.y,
-          text: text.content,
-          content: text.content,
-          fontSize: text.fontSize,
-          fontFamily: text.fontFamily,
-          fill: text.color,
-          color: text.color,
-          fontStyle: `${text.isBold ? 'bold' : ''} ${text.isItalic ? 'italic' : ''}`.trim() || 'normal',
-          draggable: true
-        };
-        setElements(prevElements => [...prevElements, newText]);
-        setSelectedId(newText.id);
-        setText({ ...text, content: '' });
-        setTool('select');
-      }
-      break;
+    // Update text creation to use history
+case 'text':
+  if (text.content.trim()) {
+    const newText = {
+      id: Date.now().toString(),
+      type: 'text',
+      x: actualPos.x,
+      y: actualPos.y,
+      text: text.content,
+      content: text.content,
+      fontSize: text.fontSize,
+      fontFamily: text.fontFamily,
+      fill: text.color,
+      color: text.color,
+      fontStyle: `${text.isBold ? 'bold' : ''} ${text.isItalic ? 'italic' : ''}`.trim() || 'normal',
+      draggable: true
+    };
+    // Use addElementWithHistory instead of setElements
+    addElementWithHistory(newText);
+    setText({ ...text, content: '' });
+    setTool('select');
+  }
+  break;
 
    case 'flowLine':
   isDrawing.current = true;
@@ -1054,30 +1126,32 @@ const handleMouseDown = (e) => {
 };
 
 const handleMouseUp = () => {
-  if (tool === 'pen' && isDrawing.current && penPoints.length > 0) {
-    const lastLine = penPoints[penPoints.length - 1];
-    if (lastLine && lastLine.points.length >= 4) { // At least 2 points (4 coordinates)
-      const newElement = {
-        id: Date.now().toString(),
-        type: 'drawing',
-        points: lastLine.points,
-        color: lastLine.color,
-        strokeWidth: lastLine.width
-      };
-      setElements(prev => [...prev, newElement]);
-      setPenPoints([]); // Clear pen points after adding to elements
-    }
+  // In handleMouseUp for pen tool
+if (tool === 'pen' && isDrawing.current && penPoints.length > 0) {
+  const lastLine = penPoints[penPoints.length - 1];
+  if (lastLine && lastLine.points.length >= 4) {
+    const newElement = {
+      id: Date.now().toString(),
+      type: 'drawing',  // Make sure this matches the type we check for eraser
+      points: lastLine.points,
+      color: lastLine.color,
+      strokeWidth: lastLine.width
+    };
+    addElementWithHistory(newElement);
+    setPenPoints([]);
   }
+}
   
-  if (tool === 'flowLine' && flowLine && isDrawing.current) {
-    const [x1, y1, x2, y2] = flowLine.points;
-    const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-    if (distance > 5) {
-      setElements(prevElements => [...prevElements, { ...flowLine }]);
-      setSelectedId(flowLine.id);
-    }
-    setFlowLine(null);
+  // In handleMouseUp, fix flow line creation
+if (tool === 'flowLine' && flowLine && isDrawing.current) {
+  const [x1, y1, x2, y2] = flowLine.points;
+  const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+  if (distance > 5) {
+    addElementWithHistory({ ...flowLine });
+    setSelectedId(flowLine.id);
   }
+  setFlowLine(null);
+}
   
   isDrawing.current = false;
   setIsErasing(false);
@@ -1388,7 +1462,7 @@ const ToolBar = () => {
                               fontStyle: `${text.isBold ? 'bold' : ''} ${text.isItalic ? 'italic' : ''}`.trim() || 'normal',
                               draggable: true
                             };
-                            setElements(prevElements => [...prevElements, newText]);
+                            addElementWithHistory(newText);
                             setSelectedId(newText.id);
                             setText({ ...text, content: '' });
                           }
@@ -1550,7 +1624,7 @@ const ToolBar = () => {
   );
 };
   // Enhanced eraser functionality
- const handleEraser = (e) => {
+const handleEraser = (e) => {
   if (tool !== 'eraser') return;
   
   const stage = e.target.getStage();
@@ -1565,9 +1639,12 @@ const ToolBar = () => {
   
   const eraserRadius = penWidth * 3;
 
+  // Create a copy of elements before modification for history
+  const prevElements = [...elements];
+  
   // Erase from elements array (finished drawings)
   setElements(prevElements => {
-    return prevElements.filter(element => {
+    const newElements = prevElements.filter(element => {
       if (element.type === 'drawing') {
         const points = element.points;
         
@@ -1584,11 +1661,27 @@ const ToolBar = () => {
       }
       return true; // Keep non-drawing elements and drawings not touched by eraser
     });
+    
+    // If any elements were removed, save to undo stack
+    if (newElements.length < prevElements.length) {
+      const removedElements = prevElements.filter(el => !newElements.includes(el));
+      setUndoStack(prev => [...prev, {
+        action: 'erase',
+        elements: prevElements,
+        removedElements
+      }]);
+      setRedoStack([]);
+    }
+    
+    return newElements;
   });
 
+  // Create a copy of pen points before modification for history
+  const prevPenPoints = [...penPoints];
+  
   // Erase from pen points (currently being drawn)
   setPenPoints(prevPoints => {
-    return prevPoints.map(line => {
+    const newPoints = prevPoints.map(line => {
       const points = [...line.points];
       const newPoints = [];
 
@@ -1608,40 +1701,114 @@ const ToolBar = () => {
         points: newPoints
       };
     }).filter(line => line.points.length >= 4); // Keep lines with at least 2 points (4 coordinates)
+    
+    // If any points were removed, save to undo stack
+    if (JSON.stringify(newPoints) !== JSON.stringify(prevPoints)) {
+      setUndoStack(prev => [...prev, {
+        action: 'erasePenPoints',
+        penPoints: prevPoints,
+        newPenPoints: newPoints
+      }]);
+      setRedoStack([]);
+    }
+    
+    return newPoints;
   });
 };
 
-  useEffect(() => {
+// Update the keyboard handler
+useEffect(() => {
   const handleKeyboard = (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
       e.preventDefault();
       handleUndo();
-    } else if (((e.ctrlKey || e.metaKey) && e.key === 'y') || ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z')) {
+    } 
+    else if (((e.ctrlKey || e.metaKey) && e.key === 'y') || 
+             ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'Z')) {
       e.preventDefault();
       handleRedo();
-    } else if (e.key === 'Delete' && selectedId) {
+    } 
+    else if (e.key === 'Delete' && selectedId) {
       handleElementDelete(selectedId);
     }
   };
 
   window.addEventListener('keydown', handleKeyboard);
   return () => window.removeEventListener('keydown', handleKeyboard);
-}, [selectedId, elements, redoStack]);
+}, [selectedId, elements, undoStack, redoStack]);
 
-  const handleUndo = () => {
-    if (elements.length === 0) return;
-    const lastElement = elements[elements.length - 1];
-    setRedoStack(prev => [...prev, lastElement]);
-    setElements(prev => prev.slice(0, -1));
+ // Update handleUndo
+const handleUndo = () => {
+  if (undoStack.length === 0) return;
+  
+  const lastAction = undoStack[undoStack.length - 1];
+  
+  setRedoStack(prev => [...prev, lastAction]);
+  
+  if (lastAction.action === 'create') {
+    // Remove created element
+    setElements(prev => prev.filter(el => el.id !== lastAction.element.id));
     setSelectedId(null);
-  };
+  } 
+  else if (lastAction.action === 'update') {
+    // Restore previous version of element
+    setElements(prev => 
+      prev.map(el => el.id === lastAction.element.id ? lastAction.element : el)
+    );
+    setSelectedId(lastAction.element.id);
+  } 
+  else if (lastAction.action === 'delete') {
+    // Restore deleted element
+    setElements(prev => [...prev, lastAction.element]);
+    setSelectedId(lastAction.element.id);
+  }
+  else if (lastAction.action === 'erase') {
+    // Restore erased elements
+    setElements(lastAction.elements);
+  }
+  else if (lastAction.action === 'erasePenPoints') {
+    // Restore pen points
+    setPenPoints(lastAction.penPoints);
+  }
+  
+  setUndoStack(prev => prev.slice(0, -1));
+};
 
-  const handleRedo = () => {
-    if (redoStack.length === 0) return;
-    const elementToRedo = redoStack[redoStack.length - 1];
-    setElements(prev => [...prev, elementToRedo]);
-    setRedoStack(prev => prev.slice(0, -1));
-  };
+const handleRedo = () => {
+  if (redoStack.length === 0) return;
+  
+  const nextAction = redoStack[redoStack.length - 1];
+  
+  setUndoStack(prev => [...prev, nextAction]);
+  
+  if (nextAction.action === 'create') {
+    // Re-create element
+    setElements(prev => [...prev, nextAction.element]);
+    setSelectedId(nextAction.element.id);
+  } 
+  else if (nextAction.action === 'update') {
+    // Re-apply update
+    setElements(prev => 
+      prev.map(el => el.id === nextAction.updatedElement.id ? nextAction.updatedElement : el)
+    );
+    setSelectedId(nextAction.updatedElement.id);
+  } 
+  else if (nextAction.action === 'delete') {
+    // Re-delete element
+    setElements(prev => prev.filter(el => el.id !== nextAction.element.id));
+    setSelectedId(null);
+  }
+  else if (nextAction.action === 'erase') {
+    // Re-apply eraser action
+    setElements(nextAction.newElements);
+  }
+  else if (nextAction.action === 'erasePenPoints') {
+    // Re-apply pen points erasure
+    setPenPoints(nextAction.newPenPoints);
+  }
+  
+  setRedoStack(prev => prev.slice(0, -1));
+};
 
   // Update elements with history tracking
   const updateElementsWithHistory = (newElements) => {
@@ -1653,6 +1820,21 @@ const ToolBar = () => {
   return (
     <div className="relative ">
       <div ref={containerRef}>
+{contextMenu.show && (
+  <ContextMenu
+    elementId={contextMenu.elementId}
+    elements={elements}
+    position={contextMenu.position}
+    // Update the onClose handler
+onClose={() => setContextMenu({
+  show: false, 
+  position: { x: 0, y: 0 }, 
+  elementId: null  // Changed from 'element' to 'elementId'
+})}
+    onUpdateElement={handleElementUpdate}
+    onDelete={handleElementDelete}
+  />
+)}
     <Stage
   ref={stageRef}
   width={dimensions.width}
@@ -1666,20 +1848,37 @@ const ToolBar = () => {
   x={stagePos.x}
   y={stagePos.y}
   listening={true}
-  onContextMenu={(e) => {
-    e.evt.preventDefault();
-    if (selectedId) {
-      const selectedElement = elements.find(el => el.id === selectedId);
-      if (selectedElement) {
-        const pos = e.target.getStage().getPointerPosition();
-        setContextMenu({
-          show: true,
-          position: { x: pos.x, y: pos.y },
-          element: selectedElement
-        });
-      }
-    }
-  }}
+ // Update the onContextMenu handler
+onContextMenu={(e) => {
+  e.evt.preventDefault();
+  const stage = e.target.getStage();
+  const pos = stage.getPointerPosition();
+  
+  if (selectedId) {
+    const containerRect = stage.container().getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    // Calculate available space
+    const rightSpace = viewportWidth - (containerRect.left + pos.x);
+    const bottomSpace = viewportHeight - (containerRect.top + pos.y);
+    
+    // Adjust position if needed
+    let adjustedX = pos.x + containerRect.left;
+    let adjustedY = pos.y + containerRect.top;
+    
+    // Ensure menu stays within viewport
+    if (rightSpace < 250) adjustedX -= 250;
+    if (bottomSpace < 300) adjustedY -= 300;
+    
+    // Corrected state update
+    setContextMenu({
+      show: true,
+      position: { x: adjustedX, y: adjustedY },
+      elementId: selectedId  // Store ID instead of full element
+    });
+  }
+}}
 >
         <Layer>
       {/* Fixed Background Rectangle */}
@@ -1739,35 +1938,27 @@ const ToolBar = () => {
       );
     case 'drawing':
       return (
-        <Line
-          key={element.id}
-          points={element.points}
-          stroke={element.color}
-          strokeWidth={element.strokeWidth}
-          tension={0.5}
-          lineCap="round"
-          lineJoin="round"
-          hitStrokeWidth={Math.max(20, element.strokeWidth * 4)}
-          onClick={(e) => {
-            // Prevent event bubbling
-            e.cancelBubble = true;
-            if (e.evt) {
-              e.evt.stopPropagation();
-            }
-            // Always select when clicked, regardless of tool
-            handleElementSelect(element.id);
-          }}
-          onTap={(e) => {
-            // Prevent event bubbling
-            e.cancelBubble = true;
-            if (e.evt) {
-              e.evt.stopPropagation();
-            }
-            // Always select when clicked, regardless of tool
-            handleElementSelect(element.id);
-          }}
-          listening={true}
-        />
+       <Line
+        key={element.id}
+        points={element.points}
+        stroke={element.color}
+        strokeWidth={element.strokeWidth}
+        tension={0.5}
+        lineCap="round"
+        lineJoin="round"
+        hitStrokeWidth={Math.max(20, element.strokeWidth * 4)}
+        onClick={(e) => {
+          e.cancelBubble = true;
+          if (e.evt) e.evt.stopPropagation();
+          handleElementSelect(element.id);
+        }}
+        onTap={(e) => {
+          e.cancelBubble = true;
+          if (e.evt) e.evt.stopPropagation();
+          handleElementSelect(element.id);
+        }}
+        listening={true}
+      />
       );
     default:
       return null;
@@ -1777,17 +1968,17 @@ const ToolBar = () => {
 
           {/* Draw pen lines */}
           {penPoints.map((line, index) => (
-            <Line
-              key={`pen-line-${index}`}
-              points={line.points.flat()}
-              stroke={line.color}
-              strokeWidth={line.width}
-              tension={0.5}
-              lineCap="round"
-              lineJoin="round"
-              globalCompositeOperation="source-over"
-            />
-          ))}
+  <Line
+    key={`pen-line-${index}`}
+    points={line.points.flat()}  // Make sure this is correctly formatted
+    stroke={line.color}
+    strokeWidth={line.width}
+    tension={0.5}
+    lineCap="round"
+    lineJoin="round"
+    globalCompositeOperation="source-over"
+  />
+))}
 
           {/* Draw flow line preview */}
           {tool === 'flowLine' && flowLine && (
