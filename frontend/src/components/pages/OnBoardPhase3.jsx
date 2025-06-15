@@ -38,13 +38,26 @@ const OnboardPhase3 = () => {
       return;
     }
     
-    // The key change is here - make sure each issue has illnessType (not issueName)
     const diagnosedIssues = Object.entries(responses)
       .filter(([_, score]) => score > 0)
-      .map(([key, score]) => ({
-        illnessType: key.charAt(0).toUpperCase() + key.slice(1), // This matches what backend expects
-        severity: determineSeverity(score)
-      }));
+      .map(([key, score]) => {
+        // Map the frontend keys to the exact backend expected values
+        const issueNameMap = {
+          'anxiety': 'Anxiety',
+          'depression': 'Depression',
+          'bipolar': 'Bipolar',
+          'ocd': 'Ocd',
+          'ptsd': 'PTSD', // Fix: Use uppercase PTSD
+          'substanceUse': 'Substance Use',
+          'adhd': 'ADHD',
+          'eatingDisorders': 'Eating Disorders'
+        };
+        
+        return {
+          illnessType: issueNameMap[key] || key.charAt(0).toUpperCase() + key.slice(1),
+          severity: determineSeverity(score)
+        };
+      });
     
     try {
       const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/users/add-issues`, {
@@ -68,10 +81,10 @@ const OnboardPhase3 = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-black via-blue-950 to-black text-white px-6 py-10">
-      <h2 className="text-3xl font-semibold text-white mb-6">Let's know you more!!</h2>
+    <div className="flex flex-col items-center justify-center min-h-screen px-6 py-10 text-white bg-gradient-to-b from-black via-blue-950 to-black">
+      <h2 className="mb-6 text-3xl font-semibold text-white">Let's know you more!!</h2>
 
-      <form onSubmit={handleSubmit} className="w-full max-w-2xl bg-gray-800 p-6 rounded-lg shadow-lg">
+      <form onSubmit={handleSubmit} className="w-full max-w-2xl p-6 bg-gray-800 rounded-lg shadow-lg">
         {[
           {
             name: "anxiety",
@@ -100,7 +113,7 @@ const OnboardPhase3 = () => {
           },
         ].map(({ name, question }) => (
           <div key={name} className="mb-6">
-            <label className="block text-white font-semibold mb-2">{question}</label>
+            <label className="block mb-2 font-semibold text-white">{question}</label>
             {["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"].map((label, index) => (
               <div key={`${name}-${index}`} className="flex items-center mb-2">
                 <input
@@ -108,7 +121,7 @@ const OnboardPhase3 = () => {
                   name={name}
                   value={index}
                   onChange={handleChange}
-                  className="form-radio text-indigo-500 focus:ring-indigo-400"
+                  className="text-indigo-500 form-radio focus:ring-indigo-400"
                 />
                 <span className="ml-2 text-gray-400">{label}</span>
               </div>
@@ -117,7 +130,7 @@ const OnboardPhase3 = () => {
         ))}
 
         <div className="text-center">
-          <button type="submit" className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all">
+          <button type="submit" className="px-6 py-2 text-white transition-all bg-green-500 rounded-lg hover:bg-green-600">
             Submit
           </button>
         </div>

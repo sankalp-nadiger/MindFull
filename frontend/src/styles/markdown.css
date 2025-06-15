@@ -1,0 +1,167 @@
+/* Markdown Content Styling */
+.markdown-content {
+  line-height: 1.6;
+}
+
+.markdown-content.dark {
+  color: #e2e8f0;
+}
+
+.markdown-content.light {
+  color: #374151;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.markdown-content h1 {
+  font-size: 1.5rem;
+  color: #60a5fa;
+}
+
+.markdown-content h2 {
+  font-size: 1.25rem;
+  color: #a78bfa;
+}
+
+.markdown-content h3 {
+  font-size: 1.125rem;
+  color: #34d399;
+}
+
+.markdown-content p {
+  margin-bottom: 1rem;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+.markdown-content li {
+  margin-bottom: 0.25rem;
+  position: relative;
+}
+
+.markdown-content li::before {
+  content: "•";
+  color: #60a5fa;
+  position: absolute;
+  left: -1rem;
+  font-weight: bold;
+}
+
+.markdown-content ol li::before {
+  content: counter(list-item);
+  color: #a78bfa;
+  font-weight: bold;
+}
+
+.markdown-content strong {
+  font-weight: 600;
+  color: #60a5fa;
+}
+
+.markdown-content em {
+  font-style: italic;
+  color: #f59e0b;
+}
+
+.markdown-content code {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.875rem;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  background-color: rgba(71, 85, 105, 0.5);
+  color: #fbbf24;
+}
+
+.markdown-content pre {
+  background-color: #1e293b;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+  border-left: 4px solid #60a5fa;
+}
+
+.markdown-content pre code {
+  background-color: transparent;
+  padding: 0;
+  color: #e2e8f0;
+}
+
+.markdown-content blockquote {
+  border-left: 4px solid #a78bfa;
+  padding-left: 1rem;
+  margin: 1rem 0;
+  font-style: italic;
+  color: #94a3b8;
+}
+
+.markdown-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+.markdown-content th,
+.markdown-content td {
+  border: 1px solid #475569;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.markdown-content th {
+  background-color: #334155;
+  font-weight: 600;
+}
+
+.markdown-content a {
+  color: #60a5fa;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.markdown-content a:hover {
+  color: #93c5fd;
+}
+
+/* Light mode adjustments */
+.markdown-content.light code {
+  background-color: rgba(229, 231, 235, 0.8);
+  color: #7c3aed;
+}
+
+.markdown-content.light pre {
+  background-color: #f8fafc;
+  border-left: 4px solid #3b82f6;
+}
+
+.markdown-content.light pre code {
+  color: #374151;
+}
+
+.markdown-content.light blockquote {
+  border-left: 4px solid #8b5cf6;
+  color: #6b7280;
+}
+
+.markdown-content.light th {
+  background-color: #f1f5f9;
+}
+
+.markdown-content.light th,
+.markdown-content.light td {
+  border: 1px solid #d1d5db;
+}

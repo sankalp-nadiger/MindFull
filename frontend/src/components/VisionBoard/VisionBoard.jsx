@@ -12,6 +12,7 @@ import {
   ChevronDown
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import FloatingChatButton from "../ChatBot/FloatingChatButton";
 
 const VisionBoard = () => {
   const [isDrawingBoardVisible, setIsDrawingBoardVisible] = useState(false);
@@ -179,7 +180,19 @@ useEffect(() => {
   // Theme modal component
   if (showThemeModal) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col items-center justify-center p-4">
+        {/* Branding */}
+        <div className="mb-8 animate-fade-in">
+          <a className="flex title-font font-medium items-center text-gray-900 group transition-all duration-300 hover:scale-105 flex-shrink-0" href="/MainPage">
+            <div className="relative">
+              <img src="plant.png" alt="Logo" className="h-12 w-12 transition-transform duration-300 group-hover:rotate-12" />
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-green-400/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm"></div>
+            </div>
+            <span className="ml-3 text-2xl bg-gradient-to-r from-blue-400 via-teal-400 to-green-400 bg-clip-text text-transparent font-bold tracking-wide">
+              MindFull
+            </span>
+          </a>
+        </div>
         <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl max-w-md w-full p-8 animate-pulse">
           <div className="text-center mb-8">
             <div className="w-20 h-20 bg-gradient-to-br from-indigo-900 to-purple-900 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -248,10 +261,10 @@ useEffect(() => {
     {/* Back button - Left */}
     <Link 
   to="/MainPage"
-  className={`flex items-center justify-center gap-2 ${themeClasses.text} hover:${themeClasses.textSecondary} transition-colors`}
+  className={`flex items-center justify-center gap-1 sm:gap-2 ${themeClasses.text} hover:${themeClasses.textSecondary} transition-colors`}
 >
   <ArrowLeft className="w-5 h-5" />
-  <span className="font-medium">Back to Dashboard</span>
+  <span className="hidden sm:block text-sm font-medium sm:text-base">Back to Dashboard</span>
 </Link>
     
     {/* Brand name - Absolute Center */}
@@ -743,10 +756,12 @@ useEffect(() => {
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
                 <span className={themeClasses.text}>Saving your vision board...</span>
               </div>
-            </div>
-          )}
+            </div>          )}
         </div>
       </div>
+      
+      {/* Floating Chat Button */}
+      <FloatingChatButton />
     </DragDropContext>
   );
 };

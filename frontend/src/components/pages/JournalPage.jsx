@@ -252,7 +252,19 @@ const JournalApp = () => {
 
  if (showThemeModal) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col items-center justify-center p-4">
+        {/* Branding */}
+        <div className="mb-8 animate-fade-in">
+          <a className="flex title-font font-medium items-center text-gray-900 group transition-all duration-300 hover:scale-105 flex-shrink-0" href="/MainPage">
+            <div className="relative">
+              <img src="plant.png" alt="Logo" className="h-12 w-12 transition-transform duration-300 group-hover:rotate-12" />
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-green-400/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm"></div>
+            </div>
+            <span className="ml-3 text-2xl bg-gradient-to-r from-blue-400 via-teal-400 to-green-400 bg-clip-text text-transparent font-bold tracking-wide">
+              MindFull
+            </span>
+          </a>
+        </div>
         <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl max-w-md w-full p-8 animate-fade-in">
           <div className="text-center mb-8">
             <div className="w-20 h-20 bg-gradient-to-br from-indigo-900 to-purple-900 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -301,93 +313,141 @@ const JournalApp = () => {
         : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50'
     }`}>
       {/* Header */}
+
       <header className={`backdrop-blur-sm border-b sticky top-0 z-40 transition-colors duration-300 ${
         darkMode 
           ? 'bg-slate-900/80 border-slate-700' 
           : 'bg-white/80 border-slate-200'
       }`}>
         <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-          <Link 
-  to="/MainPage"
-  className="flex items-center justify-center gap-2 text-gray-900 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
->
-  <ArrowLeft className="w-5 h-5" />
-  <span className="font-medium">Back to Dashboard</span>
-</Link>
-            
-            <div className="flex items-center gap-3">
-              <Heart className="w-6 h-6 text-rose-500" />
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+          {/* Top row with back button, centered title, and theme toggle */}
+          <div className="flex items-center justify-between mb-4">
+            {/* Left: Back Button */}
+            <Link 
+              to="/MainPage"
+              className="flex items-center justify-center gap-1 sm:gap-2 text-gray-900 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="hidden sm:block text-sm font-medium sm:text-base">Back to Dashboard</span>
+            </Link>
+
+            {/* Center: Title */}
+            <div className="absolute left-1/2 transform -translate-x-1/2">
+              <h1 className={`hidden md:block text-3xl font-bold ${
+                darkMode ? 'text-white' : 'text-slate-800'
+              }`}>
                 My Wellness Journal
+              </h1>
+              <h1 className={`md:hidden text-2xl font-bold ${
+                darkMode ? 'text-white' : 'text-slate-800'
+              }`}>
+                Journal
               </h1>
             </div>
 
-            <div className="flex items-center gap-3">
-              <button
-                onClick={toggleDarkMode}
-                className={`p-2 rounded-full transition-all duration-200 ${
+            {/* Right: Theme Toggle */}
+            <button
+              onClick={toggleDarkMode}
+              className={`p-2 rounded-full transition-all duration-200 ${
+                darkMode 
+                  ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' 
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
+          </div>
+              
+          {/* Desktop/Laptop View - Your original buttons */}
+          <div className="hidden md:flex items-center justify-center">
+            <button
+              onClick={() => setCurrentView('view')}
+              className={`flex items-center gap-2 px-5 py-2 rounded-l-full transition-all duration-200 min-w-[140px] justify-center ${
+                currentView === 'view' 
+                  ? darkMode 
+                    ? 'bg-indigo-600 text-white shadow-sm' 
+                    : 'bg-indigo-100 text-indigo-700 shadow-sm'
+                  : darkMode 
+                    ? 'text-slate-400 hover:bg-slate-800' 
+                    : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <BookOpen className="w-4 h-4" />
+              <span className="font-medium">View Entries</span>
+            </button>
+            <button
+              onClick={() => setCurrentView('create')}
+              className={`relative flex items-center gap-2 px-5 py-2 rounded-r-full transition-all duration-200 min-w-[140px] justify-center overflow-visible ${
+                darkMode 
+                  ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg' 
+                  : 'bg-gradient-to-r from-indigo-400 to-blue-400 text-white shadow-sm hover:from-indigo-500 hover:to-blue-500'
+              }`}
+            >
+              {/* First radiating layer */}
+              <div className={`absolute inset-0 rounded-r-full animate-ping ${
+                darkMode 
+                  ? 'bg-gradient-to-r from-teal-500/30 to-cyan-500/30 opacity-40' 
+                  : 'bg-gradient-to-r from-red-400 to-rose-400 opacity-30'
+              }`}></div>
+              {/* Second radiating layer */}
+              <div className={`absolute -inset-1 rounded-r-full animate-pulse ${
+                darkMode 
+                  ? 'bg-gradient-to-r from-teal-400/20 to-cyan-400/20 opacity-30' 
+                  : 'bg-gradient-to-r from-red-300 to-rose-300 opacity-25'
+              }`}></div>
+              {/* Outer radiating layer */}
+              <div 
+                className={`absolute -inset-2 rounded-r-full animate-pulse ${
                   darkMode 
-                    ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' 
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ? 'bg-gradient-to-r from-teal-300/10 to-cyan-300/10 opacity-20' 
+                    : 'bg-gradient-to-r from-red-200 to-rose-200 opacity-20'
+                }`}
+                style={{
+                  animationDelay: '0.5s',
+                  animationDuration: darkMode ? '4s' : '3s'
+                }}
+              ></div>
+              
+              <Plus className="w-4 h-4 relative z-10 text-white" />
+              <span className="font-medium relative z-10 text-white">New Entry</span>
+            </button>
+          </div>
+
+          {/* Mobile/Tablet View - Tab switcher on next row, centered */}
+          <div className="md:hidden flex justify-center">
+            <div className={`flex rounded-lg p-1 max-w-sm w-full ${
+              darkMode ? 'bg-slate-800' : 'bg-slate-100'
+            }`}>
+              <button
+                onClick={() => setCurrentView('view')}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md transition-all duration-200 ${
+                  currentView === 'view'
+                    ? darkMode
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'bg-white text-indigo-600 shadow-sm'
+                    : darkMode
+                      ? 'text-slate-400 hover:text-slate-300'
+                      : 'text-slate-600 hover:text-slate-800'
                 }`}
               >
-                {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                <BookOpen className="w-4 h-4" />
+                <span className="font-medium text-sm">View</span>
               </button>
-              
-              <div className="flex items-center">
-  <button
-    onClick={() => setCurrentView('view')}
-    className={`flex items-center gap-2 px-5 py-2 rounded-l-full transition-all duration-200 min-w-[140px] justify-center ${
-      currentView === 'view' 
-        ? darkMode 
-          ? 'bg-indigo-600 text-white shadow-sm' 
-          : 'bg-indigo-100 text-indigo-700 shadow-sm'
-        : darkMode 
-          ? 'text-slate-400 hover:bg-slate-800' 
-          : 'text-slate-600 hover:bg-slate-100'
-    }`}
-  >
-    <BookOpen className="w-4 h-4" />
-    <span className="font-medium">View Entries</span>
-  </button>
-  <button
-  onClick={() => setCurrentView('create')}
-  className={`relative flex items-center gap-2 px-5 py-2 rounded-r-full transition-all duration-200 min-w-[140px] justify-center overflow-visible ${
-    darkMode 
-      ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg' 
-      : 'bg-gradient-to-r from-indigo-400 to-blue-400 text-white shadow-sm hover:from-indigo-500 hover:to-blue-500'
-  }`}
->
-  {/* First radiating layer */}
-  <div className={`absolute inset-0 rounded-r-full animate-ping ${
-    darkMode 
-      ? 'bg-gradient-to-r from-teal-500/30 to-cyan-500/30 opacity-40' 
-      : 'bg-gradient-to-r from-red-400 to-rose-400 opacity-30'
-  }`}></div>
-  {/* Second radiating layer */}
-  <div className={`absolute -inset-1 rounded-r-full animate-pulse ${
-    darkMode 
-      ? 'bg-gradient-to-r from-teal-400/20 to-cyan-400/20 opacity-30' 
-      : 'bg-gradient-to-r from-red-300 to-rose-300 opacity-25'
-  }`}></div>
-  {/* Outer radiating layer */}
-  <div 
-    className={`absolute -inset-2 rounded-r-full animate-pulse ${
-      darkMode 
-        ? 'bg-gradient-to-r from-teal-300/10 to-cyan-300/10 opacity-20' 
-        : 'bg-gradient-to-r from-red-200 to-rose-200 opacity-20'
-    }`}
-    style={{
-      animationDelay: '0.5s',
-      animationDuration: darkMode ? '4s' : '3s'
-    }}
-  ></div>
-  
-  <Plus className="w-4 h-4 relative z-10 text-white" />
-  <span className="font-medium relative z-10 text-white">New Entry</span>
-</button>
-</div>
+              <button
+                onClick={() => setCurrentView('create')}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md transition-all duration-200 ${
+                  currentView === 'create'
+                    ? darkMode
+                      ? 'bg-teal-600 text-white shadow-sm'
+                      : 'bg-white text-indigo-600 shadow-sm'
+                    : darkMode
+                      ? 'text-slate-400 hover:text-slate-300'
+                      : 'text-slate-600 hover:text-slate-800'
+                }`}
+              >
+                <Plus className="w-4 h-4" />
+                <span className="font-medium text-sm">Create</span>
+              </button>
             </div>
           </div>
         </div>

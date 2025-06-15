@@ -30,9 +30,8 @@ function Navbar() {
       console.error("Logout failed", error);
     }
   };
-
   const handleBotClick = () => {
-    window.location.href = 'https://huggingface.co/spaces/vaibhav2154/MindFullBot';
+    window.location.href = '/Chatbot';
   };
 
  return (
@@ -88,16 +87,7 @@ function Navbar() {
                   <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-400 to-green-400 group-hover:w-full transition-all duration-300"></div>
                 </a>
               ))}
-              
-              <button
-                onClick={handleBotClick}
-                className="inline-flex items-center gap-1 xl:gap-2 text-black bg-gradient-to-r from-green-400 to-green-500 border-0 py-2 px-3 xl:px-5 focus:outline-none hover:from-green-500 hover:to-green-600 hover:shadow-lg hover:shadow-green-500/25 rounded-lg text-sm xl:text-base font-medium transition-all duration-300 hover:scale-105 hover:-translate-y-0.5 whitespace-nowrap"
-              >
-                <span className="hidden sm:inline">AI Chatbot</span>
-                <span className="sm:hidden">AI Bot</span>
-                <Bot size={18} className="xl:w-5 xl:h-5 transition-transform duration-300 group-hover:rotate-12" />
-              </button>
-              
+            
               <a 
                 href="/userprofile" 
                 className="ml-2 xl:ml-4 cursor-pointer p-2 rounded-full transition-all duration-300 hover:bg-gradient-to-r hover:from-blue-500/20 hover:to-green-500/15 hover:scale-110 flex-shrink-0"
@@ -136,13 +126,6 @@ function Navbar() {
                 </a>
               ))}
               
-              <button
-                onClick={handleBotClick}
-                className="inline-flex items-center gap-2 text-black bg-gradient-to-r from-green-400 to-green-500 border-0 py-3 px-6 focus:outline-none hover:from-green-500 hover:to-green-600 hover:shadow-lg hover:shadow-green-500/25 rounded-lg text-base font-medium transition-all duration-300 hover:scale-105 mb-2"
-              >
-                <span>AI Chatbot</span>
-                <Bot size={20} />
-              </button>
               
               <div className="flex items-center gap-4 mt-2">
                 <a 
@@ -167,24 +150,7 @@ function Navbar() {
         {/* Additional subtle border effect - outflowing */}
         <div className="absolute -bottom-1 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-400/50 to-transparent"></div>
       </div>
-      
-      {/* Mock Chatbox component for demonstration */}
-      {isChatOpen && (
-        <div className="fixed bottom-4 right-4 w-80 h-96 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl z-50 flex flex-col">
-          <div className="flex justify-between items-center p-4 border-b border-gray-700 bg-gradient-to-r from-blue-500/10 to-green-500/10">
-            <h3 className="text-white font-semibold">AI Chatbot</h3>
-            <button 
-              onClick={() => setIsChatOpen(false)}
-              className="text-gray-400 hover:text-white transition-colors duration-200"
-            >
-              ✕
-            </button>
-          </div>
-          <div className="flex-1 p-4 text-gray-300">
-            <p>Hello! How can I help you today?</p>
-          </div>
-        </div>
-      )}
+
     </>
   );
 }

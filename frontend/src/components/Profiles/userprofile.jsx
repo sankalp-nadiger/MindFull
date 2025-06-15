@@ -183,8 +183,9 @@ export default function UserProfile() {
 
   return (
     <>
-      <Navbar />
+
       <div className="min-h-screen bg-gradient-to-b from-slate-900 via-gray-900 to-black text-gray-100">
+              <Navbar />
         <div className="max-w-6xl mx-auto p-6">
           <div className="bg-gray-900 rounded-2xl shadow-2xl border border-gray-800 overflow-hidden">
             {/* Header Section */}

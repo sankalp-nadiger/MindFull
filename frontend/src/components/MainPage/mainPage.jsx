@@ -14,13 +14,13 @@ import Footer from "../Footer/Footer";
 import Suggestion from "./activity";
 import DynamicCarousel from "../pages/FetchPosts";
 import ExerciseCards from "../Exercises/exercise";
+import FloatingChatButton from "../ChatBot/FloatingChatButton";
 
 export function HeroHighlightDemo() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isChatOpen, setIsChatOpen] = useState(false);
   const [stories, setStories] = useState([]);
   const [showStories, setShowStories] = useState(false);
   const [suggestedActivity, setSuggestedActivity] = useState(null);
@@ -197,17 +197,13 @@ export function HeroHighlightDemo() {
               See Activities
             </button>
           </div>
-        </div>
-        <BentoGridDemo />
+        </div>        <BentoGridDemo />
         <BadgesCorner />
         <Footer />
       </section>
 
-      {isChatOpen && (
-        <div className="fixed bottom-24 right-8 w-[400px] h-[400px] z-50">
-          <ChatInterface />
-        </div>
-      )}
+      {/* Floating Chat Button */}
+      <FloatingChatButton />
     </div>
   );
 }
