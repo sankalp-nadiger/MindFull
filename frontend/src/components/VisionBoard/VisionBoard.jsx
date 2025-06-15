@@ -12,18 +12,18 @@ import { Link } from "react-router-dom";
 const VisionBoard = () => {
   const [visionBoards, setVisionBoards] = useState([]);
   const [infoOpen, setInfoOpen] = useState(false);
-  const [fullScreenView, setFullScreenView] = useState(null);
-  const userId = JSON.parse(sessionStorage.getItem("user"))?._id;
-    
-  if (!userId) {
-    setError("User not logged in");
-    setIsSaving(false);
-    return;
-  }
+  const [error, setError] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [fullScreenView, setFullScreenView] = useState(null);  const userId = JSON.parse(sessionStorage.getItem("user"))?._id;
   
   useEffect(() => {
+    if (!userId) {
+      setError("User not logged in");
+      setIsSaving(false);
+      return;
+    }
     fetchVisionBoards();
-  }, []);
+  }, [userId]);
 
   const fetchVisionBoards = async () => {
     const response = await getVisionBoards(userId);

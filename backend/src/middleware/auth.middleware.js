@@ -33,11 +33,9 @@ const verifyJWT = async (token, model, role) => {
 };
 
 export const user_verifyJWT = asyncHandler(async (req, _, next) => {
-  console.log(req.header("Authorization"))
   const token =
     req.cookies?.accessToken ||
     req.header("Authorization")?.replace("Bearer ", "");
-    console.log(token)
   const user = await verifyJWT(token, User, "User");
   req.user = user; // Attach the user to the request object
   next();

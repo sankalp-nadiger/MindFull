@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Plus, BookOpen, Heart, Users, X } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
 
-const DynamicCarousel = ({ navigate }) => {
+const DynamicCarousel = () => {
+  const navigate = useNavigate();
   const [journalEntries, setJournalEntries] = useState([]);
   const [gratitudePosts, setGratitudePosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -10,10 +12,30 @@ const DynamicCarousel = ({ navigate }) => {
   const [userReaction, setUserReaction] = useState({});
   const [memoryIndex, setMemoryIndex] = useState(0);
   const [postIndex, setPostIndex] = useState(0);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [autoRotate, setAutoRotate] = useState(true);
 
   const belowNeutralMoods = ['Sad', 'Tired', 'Angry'];
   const currentMood = typeof window !== 'undefined' ? (sessionStorage.getItem('mood') || 'Neutral') : 'Neutral';
   const isNegativeMood = belowNeutralMoods.includes(currentMood);
+
+  // Auto-rotation effect
+  useEffect(() => {
+    if (!autoRotate) return;
+    
+    const interval = setInterval(() => {
+      setCurrentSlide(prev => prev === 0 ? 1 : 0);
+    }, 10000); // 10 seconds
+
+    return () => clearInterval(interval);
+  }, [autoRotate]);
+
+  // Reset auto-rotation timer when user manually changes slides
+  const handleSlideChange = (slideIndex) => {
+    setCurrentSlide(slideIndex);
+    setAutoRotate(false);
+    setTimeout(() => setAutoRotate(true), 5000); // Resume auto-rotation after 5 seconds
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -46,7 +68,7 @@ const DynamicCarousel = ({ navigate }) => {
             } else {
               filteredEntries = filteredEntries.filter((entry) => entry.moodScore >= 5);
             }
-            setJournalEntries(filteredEntries.slice(0, 12));
+            setJournalEntries(filteredEntries);
           }
         }
 
@@ -123,95 +145,71 @@ const DynamicCarousel = ({ navigate }) => {
     if (isNegativeMood) {
       return journalEntries.length > 0 
         ? "Revisit some happy memories from your journey"
-        : "Create your first joyful memory today";
+        : "Create Post your first joyful memory today";
     }
     return journalEntries.length > 0 
       ? "More joyful moments like today"
       : "Start capturing your beautiful moments";
   };
 
-  // Calculate layout distribution
-  const getLayoutConfig = () => {
-    const memoryCount = journalEntries.length;
-    const postCount = gratitudePosts.length;
-    
-    // If both have 4+ items, use carousel
-    if (memoryCount >= 4 && postCount >= 4) {
-      return { type: 'carousel', memoryCols: 2, postCols: 2 };
-    }
-    
-    // Single row distribution logic
-    if (memoryCount === 0 && postCount === 0) {
-      return { type: 'empty', memoryCols: 2, postCols: 2 };
-    }
-    
-    // One section is empty - use balanced 1/2 split for better space utilization
-    if (memoryCount === 0) {
-      return { type: 'postsOnly', memoryCols: 2, postCols: 2 };
-    }
-    
-    if (postCount === 0) {
-      return { type: 'memoriesOnly', memoryCols: 2, postCols: 2 };
-    }
-    
-    // Both have content - dynamic allocation based on content amount
-    if (memoryCount <= 3 && postCount <= 3) {
-      // For small amounts, use balanced approach to avoid empty space
-      if (memoryCount === 1 && postCount >= 2) return { type: 'mixed', memoryCols: 1, postCols: 3 };
-      if (postCount === 1 && memoryCount >= 2) return { type: 'mixed', memoryCols: 3, postCols: 1 };
-      // Default balanced split for similar small amounts
-      return { type: 'mixed', memoryCols: 2, postCols: 2 };
-    }
-    
-    // One has significantly more content
-    if (memoryCount > 3 && postCount <= 1) return { type: 'mixed', memoryCols: 3, postCols: 1 };
-    if (postCount > 3 && memoryCount <= 1) return { type: 'mixed', memoryCols: 1, postCols: 3 };
-    
-    // Default balanced approach
-    return { type: 'mixed', memoryCols: 2, postCols: 2 };
+  // Get visible items for carousel with pagination
+  const getVisibleMemories = () => {
+    const itemsPerPage = 4;
+    const startIndex = memoryIndex * itemsPerPage;
+    return journalEntries.slice(startIndex, startIndex + itemsPerPage);
   };
 
+  const getVisiblePosts = () => {
+    const itemsPerPage = 4;
+    const startIndex = postIndex * itemsPerPage;
+    return gratitudePosts.slice(startIndex, startIndex + itemsPerPage);
+  };
+
+  // Calculate total pages for each section
+  const memoryPages = Math.ceil(journalEntries.length / 4);
+  const postPages = Math.ceil(gratitudePosts.length / 4);
+
   const MemoryPlaceholder = () => (
-    <div className="bg-gradient-to-br from-purple-900/30 to-blue-900/30 backdrop-blur-sm p-4 rounded-xl border-2 border-dashed border-purple-500/50 hover:border-purple-400/70 transition-all duration-300 h-80 flex flex-col items-center justify-center text-center">
-      <div className="w-12 h-12 mb-3 bg-purple-500/20 rounded-full flex items-center justify-center">
-        <span className="text-2xl">📝</span>
+    <div className="bg-gradient-to-br from-purple-900/30 to-blue-900/30 backdrop-blur-sm p-6 rounded-xl border-2 border-dashed border-purple-500/50 hover:border-purple-400/70 transition-all duration-300 h-96 flex flex-col items-center justify-center text-center w-full max-w-md mx-auto">
+      <div className="w-16 h-16 mb-4 bg-purple-500/20 rounded-full flex items-center justify-center">
+        <span className="text-3xl">📝</span>
       </div>
-      <h3 className="text-base font-semibold text-white mb-2">Start Your Memory Journey</h3>
-      <p className="text-gray-300 text-xs mb-3 px-2">
+      <h3 className="text-lg font-semibold text-white mb-3">Start Your Memory Journey</h3>
+      <p className="text-gray-300 text-sm mb-4 px-4">
         Capture your precious moments and experiences.
       </p>
       <button
         onClick={() => navigate('/journal')}
-        className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-all duration-300 flex items-center space-x-1"
+        className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center space-x-2"
       >
-        <BookOpen size={14} />
+        <BookOpen size={16} />
         <span>Write Memory</span>
       </button>
     </div>
   );
 
   const GratitudePlaceholder = () => (
-    <div className="bg-gradient-to-br from-green-900/30 to-teal-900/30 backdrop-blur-sm p-4 rounded-xl border-2 border-dashed border-green-500/50 hover:border-green-400/70 transition-all duration-300 h-80 flex flex-col items-center justify-center text-center">
-      <div className="w-12 h-12 mb-3 bg-green-500/20 rounded-full flex items-center justify-center">
-        <span className="text-2xl">🙏</span>
+    <div className="bg-gradient-to-br from-green-900/30 to-teal-900/30 backdrop-blur-sm p-6 rounded-xl border-2 border-dashed border-green-500/50 hover:border-green-400/70 transition-all duration-300 h-96 flex flex-col items-center justify-center text-center w-full max-w-md mx-auto">
+      <div className="w-16 h-16 mb-4 bg-green-500/20 rounded-full flex items-center justify-center">
+        <span className="text-3xl">🙏</span>
       </div>
-      <h3 className="text-base font-semibold text-white mb-2">Share Your Gratitude</h3>
-      <p className="text-gray-300 text-xs mb-3 px-2">
+      <h3 className="text-lg font-semibold text-white mb-3">Share Your Gratitude</h3>
+      <p className="text-gray-300 text-sm mb-4 px-4">
         Spread positivity by sharing what you're grateful for.
       </p>
       <button
         onClick={() => navigate('/createPost')}
-        className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-all duration-300 flex items-center space-x-1"
+        className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center space-x-2"
       >
-        <Plus size={14} />
-        <span>Add a Gratitude Post now</span>
+        <Plus size={16} />
+        <span>Add Gratitude Post</span>
       </button>
     </div>
   );
 
   const MemoryCard = ({ entry, onClick }) => (
     <div 
-      className="bg-gradient-to-br from-purple-900/50 to-blue-900/50 backdrop-blur-sm p-4 rounded-xl border border-purple-500/30 hover:border-purple-400/50 transition-all duration-300 h-80 flex flex-col cursor-pointer group"
+      className="bg-gradient-to-br from-purple-900/50 to-blue-900/50 backdrop-blur-sm p-4 rounded-xl border border-purple-500/30 hover:border-purple-400/50 transition-all duration-300 h-80 flex flex-col cursor-pointer group w-full max-w-xs"
       onClick={onClick}
     >
       <div className="flex items-center justify-between mb-3">
@@ -237,7 +235,7 @@ const DynamicCarousel = ({ navigate }) => {
   );
 
   const GratitudeCard = ({ post }) => (
-    <div className="bg-gradient-to-br from-green-900/50 to-teal-900/50 backdrop-blur-sm p-4 rounded-xl border border-green-500/30 hover:border-green-400/50 transition-all duration-300 h-80 flex flex-col">
+    <div className="bg-gradient-to-br from-green-900/50 to-teal-900/50 backdrop-blur-sm p-4 rounded-xl border border-green-500/30 hover:border-green-400/50 transition-all duration-300 h-80 flex flex-col w-full max-w-xs">
       <div className="flex items-center space-x-2 mb-3">
         {post.user?.avatar ? (
           <img
@@ -285,14 +283,30 @@ const DynamicCarousel = ({ navigate }) => {
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`absolute top-1/2 transform -translate-y-1/2 z-10 p-2 rounded-full transition-all ${
+      className={`p-3 rounded-full transition-all ${
         disabled 
           ? 'bg-gray-600/50 text-gray-400 cursor-not-allowed' 
-          : 'bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm'
+          : 'bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm hover:scale-110'
       } ${className}`}
     >
-      {direction === 'left' ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+      {direction === 'left' ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
     </button>
+  );
+
+  const DotIndicator = ({ total, current, onClick, type }) => (
+    <div className="flex justify-center space-x-2 mt-4">
+      {Array.from({ length: total }).map((_, index) => (
+        <button
+          key={index}
+          onClick={() => onClick(index)}
+          className={`w-2 h-2 rounded-full transition-all duration-300 ${
+            current === index 
+              ? type === 'memory' ? 'bg-purple-400 w-6' : 'bg-green-400 w-6'
+              : 'bg-gray-500 hover:bg-gray-400'
+          }`}
+        />
+      ))}
+    </div>
   );
 
   const MemoryModal = ({ entry, onClose }) => (
@@ -347,6 +361,7 @@ const DynamicCarousel = ({ navigate }) => {
             <BookOpen size={20} />
             <span>View All Journals</span>
           </button>
+
           <button
             onClick={() => navigate('/createPost')}
             className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:scale-105 transform"
@@ -359,65 +374,56 @@ const DynamicCarousel = ({ navigate }) => {
     );
   }
 
-  const layoutConfig = getLayoutConfig();
-  const memoryCount = journalEntries.length;
-  const postCount = gratitudePosts.length;
-
-  // Calculate visible items for current indices
-  const getVisibleMemories = () => {
-    const maxVisible = layoutConfig.memoryCols;
-    return journalEntries.slice(memoryIndex, memoryIndex + maxVisible);
-  };
-
-  const getVisiblePosts = () => {
-    const maxVisible = layoutConfig.postCols;
-    return gratitudePosts.slice(postIndex, postIndex + maxVisible);
-  };
-
-  const canNavigateMemoryNext = memoryIndex + layoutConfig.memoryCols < memoryCount;
-  const canNavigateMemoryPrev = memoryIndex > 0;
-  const canNavigatePostNext = postIndex + layoutConfig.postCols < postCount;
-  const canNavigatePostPrev = postIndex > 0;
-
-  const getInnerGridClass = (cols) => {
-    switch(cols) {
-      case 1: return 'grid-cols-1';
-      case 2: return 'grid-cols-1 sm:grid-cols-2';
-      case 3: return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3';
-      default: return 'grid-cols-1 sm:grid-cols-2';
-    }
-  };
-
   return (
     <div className="w-full px-4 lg:px-0">
-      {/* Centered Layout Container */}
-      <div className="flex justify-center">
-        <div className="w-full max-w-7xl">
-          <div className="flex flex-col lg:flex-row gap-6 lg:gap-4 min-h-[400px] items-start justify-center">
-            
-            {/* Memory Section */}
-            <div className={`w-full flex justify-center ${
-              memoryCount === 0 && postCount === 0 ? 'lg:w-1/2' :
-              memoryCount === 0 && postCount > 0 ? 'lg:w-1/4' :
-              memoryCount > 0 && postCount === 0 ? 'lg:w-3/4' :
-              'lg:w-1/2'
-            }`}>
-              <div className="w-full max-w-4xl flex flex-col items-center">
-                <div className="mb-4 w-full">
-                  <div className="relative group">
-                    <h3 className="text-xl font-bold text-white flex items-center justify-center space-x-2">
-                      <Heart className="text-purple-400 flex-shrink-0" size={20} />
-                      <span className="truncate text-center" title={getMotivationalTitle()}>
-                        {getMotivationalTitle()}
-                      </span>
-                    </h3>
-                  </div>
-                </div>
-                
-                <div className="relative h-80 flex justify-center w-full">
-                  {memoryCount > 0 ? (
-                    <>
-                      <div className={`grid gap-4 h-full justify-center items-center ${getInnerGridClass(layoutConfig.memoryCols)}`} style={{ width: 'fit-content' }}>
+      {/* Main Carousel Container */}
+      <div className="relative">
+        {/* Slides Container */}
+        <div className="overflow-hidden rounded-2xl">
+          <div 
+            className="flex transition-transform duration-500 ease-in-out"
+            style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+          >
+            {/* Memory Slide */}
+            <div className="w-full flex-shrink-0 p-8">
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-bold text-white flex items-center justify-center space-x-3">
+                  <Heart className="text-purple-400" size={24} />
+                  <span>{getMotivationalTitle()}</span>
+                </h2>
+              </div>
+              
+              <div className="relative min-h-[400px] flex items-center justify-center">
+                {journalEntries.length > 0 ? (
+                  <div className="w-full relative">
+                    {/* Memory Arrow Navigation - Only show if more than 4 items */}
+                    {journalEntries.length > 4 && (
+                      <>
+                        <div className="absolute top-1/2 -left-4 z-10 transform -translate-y-1/2">
+                          <NavigationButton
+                            direction="left"
+                            onClick={() => setMemoryIndex(prev => Math.max(0, prev - 1))}
+                            disabled={memoryIndex === 0}
+                          />
+                        </div>
+                        <div className="absolute top-1/2 -right-4 z-10 transform -translate-y-1/2">
+                          <NavigationButton
+                            direction="right"
+                            onClick={() => setMemoryIndex(prev => prev + 1)}
+                            disabled={memoryIndex >= memoryPages - 1}
+                          />
+                        </div>
+                      </>
+                    )}
+                    
+                    {/* Memory Cards - Centered with equal spacing */}
+                    <div className="flex justify-center items-center">
+                      <div className={`grid gap-6 justify-items-center ${
+                        getVisibleMemories().length === 1 ? 'grid-cols-1' :
+                        getVisibleMemories().length === 2 ? 'grid-cols-1 md:grid-cols-2' :
+                        getVisibleMemories().length === 3 ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' :
+                        'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'
+                      }`}>
                         {getVisibleMemories().map((entry, index) => (
                           <MemoryCard 
                             key={entry.id || index} 
@@ -426,83 +432,110 @@ const DynamicCarousel = ({ navigate }) => {
                           />
                         ))}
                       </div>
-                      
-                      {/* Memory Navigation */}
-                      {memoryCount > layoutConfig.memoryCols && (
-                        <>
-                          <NavigationButton
-                            direction="left"
-                            onClick={() => setMemoryIndex(prev => Math.max(0, prev - layoutConfig.memoryCols))}
-                            disabled={!canNavigateMemoryPrev}
-                            className="-left-3"
-                          />
-                          <NavigationButton
-                            direction="right"
-                            onClick={() => setMemoryIndex(prev => prev + layoutConfig.memoryCols)}
-                            disabled={!canNavigateMemoryNext}
-                            className="-right-3"
-                          />
-                        </>
-                      )}
-                    </>
-                  ) : (
-                    <MemoryPlaceholder />
-                  )}
-                </div>
+                    </div>
+                    
+                    {/* Memory Pagination Dots */}
+                    {memoryPages > 1 && (
+                      <div className="mt-6">
+                        <DotIndicator 
+                          total={memoryPages} 
+                          current={memoryIndex} 
+                          onClick={setMemoryIndex}
+                          type="memory"
+                        />
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <MemoryPlaceholder />
+                )}
               </div>
             </div>
 
-            {/* Posts Section */}
-            <div className={`w-full flex justify-center ${
-              memoryCount === 0 && postCount === 0 ? 'lg:w-1/2' :
-              postCount === 0 && memoryCount > 0 ? 'lg:w-1/4' :
-              postCount > 0 && memoryCount === 0 ? 'lg:w-3/4' :
-              'lg:w-1/2'
-            }`}>
-              <div className="w-full max-w-4xl flex flex-col items-center">
-                <div className="mb-4 w-full">
-                  <h3 className="text-xl font-bold text-white flex items-center justify-center space-x-2">
-                    <Users className="text-green-400 flex-shrink-0" size={20} />
-                    <span className="truncate text-center">
-                      {postCount > 0 ? "Community Gratitude" : "Share Your Gratitude"}
-                    </span>
-                  </h3>
-                </div>
-                
-                <div className="relative h-80 flex justify-center w-full">
-                  {postCount > 0 ? (
-                    <>
-                      <div className={`grid gap-4 h-full justify-center items-center ${getInnerGridClass(layoutConfig.postCols)}`} style={{ width: 'fit-content' }}>
+            {/* Gratitude Posts Slide */}
+            <div className="w-full flex-shrink-0 p-8">
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-bold text-white flex items-center justify-center space-x-3">
+                  <Users className="text-green-400" size={24} />
+                  <span>{gratitudePosts.length > 0 ? "Community Gratitude" : "Share Your Gratitude"}</span>
+                </h2>
+              </div>
+              
+              <div className="relative min-h-[400px] flex items-center justify-center">
+                {gratitudePosts.length > 0 ? (
+                  <div className="w-full relative">
+                    {/* Posts Arrow Navigation - Only show if more than 4 items */}
+                    {gratitudePosts.length > 4 && (
+                      <>
+                        <div className="absolute top-1/2 -left-4 z-10 transform -translate-y-1/2">
+                          <NavigationButton
+                            direction="left"
+                            onClick={() => setPostIndex(prev => Math.max(0, prev - 1))}
+                            disabled={postIndex === 0}
+                          />
+                        </div>
+                        <div className="absolute top-1/2 -right-4 z-10 transform -translate-y-1/2">
+                          <NavigationButton
+                            direction="right"
+                            onClick={() => setPostIndex(prev => prev + 1)}
+                            disabled={postIndex >= postPages - 1}
+                          />
+                        </div>
+                      </>
+                    )}
+                    
+                    {/* Gratitude Cards - Centered with equal spacing */}
+                    <div className="flex justify-center items-center">
+                      <div className={`grid gap-6 justify-items-center ${
+                        getVisiblePosts().length === 1 ? 'grid-cols-1' :
+                        getVisiblePosts().length === 2 ? 'grid-cols-1 md:grid-cols-2' :
+                        getVisiblePosts().length === 3 ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' :
+                        'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'
+                      }`}>
                         {getVisiblePosts().map((post, index) => (
                           <GratitudeCard key={post._id || index} post={post} />
                         ))}
                       </div>
-                      
-                      {/* Posts Navigation */}
-                      {postCount > layoutConfig.postCols && (
-                        <>
-                          <NavigationButton
-                            direction="left"
-                            onClick={() => setPostIndex(prev => Math.max(0, prev - layoutConfig.postCols))}
-                            disabled={!canNavigatePostPrev}
-                            className="-left-3"
-                          />
-                          <NavigationButton
-                            direction="right"
-                            onClick={() => setPostIndex(prev => prev + layoutConfig.postCols)}
-                            disabled={!canNavigatePostNext}
-                            className="-right-3"
-                          />
-                        </>
-                      )}
-                    </>
-                  ) : (
-                    <GratitudePlaceholder />
-                  )}
-                </div>
+                    </div>
+                    
+                    {/* Posts Pagination Dots */}
+                    {postPages > 1 && (
+                      <div className="mt-6">
+                        <DotIndicator 
+                          total={postPages} 
+                          current={postIndex} 
+                          onClick={setPostIndex}
+                          type="post"
+                        />
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <GratitudePlaceholder />
+                )}
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Main Slide Dots Navigation */}
+        <div className="flex justify-center space-x-3 mt-6">
+          <button
+            onClick={() => handleSlideChange(0)}
+            className={`w-3 h-3 rounded-full transition-all duration-300 ${
+              currentSlide === 0 
+                ? 'bg-purple-400 w-8' 
+                : 'bg-gray-500 hover:bg-gray-400'
+            }`}
+          />
+          <button
+            onClick={() => handleSlideChange(1)}
+            className={`w-3 h-3 rounded-full transition-all duration-300 ${
+              currentSlide === 1 
+                ? 'bg-green-400 w-8' 
+                : 'bg-gray-500 hover:bg-gray-400'
+            }`}
+          />
         </div>
       </div>
 

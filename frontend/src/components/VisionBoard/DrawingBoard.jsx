@@ -1,43 +1,73 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Stage, Layer, Text, Image, Line, Circle, Group, Transformer, Rect } from "react-konva";
+import { Stage, Layer, Text as KonvaText, Image, Line, Circle, Group, Transformer, Rect } from "react-konva";
 import useImage from "use-image";
 import SaveCanvasModal from "./SaveCanvasModal";
+import { 
+  Pen, Type, MousePointer, Share2, Image as ImageIcon, Plus, ChevronUp, ChevronDown, 
+  ZoomIn, ZoomOut, Palette, Upload, Bold, Italic, AlignLeft, Trash2, Move,
+  Save, Download, Minimize2, Maximize2, CornerRightDown
+} from 'lucide-react';
 
-// Component to render an image element using its URL with resizing capability
-const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize }) => {
+const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) => {
   const [img] = useImage(element.src);
   const imageRef = useRef();
   const trRef = useRef();
 
   useEffect(() => {
-    if (isSelected && trRef.current && imageRef.current) {
+    if (isSelected && trRef.current && imageRef.current && tool === 'select') {
+      // Attach transformer to the image node
       trRef.current.nodes([imageRef.current]);
       trRef.current.getLayer().batchDraw();
     }
-  }, [isSelected]);
+  }, [isSelected, tool]);
 
   const handleTransformEnd = () => {
-    if (imageRef.current) {
+    if (imageRef.current && onResize) {
       const node = imageRef.current;
       const scaleX = node.scaleX();
       const scaleY = node.scaleY();
-
-      // Reset scale and apply new dimensions
+      
+      const newWidth = Math.max(10, node.width() * scaleX);
+      const newHeight = Math.max(10, node.height() * scaleY);
+      
+      // Reset scale to 1 after applying to width/height
       node.scaleX(1);
       node.scaleY(1);
       
-      // Update the element with new size
       onResize(element.id, {
+        ...element,
         x: node.x(),
         y: node.y(),
-        width: Math.max(5, node.width() * scaleX),
-        height: Math.max(5, node.height() * scaleY)
+        width: newWidth,
+        height: newHeight,
+        rotation: node.rotation()
+      });
+    }
+  };
+
+  const handleImageClick = (e) => {
+    // Prevent event bubbling to stage
+    e.cancelBubble = true;
+    if (e.evt) {
+      e.evt.stopPropagation();
+    }
+    // Always select the image when clicked, regardless of tool
+    onSelect(element.id);
+  };
+
+  const handleDragEnd = (e) => {
+    if (onResize) {
+      const pos = e.target.position();
+      onResize(element.id, {
+        ...element,
+        x: pos.x,
+        y: pos.y
       });
     }
   };
 
   return (
-    <>
+    <Group>
       <Image
         ref={imageRef}
         image={img}
@@ -45,974 +75,1490 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize }) => {
         y={element.y}
         width={element.width || (img ? img.width : 100)}
         height={element.height || (img ? img.height : 100)}
-        draggable
-        onClick={() => onSelect(element.id)}
-        onTap={() => onSelect(element.id)}
-        onDragEnd={(e) => onDragEnd(e, element.id)}
+        rotation={element.rotation || 0}
+        draggable={tool === 'select'}
+        onClick={handleImageClick}
+        onTap={handleImageClick}
+        listening={true}
+        onDragStart={() => {
+          onSelect(element.id);
+        }}
+        onDragEnd={handleDragEnd}
+        onTransform={handleTransformEnd}
+        onTransformEnd={handleTransformEnd}
       />
-      {isSelected && (
+
+      {isSelected && tool === 'select' && (
         <Transformer
           ref={trRef}
           boundBoxFunc={(oldBox, newBox) => {
-            // Minimum size validation
-            if (newBox.width < 5 || newBox.height < 5) {
+            // Prevent the box from getting too small
+            if (newBox.width < 10 || newBox.height < 10) {
               return oldBox;
             }
             return newBox;
           }}
+          onTransform={handleTransformEnd}
           onTransformEnd={handleTransformEnd}
+          enabledAnchors={[
+            'top-left', 'top-right', 
+            'bottom-left', 'bottom-right',
+            'middle-left', 'middle-right',
+            'top-center', 'bottom-center'
+          ]}
+          rotateEnabled={true}
+          borderEnabled={true}
+          borderStroke="#0066ff"
+          borderStrokeWidth={2}
+          anchorFill="#fff"
+          anchorStroke="#0066ff"
+          anchorSize={10}
+          anchorStrokeWidth={2}
+          anchorCornerRadius={2}
+          keepRatio={false}
+          centeredScaling={false}
+          ignoreStroke={true}
+          padding={5}
+          rotateAnchorOffset={30}
+          flipEnabled={false}
         />
       )}
-    </>
-  );
-};
-
-// Enhanced FlowLine component with improved draggable behavior
-const FlowLine = ({ element, onDragEnd, onSelect, isSelected }) => {
-  const { id, points, color = "blue", strokeWidth = 2 } = element;
-  const [linePoints, setLinePoints] = useState(points);
-  const [isDraggingLine, setIsDraggingLine] = useState(false);
-  const [isDraggingPoint, setIsDraggingPoint] = useState(false);
-  const [dragPointIndex, setDragPointIndex] = useState(null);
-  const [startPos, setStartPos] = useState({ x: 0, y: 0 });
-  const lineRef = useRef();
-
-  // Handle dragging of the entire line (Canva-like behavior)
-  const handleLineDragStart = (e) => {
-    if (isDraggingPoint) return;
-    
-    const pos = e.target.getStage().getPointerPosition();
-    setStartPos({ x: pos.x, y: pos.y });
-    setIsDraggingLine(true);
-    
-    // Change cursor to indicate dragging
-    document.body.style.cursor = "grabbing";
-  };
-
-  const handleLineDragMove = (e) => {
-    if (!isDraggingLine || isDraggingPoint) return;
-    
-    const pos = e.target.getStage().getPointerPosition();
-    const dx = pos.x - startPos.x;
-    const dy = pos.y - startPos.y;
-    
-    // Move all points
-    const newPoints = [...linePoints];
-    for (let i = 0; i < newPoints.length; i += 2) {
-      newPoints[i] += dx;
-      newPoints[i + 1] += dy;
-    }
-    
-    setLinePoints(newPoints);
-    setStartPos({ x: pos.x, y: pos.y });
-  };
-
-  const handleLineDragEnd = () => {
-    if (isDraggingLine) {
-      setIsDraggingLine(false);
-      if (onDragEnd) {
-        onDragEnd(null, id, linePoints);
-      }
-      
-      // Reset cursor
-      document.body.style.cursor = "default";
-    }
-  };
-
-  // Enhanced endpoint dragging
-  const handleEndpointDragStart = (index) => {
-    setIsDraggingPoint(true);
-    setDragPointIndex(index);
-  };
-
-  const handleEndpointDragMove = (e, index) => {
-    if (!isDraggingPoint || dragPointIndex !== index) return;
-    
-    const pos = e.target.position();
-    let newPoints = [...linePoints];
-    
-    // Update the specific endpoint position
-    if (index === 0) {
-      newPoints[0] = pos.x;
-      newPoints[1] = pos.y;
-    } else {
-      newPoints[2] = pos.x;
-      newPoints[3] = pos.y;
-    }
-    
-    setLinePoints(newPoints);
-  };
-
-  const handleEndpointDragEnd = (e, index) => {
-    if (isDraggingPoint && dragPointIndex === index) {
-      setIsDraggingPoint(false);
-      setDragPointIndex(null);
-      
-      if (onDragEnd) {
-        onDragEnd(e, id, linePoints);
-      }
-    }
-  };
-
-  // Line hover effects
-  const handleLineHover = () => {
-    if (!isDraggingPoint) {
-      document.body.style.cursor = "grab";
-    }
-  };
-
-  const handleLineHoverExit = () => {
-    if (!isDraggingLine && !isDraggingPoint) {
-      document.body.style.cursor = "default";
-    }
-  };
-
-  return (
-    <Group
-      onClick={() => onSelect(id)}
-      onTap={() => onSelect(id)}
-    >
-      <Line
-        ref={lineRef}
-        points={linePoints}
-        stroke={color}
-        strokeWidth={strokeWidth}
-        hitStrokeWidth={20} // Wider hit area for easier selection
-        onMouseEnter={handleLineHover}
-        onMouseLeave={handleLineHoverExit}
-        onMouseDown={handleLineDragStart}
-        onMouseMove={handleLineDragMove}
-        onMouseUp={handleLineDragEnd}
-        onTouchStart={handleLineDragStart}
-        onTouchMove={handleLineDragMove}
-        onTouchEnd={handleLineDragEnd}
-      />
-      <Circle
-        x={linePoints[0]}
-        y={linePoints[1]}
-        radius={6}
-        fill={isSelected ? "green" : "red"}
-        draggable
-        onDragStart={() => handleEndpointDragStart(0)}
-        onDragMove={(e) => handleEndpointDragMove(e, 0)}
-        onDragEnd={(e) => handleEndpointDragEnd(e, 0)}
-      />
-      <Circle
-        x={linePoints[2]}
-        y={linePoints[3]}
-        radius={6}
-        fill={isSelected ? "green" : "red"}
-        draggable
-        onDragStart={() => handleEndpointDragStart(1)}
-        onDragMove={(e) => handleEndpointDragMove(e, 1)}
-        onDragEnd={(e) => handleEndpointDragEnd(e, 1)}
-      />
     </Group>
   );
 };
 
-// Helper function to determine if a color is dark
-const isDarkColor = (hexColor) => {
-  // Remove the # if it exists
-  const hex = hexColor.replace('#', '');
-  
-  // Convert to RGB
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-  
-  // Calculate relative luminance
-  // Using the formula: 0.299*R + 0.587*G + 0.114*B
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  
-  // Return true if the color is dark (luminance is less than 0.5)
-  return luminance < 0.5;
-};
+// Enhanced FlowLine component with draggable endpoints and line
+const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, tool }) => {
+  const [points, setPoints] = useState(line.points || [50, 50, 200, 50]);
+  const lineRef = useRef();
+  const groupRef = useRef();
 
-// Function to get contrast color (black for light backgrounds, white for dark)
-const getContrastColor = (bgColor) => {
-  return isDarkColor(bgColor) ? "#FFFFFF" : "#000000";
-};
-
-const VisionBoardDraw = () => {
-  const [elements, setElements] = useState([]);
-  const [selectedId, setSelectedId] = useState(null);
-  const [selectedTextId, setSelectedTextId] = useState(null);
-  const [editingTextValue, setEditingTextValue] = useState("");
-  const [showSaveModal, setShowSaveModal] = useState(false);
-const [canvasImageUri, setCanvasImageUri] = useState(null);
-  const stageRef = useRef(null);
-  const fileInputRef = useRef(null);
-  const textInputRef = useRef(null);
-  const textEditorDivRef = useRef(null);
-  
-  // Board background color state
-  const [boardColor, setBoardColor] = useState("#FFFFFF");
-  
-  // Text styling options - now dependent on board color
-  const [textStyle, setTextStyle] = useState({
-    fontSize: 20,
-    fill: "#000000", // Will be updated based on board color
-    fontStyle: "normal", // normal, bold, italic
-    fontFamily: "Arial" // Added font family option
-  });
-  
-  // Line styling options - now dependent on board color
-  const [lineStyle, setLineStyle] = useState({
-    color: "#000000", // Will be updated based on board color
-    strokeWidth: 2
-  });
-
-  // In-place text editor position state
-  const [textEditorPos, setTextEditorPos] = useState({ x: 0, y: 0 });
-
-  // Update default colors when board color changes
   useEffect(() => {
-    const contrastColor = getContrastColor(boardColor);
-    
-    // Update text style with appropriate contrast color
-    setTextStyle(prev => ({
-      ...prev,
-      fill: contrastColor
-    }));
-    
-    // Update line style with appropriate contrast color
-    setLineStyle(prev => ({
-      ...prev,
-      color: contrastColor
-    }));
-    
-    // Update existing elements if needed for better contrast
-    setElements(prevElements => 
-      prevElements.map(el => {
-        // For text elements without explicitly set color, update to contrast color
-        if (el.type === "text" && !el.hasOwnProperty("fill")) {
-          return { ...el, fill: contrastColor };
-        }
-        // For line elements without explicitly set color, update to contrast color
-        if (el.type === "line" && !el.hasOwnProperty("color")) {
-          return { ...el, color: contrastColor };
-        }
-        return el;
-      })
-    );
-  }, [boardColor]);
+    setPoints(line.points || [50, 50, 200, 50]);
+  }, [line]);
 
-  // Add a new text element
-  const addText = () => {
-    const newText = {
-      id: `text-${elements.length}`,
-      type: "text",
-      text: "Double-click to edit",
-      x: 50,
-      y: 50,
-      draggable: true,
-      ...textStyle
-    };
-    setElements([...elements, newText]);
-  };
-
-  // Trigger file input for image upload
-  const addImage = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
+  const handleEndpointDrag = (index, e) => {
+    if (tool !== 'select') return;
+    
+    e.cancelBubble = true;
+    if (e.evt) {
+      e.evt.stopPropagation();
+    }
+    
+    const pos = e.target.position();
+    const newPoints = [...points];
+    newPoints[index * 2] = pos.x;
+    newPoints[index * 2 + 1] = pos.y;
+    setPoints(newPoints);
+    
+    if (onUpdate) {
+      onUpdate(line.id, { ...line, points: newPoints });
     }
   };
 
-  // Handle image selection and add image element
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const newImage = {
-          id: `image-${elements.length}`,
-          type: "image",
-          src: reader.result,
-          x: 100,
-          y: 100,
-          draggable: true
-        };
-        setElements([...elements, newImage]);
-      };
-      reader.readAsDataURL(file);
+  const handleLineClick = (e) => {
+    // Prevent event bubbling to stage
+    e.cancelBubble = true;
+    if (e.evt) {
+      e.evt.stopPropagation();
+    }
+    // Always select the line when clicked, regardless of tool
+    onSelect(line.id);
+  };
+
+  const handleLineDrag = (e) => {
+    if (tool !== 'select' || !isSelected) return;
+    
+    const pos = e.target.position();
+    const deltaX = pos.x - line.points[0];
+    const deltaY = pos.y - line.points[1];
+    
+    const newPoints = [
+      pos.x,
+      pos.y,
+      line.points[2] + deltaX,
+      line.points[3] + deltaY
+    ];
+    
+    setPoints(newPoints);
+    if (onUpdate) {
+      onUpdate(line.id, { ...line, points: newPoints });
     }
   };
-
-  // Add a flow/connection line element with default endpoints
-  const addFlowLine = () => {
-    const newLine = {
-      id: `line-${elements.length}`,
-      type: "line",
-      points: [60, 60, 200, 200],
-      color: lineStyle.color,
-      strokeWidth: lineStyle.strokeWidth
-    };
-    setElements([...elements, newLine]);
-  };
-
-  // Remove the last added element (simple undo)
-  const undoLastElement = () => {
-    setElements((prev) => prev.slice(0, -1));
-  };
-
-  // Delete the selected element
-  const deleteSelected = () => {
-    if (selectedId) {
-      setElements((prev) => prev.filter((el) => el.id !== selectedId));
-      setSelectedId(null);
-    }
-  };
-
-  // Update position for draggable text or image elements
-  const handleDragEnd = (e, id) => {
-    const { x, y } = e.target.position();
-    setElements((prev) =>
-      prev.map((el) => (el.id === id ? { ...el, x, y } : el))
-    );
-  };
-
-  // Update flow line endpoints after dragging
-  const handleLineDragEnd = (e, id, newPoints) => {
-    setElements((prev) =>
-      prev.map((el) => (el.id === id ? { ...el, points: newPoints } : el))
-    );
-  };
-
-  // Update image size after resizing
-  const handleImageResize = (id, newAttrs) => {
-    setElements((prev) =>
-      prev.map((el) => (el.id === id ? { ...el, ...newAttrs } : el))
-    );
-  };
-
-  // Position the text editor next to the text being edited
-  const positionTextEditor = (textElement) => {
-    if (!stageRef.current) return { x: 0, y: 0 };
-    
-    // Get the stage container's position
-    const stageBox = stageRef.current.container().getBoundingClientRect();
-    
-    // Calculate position with fixed offsets from the text element
-    // Use the actual text position within the stage plus the stage's position on the page
-    const x = stageBox.left + textElement.x;
-    
-    // Position slightly below the text (10px offset)
-    const y = stageBox.top + textElement.y + 30;
-    
-    return { x, y };
-  };
-
-  // Start editing text on double-click
-  const handleTextDoubleClick = (id, currentText) => {
-    const element = elements.find(el => el.id === id);
-    if (!element) return;
-    
-    setSelectedTextId(id);
-    setEditingTextValue(currentText);
-    
-    // Position the text editor next to the text element
-    const pos = positionTextEditor(element);
-    setTextEditorPos(pos);
-    
-    // Focus the input once it's rendered
-    setTimeout(() => {
-      if (textInputRef.current) {
-        textInputRef.current.focus();
-      }
-    }, 10);
-  };
-
-  const handleTextChange = (e) => {
-    setEditingTextValue(e.target.value);
-  };
-
-  // Save edited text
-  const handleTextBlur = (e) => {
-    // Check if the related target is within the text editor div
-    // This prevents the editor from closing when clicking on style controls
-    if (e && textEditorDivRef.current && textEditorDivRef.current.contains(e.relatedTarget)) {
-      return;
-    }
-    
-    if (selectedTextId) {
-      setElements((prev) =>
-        prev.map((el) =>
-          el.id === selectedTextId ? { ...el, text: editingTextValue } : el
-        )
-      );
-      setSelectedTextId(null);
-      setEditingTextValue("");
-    }
-  };
-
-  // Save text on Enter key press
-  const handleTextKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      handleTextSubmit();
-    }
-  };
-
-  // Explicitly save text without relying on blur
-  const handleTextSubmit = () => {
-    if (selectedTextId) {
-      setElements((prev) =>
-        prev.map((el) =>
-          el.id === selectedTextId ? { ...el, text: editingTextValue } : el
-        )
-      );
-      setSelectedTextId(null);
-      setEditingTextValue("");
-    }
-  };
-
-  // Handle element selection
-  const handleSelect = (id) => {
-    const newSelectedId = id === selectedId ? null : id;
-    setSelectedId(newSelectedId);
-  };
-
-  // Clear selection when clicking on empty canvas
-  const checkDeselect = (e) => {
-    const clickedOnEmpty = e.target === e.target.getStage();
-    if (clickedOnEmpty) {
-      setSelectedId(null);
-    }
-  };
-
-  // Update text styling
-  const updateTextStyle = (property, value) => {
-    setTextStyle((prev) => ({ ...prev, [property]: value }));
-    
-    // If a text element is selected, apply the style to it
-    if (selectedTextId) {
-      setElements((prev) =>
-        prev.map((el) => (el.id === selectedTextId ? { ...el, [property]: value } : el))
-      );
-    } else if (selectedId && selectedId.startsWith('text-')) {
-      setElements((prev) =>
-        prev.map((el) => (el.id === selectedId ? { ...el, [property]: value } : el))
-      );
-    }
-  };
-
-  // Update line styling
-  const updateLineStyle = (property, value) => {
-    setLineStyle((prev) => ({ ...prev, [property]: value }));
-    
-    // If a line element is selected, apply the style to it
-    if (selectedId && selectedId.startsWith('line-')) {
-      setElements((prev) =>
-        prev.map((el) => (el.id === selectedId ? { ...el, [property]: value } : el))
-      );
-    }
-  };
-
-  // Handle board color change
-  const handleBoardColorChange = (e) => {
-    setBoardColor(e.target.value);
-  };
-
-  // Render an HTML input near the text for editing
-  const renderTextEditor = () => {
-    if (!selectedTextId) return null;
-    
-    const element = elements.find((el) => el.id === selectedTextId);
-    if (!element) return null;
-    
-    // Get the styles for the editor
-    const fontStyle = element.fontStyle || textStyle.fontStyle;
-    const isBold = fontStyle === "bold" || fontStyle.includes("bold");
-    const isItalic = fontStyle === "italic" || fontStyle.includes("italic");
-    
-    return (
-      <div
-        ref={textEditorDivRef}
-        className="text-editor-overlay"
-        // Within renderTextEditor function, update the outer div's style:
-style={{
-  position: "absolute",
-  top: textEditorPos.y,
-  left: textEditorPos.x,
-  zIndex: 1000,
-  backgroundColor: "white",
-  border: "1px solid #ccc",
-  borderRadius: "4px",
-  padding: "8px",
-  boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-  width: "auto", // Let it size to content
-  minWidth: "240px" // Ensure minimum width
-}}
-        // Stop propagation to prevent unwanted focus loss
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex flex-col gap-2 w-full">
-          <input
-            ref={textInputRef}
-            type="text"
-            value={editingTextValue}
-            onChange={handleTextChange}
-            onBlur={(e) => e.stopPropagation()}
-            onKeyDown={handleTextKeyDown}
-            style={{
-              fontSize: `${element.fontSize || textStyle.fontSize}px`,
-              color: element.fill || textStyle.fill,
-              fontWeight: isBold ? "bold" : "normal",
-              fontStyle: isItalic ? "italic" : "normal",
-              fontFamily: element.fontFamily || textStyle.fontFamily,
-              padding: "4px",
-              width: "100%",
-              border: "1px solid #ddd"
-            }}
-          />
-          
-          <div className="flex justify-between items-center mt-2">
-            <div className="flex gap-2">
-              {/* Font Size Control */}
-              <select
-                value={element.fontSize || textStyle.fontSize}
-                onChange={(e) => updateTextStyle("fontSize", Number(e.target.value))}
-                className="border rounded px-1 py-0.5 text-sm"
-                // Stop the blur event from propagating when clicking on the select
-                onMouseDown={(e) => e.stopPropagation()}
-              >
-                {[12, 14, 16, 18, 20, 24, 28, 32, 36, 48].map(size => (
-                  <option key={size} value={size}>{size}</option>
-                ))}
-              </select>
-              
-              {/* Font Family Selection */}
-              <select
-                value={element.fontFamily || textStyle.fontFamily}
-                onChange={(e) => updateTextStyle("fontFamily", e.target.value)}
-                className="border rounded px-1 py-0.5 text-sm"
-                // Stop the blur event from propagating
-                onMouseDown={(e) => e.stopPropagation()}
-              >
-                <option value="Arial">Arial</option>
-                <option value="Helvetica">Helvetica</option>
-                <option value="Times New Roman">Times New Roman</option>
-                <option value="Courier New">Courier New</option>
-                <option value="Georgia">Georgia</option>
-                <option value="Verdana">Verdana</option>
-                <option value="Impact">Impact</option>
-              </select>
-            </div>
-            
-            <div className="flex gap-2">
-              {/* Bold Button */}
-              <button
-                onMouseDown={(e) => {
-                  e.preventDefault(); // Prevent focus loss
-                  e.stopPropagation();
-                  
-                  const currentStyle = element.fontStyle || textStyle.fontStyle;
-                  let newStyle = currentStyle;
-                  
-                  if (currentStyle.includes("bold")) {
-                    newStyle = currentStyle.replace("bold", "").trim();
-                    if (newStyle === "") newStyle = "normal";
-                  } else if (currentStyle === "italic") {
-                    newStyle = "italic bold";
-                  } else {
-                    newStyle = "bold";
-                  }
-                  
-                  updateTextStyle("fontStyle", newStyle);
-                }}
-                className={`px-2 py-1 border rounded ${isBold ? 'bg-blue-200' : 'bg-gray-100'}`}
-              >
-                B
-              </button>
-              
-              {/* Italic Button */}
-              <button
-                onMouseDown={(e) => {
-                  e.preventDefault(); // Prevent focus loss
-                  e.stopPropagation();
-                  
-                  const currentStyle = element.fontStyle || textStyle.fontStyle;
-                  let newStyle = currentStyle;
-                  
-                  if (currentStyle.includes("italic")) {
-                    newStyle = currentStyle.replace("italic", "").trim();
-                    if (newStyle === "") newStyle = "normal";
-                  } else if (currentStyle === "bold") {
-                    newStyle = "bold italic";
-                  } else {
-                    newStyle = "italic";
-                  }
-                  
-                  updateTextStyle("fontStyle", newStyle);
-                }}
-                className={`px-2 py-1 border rounded ${isItalic ? 'bg-blue-200' : 'bg-gray-100'}`}
-                style={{ fontStyle: "italic" }}
-              >
-                I
-              </button>
-              
-              {/* Color Picker - given more space and using onMouseDown instead of onChange */}
-<input
-  type="color"
-  value={element.fill || textStyle.fill}
-  className="w-6 h-6 border rounded cursor-pointer"
-  onMouseDown={(e) => e.stopPropagation()}
-  onChange={(e) => {
-    e.stopPropagation();
-    updateTextStyle("fill", e.target.value);
-  }}
-/>
-            </div>
-          </div>
-          
-          <div className="flex justify-between mt-3">
-            <button
-              onMouseDown={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleTextSubmit();
-              }}
-              className="px-3 py-1 bg-blue-500 text-white rounded text-sm"
-            >
-              Apply
-            </button>
-            <button
-              onMouseDown={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setElements((prev) => prev.filter((el) => el.id !== selectedTextId));
-                setSelectedTextId(null);
-                setEditingTextValue("");
-              }}
-              className="px-3 py-1 bg-red-500 text-white rounded text-sm"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Get element type from ID
-  const getElementTypeFromId = (id) => {
-    if (!id) return null;
-    if (id.startsWith('text-')) return 'text';
-    if (id.startsWith('image-')) return 'image';
-    if (id.startsWith('line-')) return 'line';
-    return null;
-  };
-
-  // Render floating controls for selected element
-  const renderFloatingControls = () => {
-    if (!selectedId || selectedTextId) return null;
-    
-    const element = elements.find(el => el.id === selectedId);
-    if (!element) return null;
-    
-    const elementType = getElementTypeFromId(selectedId);
-    if (!elementType) return null;
-    
-    // Calculate position
-    let controlPosition = { x: 0, y: 0 };
-    
-    if (elementType === 'text') {
-      controlPosition = {
-        x: element.x + 10,
-        y: element.y - 40
-      };
-    } else if (elementType === 'image') {
-      controlPosition = {
-        x: element.x + (element.width || 100) / 2,
-        y: element.y - 40
-      };
-    } else if (elementType === 'line') {
-      // For line, position controls near the middle of the line
-      const points = element.points;
-      const middleX = (points[0] + points[2]) / 2;
-      const middleY = (points[1] + points[3]) / 2;
-      controlPosition = {
-        x: middleX,
-        y: middleY - 40
-      };
-    }
-    
-    // Get stage position
-    const stageBox = stageRef.current.container().getBoundingClientRect();
-    const absoluteX = stageBox.left + controlPosition.x;
-    const absoluteY = stageBox.top + controlPosition.y;
-    
-    return (
-      <div
-        className="floating-controls"
-        style={{
-          position: "absolute",
-          top: absoluteY,
-          left: absoluteX,
-          zIndex: 1000,
-          display: "flex",
-          gap: "5px"
-        }}
-      >
-        {elementType === 'text' && (
-          <button
-            onClick={() => handleTextDoubleClick(selectedId, element.text)}
-            className="px-2 py-1 bg-blue-500 text-white rounded-lg text-sm"
-          >
-            Edit
-          </button>
-        )}
-        
-        <button
-          onClick={deleteSelected}
-          className="px-2 py-1 bg-red-500 text-white rounded-lg text-sm"
-        >
-          Delete
-        </button>
-        
-        {elementType === 'line' && (
-          <div className="flex items-center gap-2">
-            <input
-              type="color"
-              value={element.color || lineStyle.color}
-              onChange={(e) => updateLineStyle("color", e.target.value)}
-              className="w-8 h-8 border rounded"
-            />
-            <select
-              value={element.strokeWidth || lineStyle.strokeWidth}
-              onChange={(e) => updateLineStyle("strokeWidth", Number(e.target.value))}
-              className="border rounded px-1 py-0.5 text-sm"
-            >
-              {[1, 2, 3, 4, 5, 6, 8, 10].map(size => (
-                <option key={size} value={size}>{size}px</option>
-              ))}
-            </select>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // Save the current canvas as an image
-  const downloadCanvas = () => {
-    const uri = stageRef.current.toDataURL();
-    const link = document.createElement("a");
-    link.download = "vision-board.png";
-    link.href = uri;
-    link.click();
-  };
-
-  const saveCanvas = () => {
-    const uri = stageRef.current.toDataURL();
-    setCanvasImageUri(uri);
-    setShowSaveModal(true);
-  };
-  
-  // Add this function to handle the actual saving
-  const handleSaveWithMetadata = async (metadata) => {
-    const blob = await (await fetch(canvasImageUri)).blob();
-    const formData = new FormData();
-    
-    // Get user ID from session storage
-    const userId = JSON.parse(sessionStorage.getItem("user"))?._id;
-    if (!userId) {
-      throw new Error("User not logged in");
-    }
-    
-    // Append all data to form
-    formData.append("file", blob, "vision-board.png");
-    formData.append("title", metadata.title);
-    formData.append("content", metadata.content);
-    formData.append("category", metadata.category);
-    formData.append("userId", userId);
-    
-    const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/visionBoard/add`, {
-      method: "POST",
-      body: formData,
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Error saving canvas: ${errorText}`);
-    }
-    
-    console.log("Canvas saved successfully!");
-    // You could add a success notification here
-  };
-  
-  // Predefined background color options
-  const backgroundColorOptions = [
-    { name: "White", value: "#FFFFFF" },
-    { name: "Light Gray", value: "#F0F0F0" },
-    { name: "Black", value: "#000000" },
-    { name: "Dark Blue", value: "#1A365D" },
-    { name: "Navy", value: "#0F172A" },
-    { name: "Dark Purple", value: "#2E1065" },
-    { name: "Forest Green", value: "#064E3B" },
-    { name: "Crimson", value: "#7F1D1D" },
-    { name: "Pastel Blue", value: "#DBEAFE" },
-    { name: "Pastel Green", value: "#DCFCE7" },
-    { name: "Pastel Pink", value: "#FCE7F3" },
-    { name: "Cream", value: "#FFFBEB" }
-  ];
-  
-  // Handle clicks outside the text editor more carefully
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        textEditorDivRef.current && 
-        !textEditorDivRef.current.contains(event.target) && 
-        selectedTextId && 
-        !event.target.closest(".konvajs-content")
-      ) {
-        // Only close if clicking outside both the editor and the canvas
-        handleTextSubmit();
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [selectedTextId]);
 
   return (
-    <div className="p-5 relative">
-      <div className="mb-4 flex gap-2 flex-wrap">
-        <button onClick={addText} className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-          Add Text
-        </button>
-        <button onClick={addImage} className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
-          Add Image
-        </button>
-        <button onClick={addFlowLine} className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600">
-          Add Flow Line
-        </button>
-        <button onClick={undoLastElement} className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
-          Undo
-        </button>
-        <button onClick={downloadCanvas} className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-800">
-          Download Board
-        </button>
-        <button onClick={saveCanvas} className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-800">
-          Save Board
-        </button>
-        {selectedId && (
-          <button onClick={deleteSelected} className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
-            Delete Selected
-          </button>
-        )}
-      </div>
-<div className="mb-4">
-  <label htmlFor="boardColor" className="block text-sm font-medium mb-1">
-    Board Background:
-  </label>
-  <div className="flex flex-wrap gap-2">
-    {backgroundColorOptions.map((color) => (
-      <div 
-        key={color.value}
-        className={`w-8 h-8 rounded-full cursor-pointer border ${
-          boardColor === color.value ? 'ring-2 ring-blue-500 ring-offset-2' : 'border-gray-300'
-        }`}
-        style={{ backgroundColor: color.value }}
-        onClick={() => setBoardColor(color.value)}
-        title={color.name}
+    <Group ref={groupRef}>
+      <Line
+        ref={lineRef}
+        points={points}
+        stroke={line.color || "#000000"}
+        strokeWidth={line.strokeWidth || 2}
+        hitStrokeWidth={Math.max(20, (line.strokeWidth || 2) * 4)}
+        draggable={tool === 'select' && isSelected}
+        onClick={handleLineClick}
+        onTap={handleLineClick}  
+        onDragMove={handleLineDrag}
+        listening={true}
       />
-    ))}
-    <input
-      type="color"
-      id="boardColor"
-      value={boardColor}
-      onChange={handleBoardColorChange}
-      className="w-8 h-8 cursor-pointer"
-      title="Custom color"
-    />
-  </div>
-</div>
-
-      <div className="relative mb-5">
-      <Stage
-  width={800}
-  height={600}
-  ref={stageRef}
-  onMouseDown={checkDeselect}
-  onTouchStart={checkDeselect}
-  style={{ 
-    border: "1px solid #ddd", 
-    borderRadius: "8px",
-    backgroundColor: boardColor 
-  }}
->
-          <Layer>
-          <Rect width={800} height={600} fill={boardColor} />
-            {elements.map((el) => {
-              if (el.type === "text") {
-                return (
-                  <Text
-                    key={el.id}
-                    text={el.text}
-                    x={el.x}
-                    y={el.y}
-                    draggable
-                    onClick={() => handleSelect(el.id)}
-                    onTap={() => handleSelect(el.id)}
-                    onDragEnd={(e) => handleDragEnd(e, el.id)}
-                    fontSize={el.fontSize || textStyle.fontSize}
-                    fill={el.fill || textStyle.fill}
-                    fontStyle={el.fontStyle || textStyle.fontStyle}
-                    fontFamily={el.fontFamily || textStyle.fontFamily}
-                    stroke={el.id === selectedId ? "#0096FF" : ""}
-                    strokeWidth={el.id === selectedId ? 1 : 0}
-                    onDblClick={() => handleTextDoubleClick(el.id, el.text)}
-                  />
-                );
-              } else if (el.type === "image") {
-                return (
-                  <URLImage 
-                    key={el.id} 
-                    element={el} 
-                    onDragEnd={handleDragEnd}
-                    onSelect={handleSelect}
-                    isSelected={el.id === selectedId}
-                    onResize={handleImageResize}
-                  />
-                );
-              } else if (el.type === "line") {
-                return (
-                  <FlowLine 
-                    key={el.id} 
-                    element={el} 
-                    onDragEnd={handleLineDragEnd}
-                    onSelect={handleSelect}
-                    isSelected={el.id === selectedId}
-                  />
-                );
-              }
-              return null;
-            })}
-          </Layer>
-        </Stage>
-        {renderTextEditor()}
-        {renderFloatingControls()}
-      </div>
       
+      {isSelected && tool === 'select' && (
+        <>
+          <Circle
+            x={points[0]}
+            y={points[1]}
+            radius={8}
+            fill="#fff"
+            stroke={line.color || "#000000"}
+            strokeWidth={2}
+            draggable
+            onDragMove={(e) => handleEndpointDrag(0, e)}
+            onMouseDown={(e) => {
+              e.cancelBubble = true;
+              if (e.evt) e.evt.stopPropagation();
+            }}
+          />
+          <Circle
+            x={points[2]}
+            y={points[3]}
+            radius={8}
+            fill="#fff"
+            stroke={line.color || "#000000"}
+            strokeWidth={2}
+            draggable
+            onDragMove={(e) => handleEndpointDrag(1, e)}
+            onMouseDown={(e) => {
+              e.cancelBubble = true;
+              if (e.evt) e.evt.stopPropagation();
+            }}
+          />
+        </>
+      )}
+    </Group>
+  );
+};
+
+
+const ColorPalette = ({ onColorSelect, currentColor }) => {
+  const colors = [
+    "#000000", "#FFFFFF", "#FF0000", "#00FF00", "#0000FF",
+    "#FFFF00", "#FF00FF", "#00FFFF", "#FFA500", "#800080",
+    "#008000", "#800000", "#008080", "#FFC0CB", "#A52A2A"
+  ];
+
+  return (
+    <div className="grid grid-cols-5 gap-2 p-2">
+      {colors.map((color) => (
+        <button
+          key={color}
+          onClick={() => onColorSelect(color)}
+          className={`w-6 h-6 rounded-full cursor-pointer transition-all hover:scale-110 ${
+            currentColor === color ? 'ring-2 ring-offset-2 ring-indigo-500' : ''
+          }`}
+          style={{ 
+            backgroundColor: color,
+            border: color === '#FFFFFF' ? '1px solid #E5E7EB' : 'none'
+          }}
+        />
+      ))}
       <input
-        type="file"
-        accept="image/*"
-        ref={fileInputRef}
-        style={{ display: "none" }}
-        onChange={handleFileChange}
+        type="color"
+        value={currentColor}
+        onChange={(e) => onColorSelect(e.target.value)}
+        className="w-6 h-6 cursor-pointer"
+        title="Custom Color"
       />
-      {showSaveModal && (
-  <SaveCanvasModal
-    isOpen={showSaveModal}
-    onClose={() => setShowSaveModal(false)}
-    onSave={handleSaveWithMetadata}
-    imageUri={canvasImageUri}
-  />
-)}
     </div>
   );
 };
 
-export default VisionBoardDraw;
+const ContextMenu = ({ selectedElement, position, onClose, onUpdateElement, onDelete }) => {
+  if (!selectedElement) return null;
+
+  return (
+    <div 
+      className="absolute bg-white rounded-lg shadow-xl border border-gray-200 p-2 z-50"
+      style={{ 
+        top: `${position.y}px`, 
+        left: `${position.x}px`,
+        minWidth: '200px'
+      }}
+    >
+      <div className="p-2 text-sm font-medium text-gray-700 border-b border-gray-200">
+        {selectedElement.type.charAt(0).toUpperCase() + selectedElement.type.slice(1)} Options
+      </div>
+      
+      {(selectedElement.type === 'text' || selectedElement.type === 'flowLine') && (
+        <div className="p-2 space-y-3">
+          <div className="space-y-2">
+            <label className="text-xs text-gray-600">Color</label>
+            <ColorPalette
+              currentColor={selectedElement.color || '#000000'}
+              onColorSelect={(color) => onUpdateElement({ ...selectedElement, color })}
+            />
+          </div>
+          
+          {selectedElement.type === 'text' && (
+            <>
+              <div className="space-y-1">
+                <label className="text-xs text-gray-600">Font Size</label>
+                <input
+                  type="number"
+                  value={selectedElement.fontSize || 24}
+                  onChange={(e) => onUpdateElement({ 
+                    ...selectedElement, 
+                    fontSize: parseInt(e.target.value) 
+                  })}
+                  className="w-full px-2 py-1 border rounded text-sm"
+                  min="8"
+                  max="72"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-gray-600">Font Family</label>
+                <select
+                  value={selectedElement.fontFamily || 'Arial'}
+                  onChange={(e) => onUpdateElement({ 
+                    ...selectedElement, 
+                    fontFamily: e.target.value 
+                  })}
+                  className="w-full px-2 py-1 border rounded text-sm"
+                >
+                  <option value="Arial">Arial</option>
+                  <option value="Times New Roman">Times New Roman</option>
+                  <option value="Courier New">Courier New</option>
+                </select>
+              </div>
+            </>
+          )}
+          
+          {selectedElement.type === 'flowLine' && (
+            <div className="space-y-1">
+              <label className="text-xs text-gray-600">Line Width</label>
+              <input
+                type="range"
+                min="1"
+                max="10"
+                value={selectedElement.strokeWidth || 2}
+                onChange={(e) => onUpdateElement({
+                  ...selectedElement,
+                  strokeWidth: parseInt(e.target.value)
+                })}
+                className="w-full"
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="p-2 space-y-2">
+        <button
+          onClick={() => onDelete(selectedElement.id)}
+          className="w-full px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-md flex items-center gap-2"
+        >
+          <Trash2 className="w-4 h-4" />
+          Delete
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// 2. Updated TextNode component with better transform handling
+const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
+  const textRef = useRef();
+  const trRef = useRef();
+
+  useEffect(() => {
+    if (isSelected && trRef.current && textRef.current && tool === 'select') {
+      // Attach transformer to the text node
+      trRef.current.nodes([textRef.current]);
+      trRef.current.getLayer().batchDraw();
+    }
+  }, [isSelected, tool]);
+
+  const handleTransform = () => {
+    if (textRef.current && onChange) {
+      const node = textRef.current;
+      const scaleX = node.scaleX();
+      const scaleY = node.scaleY();
+      const rotation = node.rotation();
+
+      // Calculate new font size based on scale
+      const newFontSize = Math.max(8, Math.round((text.fontSize || 24) * Math.max(scaleX, scaleY)));
+
+      // Update the element with new properties
+      onChange(text.id, {
+        ...text,
+        x: node.x(),
+        y: node.y(),
+        rotation: rotation,
+        fontSize: newFontSize
+      });
+
+      // Reset scale to 1 after applying to fontSize
+      node.scaleX(1);
+      node.scaleY(1);
+    }
+  };
+
+  const handleClick = (e) => {
+    // Prevent event bubbling to stage
+    e.cancelBubble = true;
+    if (e.evt) {
+      e.evt.stopPropagation();
+    }
+    // Always select the text when clicked, regardless of tool
+    onSelect(text.id);
+  };
+
+  const handleDragEnd = (e) => {
+    if (onChange) {
+      onChange(text.id, {
+        ...text,
+        x: e.target.x(),
+        y: e.target.y()
+      });
+    }
+  };
+
+  return (
+    <Group>
+      <KonvaText
+        ref={textRef}
+        text={text.text || text.content}
+        x={text.x}
+        y={text.y}
+        fontSize={text.fontSize || 24}
+        fontFamily={text.fontFamily || 'Arial'}
+        fill={text.color || text.fill || '#000000'}
+        draggable={tool === 'select'}
+        rotation={text.rotation || 0}
+        fontStyle={text.fontStyle || 'normal'}
+        onClick={handleClick}
+        onTap={handleClick}
+        listening={true}
+        onDragStart={() => {
+          onSelect(text.id);
+        }}
+        onDragEnd={handleDragEnd}
+        onTransform={handleTransform}
+        onTransformEnd={handleTransform}
+      />
+      {isSelected && tool === 'select' && (
+        <Transformer
+          ref={trRef}
+          enabledAnchors={[
+            'top-left', 'top-right',
+            'bottom-left', 'bottom-right',
+            'middle-left', 'middle-right',
+            'top-center', 'bottom-center'
+          ]}
+          boundBoxFunc={(oldBox, newBox) => {
+            // Prevent the box from getting too small
+            if (newBox.width < 10) newBox.width = 10;
+            if (newBox.height < 5) newBox.height = 5;
+            return newBox;
+          }}
+          onTransform={handleTransform}
+          onTransformEnd={handleTransform}
+          rotateEnabled={true}
+          keepRatio={false}
+          anchorFill="#ffffff"
+          anchorStroke="#0066ff"
+          borderStroke="#0066ff"
+          borderStrokeWidth={2}
+          borderDash={[]}
+          anchorSize={8}
+          anchorStrokeWidth={2}
+          anchorCornerRadius={2}
+          centeredScaling={false}
+          ignoreStroke={false}
+          padding={2}
+          rotateAnchorOffset={20}
+          flipEnabled={false}
+        />
+      )}
+    </Group>
+  );
+};
+
+
+const DrawingBoard = ({ onSave }) => {
+  const [elements, setElements] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [tool, setTool] = useState("select");
+  const [penColor, setPenColor] = useState("#000000");
+  const [penWidth, setPenWidth] = useState(2);
+  const [lines, setLines] = useState([]);  
+  const [undoStack, setUndoStack] = useState([]);
+  const [redoStack, setRedoStack] = useState([]);
+  const [text, setText] = useState({ 
+    content: "", 
+    fontSize: 24, // Changed from 16 to 24
+    fontFamily: 'Arial',
+    color: '#000000',
+    isBold: false,
+    isItalic: false
+});
+  const [dimensions, setDimensions] = useState({
+    width: window.innerWidth - 48,
+    height: window.innerHeight - 160
+  });
+  const [canvasBackground, setCanvasBackground] = useState("#FFFFFF");
+  const containerRef = useRef();
+  const stageRef = useRef();
+  const fileInputRef = useRef();
+  const isDrawing = useRef(false);
+  const [scale, setScale] = useState(1);
+const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
+const [penPoints, setPenPoints] = useState([]);
+const [flowLine, setFlowLine] = useState(null);
+const [contextMenu, setContextMenu] = useState({ show: false, position: { x: 0, y: 0 }, element: null });
+const [isToolboxMinimized, setIsToolboxMinimized] = useState(false);
+const [lineStyle, setLineStyle] = useState('straight');
+const [isPlacingElement, setIsPlacingElement] = useState(false);
+const [elementToPlace, setElementToPlace] = useState(null);
+const [isErasing, setIsErasing] = useState(false);
+  // Handle canvas resize with fixed width
+useEffect(() => {
+  const handleResize = () => {
+    const container = containerRef.current;
+    if (container) {
+      setDimensions({
+        width: window.innerWidth - 48, // Fixed width with padding
+        height: window.innerHeight - 160 // Fixed height with padding for toolbar
+      });
+      
+      // Only update stage dimensions if stageRef exists
+      if (stageRef.current) {
+        const containerRect = container.getBoundingClientRect();
+        stageRef.current.width(containerRect.width);
+        stageRef.current.height(containerRect.height);
+      }
+    }
+  };
+
+  window.addEventListener('resize', handleResize);
+  return () => window.removeEventListener('resize', handleResize);
+}, []);
+  useEffect(() => {
+  if (isPlacingElement) {
+    document.body.style.cursor = 'crosshair';
+  } else if (tool === 'eraser') {
+    document.body.style.cursor = 'crosshair';
+  } else if (tool === 'pen') {
+    document.body.style.cursor = 'crosshair';
+  } else {
+    document.body.style.cursor = 'default';
+  }
+  return () => {
+    document.body.style.cursor = 'default';
+  };
+}, [isPlacingElement, tool]);
+
+  // Cursor effect for different tools
+  useEffect(() => {
+    let cursorStyle = 'default';
+    
+    if (isPlacingElement) {
+      cursorStyle = 'crosshair';
+    } else if (tool === 'eraser') {
+      cursorStyle = 'url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiIGZpbGw9IndoaXRlIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjIiLz48L3N2Zz4=) 12 12, auto';
+    } else if (tool === 'pen') {
+      cursorStyle = 'crosshair';
+    } else if (tool === 'select') {
+      cursorStyle = 'pointer';
+    }
+    
+    document.body.style.cursor = cursorStyle;
+    return () => {
+      document.body.style.cursor = 'default';
+    };
+  }, [isPlacingElement, tool]);
+
+  const handleZoom = (direction) => {
+    const newScale = direction === 'in' ? scale * 1.2 : scale / 1.2;
+    setScale(Math.min(Math.max(0.1, newScale), 3)); // Limit scale between 0.1 and 3
+  };
+
+const handleImageUpload = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new window.Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        // Scale down large images to a reasonable size
+        const maxWidth = 300;
+        const maxHeight = 300;
+        let { width, height } = img;
+        
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width = width * ratio;
+          height = height * ratio;
+        }
+        
+        // Calculate center position relative to the current viewport
+        const centerX = (dimensions.width / 2 / scale) - (width / 2) - (stagePos.x / scale);
+        const centerY = (dimensions.height / 2 / scale) - (height / 2) - (stagePos.y / scale);
+        
+        const imageElement = {
+          id: Date.now().toString(),
+          type: 'image',
+          src: event.target.result,
+          x: centerX,
+          y: centerY,
+          width: width,
+          height: height,
+          originalWidth: img.width,
+          originalHeight: img.height,
+          rotation: 0
+        };
+        setElements(prevElements => [...prevElements, imageElement]);
+        setSelectedId(imageElement.id);
+        // Force tool to select for immediate interaction
+        setTool('select');
+      };
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+  // Render element handlers
+ const handleElementUpdate = (id, newProps) => {
+  setElements(prevElements => 
+    prevElements.map((el) => 
+      el.id === id ? { ...el, ...newProps } : el
+    )
+  );
+};
+
+ const handleElementSelect = (id) => {
+  setSelectedId(id);
+  setContextMenu({ ...contextMenu, show: false });
+};
+  const handleElementDelete = (id) => {
+    updateElementsWithHistory(elements.filter(el => el.id !== id));
+    setContextMenu({ ...contextMenu, show: false });
+    setSelectedId(null);
+  };
+
+  // Mouse event handlers
+const handleMouseDown = (e) => {
+  // Hide context menu on any click
+  setContextMenu({ ...contextMenu, show: false });
+  
+  const stage = e.target.getStage();
+  if (!stage) return;
+  
+  const pos = stage.getPointerPosition();
+  if (!pos) return;
+
+  // Check what was clicked
+  const clickedElement = e.target;
+  const clickedOnBackground = clickedElement === stage || 
+                            (clickedElement.getClassName() === 'Rect' && clickedElement.attrs?.id === 'background');
+  
+  const actualPos = {
+    x: (pos.x - stagePos.x) / scale,
+    y: (pos.y - stagePos.y) / scale
+  };
+
+  // Handle clicks on elements vs background
+  if (!clickedOnBackground) {
+    // Element was clicked - let the element handle its own selection
+    // Don't interfere with element-specific click handling
+    return;
+  }
+
+  // Clicked on background - handle based on current tool
+  if (tool === 'select') {
+    setSelectedId(null);
+    return;
+  }
+
+  // Handle other tool actions on background
+  switch (tool) {
+    case 'pen':
+      isDrawing.current = true;
+      setPenPoints([
+        ...penPoints,
+        { points: [actualPos.x, actualPos.y], color: penColor, width: penWidth }
+      ]);
+      break;
+
+    case 'eraser':
+      setIsErasing(true);
+      handleEraser(e);
+      break;
+
+    case 'text':
+      if (text.content.trim()) {
+        const newText = {
+          id: Date.now().toString(),
+          type: 'text',
+          x: actualPos.x,
+          y: actualPos.y,
+          text: text.content,
+          content: text.content,
+          fontSize: text.fontSize,
+          fontFamily: text.fontFamily,
+          fill: text.color,
+          color: text.color,
+          fontStyle: `${text.isBold ? 'bold' : ''} ${text.isItalic ? 'italic' : ''}`.trim() || 'normal',
+          draggable: true
+        };
+        setElements(prevElements => [...prevElements, newText]);
+        setSelectedId(newText.id);
+        setText({ ...text, content: '' });
+        // Force tool to select for immediate interaction
+        setTool('select');
+      }
+      break;
+
+    case 'flowLine':
+      isDrawing.current = true;
+      const newLine = {
+        id: Date.now().toString(),
+        type: 'flowLine',
+        points: [actualPos.x, actualPos.y, actualPos.x + 100, actualPos.y],
+        color: penColor,
+        strokeWidth: penWidth
+      };
+      setFlowLine(newLine);
+      break;
+  }
+};
+
+ const handleMouseUp = () => {
+  if (tool === 'pen' && isDrawing.current && penPoints.length > 0) {
+    const lastLine = penPoints[penPoints.length - 1];
+    if (lastLine && lastLine.points.length > 2) {
+      const newElement = {
+        id: Date.now().toString(),
+        type: 'drawing',
+        points: lastLine.points,
+        color: lastLine.color,
+        strokeWidth: lastLine.width
+      };
+      setElements(prev => [...prev, newElement]);
+      setPenPoints([]); // Clear pen points after adding to elements
+    }
+  }
+  
+  if (tool === 'flowLine' && flowLine && isDrawing.current) {
+    const [x1, y1, x2, y2] = flowLine.points;
+    const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    if (distance > 5) {
+      setElements(prevElements => [...prevElements, { ...flowLine }]);
+      setSelectedId(flowLine.id);
+    }
+    setFlowLine(null);
+  }
+  
+  isDrawing.current = false;
+  setIsErasing(false);
+};
+
+
+
+ const handleMouseMove = (e) => {
+  const stage = e.target.getStage();
+  if (!stage) return;
+
+  const pos = stage.getPointerPosition();
+  if (!pos) return;
+
+  const actualPos = {
+    x: (pos.x - stagePos.x) / scale,
+    y: (pos.y - stagePos.y) / scale
+  };
+
+  if (tool === 'pen' && isDrawing.current && penPoints.length > 0) {
+    const lastLine = penPoints[penPoints.length - 1];
+    if (lastLine) {
+      const newPoints = [...lastLine.points, actualPos.x, actualPos.y];
+      setPenPoints(prevPoints => [
+        ...prevPoints.slice(0, -1),
+        { ...lastLine, points: newPoints }
+      ]);
+    }
+  } else if (tool === 'flowLine' && flowLine && isDrawing.current) {
+    setFlowLine({
+      ...flowLine,
+      points: [flowLine.points[0], flowLine.points[1], actualPos.x, actualPos.y]
+    });
+  } else if (tool === 'eraser' && isErasing) {
+    handleEraser(e);
+  }
+};
+
+
+  const handleLineStyleChange = (style) => {
+    setLineStyle(style);
+  };
+
+  const handleAddText = () => {
+    setElementToPlace({
+      type: 'text',
+      content: text.content,
+      fontSize: text.fontSize,
+      fontFamily: text.fontFamily,
+      color: text.color,
+      isBold: text.isBold,
+      isItalic: text.isItalic
+    });
+    setIsPlacingElement(true);
+  };
+
+  const handleAddFlowLine = () => {
+    setElementToPlace({
+      type: 'flowLine',
+      color: penColor,
+      strokeWidth: penWidth,
+      style: lineStyle
+    });
+    setIsPlacingElement(true);
+  };
+
+  const handleCanvasClick = (e) => {
+    if (!isPlacingElement || !elementToPlace) return;
+
+    const stage = e.target.getStage();
+    const pos = stage.getPointerPosition();
+    const scale = stage.scaleX();
+
+    if (elementToPlace.type === 'text') {
+      const newText = {
+        id: Date.now().toString(),
+        type: 'text',
+        content: elementToPlace.content,
+        x: pos.x / scale,
+        y: pos.y / scale,
+        fontSize: elementToPlace.fontSize,
+        fontFamily: elementToPlace.fontFamily,
+        color: elementToPlace.color,
+        isBold: elementToPlace.isBold,
+        isItalic: elementToPlace.isItalic
+      };
+      setElements([...elements, newText]);
+    } else if (elementToPlace.type === 'flowLine') {
+      const newLine = {
+        id: Date.now().toString(),
+        type: 'flowLine',
+        points: [pos.x / scale, pos.y / scale, (pos.x / scale) + 100, pos.y / scale],
+        color: elementToPlace.color,
+        strokeWidth: elementToPlace.strokeWidth,
+        style: elementToPlace.style
+      };
+      setElements([...elements, newLine]);
+    }
+
+    setIsPlacingElement(false);
+    setElementToPlace(null);
+    document.body.style.cursor = 'default';
+  };
+
+  const downloadCanvas = () => {
+    const stage = stageRef.current;
+    if (stage) {
+      const dataURL = stage.toDataURL();
+      const link = document.createElement('a');
+      link.download = 'vision-board.png';
+      link.href = dataURL;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+  
+  const handleSaveBoard = (boardData) => {
+  // Get canvas data
+  const canvasData = {
+    elements: elements,
+    canvasBackground: canvasBackground,
+    dimensions: dimensions,
+    scale: scale,
+    timestamp: new Date().toISOString(),
+    ...boardData
+  };
+  
+  // Call the onSave prop if provided
+  if (onSave) {
+    onSave(canvasData);
+  }
+  
+  // You can also save to localStorage or send to server here
+  localStorage.setItem('visionBoard', JSON.stringify(canvasData));
+  
+  console.log('Board saved:', canvasData);
+  setShowSaveModal(false);
+};
+  const ActionButtons = () => (
+  <div className="absolute top-4 right-4 z-40 flex gap-2">
+    <button
+      onClick={() => setShowSaveModal(true)}
+      className="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 flex items-center gap-2 shadow-lg"
+    >
+      <Save className="w-4 h-4" />
+      Save Board
+    </button>
+    <button
+      onClick={downloadCanvas}
+      className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center gap-2 shadow-lg"
+    >
+      <Download className="w-4 h-4" />
+      Download PNG
+    </button>
+  </div>
+);
+
+  const ToolBar = () => (
+    <div className={`absolute top-4 left-4 z-40 transition-all duration-300 ${
+      isToolboxMinimized ? 'w-12' : tool === 'text' ? 'w-[400px]' : 'w-[300px]'
+    }`}>
+      <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200 overflow-hidden flex flex-col">
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
+          {!isToolboxMinimized && <h3 className="text-lg font-semibold text-gray-800">Tools</h3>}
+          <button
+            onClick={() => setIsToolboxMinimized(!isToolboxMinimized)}
+            className="h-8 w-8 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+          >
+            {isToolboxMinimized ? (
+              <ChevronDown className="w-4 h-4 text-gray-600" />
+            ) : (
+              <ChevronUp className="w-4 h-4 text-gray-600" />
+            )}
+          </button>
+        </div>
+
+        {!isToolboxMinimized && (
+          <div className="overflow-y-auto custom-scrollbar max-h-[calc(100vh-8rem)]">
+            <div className="p-4 space-y-4">
+              {/* Canvas Controls */}
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={handleUndo}
+                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                  disabled={elements.length === 0}
+                  title="Undo (Ctrl+Z)"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 14L4 9l5-5"/>
+                    <path d="M4 9h11c4 0 7 3 7 7v0c0 4-3 7-7 7H8"/>
+                  </svg>
+                </button>
+                <button
+                  onClick={handleRedo}
+                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                  disabled={redoStack.length === 0}
+                  title="Redo (Ctrl+Y)"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 14l5-5-5-5"/>
+                    <path d="M20 9H9C5 9 2 12 2 16v0c0 4 3 7 7 7h8"/>
+                  </svg>
+                </button>
+
+                <button
+                  onClick={() => handleZoom('out')}
+                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200"
+                  title="Zoom Out"
+                >
+                  <ZoomOut className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleZoom('in')}
+                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200"
+                  title="Zoom In"
+                >
+                  <ZoomIn className="w-4 h-4" />
+                </button>
+                <button
+  onClick={() => {
+    setElements([]);
+    setSelectedId(null);
+    setPenPoints([]);
+    setUndoStack([]);
+    setRedoStack([]);
+  }}
+  className="p-2 rounded-lg bg-red-100 hover:bg-red-200 text-red-600"
+  title="Clear Board"
+>
+  <Trash2 className="w-4 h-4" />
+</button>
+              </div>
+
+              {/* Canvas Background */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <Palette className="w-4 h-4" />
+                  Canvas Background
+                </label>
+                <div className="flex items-center gap-2">
+                  <ColorPalette
+                    currentColor={canvasBackground}
+                    onColorSelect={setCanvasBackground}
+                  />
+                </div>
+              </div>
+
+              {/* Tool Selection */}
+             <div className="grid grid-cols-2 gap-2">
+  <button
+    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+      tool === 'select' 
+        ? 'bg-indigo-500 text-white shadow-md' 
+        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+    }`}
+    onClick={() => setTool('select')}
+  >
+    <MousePointer className="w-4 h-4" />
+    <span>Select</span>
+  </button>
+  <button
+    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+      tool === 'pen' 
+        ? 'bg-indigo-500 text-white shadow-md' 
+        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+    }`}
+    onClick={() => setTool('pen')}
+  >
+    <Pen className="w-4 h-4" />
+    <span>Pen</span>
+  </button>
+  <button
+    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+      tool === 'text' 
+        ? 'bg-indigo-500 text-white shadow-md' 
+        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+    }`}
+    onClick={() => setTool('text')}
+  >
+    <Type className="w-4 h-4" />
+    <span>Text</span>
+  </button>
+  <button
+    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+      tool === 'eraser' 
+        ? 'bg-indigo-500 text-white shadow-md' 
+        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+    }`}
+    onClick={() => setTool('eraser')}
+  >
+    <Trash2 className="w-4 h-4" />
+    <span>Eraser</span>
+  </button>
+  <button
+    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+      tool === 'flowLine' 
+        ? 'bg-indigo-500 text-white shadow-md' 
+        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+    }`}
+    onClick={() => setTool('flowLine')}
+  >
+    <CornerRightDown className="w-4 h-4" />
+    <span>Flow Line</span>
+  </button>
+  <button
+    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+      tool === 'image' 
+        ? 'bg-indigo-500 text-white shadow-md' 
+        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+    }`}
+    onClick={() => setTool('image')}
+  >
+    <ImageIcon className="w-4 h-4" />
+    <span>Image</span>
+  </button>
+</div>
+
+              {/* Tool-specific options */}
+              {tool === 'text' && (
+                <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="grid grid-cols-2 gap-3">
+          <div className="col-span-2">
+  <input
+    type="text"
+    placeholder="Enter text..."
+    value={text.content}
+    onChange={(e) => setText({ ...text, content: e.target.value })}
+    onKeyDown={(e) => {
+      if (e.key === 'Enter' && text.content.trim()) {
+        e.preventDefault();
+        // Auto-place text in center when Enter is pressed
+        const centerX = (dimensions.width / 2 / scale) - 50;
+        const centerY = (dimensions.height / 2 / scale) - 10;
+        
+        const newText = {
+          id: Date.now().toString(),
+          type: 'text',
+          x: centerX,
+          y: centerY,
+          text: text.content,
+          content: text.content,
+          fontSize: text.fontSize,
+          fontFamily: text.fontFamily,
+          fill: text.color,
+          color: text.color,
+          fontStyle: `${text.isBold ? 'bold' : ''} ${text.isItalic ? 'italic' : ''}`.trim() || 'normal',
+          draggable: true
+        };
+        setElements(prevElements => [...prevElements, newText]);
+        setSelectedId(newText.id);
+        setText({ ...text, content: '' });
+      }
+    }}
+    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+    autoFocus={tool === 'text'}
+  />
+  <p className="text-xs text-gray-500 mt-1">
+    Press Enter to add text to center, or click canvas after typing
+  </p>
+</div>
+                    <select
+                      value={text.fontFamily}
+                      onChange={(e) => setText({ ...text, fontFamily: e.target.value })}
+                      className="px-3 py-2 border rounded-lg"
+                    >
+                      <option value="Arial">Arial</option>
+                      <option value="Times New Roman">Times New Roman</option>
+                      <option value="Courier New">Courier New</option>
+                      <option value="Georgia">Georgia</option>
+                      <option value="Verdana">Verdana</option>
+                    </select>
+                    <input
+                      type="number"
+                      value={text.fontSize}
+                      onChange={(e) => setText({ ...text, fontSize: parseInt(e.target.value) })}
+                      className="px-3 py-2 border rounded-lg"
+                      min="8"
+                      max="72"
+                      placeholder="Font size"
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <ColorPalette
+                      currentColor={text.color}
+                      onColorSelect={(color) => setText({ ...text, color })}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      className={`p-2 rounded ${text.isBold ? 'bg-indigo-500 text-white' : 'bg-gray-200'}`}
+                      onClick={() => setText({ ...text, isBold: !text.isBold })}
+                    >
+                      <Bold className="w-4 h-4" />
+                    </button>
+                    <button
+                      className={`p-2 rounded ${text.isItalic ? 'bg-indigo-500 text-white' : 'bg-gray-200'}`}
+                      onClick={() => setText({ ...text, isItalic: !text.isItalic })}
+                    >
+                      <Italic className="w-4 h-4" />
+                    </button>
+                  </div>
+                 <p className="text-sm text-gray-600">Click on canvas to place text</p>
+                </div>
+              )}
+
+              {tool === 'image' && (
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    style={{ display: 'none' }}
+                  />
+                  <button
+                    onClick={() => fileInputRef.current.click()}
+                    className="w-full px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 flex items-center justify-center gap-2"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Choose Image
+                  </button>
+                </div>
+              )}
+
+              {tool === 'flowLine' && (
+                <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600">Click on canvas to set start point, then drag to create line</p>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Line Color</label>
+                    <ColorPalette
+                      currentColor={penColor}
+                      onColorSelect={setPenColor}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Width: {penWidth}px</label>
+                    <input
+                      type="range"
+                      min="1"
+                      max="10"
+                      value={penWidth}
+                      onChange={(e) => setPenWidth(parseInt(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    {['straight', 'curved'].map((style) => (
+                      <button
+                        key={style}
+                        className={`px-3 py-2 rounded-lg text-sm ${
+                          lineStyle === style 
+                            ? 'bg-indigo-500 text-white' 
+                            : 'bg-gray-200 text-gray-700'
+                        }`}
+                        onClick={() => handleLineStyleChange(style)}
+                      >
+                        {style.charAt(0).toUpperCase() + style.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                 
+                </div>
+              )}
+
+{tool === 'eraser' && (
+  <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
+    <p className="text-sm text-gray-600">Click and drag to erase drawings</p>
+    <div className="space-y-2">
+      <label className="text-sm font-medium text-gray-700">Eraser Size: {penWidth * 3}px</label>
+      <input
+        type="range"
+        min="1"
+        max="10"
+        value={penWidth}
+        onChange={(e) => setPenWidth(parseInt(e.target.value))}
+        className="w-full"
+      />
+    </div>
+  </div>
+)}
+              {tool === 'pen' && (
+                <div className="space-y-4 p-3 bg-gray-50 rounded-lg">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Pen Color</label>
+                    <ColorPalette
+                      currentColor={penColor}
+                      onColorSelect={setPenColor}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Width: {penWidth}px</label>
+                    <input
+                      type="range"
+                      min="1"
+                      max="20"
+                      value={penWidth}
+                      onChange={(e) => setPenWidth(parseInt(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // Enhanced eraser functionality
+  const handleEraser = (e) => {
+  if (tool !== 'eraser') return;
+  
+  const stage = e.target.getStage();
+  const pos = stage.getPointerPosition();
+  
+  if (!pos) return;
+  
+  const actualPos = {
+    x: (pos.x - stagePos.x) / scale,
+    y: (pos.y - stagePos.y) / scale
+  };
+  
+  const eraserRadius = penWidth * 3;
+
+  // Erase from elements array (drawings)
+  setElements(prevElements => {
+    return prevElements.filter(element => {
+      if (element.type === 'drawing') {
+        const points = element.points;
+        let shouldKeep = true;
+        
+        for (let i = 0; i < points.length; i += 2) {
+          const dx = points[i] - actualPos.x;
+          const dy = points[i + 1] - actualPos.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < eraserRadius) {
+            shouldKeep = false;
+            break;
+          }
+        }
+        return shouldKeep;
+      }
+      return true; // Keep non-drawing elements
+    });
+  });
+
+  // Erase from pen points (current drawing)
+  setPenPoints(prevPoints => {
+    return prevPoints.map(line => {
+      const newPoints = [];
+      const points = [...line.points];
+
+      for (let i = 0; i < points.length; i += 2) {
+        const dx = points[i] - actualPos.x;
+        const dy = points[i + 1] - actualPos.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance >= eraserRadius) {
+          newPoints.push(points[i], points[i + 1]);
+        }
+      }
+
+      return {
+        ...line,
+        points: newPoints
+      };
+    }).filter(line => line.points.length > 0);
+  });
+};
+
+  useEffect(() => {
+    const handleKeyboard = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        if (e.shiftKey) {
+          handleRedo();
+        } else {
+          handleUndo();
+        }
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+        handleRedo();
+      } else if (e.key === 'Delete' && selectedId) {
+        handleElementDelete(selectedId);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyboard);
+    return () => window.removeEventListener('keydown', handleKeyboard);
+  }, [selectedId]);
+
+  const handleUndo = () => {
+    if (elements.length === 0) return;
+    const lastElement = elements[elements.length - 1];
+    setRedoStack(prev => [...prev, lastElement]);
+    setElements(prev => prev.slice(0, -1));
+    setSelectedId(null);
+  };
+
+  const handleRedo = () => {
+    if (redoStack.length === 0) return;
+    const elementToRedo = redoStack[redoStack.length - 1];
+    setElements(prev => [...prev, elementToRedo]);
+    setRedoStack(prev => prev.slice(0, -1));
+  };
+
+  // Update elements with history tracking
+  const updateElementsWithHistory = (newElements) => {
+    setUndoStack(prev => [...prev, elements]);
+    setElements(newElements);
+    setRedoStack([]);
+  };
+
+  return (
+    <div className="relative">
+      <div className="relative" ref={containerRef}>
+    <Stage
+  ref={stageRef}
+  width={dimensions.width}
+  height={dimensions.height}
+  onMouseDown={handleMouseDown}
+  onMouseMove={handleMouseMove}
+  onMouseUp={handleMouseUp}
+  onMouseLeave={handleMouseUp}
+  scaleX={scale}
+  scaleY={scale}
+  x={stagePos.x}
+  y={stagePos.y}
+  listening={true}
+  onContextMenu={(e) => {
+    e.evt.preventDefault();
+    if (selectedId) {
+      const selectedElement = elements.find(el => el.id === selectedId);
+      if (selectedElement) {
+        const pos = e.target.getStage().getPointerPosition();
+        setContextMenu({
+          show: true,
+          position: { x: pos.x, y: pos.y },
+          element: selectedElement
+        });
+      }
+    }
+  }}
+>
+        <Layer>
+      {/* Fixed Background Rectangle */}
+  <Rect
+  id="background"
+  x={-stagePos.x / scale}
+  y={-stagePos.y / scale}
+  width={dimensions.width / scale}
+  height={dimensions.height / scale}
+  fill={canvasBackground}
+  listening={true} // Changed to true to capture background clicks
+/>
+ 
+          <defs>
+            <pattern id="gridPattern" width="20" height="20" patternUnits="userSpaceOnUse">
+              <rect width="100%" height="100%" fill="white" />
+              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e5e5e5" strokeWidth="0.5" />
+            </pattern>
+          </defs>
+
+    {elements.map((element) => {
+  switch (element.type) {
+    case 'text':
+      return (
+        <TextNode
+          key={element.id}
+          text={element}
+          isSelected={selectedId === element.id}
+          onSelect={handleElementSelect}
+          onChange={handleElementUpdate}
+          tool={tool}
+        />
+      );
+    case 'image':
+      return (
+        <URLImage
+          key={element.id}
+          element={element}
+          isSelected={selectedId === element.id}
+          onSelect={handleElementSelect}
+          onDragEnd={handleElementUpdate}
+          onResize={handleElementUpdate}
+          tool={tool}
+        />
+      );
+    case 'flowLine':
+      return (
+        <FlowLineComponent
+          key={element.id}
+          line={element}
+          isSelected={selectedId === element.id}
+          onSelect={handleElementSelect}
+          onDragEnd={handleElementUpdate}
+          onUpdate={handleElementUpdate}
+          tool={tool}
+        />
+      );
+    case 'drawing':
+      return (
+        <Line
+          key={element.id}
+          points={element.points}
+          stroke={element.color}
+          strokeWidth={element.strokeWidth}
+          tension={0.5}
+          lineCap="round"
+          lineJoin="round"
+          hitStrokeWidth={Math.max(20, element.strokeWidth * 4)}
+          onClick={(e) => {
+            // Prevent event bubbling
+            e.cancelBubble = true;
+            if (e.evt) {
+              e.evt.stopPropagation();
+            }
+            // Always select when clicked, regardless of tool
+            handleElementSelect(element.id);
+          }}
+          onTap={(e) => {
+            // Prevent event bubbling
+            e.cancelBubble = true;
+            if (e.evt) {
+              e.evt.stopPropagation();
+            }
+            // Always select when clicked, regardless of tool
+            handleElementSelect(element.id);
+          }}
+          listening={true}
+        />
+      );
+    default:
+      return null;
+  }
+})}
+
+
+          {/* Draw pen lines */}
+          {penPoints.map((line, index) => (
+            <Line
+              key={`pen-line-${index}`}
+              points={line.points.flat()}
+              stroke={line.color}
+              strokeWidth={line.width}
+              tension={0.5}
+              lineCap="round"
+              lineJoin="round"
+              globalCompositeOperation="source-over"
+            />
+          ))}
+
+          {/* Draw flow line preview */}
+          {tool === 'flowLine' && flowLine && (
+            <Line
+              points={flowLine.points}
+              stroke={penColor}
+              strokeWidth={penWidth}
+              tension={0.5}
+              lineCap="round"
+              lineJoin="round"
+              dash={[10, 5]}
+              globalCompositeOperation="source-over"
+            />
+          )}
+        </Layer>
+      </Stage>
+      </div>
+      {/* Context menu */}
+      {contextMenu.show && (
+        <ContextMenu
+          selectedElement={contextMenu.element}
+          position={contextMenu.position}
+          onClose={() => setContextMenu({ ...contextMenu, show: false })}
+          onUpdateElement={handleElementUpdate}
+          onDelete={handleElementDelete}
+        />
+      )}
+
+      {/* Action buttons */}
+      <ActionButtons />      {/* Save canvas modal */}
+      {showSaveModal && (
+        <SaveCanvasModal
+          isOpen={showSaveModal}
+          onClose={() => setShowSaveModal(false)}
+          onSave={() => {
+            setShowSaveModal(false);
+            if (onSave) {
+              const dataURL = stageRef.current.toDataURL();
+              onSave(dataURL);
+            }
+          }}
+          imageUri={stageRef.current ? stageRef.current.toDataURL() : null}
+        />
+      )}
+
+      {/* Tool bar */}
+      <ToolBar />
+    </div>
+  );
+};
+
+export default DrawingBoard;

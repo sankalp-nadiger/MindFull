@@ -182,7 +182,6 @@ const TodoListPage = () => {
 
   const handleCompleteTask = async (taskId) => {
     try {
-      // Replace with actual API call
       await fetch(`${import.meta.env.VITE_BASE_API_URL}/tasks/${taskId}/complete`, {
         method: 'PATCH',
       });
