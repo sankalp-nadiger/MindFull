@@ -27,7 +27,12 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
   const handleTransformStart = () => {
     setIsTransforming(true);
   };
-
+  const handleTransformerInteraction = (e) => {
+    e.cancelBubble = true;
+    if (e.evt) {
+      e.evt.stopPropagation();
+    }
+  };
   const handleTransform = () => {
     if (imageRef.current && onResize) {
       const node = imageRef.current;
@@ -184,6 +189,10 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
           onTransformStart={handleTransformStart}
           onTransform={handleTransform}
           onTransformEnd={handleTransformEnd}
+         onMouseDown={handleTransformerInteraction}
+          onTouchStart={handleTransformerInteraction}
+          onClick={handleTransformerInteraction}
+          onTap={handleTransformerInteraction}
           enabledAnchors={[
             'top-left', 'top-right', 
             'bottom-left', 'bottom-right',
@@ -327,6 +336,7 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
         listening={true}
         lineCap="round"
         lineJoin="round"
+        tension={line.style === 'curved' ? 0.5 : 0} // Add tension for curved lines
       />
       
       {isSelected && tool === 'select' && points.length >= 4 && (
@@ -501,6 +511,10 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
   const [dragStartPos, setDragStartPos] = useState(null);
   const [isTransforming, setIsTransforming] = useState(false);
   const [mouseStartPos, setMouseStartPos] = useState(null);
+  const handleTransformerMouseDown = (e) => {
+    e.cancelBubble = true;
+    if (e.evt) e.evt.stopPropagation();
+  };
 
   useEffect(() => {
     if (isSelected && trRef.current && textRef.current && tool === 'select') {
@@ -678,6 +692,10 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
           onTransformStart={handleTransformStart}
           onTransform={handleTransform}
           onTransformEnd={handleTransformEnd}
+          onMouseDown={handleTransformerMouseDown}
+          onTouchStart={handleTransformerMouseDown}
+          onClick={handleTransformerMouseDown}
+          onTap={handleTransformerMouseDown}
           rotateEnabled={true}
           keepRatio={false}
           anchorFill="#ffffff"
@@ -1025,67 +1043,6 @@ const handleMouseDown = (e) => {
     setLineStyle(style);
   };
 
-  const handleAddText = () => {
-    setElementToPlace({
-      type: 'text',
-      content: text.content,
-      fontSize: text.fontSize,
-      fontFamily: text.fontFamily,
-      color: text.color,
-      isBold: text.isBold,
-      isItalic: text.isItalic
-    });
-    setIsPlacingElement(true);
-  };
-
-  const handleAddFlowLine = () => {
-    setElementToPlace({
-      type: 'flowLine',
-      color: penColor,
-      strokeWidth: penWidth,
-      style: lineStyle
-    });
-    setIsPlacingElement(true);
-  };
-
-  const handleCanvasClick = (e) => {
-    if (!isPlacingElement || !elementToPlace) return;
-
-    const stage = e.target.getStage();
-    const pos = stage.getPointerPosition();
-    const scale = stage.scaleX();
-
-    if (elementToPlace.type === 'text') {
-      const newText = {
-        id: Date.now().toString(),
-        type: 'text',
-        content: elementToPlace.content,
-        x: pos.x / scale,
-        y: pos.y / scale,
-        fontSize: elementToPlace.fontSize,
-        fontFamily: elementToPlace.fontFamily,
-        color: elementToPlace.color,
-        isBold: elementToPlace.isBold,
-        isItalic: elementToPlace.isItalic
-      };
-      setElements([...elements, newText]);
-    } else if (elementToPlace.type === 'flowLine') {
-      const newLine = {
-        id: Date.now().toString(),
-        type: 'flowLine',
-        points: [pos.x / scale, pos.y / scale, (pos.x / scale) + 100, pos.y / scale],
-        color: elementToPlace.color,
-        strokeWidth: elementToPlace.strokeWidth,
-        style: elementToPlace.style
-      };
-      setElements([...elements, newLine]);
-    }
-
-    setIsPlacingElement(false);
-    setElementToPlace(null);
-    document.body.style.cursor = 'default';
-  };
-
   const downloadCanvas = () => {
     const stage = stageRef.current;
     if (stage) {
@@ -1099,43 +1056,21 @@ const handleMouseDown = (e) => {
     }
   };
   
-  const handleSaveBoard = (boardData) => {
-  // Get canvas data
-  const canvasData = {
-    elements: elements,
-    canvasBackground: canvasBackground,
-    dimensions: dimensions,
-    scale: scale,
-    timestamp: new Date().toISOString(),
-    ...boardData
-  };
-  
-  // Call the onSave prop if provided
-  if (onSave) {
-    onSave(canvasData);
-  }
-  
-  // You can also save to localStorage or send to server here
-  localStorage.setItem('visionBoard', JSON.stringify(canvasData));
-  
-  console.log('Board saved:', canvasData);
-  setShowSaveModal(false);
-};
-  const ActionButtons = () => (
+const ActionButtons = () => (
   <div className="absolute top-4 right-4 z-40 flex gap-2">
     <button
       onClick={() => setShowSaveModal(true)}
-      className="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 flex items-center gap-2 shadow-lg"
+      className="px-4 py-2 bg-white/90 backdrop-blur-md text-indigo-600 rounded-lg hover:bg-white transition-all flex items-center gap-1.5 shadow-md border border-indigo-100 text-sm font-medium"
     >
-      <Save className="w-4 h-4" />
-      Save Board
+      <Save className="w-3.5 h-3.5" />
+      Save
     </button>
     <button
       onClick={downloadCanvas}
-      className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center gap-2 shadow-lg"
+      className="px-4 py-2 bg-white/90 backdrop-blur-md text-green-600 rounded-lg hover:bg-white transition-all flex items-center gap-1.5 shadow-md border border-green-100 text-sm font-medium"
     >
-      <Download className="w-4 h-4" />
-      Download PNG
+      <Download className="w-3.5 h-3.5" />
+      Export
     </button>
   </div>
 );
