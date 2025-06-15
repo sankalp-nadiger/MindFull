@@ -9,7 +9,7 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { 
   Info, Home, ChevronLeft, ChevronRight, X, Download, Maximize2, RefreshCw,
   MousePointer, Move, ZoomIn, PenLine, Save, Check, ArrowLeft, Heart, Sun, Moon,
-  ChevronDown, Sparkles // Add this import
+  ChevronDown
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -170,6 +170,11 @@ useEffect(() => {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [fullScreenView, visionBoards]);
+  // Add this useEffect to ensure page starts at top
+useEffect(() => {
+  // Scroll to top when component mounts
+  window.scrollTo(0, 0);
+}, []);
 
   // Theme modal component
   if (showThemeModal) {
@@ -235,22 +240,57 @@ useEffect(() => {
     
     <DragDropContext onDragEnd={handleDragEnd}>
     <div className={`min-h-screen ${themeClasses.bg} transition-all duration-300`}>
+      
       <div className="p-5 flex flex-col items-center relative pb-20">
-        {/* Theme toggle button */}
-        <button
-          onClick={() => setDarkMode(!darkMode)}
-          className={`absolute top-4 right-20 ${themeClasses.buttonSecondary} ${darkMode ? 'text-slate-300' : 'text-gray-700'} p-2 rounded-lg shadow-md transition-all flex items-center gap-2`}
-        >
-          {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-          <span className="text-sm">{darkMode ? 'Light' : 'Dark'}</span>
-        </button>
+  
+  {/* Header row with Back button, Brand name, and Theme toggle */}
+  <div className="w-full flex items-center mb-6 relative">
+    {/* Back button - Left */}
+    <Link 
+  to="/MainPage"
+  className={`flex items-center justify-center gap-2 ${themeClasses.text} hover:${themeClasses.textSecondary} transition-colors`}
+>
+  <ArrowLeft className="w-5 h-5" />
+  <span className="font-medium">Back to Dashboard</span>
+</Link>
+    
+    {/* Brand name - Absolute Center */}
+    <div className={`absolute left-1/2 transform -translate-x-1/2 text-4xl ${themeClasses.brandText} font-medium`}>
+      VisionFull
+    </div>
+    
+    {/* Theme toggle button - Right */}
+    <button
+      onClick={() => setDarkMode(!darkMode)}
+      className={`ml-auto ${themeClasses.buttonSecondary} ${darkMode ? 'text-slate-300' : 'text-gray-700'} p-2 rounded-lg shadow-md transition-all flex items-center gap-2`}
+    >
+      {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+      <span className="text-sm">{darkMode ? 'Light' : 'Dark'}</span>
+    </button>
+  </div>
 
-        {/* Brand name */}
-        <div className={`mb-2 text-4xl ${themeClasses.brandText} font-medium`}>VisionFull</div>
+  {/* Inspirational tagline */}
+  <p className={`${themeClasses.textSecondary} italic mb-6`}>Visualize • Believe • Achieve</p>
         
-        {/* Inspirational tagline */}
-        <p className={`${themeClasses.textSecondary} italic mb-6`}>Visualize • Believe • Achieve</p>
-        
+  {/* Decorative elements - positive words */}
+<div className="absolute top-32 left-16 rotate-[-15deg] text-purple-300 font-bold opacity-30 text-2xl">Success</div>
+<div className="absolute top-28 right-24 rotate-[10deg] text-blue-300 font-bold opacity-30 text-2xl">Growth</div>
+<div className="absolute top-64 left-8 rotate-[5deg] text-green-300 font-bold opacity-30 text-xl">Harmony</div>
+<div className="absolute top-72 right-12 rotate-[-5deg] text-pink-300 font-bold opacity-30 text-xl">Fulfillment</div>
+<div className="absolute top-96 left-32 rotate-[12deg] text-yellow-300 font-bold opacity-30 text-xl">Joy</div>
+<div className="absolute top-80 right-40 rotate-[-8deg] text-indigo-300 font-bold opacity-30 text-xl">Dreams</div>
+<div className="absolute top-48 left-64 rotate-[15deg] text-emerald-300 font-bold opacity-30 text-xl">Peace</div>
+<div className="absolute top-56 right-64 rotate-[-10deg] text-orange-300 font-bold opacity-30 text-xl">Hope</div>
+
+{/* Decorative icons */}
+<div className="absolute top-40 left-48 text-blue-200 opacity-40 text-2xl">✨</div>
+<div className="absolute top-88 right-28 text-yellow-200 opacity-40 text-2xl">⭐</div>
+<div className="absolute top-52 left-80 text-purple-200 opacity-40 text-3xl">🌟</div>
+<div className="absolute top-36 right-80 text-green-200 opacity-40 text-2xl">💫</div>
+<div className="absolute top-68 right-56 text-cyan-200 opacity-40 text-2xl">🦋</div>
+<div className="absolute top-92 left-56 text-violet-200 opacity-40 text-2xl">🌺</div>
+<div className="absolute top-84 right-72 text-rose-200 opacity-40 text-2xl">🌈</div>
+
         {/* Small wellness quote */}
         <div className={`${themeClasses.quote} p-4 rounded-lg shadow-sm mb-8 max-w-3xl relative z-10`}>
           <p className={`text-center ${themeClasses.text}`}>
@@ -269,12 +309,6 @@ useEffect(() => {
             <RefreshCw size={18} />
           </button>
         </div>
-
-        {/* Home button */}
-        <Link to="/MainPage" className={`absolute top-4 left-4 ${themeClasses.button} text-white p-2 rounded-lg shadow-md transition-all flex items-center`}>
-          <Home size={18} className="mr-1" />
-          <span>Home</span>
-        </Link>
 
         {/* Horizontal scrolling container */}
         <div className="relative w-full max-w-4xl">
@@ -393,7 +427,7 @@ useEffect(() => {
     <div className="absolute -inset-1 bg-white/10 rounded-full filter blur-md opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
     
     <ChevronDown size={20} className="relative z-10" />
-    <span className="relative z-10 font-medium text-lg">Create Your Vision Board</span>
+    <span className="relative z-10 font-medium text-lg">Draw a Vision Board</span>
     <ChevronDown size={20} className="relative z-10" />
     
     {/* Animated ring */}

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from '../Navbar/Navbar';
 import { Clock, X, Calendar } from 'lucide-react';
-import { ArrowUp, ArrowDown, Check, Plus, Award, Lightbulb, ChevronRight, Trash, Save } from 'lucide-react';
+import { ArrowUp, ArrowDown, ArrowLeft, Check, Plus, Award, Lightbulb, ChevronRight, Trash, Save } from 'lucide-react';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
 
 const TodoListPage = () => {
   const [tasks, setTasks] = useState([]);
@@ -357,11 +357,18 @@ const TodoListPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      <Navbar />
       {/* Expanded header with TaskMaster and productivity message */}
       <div className="bg-gradient-to-r from-gray-800 to-gray-900 py-6 px-4 shadow-lg">
         <div className="container mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center">
+             {/* Back button - Left */}
+   <Link 
+  to="/MainPage"
+  className="flex items-center justify-center gap-2"
+>
+  <ArrowLeft className="w-5 h-5" />
+  <span className="font-medium">Back to Dashboard</span>
+</Link>
             <div className="flex items-center mb-4 md:mb-0">
               <h1 className="text-3xl font-bold text-purple-400">TaskMaster</h1>
               <span className="ml-3 px-3 py-1 bg-purple-900 text-purple-200 text-xs rounded-full">Pro</span>

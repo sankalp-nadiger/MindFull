@@ -19,16 +19,25 @@ dotenv.config();
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
 const sendOTP = async (req, res) => {
+ 
+    console.log('Received request to send OTP:', req.body);
     const mobileNumber= req.body.mobileNumber;
     const otp=generateOTP();
+    console.log('Generated OTP:', otp, 'for mobile number:', mobileNumber);
     await OTP.create({ mobileNumber, otp, createdAt: new Date() });
     const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_API_KEY_SECRET;
 const Twilio_Number = process.env.TWILIO_NUMBER;
+
 const client = twilio(accountSid, authToken);
+
+client.api.accounts(accountSid).fetch()
+  .then(account => console.log('Twilio credentials valid:', account.friendlyName))
+  .catch(err => console.error('Twilio auth failed:', err.message));
+
 try {
     const message = await client.messages.create({
-        body: `Your OTP is: ${otp}`, // Use template literals to include OTP
+        body: `Your OTP is: ${otp}`, 
         to: `+91${mobileNumber}`, 
         from: Twilio_Number });
 

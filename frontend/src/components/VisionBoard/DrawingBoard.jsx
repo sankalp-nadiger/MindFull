@@ -1825,11 +1825,10 @@ const handleRedo = () => {
     elementId={contextMenu.elementId}
     elements={elements}
     position={contextMenu.position}
-    // Update the onClose handler
 onClose={() => setContextMenu({
   show: false, 
   position: { x: 0, y: 0 }, 
-  elementId: null  // Changed from 'element' to 'elementId'
+  elementId: null 
 })}
     onUpdateElement={handleElementUpdate}
     onDelete={handleElementDelete}
@@ -1838,7 +1837,7 @@ onClose={() => setContextMenu({
     <Stage
   ref={stageRef}
   width={dimensions.width}
-  height={Math.max(dimensions.height, window.innerHeight)} // Ensure minimum height of viewport
+  height={Math.max(dimensions.height, window.innerHeight)}
   onMouseDown={handleMouseDown}
   onMouseMove={handleMouseMove}
   onMouseUp={handleMouseUp}
@@ -1848,7 +1847,6 @@ onClose={() => setContextMenu({
   x={stagePos.x}
   y={stagePos.y}
   listening={true}
- // Update the onContextMenu handler
 onContextMenu={(e) => {
   e.evt.preventDefault();
   const stage = e.target.getStage();
@@ -1875,7 +1873,7 @@ onContextMenu={(e) => {
     setContextMenu({
       show: true,
       position: { x: adjustedX, y: adjustedY },
-      elementId: selectedId  // Store ID instead of full element
+      elementId: selectedId 
     });
   }
 }}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, 
@@ -20,105 +20,21 @@ import {
   MicOff,
   VideoOff
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { io } from 'socket.io-client';
 
-const VideoChat = () => {
-  const [issueDetails, setIssueDetails] = useState('');
-  const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [endedSession, setEndedSession] = useState(null);
-  const [error, setError] = useState('');
-  const [ending, setEnding] = useState(false);
-  const [notes, setNotes] = useState('');
-  const [noteStatus, setNoteStatus] = useState('');
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [feedback, setFeedback] = useState('');
-  const [feedbackStatus, setFeedbackStatus] = useState('');
-  const [rating, setRating] = useState(5);
-  const [sessions, setSessions] = useState([
-    {
-      _id: '1',
-      counselor: { fullName: 'Dr. Sarah Johnson', specialization: 'Anxiety & Depression' },
-      createdAt: '2024-06-10',
-      issueDetails: 'Dealing with work-related stress and anxiety',
-      notes: 'Learned breathing techniques and coping strategies',
-      rating: 5,
-      feedback: 'Very helpful session'
-    },
-    {
-      _id: '2',
-      counselor: { fullName: 'Dr. Michael Chen', specialization: 'Relationship Counseling' },
-      createdAt: '2024-06-05',
-      issueDetails: 'Communication issues with partner',
-      notes: 'Discussed active listening techniques',
-      rating: 4
-    }
-  ]);
-  const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+const getSocket = () => {
+  if (!window.socketInstance) {
+    window.socketInstance = io(`${import.meta.env.VITE_BASE_URL}`, {
+      transports: ['websocket'],
+      withCredentials: true,
+    });
+  }
+  return window.socketInstance;
+};
 
-  // Mock functions for demo
-  const requestSession = () => {
-    if (!issueDetails.trim()) {
-      setError('Please provide issue details.');
-      return;
-    }
-    setLoading(true);
-    setTimeout(() => {
-      setSession({
-        _id: 'demo-session',
-        status: 'Pending',
-        counselor: { fullName: 'Dr. Emily Watson', specialization: 'Anxiety & Stress Management' },
-        roomName: 'demo-room'
-      });
-      setLoading(false);
-      setError('');
-      setTimeout(() => {
-        setSession(prev => ({ ...prev, status: 'Active' }));
-      }, 3000);
-    }, 2000);
-  };
-
-  const endSession = () => {
-    setEnding(true);
-    setTimeout(() => {
-      setEndedSession(session);
-      setSession(null);
-      setShowFeedback(true);
-      setEnding(false);
-    }, 1500);
-  };
-
-  const handleAddNotes = () => {
-    if (!notes.trim()) {
-      setNoteStatus('Please enter some notes');
-      return;
-    }
-    setNoteStatus('Notes saved successfully!');
-    setTimeout(() => setNoteStatus(''), 3000);
-  };
-
-  const handleFeedbackSubmit = () => {
-    if (!feedback.trim()) {
-      setFeedbackStatus('Please provide feedback');
-      return;
-    }
-    setFeedbackStatus('Thank you for your feedback!');
-    setTimeout(() => {
-      setShowFeedback(false);
-      setFeedback('');
-      setRating(5);
-      setEndedSession(null);
-      setFeedbackStatus('');
-    }, 2000);
-  };
-
-  const handleSkipFeedback = () => {
-    setShowFeedback(false);
-    setFeedback('');
-    setRating(5);
-    setEndedSession(null);
-  };
-
-  // Trust indicators component
+ // Trust indicators component
   const TrustIndicators = () => (
     <div className="flex items-center justify-center space-x-6 mb-8 text-sm text-slate-400">
       <div className="flex items-center space-x-2">
@@ -137,7 +53,7 @@ const VideoChat = () => {
   );
 
   // Request form component
-  const RequestForm = () => (
+  const RequestForm = ({ issueDetails, loading, requestSession, handleIssueDetailsChange }) => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -162,10 +78,13 @@ const VideoChat = () => {
           </label>
           <textarea
             value={issueDetails}
-            onChange={(e) => setIssueDetails(e.target.value)}
+            onChange={handleIssueDetailsChange}
             placeholder="Share what's on your mind. This helps us match you with the right counselor..."
             rows="4"
+            maxLength={500}
             className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors resize-none text-slate-200 placeholder-slate-500"
+            autoComplete="off"
+            spellCheck="true"
           />
           <div className="flex justify-between items-center mt-2 text-xs text-slate-500">
             <span>Your information is completely confidential</span>
@@ -198,8 +117,18 @@ const VideoChat = () => {
     </motion.div>
   );
 
+  
+
   // Active session component
-  const ActiveSession = () => (
+const ActiveSession = ({ 
+  session, 
+  endSession, 
+  ending, 
+  notes, 
+  handleNotesChange, 
+  handleAddNotes, 
+  noteStatus 
+}) => (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -217,7 +146,7 @@ const VideoChat = () => {
           {session?.status === 'Active' && (
             <div className="flex items-center space-x-1 text-emerald-400 text-sm font-medium">
               <Clock className="w-4 h-4" />
-              <span>12:34</span>
+              <span>Active</span>
             </div>
           )}
         </div>
@@ -225,24 +154,28 @@ const VideoChat = () => {
         <div className="flex items-center space-x-4 text-sm text-slate-300">
           <div className="flex items-center space-x-2">
             <User className="w-4 h-4" />
-            <span>{session?.counselor?.fullName}</span>
+            <span>{session?.counselor?.fullName || 'Waiting for counselor...'}</span>
           </div>
-          <div className="flex items-center space-x-2">
-            <Heart className="w-4 h-4 text-rose-400" />
-            <span>{session?.counselor?.specialization}</span>
-          </div>
+          {session?.counselor?.specialization && (
+            <div className="flex items-center space-x-2">
+              <Heart className="w-4 h-4 text-rose-400" />
+              <span>{session.counselor.specialization}</span>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Video Interface */}
       {session?.status === 'Active' ? (
         <div className="relative bg-slate-900 rounded-xl overflow-hidden shadow-2xl border border-slate-700">
-          <div className="aspect-video w-full bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center border border-slate-700">
-            <div className="text-center text-white">
-              <Video className="w-12 h-12 mx-auto mb-3 opacity-60" />
-              <p className="text-lg font-medium mb-1">Video Session Active</p>
-              <p className="text-sm opacity-80">Secure connection established</p>
-            </div>
+          <div className="aspect-video w-full">
+            <iframe
+              src={`https://meet.jit.si/${session.roomName}`}
+              width="100%"
+              height="100%"
+              allow="camera; microphone; fullscreen; display-capture"
+              className="rounded-xl"
+            />
           </div>
           
           {/* Video Controls */}
@@ -287,7 +220,7 @@ const VideoChat = () => {
         
         <textarea
           value={notes}
-          onChange={(e) => setNotes(e.target.value)}
+          onChange={handleNotesChange}
           placeholder="Jot down key insights, thoughts, or things you want to remember..."
           rows="3"
           className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors resize-none text-slate-200 placeholder-slate-500"
@@ -304,7 +237,9 @@ const VideoChat = () => {
             <motion.span
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
-              className="text-sm text-emerald-400 font-medium"
+              className={`text-sm font-medium ${
+                noteStatus.includes('successfully') ? 'text-emerald-400' : 'text-red-400'
+              }`}
             >
               {noteStatus}
             </motion.span>
@@ -315,7 +250,15 @@ const VideoChat = () => {
   );
 
   // Feedback form component
-  const FeedbackForm = () => (
+  const FeedbackForm = ({ 
+  feedback, 
+  rating, 
+  setRating, 
+  handleFeedbackChange, 
+  handleFeedbackSubmit, 
+  handleSkipFeedback, 
+  feedbackStatus 
+})  => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -354,7 +297,7 @@ const VideoChat = () => {
         </label>
         <textarea
           value={feedback}
-          onChange={(e) => setFeedback(e.target.value)}
+          onChange={handleFeedbackChange}
           placeholder="What went well? How could we improve?"
           rows="4"
           className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors resize-none text-slate-200 placeholder-slate-500"
@@ -393,7 +336,7 @@ const VideoChat = () => {
   );
 
   // Session history component
-  const SessionHistory = () => (
+  const SessionHistory = ({ sessions, isLoadingSessions }) => (
     <div className="space-y-4">
       {isLoadingSessions ? (
         <div className="flex flex-col items-center justify-center py-12">
@@ -412,15 +355,17 @@ const VideoChat = () => {
             >
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <h4 className="font-semibold text-white">{session.counselor?.fullName}</h4>
-                  <p className="text-sm text-slate-400">{session.counselor?.specialization}</p>
+                  <h4 className="font-semibold text-white">{session.counselor?.fullName || session.counselorName}</h4>
+                  <p className="text-sm text-slate-400">{session.counselor?.specialization || session.counselorSpecialization || 'General'}</p>
                 </div>
                 <div className="text-right">
-                  <div className="flex items-center space-x-1 text-amber-400 mb-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className={`w-3 h-3 ${i < (session.rating || 0) ? 'fill-current' : 'text-slate-600'}`} />
-                    ))}
-                  </div>
+                  {session.rating && (
+                    <div className="flex items-center space-x-1 text-amber-400 mb-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className={`w-3 h-3 ${i < session.rating ? 'fill-current' : 'text-slate-600'}`} />
+                      ))}
+                    </div>
+                  )}
                   <span className="text-xs text-slate-500">
                     {new Date(session.createdAt).toLocaleDateString()}
                   </span>
@@ -449,13 +394,272 @@ const VideoChat = () => {
     </div>
   );
 
+const VideoChat = () => {
+  const navigate = useNavigate();
+  const socket = useMemo(() => getSocket(), []);
+  
+  // State management
+  const [issueDetails, setIssueDetails] = useState('');
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [endedSession, setEndedSession] = useState(null);
+  const [error, setError] = useState('');
+  const [ending, setEnding] = useState(false);
+  const [notes, setNotes] = useState('');
+  const [noteStatus, setNoteStatus] = useState('');
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedback, setFeedback] = useState('');
+  const [feedbackStatus, setFeedbackStatus] = useState('');
+  const [rating, setRating] = useState(5);
+  const [sessions, setSessions] = useState([]);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+
+  // Memoized API functions to prevent re-creation
+  const requestSession = useCallback(async () => {
+    console.log('RequestSession called with:', issueDetails); // Debug log
+    
+    if (!issueDetails.trim()) {
+      setError('Please provide issue details.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError('');
+      
+      const token = sessionStorage.getItem('accessToken');
+      if (!token) {
+        setError('Authentication token not found. Please login again.');
+        return;
+      }
+      
+      console.log('Making API request...'); // Debug log
+      
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_API_URL}/counsellor/request`,
+        { issueDetails },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+        }
+      );
+      
+      console.log('API Response:', response.data); // Debug log
+      
+      const newSession = response.data.session;
+      setSession(newSession);
+      
+      // Emit socket event for new session request
+      socket.emit('sessionRequested', {
+        sessionId: newSession._id,
+        issueDetails: issueDetails,
+        userId: newSession.userId,
+        timestamp: new Date().toISOString()
+      });
+      
+    } catch (error) {
+      console.error('Request session error:', error); // Debug log
+      setError(error.response?.data?.message || 'Failed to request session. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [issueDetails, socket]);
+
+  const fetchSessions = useCallback(async () => {
+    setIsLoadingSessions(true);
+    
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/users/counseling-sessions`, {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+        },
+      });
+      setSessions(response.data);
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+    } finally {
+      setIsLoadingSessions(false);
+    }
+  }, []);
+
+  const handleAddNotes = useCallback(async () => {
+    if (!notes.trim()) {
+      setNoteStatus('Please enter some notes');
+      return;
+    }
+
+    try {
+      await axios.post(
+        `${import.meta.env.VITE_BASE_API_URL}/users/addNotes`,
+        { sessionId: session._id, notes }
+      );
+      setNoteStatus('Notes saved successfully!');
+      setTimeout(() => setNoteStatus(''), 3000);
+    } catch (error) {
+      setNoteStatus('Failed to save notes. Please try again.');
+      setTimeout(() => setNoteStatus(''), 3000);
+    }
+  }, [notes, session]);
+
+  const endSession = useCallback(async () => {
+    if (!session) {
+      setError('No active session to end.');
+      return;
+    }
+
+    try {
+      setEnding(true);
+      await axios.post(
+        `${import.meta.env.VITE_BASE_API_URL}/users/end`,
+        { sessionId: session._id },
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
+          },
+        }
+      );
+
+      socket.emit('endSession', { sessionId: session._id });
+      setEndedSession(session);
+      setSession(null);
+      setShowFeedback(true);
+    } catch (error) {
+      setError('Failed to end session. Please try again.');
+    } finally {
+      setEnding(false);
+    }
+  }, [session, socket]);
+
+  const handleFeedbackSubmit = useCallback(async () => {
+    if (!endedSession || !endedSession._id) {
+      setFeedbackStatus("Session information missing.");
+      return;
+    }
+
+    if (!feedback.trim()) {
+      setFeedbackStatus("Please provide feedback");
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_API_URL}/sessions/${endedSession._id}/feedback`,
+        { feedback, rating },
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        setFeedbackStatus("Thank you for your feedback!");
+        setTimeout(() => {
+          handleFeedbackComplete();
+        }, 2000);
+      }
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+      setFeedbackStatus("Failed to submit feedback. Please try again.");
+    }
+  }, [endedSession, feedback, rating]);
+
+  // Memoized input change handlers
+  const handleIssueDetailsChange = useCallback((e) => {
+    const newValue = e.target.value;
+    if (newValue.length <= 500) {
+      setIssueDetails(newValue);
+    }
+  }, []);
+
+  const handleNotesChange = useCallback((e) => {
+    setNotes(e.target.value);
+  }, []);
+
+  const handleFeedbackChange = useCallback((e) => {
+    setFeedback(e.target.value);
+  }, []);
+
+  const handleSkipFeedback = useCallback(() => {
+    handleFeedbackComplete();
+  }, []);
+
+  const handleFeedbackComplete = useCallback(() => {
+    setShowFeedback(false);
+    setFeedback('');
+    setRating(5);
+    setEndedSession(null);
+    setFeedbackStatus('');
+    fetchSessions(); // Refresh sessions
+  }, [fetchSessions]);
+
+  // Effects
+  useEffect(() => {
+    fetchSessions();
+    
+    const handleSessionsUpdated = () => {
+      fetchSessions();
+    };
+    
+    socket.on('sessionsUpdated', handleSessionsUpdated);
+    
+    return () => {
+      socket.off('sessionsUpdated', handleSessionsUpdated);
+    };
+  }, [fetchSessions, socket]);
+
+  useEffect(() => {
+    if (!session || session.status === 'Active') return;
+
+    const interval = setInterval(async () => {
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/users/sessions`, {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
+          },
+        });
+
+        const updatedSession = response.data.sessions.find(s => s._id === session._id);
+        if (updatedSession && updatedSession.status === 'Active') {
+          setSession(updatedSession);
+          clearInterval(interval);
+        }
+      } catch (error) {
+        console.error('Failed to fetch active sessions.');
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [session]);
+
+  useEffect(() => {
+    if (!session) return;
+
+    const handleSessionEnd = (data) => {
+      setEndedSession(session);
+      setSession(null);
+      setShowFeedback(true);
+    };
+
+    socket.on(`sessionEnded-${session._id}`, handleSessionEnd);
+
+    return () => {
+      socket.off(`sessionEnded-${session._id}`, handleSessionEnd);
+    };
+  }, [session, socket]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Header */}
       <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-700 shadow-xl">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <button className="flex items-center space-x-2 text-slate-400 hover:text-white transition-colors">
+            <button 
+              onClick={() => navigate('/MainPage')}
+              className="flex items-center text-gray-400 justify-center gap-2 hover:text-emerald-400 transition-colors"
+            >
               <ArrowLeft className="w-5 h-5" />
               <span className="font-medium">Back to Dashboard</span>
             </button>
@@ -481,7 +685,7 @@ const VideoChat = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 pb-12">
+  <div className="max-w-7xl mx-auto px-4 pb-12">
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Session Area */}
           <div className="lg:col-span-2">
@@ -502,12 +706,33 @@ const VideoChat = () => {
                   </motion.div>
                 )}
 
-                {showFeedback ? (
-                  <FeedbackForm key="feedback" />
+               {showFeedback ? (
+                  <FeedbackForm
+                    feedback={feedback}
+                    rating={rating}
+                    setRating={setRating}
+                    handleFeedbackChange={handleFeedbackChange}
+                    handleFeedbackSubmit={handleFeedbackSubmit}
+                    handleSkipFeedback={handleSkipFeedback}
+                    feedbackStatus={feedbackStatus}
+                  />
                 ) : session ? (
-                  <ActiveSession key="active" />
-                ) : (
-                  <RequestForm key="request" />
+                  <ActiveSession
+                    session={session}
+                    endSession={endSession}
+                    ending={ending}
+                    notes={notes}
+                    handleNotesChange={handleNotesChange}
+                    handleAddNotes={handleAddNotes}
+                    noteStatus={noteStatus}
+                  />
+                ) :  (
+                  <RequestForm
+                    issueDetails={issueDetails}
+                    loading={loading}
+                    requestSession={requestSession}
+                    handleIssueDetailsChange={handleIssueDetailsChange}
+                  />
                 )}
               </AnimatePresence>
             </div>
@@ -520,7 +745,10 @@ const VideoChat = () => {
                 <Clock className="w-5 h-5 text-slate-400" />
                 <h2 className="text-xl font-semibold text-white">Recent Sessions</h2>
               </div>
-              <SessionHistory />
+              <SessionHistory 
+                sessions={sessions} 
+                isLoadingSessions={isLoadingSessions} 
+              />
             </div>
 
             {/* Quick Actions */}

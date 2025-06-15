@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, BookOpen, Plus, RefreshCw, Lock, Unlock, Sparkles, Lightbulb, ArrowLeft, Calendar, Smile, Meh, Frown, Moon, Sun } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const JournalApp = () => {
   const [currentView, setCurrentView] = useState('view');
@@ -307,17 +308,13 @@ const JournalApp = () => {
       }`}>
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <button 
-              onClick={() => window.history.back()}
-              className={`flex items-center gap-2 transition-colors ${
-                darkMode 
-                  ? 'text-slate-400 hover:text-slate-200' 
-                  : 'text-slate-600 hover:text-slate-800'
-              }`}
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span className="font-medium">Back to Dashboard</span>
-            </button>
+          <Link 
+  to="/MainPage"
+  className="flex items-center justify-center gap-2 text-gray-900 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+>
+  <ArrowLeft className="w-5 h-5" />
+  <span className="font-medium">Back to Dashboard</span>
+</Link>
             
             <div className="flex items-center gap-3">
               <Heart className="w-6 h-6 text-rose-500" />
