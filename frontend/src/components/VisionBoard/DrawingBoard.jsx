@@ -12,10 +12,11 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
   const [img] = useImage(element.src);
   const imageRef = useRef();
   const trRef = useRef();
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartPos, setDragStartPos] = useState(null);
 
   useEffect(() => {
     if (isSelected && trRef.current && imageRef.current && tool === 'select') {
-      // Attach transformer to the image node
       trRef.current.nodes([imageRef.current]);
       trRef.current.getLayer().batchDraw();
     }
@@ -46,16 +47,43 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
   };
 
   const handleImageClick = (e) => {
-    // Prevent event bubbling to stage
     e.cancelBubble = true;
     if (e.evt) {
       e.evt.stopPropagation();
     }
-    // Always select the image when clicked, regardless of tool
+    // Only select if not dragging
+    if (!isDragging) {
+      onSelect(element.id);
+    }
+  };
+
+  const handleDragStart = (e) => {
+    if (tool !== 'select') return;
+    
+    const pos = e.target.position();
+    setDragStartPos({ x: pos.x, y: pos.y });
+    setIsDragging(false);
     onSelect(element.id);
   };
 
+  const handleDragMove = (e) => {
+    if (tool !== 'select' || !dragStartPos) return;
+    
+    const pos = e.target.position();
+    const distance = Math.sqrt(
+      Math.pow(pos.x - dragStartPos.x, 2) + Math.pow(pos.y - dragStartPos.y, 2)
+    );
+    
+    // Only start dragging if moved more than 5 pixels
+    if (distance > 5 && !isDragging) {
+      setIsDragging(true);
+    }
+  };
+
   const handleDragEnd = (e) => {
+    if (tool !== 'select') return;
+    
+    // Always update position on drag end, regardless of isDragging state
     if (onResize) {
       const pos = e.target.position();
       onResize(element.id, {
@@ -64,6 +92,10 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
         y: pos.y
       });
     }
+    
+    // Reset drag state
+    setIsDragging(false);
+    setDragStartPos(null);
   };
 
   return (
@@ -80,19 +112,18 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
         onClick={handleImageClick}
         onTap={handleImageClick}
         listening={true}
-        onDragStart={() => {
-          onSelect(element.id);
-        }}
+        onDragStart={handleDragStart}
+        onDragMove={handleDragMove}
         onDragEnd={handleDragEnd}
         onTransform={handleTransformEnd}
         onTransformEnd={handleTransformEnd}
+        // Remove dragBoundFunc to allow free dragging when in select mode
       />
 
       {isSelected && tool === 'select' && (
         <Transformer
           ref={trRef}
           boundBoxFunc={(oldBox, newBox) => {
-            // Prevent the box from getting too small
             if (newBox.width < 10 || newBox.height < 10) {
               return oldBox;
             }
@@ -127,15 +158,15 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
   );
 };
 
-// Enhanced FlowLine component with draggable endpoints and line
+// Enhanced FlowLine component with fixed dragging and endpoint positioning
 const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, tool }) => {
-  const [points, setPoints] = useState(line.points || [50, 50, 200, 50]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartPos, setDragStartPos] = useState(null);
   const lineRef = useRef();
   const groupRef = useRef();
 
-  useEffect(() => {
-    setPoints(line.points || [50, 50, 200, 50]);
-  }, [line]);
+  // Use line.points directly, no local state
+  const points = line.points || [50, 50, 200, 50];
 
   const handleEndpointDrag = (index, e) => {
     if (tool !== 'select') return;
@@ -149,7 +180,6 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
     const newPoints = [...points];
     newPoints[index * 2] = pos.x;
     newPoints[index * 2 + 1] = pos.y;
-    setPoints(newPoints);
     
     if (onUpdate) {
       onUpdate(line.id, { ...line, points: newPoints });
@@ -157,33 +187,74 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
   };
 
   const handleLineClick = (e) => {
-    // Prevent event bubbling to stage
     e.cancelBubble = true;
     if (e.evt) {
       e.evt.stopPropagation();
     }
-    // Always select the line when clicked, regardless of tool
-    onSelect(line.id);
+    if (!isDragging) {
+      onSelect(line.id);
+    }
   };
 
-  const handleLineDrag = (e) => {
-    if (tool !== 'select' || !isSelected) return;
+  const handleLineDragStart = (e) => {
+    if (tool !== 'select') return;
     
     const pos = e.target.position();
-    const deltaX = pos.x - line.points[0];
-    const deltaY = pos.y - line.points[1];
+    setDragStartPos({ x: pos.x, y: pos.y });
+    setIsDragging(false);
+    onSelect(line.id);
     
-    const newPoints = [
-      pos.x,
-      pos.y,
-      line.points[2] + deltaX,
-      line.points[3] + deltaY
-    ];
+    // Prevent line from moving during drag start
+    e.target.position({ x: 0, y: 0 });
+  };
+
+  const handleLineDragMove = (e) => {
+    if (tool !== 'select' || !dragStartPos) return;
     
-    setPoints(newPoints);
-    if (onUpdate) {
-      onUpdate(line.id, { ...line, points: newPoints });
+    const pos = e.target.position();
+    const distance = Math.sqrt(
+      Math.pow(pos.x - dragStartPos.x, 2) + Math.pow(pos.y - dragStartPos.y, 2)
+    );
+    
+    // Only start dragging if moved more than 5 pixels
+    if (distance > 5 && !isDragging) {
+      setIsDragging(true);
     }
+    
+    if (isDragging) {
+      // Calculate delta from drag start
+      const deltaX = pos.x - dragStartPos.x;
+      const deltaY = pos.y - dragStartPos.y;
+      
+      // Update line points by adding delta
+      const newPoints = [
+        points[0] + deltaX,
+        points[1] + deltaY,
+        points[2] + deltaX,
+        points[3] + deltaY
+      ];
+      
+      if (onUpdate) {
+        onUpdate(line.id, { ...line, points: newPoints });
+      }
+      
+      // Update drag start position for next movement
+      setDragStartPos({ x: pos.x, y: pos.y });
+    }
+    
+    // Keep line at origin to prevent double movement
+    e.target.position({ x: 0, y: 0 });
+  };
+
+  const handleLineDragEnd = (e) => {
+    if (tool !== 'select') return;
+    
+    // Reset drag state
+    setIsDragging(false);
+    setDragStartPos(null);
+    
+    // Ensure line stays at origin
+    e.target.position({ x: 0, y: 0 });
   };
 
   return (
@@ -196,12 +267,16 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
         hitStrokeWidth={Math.max(20, (line.strokeWidth || 2) * 4)}
         draggable={tool === 'select' && isSelected}
         onClick={handleLineClick}
-        onTap={handleLineClick}  
-        onDragMove={handleLineDrag}
+        onTap={handleLineClick}
+        onDragStart={handleLineDragStart}
+        onDragMove={handleLineDragMove}
+        onDragEnd={handleLineDragEnd}
         listening={true}
+        lineCap="round"
+        lineJoin="round"
       />
       
-      {isSelected && tool === 'select' && (
+      {isSelected && tool === 'select' && points.length >= 4 && (
         <>
           <Circle
             x={points[0]}
@@ -210,12 +285,13 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
             fill="#fff"
             stroke={line.color || "#000000"}
             strokeWidth={2}
-            draggable
+            draggable={true}
             onDragMove={(e) => handleEndpointDrag(0, e)}
             onMouseDown={(e) => {
               e.cancelBubble = true;
               if (e.evt) e.evt.stopPropagation();
             }}
+            listening={true}
           />
           <Circle
             x={points[2]}
@@ -224,12 +300,13 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
             fill="#fff"
             stroke={line.color || "#000000"}
             strokeWidth={2}
-            draggable
+            draggable={true}
             onDragMove={(e) => handleEndpointDrag(1, e)}
             onMouseDown={(e) => {
               e.cancelBubble = true;
               if (e.evt) e.evt.stopPropagation();
             }}
+            listening={true}
           />
         </>
       )}
@@ -367,10 +444,11 @@ const ContextMenu = ({ selectedElement, position, onClose, onUpdateElement, onDe
 const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
   const textRef = useRef();
   const trRef = useRef();
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartPos, setDragStartPos] = useState(null);
 
   useEffect(() => {
     if (isSelected && trRef.current && textRef.current && tool === 'select') {
-      // Attach transformer to the text node
       trRef.current.nodes([textRef.current]);
       trRef.current.getLayer().batchDraw();
     }
@@ -383,7 +461,7 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
       const scaleY = node.scaleY();
       const rotation = node.rotation();
 
-      // Calculate new font size based on scale
+      // Calculate new font size based on average scale
       const newFontSize = Math.max(8, Math.round((text.fontSize || 24) * Math.max(scaleX, scaleY)));
 
       // Update the element with new properties
@@ -402,23 +480,55 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
   };
 
   const handleClick = (e) => {
-    // Prevent event bubbling to stage
     e.cancelBubble = true;
     if (e.evt) {
       e.evt.stopPropagation();
     }
-    // Always select the text when clicked, regardless of tool
+    // Only select if not dragging
+    if (!isDragging) {
+      onSelect(text.id);
+    }
+  };
+
+  const handleDragStart = (e) => {
+    if (tool !== 'select') return;
+    
+    const pos = e.target.position();
+    setDragStartPos({ x: pos.x, y: pos.y });
+    setIsDragging(false);
     onSelect(text.id);
   };
 
+  const handleDragMove = (e) => {
+    if (tool !== 'select' || !dragStartPos) return;
+    
+    const pos = e.target.position();
+    const distance = Math.sqrt(
+      Math.pow(pos.x - dragStartPos.x, 2) + Math.pow(pos.y - dragStartPos.y, 2)
+    );
+    
+    // Only start dragging if moved more than 5 pixels
+    if (distance > 5 && !isDragging) {
+      setIsDragging(true);
+    }
+  };
+
   const handleDragEnd = (e) => {
+    if (tool !== 'select') return;
+    
+    // Always update position on drag end, regardless of isDragging state
     if (onChange) {
+      const pos = e.target.position();
       onChange(text.id, {
         ...text,
-        x: e.target.x(),
-        y: e.target.y()
+        x: pos.x,
+        y: pos.y
       });
     }
+    
+    // Reset drag state
+    setIsDragging(false);
+    setDragStartPos(null);
   };
 
   return (
@@ -437,12 +547,12 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
         onClick={handleClick}
         onTap={handleClick}
         listening={true}
-        onDragStart={() => {
-          onSelect(text.id);
-        }}
+        onDragStart={handleDragStart}
+        onDragMove={handleDragMove}
         onDragEnd={handleDragEnd}
         onTransform={handleTransform}
         onTransformEnd={handleTransform}
+        // Remove dragBoundFunc to allow free dragging when in select mode
       />
       {isSelected && tool === 'select' && (
         <Transformer
@@ -454,7 +564,6 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
             'top-center', 'bottom-center'
           ]}
           boundBoxFunc={(oldBox, newBox) => {
-            // Prevent the box from getting too small
             if (newBox.width < 10) newBox.width = 10;
             if (newBox.height < 5) newBox.height = 5;
             return newBox;
@@ -481,7 +590,6 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
     </Group>
   );
 };
-
 
 const DrawingBoard = ({ onSave }) => {
   const [elements, setElements] = useState([]);
@@ -667,11 +775,19 @@ const handleMouseDown = (e) => {
     y: (pos.y - stagePos.y) / scale
   };
 
-  // Handle clicks on elements vs background
+  // If we clicked on an element (not background), let the element handle its own selection
   if (!clickedOnBackground) {
-    // Element was clicked - let the element handle its own selection
-    // Don't interfere with element-specific click handling
-    return;
+    // Check if we clicked on a shape that should be selectable
+    const parent = clickedElement.getParent();
+    
+    // For images, text, and other shapes, the element itself handles selection
+    if (clickedElement.getClassName() === 'Image' || 
+        clickedElement.getClassName() === 'Text' || 
+        clickedElement.getClassName() === 'Line' ||
+        clickedElement.getClassName() === 'Circle') {
+      // The element's own click handler will handle selection
+      return;
+    }
   }
 
   // Clicked on background - handle based on current tool
@@ -714,7 +830,6 @@ const handleMouseDown = (e) => {
         setElements(prevElements => [...prevElements, newText]);
         setSelectedId(newText.id);
         setText({ ...text, content: '' });
-        // Force tool to select for immediate interaction
         setTool('select');
       }
       break;
