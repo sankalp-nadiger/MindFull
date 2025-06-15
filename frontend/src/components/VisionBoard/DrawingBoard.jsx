@@ -14,6 +14,8 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
   const trRef = useRef();
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartPos, setDragStartPos] = useState(null);
+  const [isTransforming, setIsTransforming] = useState(false);
+  const [mouseStartPos, setMouseStartPos] = useState(null);
 
   useEffect(() => {
     if (isSelected && trRef.current && imageRef.current && tool === 'select') {
@@ -21,6 +23,31 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
       trRef.current.getLayer().batchDraw();
     }
   }, [isSelected, tool]);
+
+  const handleTransformStart = () => {
+    setIsTransforming(true);
+  };
+
+  const handleTransform = () => {
+    if (imageRef.current && onResize) {
+      const node = imageRef.current;
+      const scaleX = node.scaleX();
+      const scaleY = node.scaleY();
+      
+      const newWidth = Math.max(10, node.width() * scaleX);
+      const newHeight = Math.max(10, node.height() * scaleY);
+      
+      // Update element with new dimensions but keep scale for live preview
+      onResize(element.id, {
+        ...element,
+        x: node.x(),
+        y: node.y(),
+        width: newWidth,
+        height: newHeight,
+        rotation: node.rotation()
+      });
+    }
+  };
 
   const handleTransformEnd = () => {
     if (imageRef.current && onResize) {
@@ -44,58 +71,82 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
         rotation: node.rotation()
       });
     }
+    setIsTransforming(false);
   };
 
-  const handleImageClick = (e) => {
+  const handleMouseDown = (e) => {
+    if (tool !== 'select') return;
+    
     e.cancelBubble = true;
     if (e.evt) {
       e.evt.stopPropagation();
     }
-    // Only select if not dragging
-    if (!isDragging) {
-      onSelect(element.id);
-    }
-  };
-
-  const handleDragStart = (e) => {
-    if (tool !== 'select') return;
     
-    const pos = e.target.position();
-    setDragStartPos({ x: pos.x, y: pos.y });
+    const pos = e.target.getStage().getPointerPosition();
+    setMouseStartPos(pos);
     setIsDragging(false);
     onSelect(element.id);
   };
 
-  const handleDragMove = (e) => {
-    if (tool !== 'select' || !dragStartPos) return;
+  const handleMouseMove = (e) => {
+    if (tool !== 'select' || !mouseStartPos || isTransforming) return;
     
-    const pos = e.target.position();
+    const pos = e.target.getStage().getPointerPosition();
     const distance = Math.sqrt(
-      Math.pow(pos.x - dragStartPos.x, 2) + Math.pow(pos.y - dragStartPos.y, 2)
+      Math.pow(pos.x - mouseStartPos.x, 2) + Math.pow(pos.y - mouseStartPos.y, 2)
     );
     
     // Only start dragging if moved more than 5 pixels
     if (distance > 5 && !isDragging) {
       setIsDragging(true);
+      setDragStartPos({ x: element.x, y: element.y });
+    }
+    
+    // If dragging, update position
+    if (isDragging && dragStartPos) {
+      const deltaX = pos.x - mouseStartPos.x;
+      const deltaY = pos.y - mouseStartPos.y;
+      
+      const newX = dragStartPos.x + deltaX;
+      const newY = dragStartPos.y + deltaY;
+      
+      // Update position in real-time
+      if (imageRef.current) {
+        imageRef.current.x(newX);
+        imageRef.current.y(newY);
+        imageRef.current.getLayer().batchDraw();
+      }
     }
   };
 
-  const handleDragEnd = (e) => {
+  const handleMouseUp = (e) => {
     if (tool !== 'select') return;
     
-    // Always update position on drag end, regardless of isDragging state
-    if (onResize) {
-      const pos = e.target.position();
+    // If we were dragging, update the final position
+    if (isDragging && onResize && imageRef.current) {
+      const node = imageRef.current;
       onResize(element.id, {
         ...element,
-        x: pos.x,
-        y: pos.y
+        x: node.x(),
+        y: node.y()
       });
     }
     
-    // Reset drag state
+    // Reset states
     setIsDragging(false);
+    setMouseStartPos(null);
     setDragStartPos(null);
+  };
+
+  const handleClick = (e) => {
+    e.cancelBubble = true;
+    if (e.evt) {
+      e.evt.stopPropagation();
+    }
+    // Only select if not dragging and not transforming
+    if (!isDragging && !isTransforming) {
+      onSelect(element.id);
+    }
   };
 
   return (
@@ -108,28 +159,30 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
         width={element.width || (img ? img.width : 100)}
         height={element.height || (img ? img.height : 100)}
         rotation={element.rotation || 0}
-        draggable={tool === 'select'}
-        onClick={handleImageClick}
-        onTap={handleImageClick}
+        draggable={false} // Always false, we handle dragging manually
+        onClick={handleClick}
+        onTap={handleClick}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
         listening={true}
-        onDragStart={handleDragStart}
-        onDragMove={handleDragMove}
-        onDragEnd={handleDragEnd}
-        onTransform={handleTransformEnd}
+        onTransformStart={handleTransformStart}
+        onTransform={handleTransform}
         onTransformEnd={handleTransformEnd}
-        // Remove dragBoundFunc to allow free dragging when in select mode
       />
 
       {isSelected && tool === 'select' && (
         <Transformer
           ref={trRef}
           boundBoxFunc={(oldBox, newBox) => {
+            // Minimum size constraints
             if (newBox.width < 10 || newBox.height < 10) {
               return oldBox;
             }
             return newBox;
           }}
-          onTransform={handleTransformEnd}
+          onTransformStart={handleTransformStart}
+          onTransform={handleTransform}
           onTransformEnd={handleTransformEnd}
           enabledAnchors={[
             'top-left', 'top-right', 
@@ -152,12 +205,12 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
           padding={5}
           rotateAnchorOffset={30}
           flipEnabled={false}
+          resizeEnabled={true}
         />
       )}
     </Group>
   );
 };
-
 // Enhanced FlowLine component with fixed dragging and endpoint positioning
 const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, tool }) => {
   const [isDragging, setIsDragging] = useState(false);
@@ -446,6 +499,8 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
   const trRef = useRef();
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartPos, setDragStartPos] = useState(null);
+  const [isTransforming, setIsTransforming] = useState(false);
+  const [mouseStartPos, setMouseStartPos] = useState(null);
 
   useEffect(() => {
     if (isSelected && trRef.current && textRef.current && tool === 'select') {
@@ -453,6 +508,10 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
       trRef.current.getLayer().batchDraw();
     }
   }, [isSelected, tool]);
+
+  const handleTransformStart = () => {
+    setIsTransforming(true);
+  };
 
   const handleTransform = () => {
     if (textRef.current && onChange) {
@@ -462,9 +521,10 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
       const rotation = node.rotation();
 
       // Calculate new font size based on average scale
-      const newFontSize = Math.max(8, Math.round((text.fontSize || 24) * Math.max(scaleX, scaleY)));
+      const avgScale = (scaleX + scaleY) / 2;
+      const newFontSize = Math.max(8, Math.round((text.fontSize || 24) * avgScale));
 
-      // Update the element with new properties
+      // Update the element with new properties for live preview
       onChange(text.id, {
         ...text,
         x: node.x(),
@@ -472,11 +532,98 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
         rotation: rotation,
         fontSize: newFontSize
       });
+    }
+  };
+
+  const handleTransformEnd = () => {
+    if (textRef.current && onChange) {
+      const node = textRef.current;
+      const scaleX = node.scaleX();
+      const scaleY = node.scaleY();
+      const rotation = node.rotation();
+
+      // Calculate new font size based on average scale
+      const avgScale = (scaleX + scaleY) / 2;
+      const newFontSize = Math.max(8, Math.round((text.fontSize || 24) * avgScale));
 
       // Reset scale to 1 after applying to fontSize
       node.scaleX(1);
       node.scaleY(1);
+
+      // Update the element with final properties
+      onChange(text.id, {
+        ...text,
+        x: node.x(),
+        y: node.y(),
+        rotation: rotation,
+        fontSize: newFontSize
+      });
     }
+    setIsTransforming(false);
+  };
+
+  const handleMouseDown = (e) => {
+    if (tool !== 'select') return;
+    
+    e.cancelBubble = true;
+    if (e.evt) {
+      e.evt.stopPropagation();
+    }
+    
+    const pos = e.target.getStage().getPointerPosition();
+    setMouseStartPos(pos);
+    setIsDragging(false);
+    onSelect(text.id);
+  };
+
+  const handleMouseMove = (e) => {
+    if (tool !== 'select' || !mouseStartPos || isTransforming) return;
+    
+    const pos = e.target.getStage().getPointerPosition();
+    const distance = Math.sqrt(
+      Math.pow(pos.x - mouseStartPos.x, 2) + Math.pow(pos.y - mouseStartPos.y, 2)
+    );
+    
+    // Only start dragging if moved more than 5 pixels
+    if (distance > 5 && !isDragging) {
+      setIsDragging(true);
+      setDragStartPos({ x: text.x, y: text.y });
+    }
+    
+    // If dragging, update position
+    if (isDragging && dragStartPos) {
+      const deltaX = pos.x - mouseStartPos.x;
+      const deltaY = pos.y - mouseStartPos.y;
+      
+      const newX = dragStartPos.x + deltaX;
+      const newY = dragStartPos.y + deltaY;
+      
+      // Update position in real-time
+      if (textRef.current) {
+        textRef.current.x(newX);
+        textRef.current.y(newY);
+        textRef.current.getLayer().batchDraw();
+      }
+    }
+  };
+
+  const handleMouseUp = (e) => {
+    if (tool !== 'select') return;
+    
+    // If we were dragging, update the final position
+    if (isDragging && onChange && textRef.current) {
+      const node = textRef.current;
+      onChange(text.id, {
+        ...text,
+        x: node.x(),
+        y: node.y()
+      });
+    }
+    
+    // Reset states
+    setIsDragging(false);
+    setMouseStartPos(null);
+    setDragStartPos(null);
   };
 
   const handleClick = (e) => {
@@ -484,51 +631,10 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
     if (e.evt) {
       e.evt.stopPropagation();
     }
-    // Only select if not dragging
-    if (!isDragging) {
+    // Only select if not dragging and not transforming
+    if (!isDragging && !isTransforming) {
       onSelect(text.id);
     }
-  };
-
-  const handleDragStart = (e) => {
-    if (tool !== 'select') return;
-    
-    const pos = e.target.position();
-    setDragStartPos({ x: pos.x, y: pos.y });
-    setIsDragging(false);
-    onSelect(text.id);
-  };
-
-  const handleDragMove = (e) => {
-    if (tool !== 'select' || !dragStartPos) return;
-    
-    const pos = e.target.position();
-    const distance = Math.sqrt(
-      Math.pow(pos.x - dragStartPos.x, 2) + Math.pow(pos.y - dragStartPos.y, 2)
-    );
-    
-    // Only start dragging if moved more than 5 pixels
-    if (distance > 5 && !isDragging) {
-      setIsDragging(true);
-    }
-  };
-
-  const handleDragEnd = (e) => {
-    if (tool !== 'select') return;
-    
-    // Always update position on drag end, regardless of isDragging state
-    if (onChange) {
-      const pos = e.target.position();
-      onChange(text.id, {
-        ...text,
-        x: pos.x,
-        y: pos.y
-      });
-    }
-    
-    // Reset drag state
-    setIsDragging(false);
-    setDragStartPos(null);
   };
 
   return (
@@ -541,18 +647,18 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
         fontSize={text.fontSize || 24}
         fontFamily={text.fontFamily || 'Arial'}
         fill={text.color || text.fill || '#000000'}
-        draggable={tool === 'select'}
+        draggable={false} // Always false, we handle dragging manually
         rotation={text.rotation || 0}
         fontStyle={text.fontStyle || 'normal'}
         onClick={handleClick}
         onTap={handleClick}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
         listening={true}
-        onDragStart={handleDragStart}
-        onDragMove={handleDragMove}
-        onDragEnd={handleDragEnd}
+        onTransformStart={handleTransformStart}
         onTransform={handleTransform}
-        onTransformEnd={handleTransform}
-        // Remove dragBoundFunc to allow free dragging when in select mode
+        onTransformEnd={handleTransformEnd}
       />
       {isSelected && tool === 'select' && (
         <Transformer
@@ -564,12 +670,14 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
             'top-center', 'bottom-center'
           ]}
           boundBoxFunc={(oldBox, newBox) => {
+            // Minimum size constraints
             if (newBox.width < 10) newBox.width = 10;
             if (newBox.height < 5) newBox.height = 5;
             return newBox;
           }}
+          onTransformStart={handleTransformStart}
           onTransform={handleTransform}
-          onTransformEnd={handleTransform}
+          onTransformEnd={handleTransformEnd}
           rotateEnabled={true}
           keepRatio={false}
           anchorFill="#ffffff"
@@ -585,6 +693,7 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
           padding={2}
           rotateAnchorOffset={20}
           flipEnabled={false}
+          resizeEnabled={true}
         />
       )}
     </Group>
