@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { User, Users, Mail, Book, Edit2, Upload, Star, Heart, Shield, Clock, Target } from "lucide-react";
 import Navbar from "../Navbar/Navbar";
 import Footer from "../Footer/Footer";
+import FloatingChatButton from "../ChatBot/FloatingChatButton";
 
 export default function UserProfile() {
   const [isEditing, setIsEditing] = useState(false);
@@ -388,6 +389,8 @@ export default function UserProfile() {
           </div>
         </div>
       </div>
+            {/* Floating Chat Button */}
+      <FloatingChatButton />
       <Footer />
     </>
   );

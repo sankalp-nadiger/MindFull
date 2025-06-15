@@ -12,7 +12,6 @@ import {
   ChevronDown
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import FloatingChatButton from "../ChatBot/FloatingChatButton";
 
 const VisionBoard = () => {
   const [isDrawingBoardVisible, setIsDrawingBoardVisible] = useState(false);
@@ -760,8 +759,6 @@ useEffect(() => {
         </div>
       </div>
       
-      {/* Floating Chat Button */}
-      <FloatingChatButton />
     </DragDropContext>
   );
 };
