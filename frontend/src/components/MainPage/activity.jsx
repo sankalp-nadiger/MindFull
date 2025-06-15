@@ -134,11 +134,10 @@ export default function Suggestion() {
         </div>
       </div>
     );
-  }
-
+  } 
   return (
     <div className="shadow-[4px_4px_0_rgba(0,0,0,0.3)] hover:shadow-[6px_6px_0_rgba(0,0,0,0.4)] transition duration-300 p-6 bg-black w-full">
-      <div className="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto backdrop-blur-lg bg-gray-900 bg-opacity-70 p-8 rounded-lg shadow-lg shadow-red-500/50 hover:shadow-blue-500/50 transition-shadow">
+      <div className="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto backdrop-blur-lg bg-gray-900 bg-opacity-70 p-8 rounded-lg shadow-lg shadow-red-950/60 hover:shadow-blue-500/50 transition-shadow">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
