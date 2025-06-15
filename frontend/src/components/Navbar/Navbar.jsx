@@ -30,9 +30,8 @@ function Navbar() {
       console.error("Logout failed", error);
     }
   };
-
   const handleBotClick = () => {
-    window.location.href = 'https://huggingface.co/spaces/vaibhav2154/MindFullBot';
+    window.location.href = '/Chatbot';
   };
 
   return (

@@ -12,6 +12,7 @@ import {
   ChevronDown
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import FloatingChatButton from "../ChatBot/FloatingChatButton";
 
 const VisionBoard = () => {
   const [isDrawingBoardVisible, setIsDrawingBoardVisible] = useState(false);
@@ -743,10 +744,12 @@ useEffect(() => {
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
                 <span className={themeClasses.text}>Saving your vision board...</span>
               </div>
-            </div>
-          )}
+            </div>          )}
         </div>
       </div>
+      
+      {/* Floating Chat Button */}
+      <FloatingChatButton />
     </DragDropContext>
   );
 };
