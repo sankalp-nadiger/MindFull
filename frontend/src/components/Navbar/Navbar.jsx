@@ -1,12 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, memo, useCallback } from "react";
 import { Bot, User, LogOut } from 'lucide-react';
 import Chatbox from "../pages/Chatbot";
 
-function Navbar() {
+const Navbar = memo(({ onStoryClick }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     const token = sessionStorage.getItem("accessToken");
     if (!token) return;
 
@@ -29,10 +29,15 @@ function Navbar() {
     } catch (error) {
       console.error("Logout failed", error);
     }
-  };
-  const handleBotClick = () => {
+  }, []);
+
+  const handleBotClick = useCallback(() => {
     window.location.href = '/Chatbot';
-  };
+  }, []);
+
+  const toggleMenu = useCallback(() => {
+    setMenuOpen(prev => !prev);
+  }, []);
 
  return (
     <>
@@ -59,7 +64,7 @@ function Navbar() {
 
             {/* Mobile Menu Button - Right Side */}
             <button
-              onClick={() => setMenuOpen(!menuOpen)}
+              onClick={toggleMenu}
               className="lg:hidden text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400/50 rounded-lg p-2 transition-all duration-300 hover:bg-gray-800/50 hover:scale-110 flex-shrink-0"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -153,6 +158,6 @@ function Navbar() {
 
     </>
   );
-}
+});
 
 export default Navbar;
