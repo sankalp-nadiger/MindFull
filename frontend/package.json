@@ -3,13 +3,14 @@
   "version": "1.0.0",
   "type": "module",
   "description": "This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.",
-  "main": "eslint.config.js",
-  "scripts": {
+  "main": "eslint.config.js",  "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "vite build",
+    "build:analyze": "vite build --mode analyze",
     "lint": "eslint . ",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "preload": "vite --force"
   },
   "keywords": [],
   "author": "",
