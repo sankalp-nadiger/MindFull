@@ -40,7 +40,7 @@ export const requestSession = asyncHandler(async (req, res) => {
     if (!userId || !issueDetails) {
         throw new ApiError(400, "User ID and issue details are required");
     }
-
+    console.log("Requesting session for user:", userId);
     const user = await User.findById(userId);
     if (!user) {
         throw new ApiError(404, "User not found");

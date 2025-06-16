@@ -15,6 +15,7 @@ const StudentSignIn = () => {
     const username = event.target.username.value;
     const email = event.target.email.value;
     const password = event.target.password.value;
+    sessionStorage.setItem("password", password);
     const mood = event.target.mood.value;
 
     // Validate fields

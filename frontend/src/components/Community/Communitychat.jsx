@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Navbar from '../Navbar/Navbar';
-import { Video, X, Mic, MicOff, Camera, CameraOff, Maximize, Minimize } from 'lucide-react';
+import { MessageCircle, Users, Plus, Hash, Send, X, Shield, Heart, UserPlus } from 'lucide-react';
+import FloatingChatButton from "../ChatBot/FloatingChatButton";
 
 const CommunityChat = () => {
   const [rooms, setRooms] = useState([]);
@@ -9,7 +10,6 @@ const CommunityChat = () => {
   const [loading, setLoading] = useState(true);
   const [showCreateRoomModal, setShowCreateRoomModal] = useState(false);
   const [showJoinRoomModal, setShowJoinRoomModal] = useState(false);
-  const [showVideoModal, setShowVideoModal] = useState(false);
   const [newRoomName, setNewRoomName] = useState('');
   const [newRoomDescription, setNewRoomDescription] = useState('');
   const [roomIdToJoin, setRoomIdToJoin] = useState('');
@@ -21,19 +21,46 @@ const CommunityChat = () => {
   const [userId, setUserId] = useState(null);
   const chatContainerRef = useRef(null);
   
-  // Video chat states
-  const [stream, setStream] = useState(null);
-  const [peerStreams, setPeerStreams] = useState([]);
-  const [videoEnabled, setVideoEnabled] = useState(true);
-  const [audioEnabled, setAudioEnabled] = useState(true);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [activeVideoRoom, setActiveVideoRoom] = useState(null);
-  const [videoParticipants, setVideoParticipants] = useState([]);
-  const localVideoRef = useRef(null);
-  const peerConnections = useRef({});
-  const videoModalRef = useRef(null);
-  
   const accessToken = sessionStorage.getItem('accessToken');
+
+  // Helper function to format date for separators
+  const formatDateSeparator = (date) => {
+    const today = new Date();
+    const messageDate = new Date(date);
+    
+    // Reset time to compare just dates
+    today.setHours(0, 0, 0, 0);
+    messageDate.setHours(0, 0, 0, 0);
+    
+    const diffTime = today.getTime() - messageDate.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    
+    return messageDate.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  // Helper function to check if two dates are on different days
+  const isDifferentDay = (date1, date2) => {
+    const d1 = new Date(date1);
+    const d2 = new Date(date2);
+    return d1.toDateString() !== d2.toDateString();
+  };
+
+  // Helper function to format time for messages
+  const formatMessageTime = (timestamp) => {
+    return new Date(timestamp).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -67,11 +94,11 @@ const CommunityChat = () => {
       fetchRooms();
     } else {
       setLoading(false);
-      alert('You must be logged in to access the rooms.');
+      alert('You must be logged in to access the community.');
     }
   }, [accessToken]);
 
-  // Monitor active video chats in rooms
+  // Monitor room messages
   useEffect(() => {
     let interval;
     if (joinedRoom) {
@@ -85,7 +112,6 @@ const CommunityChat = () => {
           
           const currentRoomData = response.data.rooms.find(room => room._id === joinedRoom);
           
-          // Check for messages
           if (currentRoomData && currentRoomData.messages) {
             setMessages(prev => {
               if (JSON.stringify(prev) !== JSON.stringify(currentRoomData.messages)) {
@@ -94,22 +120,13 @@ const CommunityChat = () => {
               return prev;
             });
           }
-          
-          // Check for active video chats
-          if (currentRoomData && currentRoomData.activeVideoChat) {
-            setActiveVideoRoom(currentRoomData.activeVideoChat);
-            setVideoParticipants(currentRoomData.videoParticipants || []);
-          } else {
-            setActiveVideoRoom(null);
-            setVideoParticipants([]);
-          }
         } catch (error) {
           console.error('Error fetching room status:', error);
         }
       };
 
       pollRoomStatus();
-      interval = setInterval(pollRoomStatus, 1000);
+      interval = setInterval(pollRoomStatus, 2000);
     }
     return () => clearInterval(interval);
   }, [joinedRoom, accessToken]);
@@ -119,363 +136,6 @@ const CommunityChat = () => {
       scrollToBottom();
     }
   }, [messages]);
-
-  // Handle fullscreen changes
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(
-        document.fullscreenElement || 
-        document.webkitFullscreenElement || 
-        document.mozFullScreenElement || 
-        document.msFullscreenElement
-      );
-    };
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
-
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
-      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
-      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
-    };
-  }, []);
-
-  // Toggle fullscreen
-  const toggleFullscreen = () => {
-    if (!videoModalRef.current) return;
-
-    if (!isFullscreen) {
-      if (videoModalRef.current.requestFullscreen) {
-        videoModalRef.current.requestFullscreen();
-      } else if (videoModalRef.current.webkitRequestFullscreen) {
-        videoModalRef.current.webkitRequestFullscreen();
-      } else if (videoModalRef.current.mozRequestFullScreen) {
-        videoModalRef.current.mozRequestFullScreen();
-      } else if (videoModalRef.current.msRequestFullscreen) {
-        videoModalRef.current.msRequestFullscreen();
-      }
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-      } else if (document.mozCancelFullScreen) {
-        document.mozCancelFullScreen();
-      } else if (document.msExitFullscreen) {
-        document.msExitFullscreen();
-      }
-    }
-  };
-
-  // Setup user media when video modal is opened
-  useEffect(() => {
-    if (showVideoModal) {
-      const setupMediaStream = async () => {
-        try {
-          const mediaStream = await navigator.mediaDevices.getUserMedia({
-            video: videoEnabled,
-            audio: audioEnabled
-          });
-          
-          setStream(mediaStream);
-          
-          if (localVideoRef.current) {
-            localVideoRef.current.srcObject = mediaStream;
-          }
-          
-          // Notify server about starting/joining video chat
-          await notifyVideoStatus(true);
-          
-          // Setup WebRTC connection
-          setupWebRTC(mediaStream);
-          
-        } catch (error) {
-          console.error('Error accessing camera and microphone:', error);
-          alert('Failed to access camera and microphone');
-        }
-      };
-      
-      setupMediaStream();
-    } else {
-      // Close and cleanup media streams when modal is closed
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-        setStream(null);
-      }
-      
-      // Close all peer connections
-      Object.values(peerConnections.current).forEach(connection => {
-        if (connection) {
-          connection.close();
-        }
-      });
-      
-      // Notify server about leaving video chat
-      if (joinedRoom) {
-        notifyVideoStatus(false);
-      }
-      
-      peerConnections.current = {};
-      setPeerStreams([]);
-    }
-  }, [showVideoModal]);
-
-  // Function to notify server about video chat status
-  const notifyVideoStatus = async (isJoining) => {
-    try {
-      if (isJoining) {
-        await axios.post(
-          `${import.meta.env.VITE_BASE_API_URL}/community/video/join`,
-          { 
-            roomId: joinedRoom,
-            userId: userId,
-            username: senderUsername
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-      } else {
-        await axios.post(
-          `${import.meta.env.VITE_BASE_API_URL}/community/video/leave`,
-          { 
-            roomId: joinedRoom,
-            userId: userId
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-      }
-    } catch (error) {
-      console.error('Error updating video status:', error);
-    }
-  };
-
-  // Function to set up WebRTC connection
-  const setupWebRTC = async (mediaStream) => {
-    // This is a simplified example - you would need to implement a proper signaling mechanism
-    try {
-      // Create socket connection for signaling
-      const socket = new WebSocket(`${import.meta.env.VITE_WS_URL}/videochat?roomId=${joinedRoom}&token=${accessToken}`);
-      
-      socket.onopen = () => {
-        console.log('WebSocket connection established');
-        socket.send(JSON.stringify({
-          type: 'join',
-          roomId: joinedRoom,
-          userId: userId,
-          username: senderUsername
-        }));
-      };
-      
-      socket.onmessage = async (event) => {
-        const data = JSON.parse(event.data);
-        
-        if (data.type === 'room-participants') {
-          // Update the list of video participants
-          setVideoParticipants(data.participants || []);
-          
-          // Connect to each existing participant
-          data.participants.forEach(async (participant) => {
-            if (participant.userId !== userId && !peerConnections.current[participant.userId]) {
-              await initiateConnection(socket, participant.userId, mediaStream);
-            }
-          });
-        }
-        
-        if (data.type === 'user-joined' && data.userId !== userId) {
-          // Add the new participant to the list
-          setVideoParticipants(prev => {
-            if (!prev.some(p => p.userId === data.userId)) {
-              return [...prev, { userId: data.userId, username: data.username }];
-            }
-            return prev;
-          });
-          
-          // Create connection with the new participant
-          await initiateConnection(socket, data.userId, mediaStream);
-        }
-        
-        // Handle offers from other peers
-        if (data.type === 'offer' && data.targetUserId === userId) {
-          await handleOffer(socket, data, mediaStream);
-        }
-        
-        // Handle answers from other peers
-        if (data.type === 'answer' && data.targetUserId === userId) {
-          const peerConnection = peerConnections.current[data.userId];
-          if (peerConnection) {
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-          }
-        }
-        
-        // Handle ICE candidates from other peers
-        if (data.type === 'ice-candidate' && data.targetUserId === userId) {
-          const peerConnection = peerConnections.current[data.userId];
-          if (peerConnection) {
-            await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-          }
-        }
-        
-        // Handle user disconnections
-        if (data.type === 'user-left') {
-          // Close the peer connection
-          if (peerConnections.current[data.userId]) {
-            peerConnections.current[data.userId].close();
-            delete peerConnections.current[data.userId];
-          }
-          
-          // Remove the stream from the list
-          setPeerStreams(prev => prev.filter(item => item.id !== data.userId));
-          
-          // Remove from participants list
-          setVideoParticipants(prev => prev.filter(p => p.userId !== data.userId));
-        }
-      };
-      
-      // Clean up on component unmount
-      return () => {
-        socket.close();
-      };
-    } catch (error) {
-      console.error('Error setting up WebRTC:', error);
-    }
-  };
-
-  // Function to initiate connection with a peer
-  const initiateConnection = async (socket, peerId, mediaStream) => {
-    // Create a new peer connection
-    const peerConnection = new RTCPeerConnection({
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' }
-      ]
-    });
-    
-    peerConnections.current[peerId] = peerConnection;
-    
-    // Add local tracks to the peer connection
-    mediaStream.getTracks().forEach(track => {
-      peerConnection.addTrack(track, mediaStream);
-    });
-    
-    // Handle ICE candidates
-    peerConnection.onicecandidate = (event) => {
-      if (event.candidate) {
-        socket.send(JSON.stringify({
-          type: 'ice-candidate',
-          candidate: event.candidate,
-          targetUserId: peerId
-        }));
-      }
-    };
-    
-    // Handle remote tracks
-    peerConnection.ontrack = (event) => {
-      const [remoteStream] = event.streams;
-      setPeerStreams(prev => {
-        // Check if we already have this stream
-        if (!prev.some(stream => stream.id === peerId)) {
-          return [...prev, { id: peerId, stream: remoteStream }];
-        }
-        return prev;
-      });
-    };
-    
-    // Create and send an offer
-    const offer = await peerConnection.createOffer({
-      offerToReceiveAudio: true,
-      offerToReceiveVideo: true
-    });
-    await peerConnection.setLocalDescription(offer);
-    
-    socket.send(JSON.stringify({
-      type: 'offer',
-      offer: peerConnection.localDescription,
-      targetUserId: peerId
-    }));
-  };
-
-  // Function to handle incoming offers
-  const handleOffer = async (socket, data, mediaStream) => {
-    const peerConnection = new RTCPeerConnection({
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' }
-      ]
-    });
-    
-    peerConnections.current[data.userId] = peerConnection;
-    
-    // Add local tracks to the peer connection
-    mediaStream.getTracks().forEach(track => {
-      peerConnection.addTrack(track, mediaStream);
-    });
-    
-    // Handle ICE candidates
-    peerConnection.onicecandidate = (event) => {
-      if (event.candidate) {
-        socket.send(JSON.stringify({
-          type: 'ice-candidate',
-          candidate: event.candidate,
-          targetUserId: data.userId
-        }));
-      }
-    };
-    
-    // Handle remote tracks
-    peerConnection.ontrack = (event) => {
-      const [remoteStream] = event.streams;
-      setPeerStreams(prev => {
-        if (!prev.some(stream => stream.id === data.userId)) {
-          return [...prev, { id: data.userId, stream: remoteStream }];
-        }
-        return prev;
-      });
-    };
-    
-    // Set remote description
-    await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
-    
-    // Create and send an answer
-    const answer = await peerConnection.createAnswer();
-    await peerConnection.setLocalDescription(answer);
-    
-    socket.send(JSON.stringify({
-      type: 'answer',
-      answer: peerConnection.localDescription,
-      targetUserId: data.userId
-    }));
-  };
-
-  // Toggle video
-  const toggleVideo = () => {
-    if (stream) {
-      stream.getVideoTracks().forEach(track => {
-        track.enabled = !videoEnabled;
-      });
-      setVideoEnabled(!videoEnabled);
-    }
-  };
-
-  // Toggle audio
-  const toggleAudio = () => {
-    if (stream) {
-      stream.getAudioTracks().forEach(track => {
-        track.enabled = !audioEnabled;
-      });
-      setAudioEnabled(!audioEnabled);
-    }
-  };
 
   const joinRoom = async (roomId) => {
     try {
@@ -506,20 +166,10 @@ const CommunityChat = () => {
       if (currentRoomData && currentRoomData.messages) {
         setMessages(currentRoomData.messages);
       }
-      
-      // Check if there's an active video chat
-      if (currentRoomData && currentRoomData.activeVideoChat) {
-        setActiveVideoRoom(currentRoomData.activeVideoChat);
-        setVideoParticipants(currentRoomData.videoParticipants || []);
-      }
     } catch (error) {
       console.error('Error joining room:', error);
-      alert('Failed to join the room');
+      alert('Failed to join the room. Please try again.');
     }
-  };
-
-  const startOrJoinVideoChat = () => {
-    setShowVideoModal(true);
   };
 
   const sendMessage = async (e) => {
@@ -553,11 +203,16 @@ const CommunityChat = () => {
       }
     } catch (error) {
       console.error('Error sending message:', error);
-      alert('Failed to send message');
+      alert('Failed to send message. Please try again.');
     }
   };
 
   const createRoom = async () => {
+    if (!newRoomName.trim() || !newRoomDescription.trim()) {
+      alert('Please fill in both room name and description.');
+      return;
+    }
+
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_BASE_API_URL}/community/create`,
@@ -588,293 +243,354 @@ const CommunityChat = () => {
       }
     } catch (error) {
       console.error('Error creating room:', error);
-      alert('Failed to create the room');
+      alert('Failed to create the room. Please try again.');
     }
   };
 
+  const getRoomIcon = (roomName) => {
+    const name = roomName.toLowerCase();
+    if (name.includes('anxiety') || name.includes('stress')) return '🧘';
+    if (name.includes('depression') || name.includes('mood')) return '💙';
+    if (name.includes('support') || name.includes('help')) return '🤝';
+    if (name.includes('general') || name.includes('chat')) return '💬';
+    if (name.includes('group') || name.includes('community')) return '👥';
+    return '🌟';
+  };
+
   return (
-    
-      <><Navbar /><div className="min-h-screen bg-gradient-to-b from-black via-blue-950 to-black text-white p-6">
-      <div className="max-w-6xl mx-auto my-10 p-6 bg-gradient-to-br from-indigo-800 to-purple-600 rounded-lg shadow-lg">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-white">Community Chat</h2>
+    <>
+      <Navbar />
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          {/* Header Section */}
+          <div className="text-center mb-8">
+            <div className="flex justify-center items-center gap-3 mb-4">
+              <div className="p-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full">
+                <MessageCircle size={32} className="text-white" />
+              </div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                Community Support
+              </h1>
+            </div>
+            <p className="text-gray-300 text-lg max-w-2xl mx-auto">
+              Connect with others who understand your journey. Find support, share experiences, and build meaningful connections in a safe, moderated environment.
+            </p>
+            
+            {/* Trust Indicators */}
+            <div className="mt-6 flex justify-center items-center gap-6 text-sm text-gray-400">
+              <div className="flex items-center gap-2">
+                <Shield size={16} className="text-green-400" />
+                <span>Safe & Moderated</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Heart size={16} className="text-red-400" />
+                <span>Mental Health Focused</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Users size={16} className="text-blue-400" />
+                <span>Supportive Community</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
           {!joinedRoom && (
-            <div className="mt-4 space-x-4">
+            <div className="flex justify-center gap-4 mb-8">
               <button
                 onClick={() => setShowCreateRoomModal(true)}
-                className="p-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
               >
-                Create a Room
+                <Plus size={20} />
+                Create Support Room
               </button>
               <button
                 onClick={() => setShowJoinRoomModal(true)}
-                className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
               >
-                Join by ID
+                <UserPlus size={20} />
+                Join with Room ID
               </button>
             </div>
           )}
-        </div>
 
-        {!joinedRoom && !loading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {rooms.map((room) => (
-              <div key={room._id} className="bg-gray-800 p-4 rounded-lg">
-                <div className="text-white">
-                  <h3 className="text-xl font-bold">{room.name}</h3>
-                  <p className="text-gray-300 mt-2">{room.description}</p>
-                  <p className="text-gray-400 text-sm mt-2">Room ID: {room._id}</p>
-                  {room.activeVideoChat && (
-                    <div className="mt-2 flex items-center text-green-400">
-                      <Video size={16} className="mr-1" />
-                      <span>Active video chat ({room.videoParticipants?.length || 0} participants)</span>
+          {/* Room List */}
+          {!joinedRoom && !loading && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {rooms.map((room) => (
+                <div 
+                  key={room._id} 
+                  className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl p-6 hover:border-purple-500 transition-all duration-300 shadow-lg hover:shadow-purple-500/20"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="text-3xl">{getRoomIcon(room.name)}</div>
+                    <div className="text-xs text-gray-400 bg-gray-700 px-2 py-1 rounded">
+                      {room.messages?.length || 0} messages
                     </div>
-                  )}
+                  </div>
+                  
+                  <h3 className="text-xl font-semibold text-white mb-2 line-clamp-1">
+                    {room.name}
+                  </h3>
+                  
+                  <p className="text-gray-300 text-sm mb-4 line-clamp-2 leading-relaxed">
+                    {room.description}
+                  </p>
+                  
+                  <div className="flex items-center justify-between text-xs text-gray-400 mb-4">
+                    <div className="flex items-center gap-1">
+                      <Hash size={12} />
+                      <span className="font-mono">{room._id.slice(-8)}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Users size={12} />
+                      <span>Active now</span>
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={() => joinRoom(room._id)}
+                    className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-lg transition-all duration-200 font-medium shadow-md hover:shadow-lg"
+                  >
+                    Join Conversation
+                  </button>
                 </div>
-                <button
-                  onClick={() => joinRoom(room._id)}
-                  className="mt-4 w-full p-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-                >
-                  Join Room
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {joinedRoom && currentRoom && (
-          <div className="bg-gray-900 rounded-lg p-4">
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <h3 className="text-xl font-bold">{currentRoom.name}</h3>
-                <p className="text-gray-300">{currentRoom.description}</p>
-                <p className="text-gray-400 text-sm">Room ID: {currentRoom._id}</p>
-                {activeVideoRoom && videoParticipants.length > 0 && !showVideoModal && (
-                  <div className="mt-2 flex items-center text-green-400">
-                    <Video size={16} className="mr-1" />
-                    <span>Active video chat ({videoParticipants.length} participants)</span>
-                  </div>
-                )}
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={startOrJoinVideoChat}
-                  className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
-                >
-                  <Video size={18} className="mr-1" /> 
-                  {activeVideoRoom ? 'Join Video Chat' : 'Start Video Chat'}
-                </button>
-                <button
-                  onClick={() => setJoinedRoom(null)}
-                  className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                >
-                  Leave Room
-                </button>
-              </div>
+              ))}
+              
+              {rooms.length === 0 && (
+                <div className="col-span-full text-center py-12">
+                  <MessageCircle size={48} className="mx-auto text-gray-500 mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-400 mb-2">No rooms available</h3>
+                  <p className="text-gray-500">Be the first to create a support room for the community!</p>
+                </div>
+              )}
             </div>
+          )}
 
-            <div ref={chatContainerRef} className="bg-gray-800 rounded-lg h-96 overflow-auto p-4 mb-4">
-              {messages?.map((msg, idx) => {
-                const storedUserId = userId || localStorage.getItem("userId");
-                const isCurrentUser = msg.sender && storedUserId && msg.sender.toString() === storedUserId.toString();
-
-                return (
-                  <div key={idx} className={`flex w-full mb-2 ${isCurrentUser ? "justify-end" : "justify-start"}`}>
-                    <div
-                      className={`p-3 max-w-[70%] rounded-xl shadow-md ${isCurrentUser ? "bg-green-500 text-white rounded-br-none" : "bg-gray-200 text-black rounded-bl-none"}`}
-                    >
-                      <p className="text-xs font-medium mb-0.5 text-opacity-80">
-                        {isCurrentUser ? "You" : `${senderUsername}`}
-                      </p>
-                      <p className="text-sm">{msg.message}</p>
-                      <p className="text-[11px] text-opacity-80 text-right mt-0.5">
-                        {new Date(msg.timestamp).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: true,
-                        })}
-                      </p>
+          {/* Chat Interface */}
+          {joinedRoom && currentRoom && (
+            <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl shadow-2xl overflow-hidden">
+              {/* Chat Header */}
+              <div className="bg-gradient-to-r from-purple-800 to-blue-800 p-6 border-b border-gray-700">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-4">
+                    <div className="text-2xl">{getRoomIcon(currentRoom.name)}</div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-white">{currentRoom.name}</h3>
+                      <p className="text-gray-200 text-sm">{currentRoom.description}</p>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-gray-300">
+                        <Hash size={12} />
+                        <span>Room ID: {currentRoom._id.slice(-8)}</span>
+                      </div>
                     </div>
                   </div>
-                );
-              })}
-              <div ref={messagesEndRef} />
-            </div>
+                  <button
+                    onClick={() => {
+                      setJoinedRoom(null);
+                      setCurrentRoom(null);
+                      setMessages([]);
+                    }}
+                    className="p-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors duration-200"
+                    title="Leave room"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              </div>
 
-            <form onSubmit={sendMessage} className="flex gap-2">
-              <input
-                type="text"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Type a message..."
-                className="flex-1 p-3 rounded-lg bg-gray-700 text-white" />
-              <button
-                type="submit"
-                className="p-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              {/* Messages Container */}
+              <div 
+                ref={chatContainerRef} 
+                className="h-96 lg:h-[500px] overflow-y-auto p-6 bg-gradient-to-b from-gray-900 to-slate-900 scroll-smooth"
               >
-                Send
-              </button>
-            </form>
-          </div>
-        )}
+                {messages?.length === 0 ? (
+                  <div className="text-center py-12">
+                    <MessageCircle size={48} className="mx-auto text-gray-500 mb-4" />
+                    <h4 className="text-lg font-semibold text-gray-400 mb-2">Start the conversation</h4>
+                    <p className="text-gray-500">Be the first to share your thoughts and connect with others.</p>
+                  </div>
+                ) : (
+                  messages?.map((msg, idx) => {
+                    const storedUserId = userId || localStorage.getItem("userId");
+                    const isCurrentUser = msg.sender && storedUserId && msg.sender.toString() === storedUserId.toString();
+                    
+                    // Check if we need to show a date separator
+                    const showDateSeparator = idx === 0 || 
+                      (idx > 0 && isDifferentDay(messages[idx - 1].timestamp, msg.timestamp));
 
-        {/* Create Room Modal */}
-        {showCreateRoomModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-            <div className="bg-gray-800 p-6 rounded-lg shadow-lg w-96">
-              <h3 className="text-2xl font-bold mb-4">Create a New Room</h3>
-              <input
-                type="text"
-                value={newRoomName}
-                onChange={(e) => setNewRoomName(e.target.value)}
-                placeholder="Enter room name"
-                className="w-full p-3 mb-4 rounded-lg bg-gray-700 text-white" />
-              <textarea
-                value={newRoomDescription}
-                onChange={(e) => setNewRoomDescription(e.target.value)}
-                placeholder="Enter room description"
-                className="w-full p-3 mb-4 rounded-lg bg-gray-700 text-white" />
-              <div className="flex justify-between">
-                <button
-                  onClick={() => setShowCreateRoomModal(false)}
-                  className="p-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={createRoom}
-                  className="p-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                >
-                  Create Room
-                </button>
+                    return (
+                      <React.Fragment key={idx}>
+                        {/* Date Separator */}
+                        {showDateSeparator && (
+                          <div className="flex justify-center mb-6 mt-4">
+                            <div className="bg-gray-800 border border-gray-600 rounded-full px-4 py-2 text-xs text-gray-300 font-medium shadow-md">
+                              {formatDateSeparator(msg.timestamp)}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Message */}
+                        <div className={`flex w-full mb-4 ${isCurrentUser ? "justify-end" : "justify-start"}`}>
+                          <div
+                            className={`p-4 max-w-[75%] rounded-2xl shadow-lg ${
+                              isCurrentUser 
+                                ? "bg-gradient-to-r from-green-600 to-green-700 text-white rounded-br-sm" 
+                                : "bg-gradient-to-r from-gray-700 to-gray-800 text-white rounded-bl-sm border border-gray-600"
+                            }`}
+                          >
+                            {/* Username and Time Header */}
+                            <div className="flex items-center justify-between mb-2">
+                              <p className={`text-sm font-semibold ${
+                                isCurrentUser ? "text-green-100" : "text-gray-200"
+                              }`}>
+                                {isCurrentUser ? "You" : (msg.username || "Anonymous")}
+                              </p>
+                              <p className={`text-xs font-medium ${
+                                isCurrentUser ? "text-green-200" : "text-gray-300"
+                              }`}>
+                                {formatMessageTime(msg.timestamp)}
+                              </p>
+                            </div>
+                            
+                            {/* Message Content */}
+                            <p className="text-sm leading-relaxed break-words">{msg.message}</p>
+                          </div>
+                        </div>
+                      </React.Fragment>
+                    );
+                  })
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Message Input */}
+              <div className="p-6 bg-gradient-to-r from-gray-800 to-gray-900 border-t border-gray-700">
+                <form onSubmit={sendMessage} className="flex gap-3">
+                  <input
+                    type="text"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Share your thoughts..."
+                    className="flex-1 p-4 rounded-xl bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                    maxLength={500}
+                  />
+                  <button
+                    type="submit"
+                    disabled={!message.trim()}
+                    className="px-6 py-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+                  >
+                    <Send size={20} />
+                  </button>
+                </form>
+                <div className="mt-2 text-xs text-gray-400 text-center">
+                  Remember to be kind and supportive. This is a safe space for everyone.
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Join Room Modal */}
-        {showJoinRoomModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-            <div className="bg-gray-800 p-6 rounded-lg shadow-lg w-96">
-              <h3 className="text-2xl font-bold mb-4">Join Room by ID</h3>
-              <input
-                type="text"
-                value={roomIdToJoin}
-                onChange={(e) => setRoomIdToJoin(e.target.value)}
-                placeholder="Enter room ID"
-                className="w-full p-3 mb-4 rounded-lg bg-gray-700 text-white" />
-              <div className="flex justify-between">
-                <button
-                  onClick={() => setShowJoinRoomModal(false)}
-                  className="p-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => joinRoom(roomIdToJoin)}
-                  className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Join Room
-                </button>
+          {/* Create Room Modal */}
+          {showCreateRoomModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4">
+              <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl shadow-2xl w-full max-w-md">
+                <div className="p-6 border-b border-gray-700">
+                  <h3 className="text-2xl font-bold text-white">Create Support Room</h3>
+                  <p className="text-gray-400 text-sm mt-1">Create a safe space for meaningful conversations</p>
+                </div>
+                
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Room Name</label>
+                    <input
+                      type="text"
+                      value={newRoomName}
+                      onChange={(e) => setNewRoomName(e.target.value)}
+                      placeholder="e.g., Anxiety Support Group"
+                      className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      maxLength={50}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                    <textarea
+                      value={newRoomDescription}
+                      onChange={(e) => setNewRoomDescription(e.target.value)}
+                      placeholder="Describe the purpose and guidelines for this room..."
+                      className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent h-24 resize-none"
+                      maxLength={200}
+                    />
+                  </div>
+                </div>
+                
+                <div className="p-6 border-t border-gray-700 flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowCreateRoomModal(false);
+                      setNewRoomName('');
+                      setNewRoomDescription('');
+                    }}
+                    className="flex-1 p-3 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors duration-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={createRoom}
+                    disabled={!newRoomName.trim() || !newRoomDescription.trim()}
+                    className="flex-1 p-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed rounded-lg transition-all duration-200"
+                  >
+                    Create Room
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Video Chat Modal */}
-        {/* Video Chat Modal */}
-{showVideoModal && (
-  <div className="fixed inset-0 bg-black bg-opacity-80 flex justify-center items-center z-50">
-    <div 
-      ref={videoModalRef}
-      className={`bg-gray-900 p-6 rounded-lg shadow-lg w-full max-w-4xl h-full max-h-[90vh] flex flex-col ${isFullscreen ? 'max-w-none max-h-none' : ''}`}
-    >
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-2xl font-bold">Video Chat: {currentRoom.name}</h3>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={toggleFullscreen}
-            className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-1"
-            title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-          >
-            {isFullscreen ? (
-              <>
-                <Minimize size={20} /> <span>Exit Fullscreen</span>
-              </>
-            ) : (
-              <>
-                <Maximize size={20} /> <span>Fullscreen</span>
-              </>
-            )}
-          </button>
-          <button
-            onClick={() => setShowVideoModal(false)}
-            className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center"
-            title="Close video chat"
-          >
-            <X size={20} />
-          </button>
+          {/* Join Room Modal */}
+          {showJoinRoomModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4">
+              <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl shadow-2xl w-full max-w-md">
+                <div className="p-6 border-b border-gray-700">
+                  <h3 className="text-2xl font-bold text-white">Join Room</h3>
+                  <p className="text-gray-400 text-sm mt-1">Enter the room ID to join a specific conversation</p>
+                </div>
+                
+                <div className="p-6">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Room ID</label>
+                  <input
+                    type="text"
+                    value={roomIdToJoin}
+                    onChange={(e) => setRoomIdToJoin(e.target.value)}
+                    placeholder="Enter the room ID..."
+                    className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono"
+                  />
+                </div>
+                
+                <div className="p-6 border-t border-gray-700 flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowJoinRoomModal(false);
+                      setRoomIdToJoin('');
+                    }}
+                    className="flex-1 p-3 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors duration-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => joinRoom(roomIdToJoin)}
+                    disabled={!roomIdToJoin.trim()}
+                    className="flex-1 p-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed rounded-lg transition-all duration-200"
+                  >
+                    Join Room
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
       
-      <div className="mb-2">
-        <p className="text-sm text-gray-300">
-          {videoParticipants.length} participants in this video chat
-        </p>
-      </div>
-      
-      <div className="flex-1 flex flex-wrap gap-4 overflow-y-auto p-4 bg-gray-800 rounded-lg">
-        {/* Local video */}
-        <div className="relative w-full md:w-64 h-48 bg-gray-700 rounded-lg overflow-hidden">
-          <video
-            ref={localVideoRef}
-            autoPlay
-            muted
-            playsInline
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute bottom-2 left-2 text-sm bg-black bg-opacity-50 px-2 py-1 rounded">
-            You (Host)
-          </div>
-        </div>
-        
-        {/* Remote videos */}
-        {peerStreams.map((peerStream) => (
-          <div key={peerStream.id} className="relative w-full md:w-64 h-48 bg-gray-700 rounded-lg overflow-hidden">
-            <video
-              autoPlay
-              playsInline
-              className="w-full h-full object-cover"
-              ref={(ref) => {
-                if (ref) ref.srcObject = peerStream.stream;
-              }}
-            />
-            <div className="absolute bottom-2 left-2 text-sm bg-black bg-opacity-50 px-2 py-1 rounded">
-              Participant
-            </div>
-          </div>
-        ))}
-      </div>
-      
-      <div className="flex justify-center gap-4 mt-4">
-        <button
-          onClick={toggleAudio}
-          className={`p-3 rounded-full ${audioEnabled ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700'}`}
-        >
-          {audioEnabled ? <Mic size={20} /> : <MicOff size={20} />}
-        </button>
-        <button
-          onClick={toggleVideo}
-          className={`p-3 rounded-full ${videoEnabled ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700'}`}
-        >
-          {videoEnabled ? <Camera size={20} /> : <CameraOff size={20} />}
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-      </div>
-    </div></>
+      <FloatingChatButton />
+    </>
   );
 };
 

@@ -891,10 +891,8 @@ const extractMobileNumber = async (imagePath, user) => {
 const getJournals = async (req, res) => {
   try {
       const  userId = req.user._id;
-      console.log("User ID:", userId);
       // Fetch journals directly for the given userId
       const journals = await Journal.find({ user: userId });
-
       if (!journals.length) {
           return res.status(404).json({
               success: false,

@@ -1,3 +1,87 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(-5px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+/* Tooltip animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.group:hover .group-hover\:opacity-100 {
+  opacity: 1;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes radiate {
+  0% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.01); }
+  100% { opacity: 0.7; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.01); }
+}
+@keyframes pulse-beam {
+  0% { height: 40px; opacity: 0.8; }
+  50% { height: 80px; opacity: 0.3; }
+  100% { height: 40px; opacity: 0.8; }
+}
+.animate-pulse-beam {
+  animation: pulse-beam 4s ease-in-out infinite;
+}
+
+/* In index.css */
+/* Replace your float animations with this */
+/* Add to index.css */
+@keyframes float {
+  0%, 100% { 
+    transform: translate(0, 0) scale(1); 
+    opacity: 0.8; 
+  }
+  50% { 
+    transform: translate(var(--float-x, 0), var(--float-y, 0)) scale(1.2); 
+    opacity: 0.3; 
+  }
+}
+.animate-float {
+  animation: float linear infinite;
+}
+.bg-gradient-radial {
+  background-image: radial-gradient(circle, var(--tw-gradient-stops));
+}
+.float-1 { animation: float 5s linear infinite; }
+.float-1::before { transform: translate(-15px, -20px); }
+
+.float-2 { animation: float 7s linear infinite; }
+.float-2::before { transform: translate(20px, -15px); }
+
+.particle-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0.3;
+}

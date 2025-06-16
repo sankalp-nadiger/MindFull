@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User, Users, Mail, Book, Edit2, Upload, Star } from "lucide-react";
+import { User, Users, Mail, Book, Edit2, Upload, Star, Heart, Shield, Clock, Target } from "lucide-react";
 import Navbar from "../Navbar/Navbar";
 import Footer from "../Footer/Footer";
+import FloatingChatButton from "../ChatBot/FloatingChatButton";
 
 export default function UserProfile() {
   const [isEditing, setIsEditing] = useState(false);
@@ -123,7 +124,6 @@ export default function UserProfile() {
       alert("There was an error while adding the interest.");
     }
   };
-  
 
   const handleRemoveInterest = (index) => {
     setUserDetails((prev) => ({
@@ -172,171 +172,225 @@ export default function UserProfile() {
   };
 
   if (!userDetails) {
-    return <div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-900 via-gray-900 to-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading your profile...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <>
-      <Navbar />
-      <div className="min-h-screen bg-gradient-to-b from-blue-600 via-blue-800 to-black text-gray-100 flex items-center justify-center p-4">
-        <div className="w-full max-w-4xl bg-gradient-to-b from-blue-800 via-blue-950 to-black rounded-lg shadow-2xl border-white border-y-2 overflow-hidden">
-          <div className="flex flex-col md:flex-row">
-            {/* Side Panel */}
-            <div className="w-full md:w-1/3 bg-gray-950 p-6 flex flex-col items-center">
-              <div className="relative">
-                <img
-                  src={image}
-                  className="w-40 h-40 rounded-full object-cover border-4 border-blue-500 transition-transform duration-300 hover:scale-105"
-                  alt="Profile"
-                />
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
-                  id="fileInput"
-                />
-                <button
-                  onClick={() => document.getElementById("fileInput").click()}
-                  className="absolute bottom-0 right-0 bg-blue-500 p-2 rounded-full hover:bg-blue-600 transition-colors duration-300"
-                >
-                  <Upload size={20} />
-                </button>
-              </div>
-              <h2 className="mt-4 text-2xl font-bold text-gradient bg-clip-text text-transparent bg-gradient-to-r from-blue-100 to-indigo-500">
-                {userDetails.fullName}
-              </h2>
-              <p className="text-blue-400">{userDetails.email}</p>
+
+      <div className="min-h-screen bg-gradient-to-b from-slate-900 via-gray-900 to-black text-gray-100">
+              <Navbar />
+        <div className="max-w-6xl mx-auto p-6">
+          <div className="bg-gray-900 rounded-2xl shadow-2xl border border-gray-800 overflow-hidden">
+            {/* Header Section */}
+            <div className="bg-gradient-to-r from-emerald-800/30 to-teal-800/30 p-6 border-b border-gray-800">
+              <h1 className="text-3xl font-bold text-white mb-2">Your Wellness Profile</h1>
+              <p className="text-gray-300">Manage your personal information and wellness preferences</p>
             </div>
 
-            {/* Main Content */}
-            <div className="w-full md:w-2/3 p-8">
-              <h1 className="text-3xl font-bold mb-6 text-gradient bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-indigo-500">
-                Profile
-              </h1>
-              <div className="space-y-6">
-                {/* Basic Details */}
-                {Object.entries(userDetails).map(([field, value]) => {
-  // Expanded list of fields to exclude
-  const excludedFields = [
-    "interests",
-    "journals",
-    "_id",
-    "avatar",
-    "goals",
-    "events",
-    "location",
-    "progress",
-    "refreshToken",
-    "createdAt",
-    "updatedAt",
-    "lastLoginDate",
-    "issues",
-    "parent",
-    "__v"
-  ];
-  
-  if (excludedFields.includes(field)) return null;
-  
-  return (
-    <div key={field}>
-      <label className="block text-sm font-medium mb-2 text-gray-400">
-        {field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')}
-      </label>
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => handleEdit(field, e.target.value)}
-        disabled={!isEditing || field === 'parent_phone_no'} // Add condition here
-        className={`w-full bg-gray-900 rounded px-2 py-1 focus:ring-blue-500 border-white ${
-          field === 'parent_phone_no' ? 'cursor-not-allowed opacity-70' : ''
-        }`}
-      />
-    </div>
-  );
-})}
-
-
-                {/* Interests Section */}
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-400">Interests & Goals</label>
-                  <div className="space-y-2">
-                    {userDetails.interests?.map((interest, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        <input
-                          type="text"
-                          value={interest.name}
-                          onChange={(e) => handleInterestEdit(index, "name", e.target.value)}
-                          disabled={!isEditing}
-                          className="flex-1 bg-gray-900 rounded px-2 py-1 focus:ring-blue-500 border-white"
-                        />
-                        <label className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            checked={interest.goal}
-                            onChange={(e) => handleInterestEdit(index, "goal", e.target.checked)}
-                            disabled={!isEditing}
-                            className="form-checkbox h-5 w-5 text-blue-500"
-                          />
-                          <span className="text-sm text-gray-400">Goal</span>
-                        </label>
-                        {isEditing && (
-                          <button
-                            onClick={() => handleRemoveInterest(index)}
-                            className="text-red-500 hover:text-red-600"
-                          >
-                            ×
-                          </button>
-                        )}
-                      </div>
-                    ))}
+            <div className="flex flex-col lg:flex-row">
+              {/* Profile Sidebar */}
+              <div className="w-full lg:w-1/3 bg-gray-800/50 p-8 border-r border-gray-800">
+                <div className="text-center">
+                  <div className="relative inline-block">
+                    <img
+                      src={image}
+                      className="w-32 h-32 rounded-full object-cover border-4 border-emerald-500/50 shadow-lg"
+                      alt="Profile"
+                    />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                      id="fileInput"
+                    />
+                    <button
+                      onClick={() => document.getElementById("fileInput").click()}
+                      className="absolute bottom-0 right-0 bg-emerald-600 hover:bg-emerald-700 p-2 rounded-full transition-colors shadow-lg"
+                    >
+                      <Upload size={16} />
+                    </button>
                   </div>
-                  {isEditing && (
-  <div className="flex mt-2">
-    <input
-      type="text"
-      value={newInterest}
-      onChange={(e) => setNewInterest(e.target.value)}
-      className="flex-1 bg-gray-900 rounded px-2 py-1 border-white"
-      placeholder="Add new interest"
-    />
-    <label className="flex items-center mx-2 space-x-2">
-      <input
-        type="checkbox"
-        checked={isGoal}
-        onChange={(e) => setIsGoal(e.target.checked)}
-        className="form-checkbox h-5 w-5 text-blue-500"
-      />
-      <span className="text-sm text-gray-400">Goal</span>
-    </label>
-    <button
-      onClick={handleAddInterest}
-      className="ml-2 bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600 transition"
-    >
-      Add
-    </button>
-  </div>
-)}
+                  
+                  <h2 className="mt-4 text-xl font-semibold text-white">
+                    {userDetails.fullName}
+                  </h2>
+                  <p className="text-gray-400 text-sm mt-1">{userDetails.email}</p>
+                  
+                  {/* Wellness Stats */}
+                  <div className="mt-6 space-y-3">
+                    <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-700">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-400">Wellness Goals</span>
+                        <span className="text-emerald-400 font-semibold">
+                          {userDetails.interests?.filter(i => i.goal).length || 0}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-700">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-400">Interests</span>
+                        <span className="text-emerald-400 font-semibold">
+                          {userDetails.interests?.length || 0}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <button
-                onClick={() => {
-                  if (isEditing) {
-                    handleSaveProfile();
-                  } else {
-                    setIsEditing(true);
-                  }
-                }}
-                className="mt-8 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded flex items-center transition-colors duration-300 transform hover:scale-105"
-              >
-                <Edit2 size={20} className="mr-2" />
-                {isEditing ? "Save Profile" : "Edit Profile"}
-              </button>
+              {/* Main Content */}
+              <div className="w-full lg:w-2/3 p-8">
+                <div className="flex justify-between items-center mb-8">
+                  <h3 className="text-2xl font-semibold text-white">Personal Information</h3>
+                  <button
+                    onClick={() => {
+                      if (isEditing) {
+                        handleSaveProfile();
+                      } else {
+                        setIsEditing(true);
+                      }
+                    }}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-6 rounded-lg flex items-center transition-all duration-200 shadow-lg hover:shadow-emerald-500/25"
+                  >
+                    <Edit2 size={18} className="mr-2" />
+                    {isEditing ? "Save Changes" : "Edit Profile"}
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Basic Information Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {Object.entries(userDetails).map(([field, value]) => {
+                      const excludedFields = [
+                        "interests", "journals", "_id", "avatar", "goals", "events", 
+                        "location", "progress", "refreshToken", "createdAt", "updatedAt", 
+                        "lastLoginDate", "issues", "parent", "__v"
+                      ];
+                      
+                      if (excludedFields.includes(field)) return null;
+                      
+                      const isReadOnly = field === 'parent_phone_no';
+                      const fieldLabel = field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1');
+                      
+                      return (
+                        <div key={field} className="space-y-2">
+                          <label className="block text-sm font-medium text-gray-300">
+                            {fieldLabel}
+                            {isReadOnly && <span className="text-xs text-gray-500 ml-2">(Protected)</span>}
+                          </label>
+                          <input
+                            type="text"
+                            value={value || ''}
+                            onChange={(e) => handleEdit(field, e.target.value)}
+                            disabled={!isEditing || isReadOnly}
+                            className={`w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-400 transition-all duration-200 ${
+                              isEditing && !isReadOnly 
+                                ? 'focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500' 
+                                : 'cursor-default'
+                            } ${isReadOnly ? 'opacity-60' : ''}`}
+                            placeholder={`Enter your ${fieldLabel.toLowerCase()}`}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Wellness Interests & Goals Section */}
+                  <div className="bg-gray-800/30 rounded-xl p-6 border border-gray-700">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <Target className="w-5 h-5 text-emerald-400" />
+                      <h4 className="text-lg font-semibold text-white">Wellness Interests & Goals</h4>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      {userDetails.interests?.map((interest, index) => (
+                        <div key={index} className="flex items-center space-x-3 bg-gray-900/50 rounded-lg p-3 border border-gray-700">
+                          <input
+                            type="text"
+                            value={interest.name}
+                            onChange={(e) => handleInterestEdit(index, "name", e.target.value)}
+                            disabled={!isEditing}
+                            className="flex-1 bg-gray-800 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                          />
+                          <label className="flex items-center space-x-2 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={interest.goal}
+                              onChange={(e) => handleInterestEdit(index, "goal", e.target.checked)}
+                              disabled={!isEditing}
+                              className="w-4 h-4 text-emerald-600 bg-gray-700 border-gray-600 rounded focus:ring-emerald-500"
+                            />
+                            <span className="text-gray-300">Goal</span>
+                          </label>
+                          {isEditing && (
+                            <button
+                              onClick={() => handleRemoveInterest(index)}
+                              className="text-red-400 hover:text-red-300 p-1 rounded transition-colors"
+                            >
+                              <span className="text-lg">×</span>
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {isEditing && (
+                      <div className="mt-4 flex space-x-3">
+                        <input
+                          type="text"
+                          value={newInterest}
+                          onChange={(e) => setNewInterest(e.target.value)}
+                          className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                          placeholder="Add a new wellness interest..."
+                        />
+                        <label className="flex items-center space-x-2 text-sm px-3">
+                          <input
+                            type="checkbox"
+                            checked={isGoal}
+                            onChange={(e) => setIsGoal(e.target.checked)}
+                            className="w-4 h-4 text-emerald-600 bg-gray-700 border-gray-600 rounded focus:ring-emerald-500"
+                          />
+                          <span className="text-gray-300">Goal</span>
+                        </label>
+                        <button
+                          onClick={handleAddInterest}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+                        >
+                          Add
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Privacy Notice */}
+                <div className="mt-8 bg-emerald-900/20 border border-emerald-800/50 rounded-lg p-4">
+                  <div className="flex items-start space-x-3">
+                    <Shield className="w-5 h-5 text-emerald-400 mt-0.5" />
+                    <div>
+                      <h5 className="font-medium text-emerald-200 mb-1">Your Privacy Matters</h5>
+                      <p className="text-sm text-emerald-300/80">
+                        All your personal information is encrypted and stored securely. We never share your data with third parties without your explicit consent.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
+            {/* Floating Chat Button */}
+      <FloatingChatButton />
       <Footer />
     </>
   );
