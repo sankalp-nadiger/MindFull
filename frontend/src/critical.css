@@ -31,16 +31,18 @@
 /* Critical layout styles */
 body {
   margin: 0;
-  padding: 0;
-  width: 100%;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
   min-height: 100vh;
 }
 
 #root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
   width: 100%;
-  min-height: 100vh;
-  margin: 0;
-  padding: 0;
 }
 
 /* Hero section styles */
@@ -52,7 +54,6 @@ body {
   align-items: center;
   text-align: center;
   padding: 1rem;
-  width: 100%;
 }
 
 /* Navigation styles */
@@ -62,7 +63,6 @@ body {
   padding: 1rem;
   position: relative;
   z-index: 50;
-  width: 100%;
 }
 
 /* Utility classes */
