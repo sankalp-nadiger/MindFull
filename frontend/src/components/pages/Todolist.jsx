@@ -362,13 +362,13 @@ const TodoListPage = () => {
         <div className="container mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center">
              {/* Back button - Left */}
-   <Link 
-  to="/MainPage"
-  className="flex items-center justify-center gap-2"
->
-  <ArrowLeft className="w-5 h-5" />
-  <span className="font-medium">Back to Dashboard</span>
-</Link>
+  <Link 
+              to="/MainPage"
+              className="flex items-center justify-center gap-1 sm:gap-2 text-gray-900 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="hidden sm:block text-sm font-medium sm:text-base">Back to Dashboard</span>
+            </Link>
             <div className="flex items-center mb-4 md:mb-0">
               <h1 className="text-3xl font-bold text-purple-400">TaskMaster</h1>
               <span className="ml-3 px-3 py-1 bg-purple-900 text-purple-200 text-xs rounded-full">Pro</span>
