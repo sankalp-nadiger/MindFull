@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Navbar from '../Navbar/Navbar';
-import { MessageCircle, Users, Plus, Hash, Send, X, Shield, Heart, UserPlus } from 'lucide-react';
+import { MessageCircle, Users, Plus, Hash, Send, X, Shield, Heart, UserPlus, ChevronDown } from 'lucide-react';
 import FloatingChatButton from "../ChatBot/FloatingChatButton";
 
 const CommunityChat = () => {
@@ -20,6 +20,7 @@ const CommunityChat = () => {
   const messagesEndRef = useRef(null);
   const [userId, setUserId] = useState(null);
   const chatContainerRef = useRef(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   
   const accessToken = sessionStorage.getItem('accessToken');
 
@@ -62,17 +63,34 @@ const CommunityChat = () => {
     });
   };
 
-  const scrollToBottom = () => {
+  // Check if user is scrolled to bottom
+  const checkScrollPosition = () => {
+    if (chatContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+      setShowScrollButton(!isNearBottom && messages.length > 0);
+    }
+  };
+
+  // Smooth scroll to bottom
+  const scrollToBottom = (force = false) => {
     if (messagesEndRef.current) {
       const chatContainer = chatContainerRef.current;
-      const isScrolledToBottom = chatContainer && 
-        (chatContainer.scrollHeight - chatContainer.scrollTop <= chatContainer.clientHeight + 100);
-
-      if (isScrolledToBottom) {
+      if (force || !showScrollButton) {
         messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        setShowScrollButton(false);
       }
     }
   };
+
+  // Handle scroll events
+  useEffect(() => {
+    const chatContainer = chatContainerRef.current;
+    if (chatContainer) {
+      chatContainer.addEventListener('scroll', checkScrollPosition);
+      return () => chatContainer.removeEventListener('scroll', checkScrollPosition);
+    }
+  }, [messages.length]);
 
   useEffect(() => {
     const fetchRooms = async () => {
@@ -133,9 +151,15 @@ const CommunityChat = () => {
 
   useEffect(() => {
     if (messages.length > 0) {
-      scrollToBottom();
+      // Auto-scroll only if user was already at bottom
+      const timer = setTimeout(() => {
+        if (!showScrollButton) {
+          scrollToBottom();
+        }
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [messages]);
+  }, [messages, showScrollButton]);
 
   const joinRoom = async (roomId) => {
     try {
@@ -260,8 +284,8 @@ const CommunityChat = () => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-x-hidden">
+        <div className="max-w-7xl mx-auto px-4 py-8 overflow-x-hidden">
           {/* Header Section */}
           <div className="text-center mb-8">
             <div className="flex justify-center items-center gap-3 mb-4">
@@ -277,7 +301,7 @@ const CommunityChat = () => {
             </p>
             
             {/* Trust Indicators */}
-            <div className="mt-6 flex justify-center items-center gap-6 text-sm text-gray-400">
+            <div className="mt-6 flex flex-wrap justify-center items-center gap-4 sm:gap-6 text-sm text-gray-400">
               <div className="flex items-center gap-2">
                 <Shield size={16} className="text-green-400" />
                 <span>Safe & Moderated</span>
@@ -295,7 +319,7 @@ const CommunityChat = () => {
 
           {/* Action Buttons */}
           {!joinedRoom && (
-            <div className="flex justify-center gap-4 mb-8">
+            <div className="flex flex-wrap justify-center gap-4 mb-8">
               <button
                 onClick={() => setShowCreateRoomModal(true)}
                 className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
@@ -315,11 +339,11 @@ const CommunityChat = () => {
 
           {/* Room List */}
           {!joinedRoom && !loading && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-x-hidden">
               {rooms.map((room) => (
                 <div 
                   key={room._id} 
-                  className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl p-6 hover:border-purple-500 transition-all duration-300 shadow-lg hover:shadow-purple-500/20"
+                  className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl p-6 hover:border-purple-500 transition-all duration-300 shadow-lg hover:shadow-purple-500/20 overflow-hidden"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="text-3xl">{getRoomIcon(room.name)}</div>
@@ -328,20 +352,20 @@ const CommunityChat = () => {
                     </div>
                   </div>
                   
-                  <h3 className="text-xl font-semibold text-white mb-2 line-clamp-1">
+                  <h3 className="text-xl font-semibold text-white mb-2 line-clamp-1 break-words">
                     {room.name}
                   </h3>
                   
-                  <p className="text-gray-300 text-sm mb-4 line-clamp-2 leading-relaxed">
+                  <p className="text-gray-300 text-sm mb-4 line-clamp-2 leading-relaxed break-words">
                     {room.description}
                   </p>
                   
-                  <div className="flex items-center justify-between text-xs text-gray-400 mb-4">
-                    <div className="flex items-center gap-1">
-                      <Hash size={12} />
-                      <span className="font-mono">{room._id.slice(-8)}</span>
+                  <div className="flex items-center justify-between text-xs text-gray-400 mb-4 overflow-hidden">
+                    <div className="flex items-center gap-1 min-w-0">
+                      <Hash size={12} className="flex-shrink-0" />
+                      <span className="font-mono truncate">{room._id.slice(-8)}</span>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       <Users size={12} />
                       <span>Active now</span>
                     </div>
@@ -372,14 +396,14 @@ const CommunityChat = () => {
               {/* Chat Header */}
               <div className="bg-gradient-to-r from-purple-800 to-blue-800 p-6 border-b border-gray-700">
                 <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-4">
-                    <div className="text-2xl">{getRoomIcon(currentRoom.name)}</div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-white">{currentRoom.name}</h3>
-                      <p className="text-gray-200 text-sm">{currentRoom.description}</p>
+                  <div className="flex items-center gap-4 min-w-0 flex-1">
+                    <div className="text-2xl flex-shrink-0">{getRoomIcon(currentRoom.name)}</div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-xl font-semibold text-white truncate">{currentRoom.name}</h3>
+                      <p className="text-gray-200 text-sm line-clamp-1">{currentRoom.description}</p>
                       <div className="flex items-center gap-2 mt-1 text-xs text-gray-300">
                         <Hash size={12} />
-                        <span>Room ID: {currentRoom._id.slice(-8)}</span>
+                        <span className="truncate">Room ID: {currentRoom._id.slice(-8)}</span>
                       </div>
                     </div>
                   </div>
@@ -388,8 +412,9 @@ const CommunityChat = () => {
                       setJoinedRoom(null);
                       setCurrentRoom(null);
                       setMessages([]);
+                      setShowScrollButton(false);
                     }}
-                    className="p-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors duration-200"
+                    className="p-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors duration-200 flex-shrink-0"
                     title="Leave room"
                   >
                     <X size={20} />
@@ -398,68 +423,95 @@ const CommunityChat = () => {
               </div>
 
               {/* Messages Container */}
-              <div 
-                ref={chatContainerRef} 
-                className="h-96 lg:h-[500px] overflow-y-auto p-6 bg-gradient-to-b from-gray-900 to-slate-900 scroll-smooth"
-              >
-                {messages?.length === 0 ? (
-                  <div className="text-center py-12">
-                    <MessageCircle size={48} className="mx-auto text-gray-500 mb-4" />
-                    <h4 className="text-lg font-semibold text-gray-400 mb-2">Start the conversation</h4>
-                    <p className="text-gray-500">Be the first to share your thoughts and connect with others.</p>
-                  </div>
-                ) : (
-                  messages?.map((msg, idx) => {
-                    const storedUserId = userId || localStorage.getItem("userId");
-                    const isCurrentUser = msg.sender && storedUserId && msg.sender.toString() === storedUserId.toString();
-                    
-                    // Check if we need to show a date separator
-                    const showDateSeparator = idx === 0 || 
-                      (idx > 0 && isDifferentDay(messages[idx - 1].timestamp, msg.timestamp));
+              <div className="relative">
+                <div 
+                  ref={chatContainerRef} 
+                  className="h-96 lg:h-[500px] overflow-y-auto p-6 bg-gradient-to-b from-gray-900 to-slate-900 scroll-smooth overflow-x-hidden"
+                >
+                  {messages?.length === 0 ? (
+                    <div className="text-center py-12">
+                      <MessageCircle size={48} className="mx-auto text-gray-500 mb-4" />
+                      <h4 className="text-lg font-semibold text-gray-400 mb-2">Start the conversation</h4>
+                      <p className="text-gray-500">Be the first to share your thoughts and connect with others.</p>
+                    </div>
+                  ) : (
+                    messages?.map((msg, idx) => {
+                      const storedUserId = userId || localStorage.getItem("userId");
+                      const isCurrentUser = msg.sender && storedUserId && msg.sender.toString() === storedUserId.toString();
+                      
+                      // Check if we need to show a date separator
+                      const showDateSeparator = idx === 0 || 
+                        (idx > 0 && isDifferentDay(messages[idx - 1].timestamp, msg.timestamp));
 
-                    return (
-                      <React.Fragment key={idx}>
-                        {/* Date Separator */}
-                        {showDateSeparator && (
-                          <div className="flex justify-center mb-6 mt-4">
-                            <div className="bg-gray-800 border border-gray-600 rounded-full px-4 py-2 text-xs text-gray-300 font-medium shadow-md">
-                              {formatDateSeparator(msg.timestamp)}
+                      return (
+                        <React.Fragment key={idx}>
+                          {/* Date Separator */}
+                          {showDateSeparator && (
+                            <div className="flex justify-center mb-6 mt-4">
+                              <div className="bg-gray-800 border border-gray-600 rounded-full px-4 py-2 text-xs text-gray-300 font-medium shadow-md">
+                                {formatDateSeparator(msg.timestamp)}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Message */}
+                          <div className={`flex w-full mb-4 ${isCurrentUser ? "justify-end" : "justify-start"}`}>
+                            <div
+                              className={`relative p-4 max-w-[85%] sm:max-w-[75%] rounded-2xl shadow-lg ${
+                                isCurrentUser 
+                                  ? "bg-gradient-to-r from-green-600 to-green-700 text-white rounded-br-sm" 
+                                  : "bg-gradient-to-r from-gray-700 to-gray-800 text-white rounded-bl-sm border border-gray-600"
+                              }`}
+                            >
+                              {/* Message Header */}
+                              <div className="flex items-start justify-between mb-2 gap-3">
+                                <div className="flex-1 min-w-0">
+                                  <p className={`text-sm font-semibold truncate ${
+                                    isCurrentUser ? "text-green-100" : "text-gray-200"
+                                  }`}>
+                                    {isCurrentUser ? "You" : (msg.username || "Anonymous")}
+                                  </p>
+                                </div>
+                                <div className="flex-shrink-0">
+                                  <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                                    isCurrentUser 
+                                      ? "bg-green-800/30 text-green-200" 
+                                      : "bg-gray-600/30 text-gray-300"
+                                  }`}>
+                                    <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60"></span>
+                                    {formatMessageTime(msg.timestamp)}
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {/* Message Content */}
+                              <p className="text-sm leading-relaxed break-words">{msg.message}</p>
+                              
+                              {/* Message Tail */}
+                              <div className={`absolute bottom-0 w-0 h-0 ${
+                                isCurrentUser 
+                                  ? "right-0 border-l-[12px] border-l-green-700 border-t-[12px] border-t-transparent"
+                                  : "left-0 border-r-[12px] border-r-gray-800 border-t-[12px] border-t-transparent"
+                              }`}></div>
                             </div>
                           </div>
-                        )}
-                        
-                        {/* Message */}
-                        <div className={`flex w-full mb-4 ${isCurrentUser ? "justify-end" : "justify-start"}`}>
-                          <div
-                            className={`p-4 max-w-[75%] rounded-2xl shadow-lg ${
-                              isCurrentUser 
-                                ? "bg-gradient-to-r from-green-600 to-green-700 text-white rounded-br-sm" 
-                                : "bg-gradient-to-r from-gray-700 to-gray-800 text-white rounded-bl-sm border border-gray-600"
-                            }`}
-                          >
-                            {/* Username and Time Header */}
-                            <div className="flex items-center justify-between mb-2">
-                              <p className={`text-sm font-semibold ${
-                                isCurrentUser ? "text-green-100" : "text-gray-200"
-                              }`}>
-                                {isCurrentUser ? "You" : (msg.username || "Anonymous")}
-                              </p>
-                              <p className={`text-xs font-medium ${
-                                isCurrentUser ? "text-green-200" : "text-gray-300"
-                              }`}>
-                                {formatMessageTime(msg.timestamp)}
-                              </p>
-                            </div>
-                            
-                            {/* Message Content */}
-                            <p className="text-sm leading-relaxed break-words">{msg.message}</p>
-                          </div>
-                        </div>
-                      </React.Fragment>
-                    );
-                  })
+                        </React.Fragment>
+                      );
+                    })
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {/* Scroll to Bottom Button */}
+                {showScrollButton && (
+                  <button
+                    onClick={() => scrollToBottom(true)}
+                    className="absolute bottom-4 right-4 p-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 z-10 animate-bounce"
+                    title="Scroll to latest message"
+                  >
+                    <ChevronDown size={20} className="text-white" />
+                  </button>
                 )}
-                <div ref={messagesEndRef} />
               </div>
 
               {/* Message Input */}
@@ -476,7 +528,7 @@ const CommunityChat = () => {
                   <button
                     type="submit"
                     disabled={!message.trim()}
-                    className="px-6 py-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+                    className="px-6 py-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl flex-shrink-0"
                   >
                     <Send size={20} />
                   </button>
@@ -490,8 +542,8 @@ const CommunityChat = () => {
 
           {/* Create Room Modal */}
           {showCreateRoomModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4">
-              <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl shadow-2xl w-full max-w-md">
+            <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4 overflow-y-auto">
+              <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl shadow-2xl w-full max-w-md mx-auto my-8">
                 <div className="p-6 border-b border-gray-700">
                   <h3 className="text-2xl font-bold text-white">Create Support Room</h3>
                   <p className="text-gray-400 text-sm mt-1">Create a safe space for meaningful conversations</p>
@@ -547,8 +599,8 @@ const CommunityChat = () => {
 
           {/* Join Room Modal */}
           {showJoinRoomModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4">
-              <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl shadow-2xl w-full max-w-md">
+            <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4 overflow-y-auto">
+              <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl shadow-2xl w-full max-w-md mx-auto my-8">
                 <div className="p-6 border-b border-gray-700">
                   <h3 className="text-2xl font-bold text-white">Join Room</h3>
                   <p className="text-gray-400 text-sm mt-1">Enter the room ID to join a specific conversation</p>
