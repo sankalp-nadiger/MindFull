@@ -23,6 +23,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { io } from 'socket.io-client';
+import { Link } from "react-router-dom";
 
 const getSocket = () => {
   if (!window.socketInstance) {
@@ -656,13 +657,13 @@ const VideoChat = () => {
       <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-700 shadow-xl">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <button 
-              onClick={() => navigate('/MainPage')}
-              className="flex items-center text-gray-400 justify-center gap-2 hover:text-emerald-400 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span className="font-medium">Back to Dashboard</span>
-            </button>
+            <Link 
+                          to="/MainPage"
+                          className="flex items-center justify-center gap-1 sm:gap-2 text-gray-900 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                        >
+                          <ArrowLeft className="w-5 h-5" />
+                          <span className="hidden sm:block text-sm font-medium sm:text-base">Back to Dashboard</span>
+                        </Link>
             
             <div className="text-center">
               <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
