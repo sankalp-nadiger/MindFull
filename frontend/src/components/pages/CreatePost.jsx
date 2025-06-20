@@ -79,8 +79,10 @@ const CreatePost = () => {
 
       <div className="relative z-10 flex items-center justify-center min-h-screen">
         <div className="w-full max-w-2xl">
-          {/* Header with back button */}
-          <div className="flex items-center mb-8">
+
+          {/* Main card */}
+          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl">
+            <div className="flex items-center mb-8">
             <button
               onClick={handleGoBack}
               className="flex items-center gap-2 text-white/80 hover:text-white transition-colors group"
@@ -89,9 +91,6 @@ const CreatePost = () => {
               <span className="font-medium">Back</span>
             </button>
           </div>
-
-          {/* Main card */}
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl">
             {/* Title */}
             <div className="text-center mb-8">
               <div className="flex items-center justify-center gap-3 mb-3">
