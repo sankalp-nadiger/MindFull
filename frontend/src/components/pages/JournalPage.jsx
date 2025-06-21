@@ -477,16 +477,31 @@ const JournalApp = () => {
               </button>
             </div>
 
-            {loadingEntries ? (
-              <div className="flex flex-col items-center justify-center py-16">
-                <div className={`w-8 h-8 border-2 rounded-full animate-spin mb-4 ${
-                  darkMode 
-                    ? 'border-slate-700 border-t-indigo-400' 
-                    : 'border-indigo-200 border-t-indigo-600'
-                }`}></div>
-                <p className={darkMode ? 'text-slate-400' : 'text-slate-600'}>Loading your journal entries...</p>
-              </div>
-            ) : journalEntries.length === 0 ? (
+            
+{loadingEntries ? (
+  <div className="flex flex-col items-center justify-center py-12">
+    <div className="relative">
+      {/* Main spinner */}
+      <div className={`w-6 h-6 border-2 rounded-full animate-spin ${
+        darkMode 
+          ? 'border-slate-600 border-t-indigo-400' 
+          : 'border-slate-200 border-t-indigo-500'
+      }`}></div>
+      
+      <div className={`absolute inset-0 w-6 h-6 border border-transparent rounded-full ${
+        darkMode 
+          ? 'border-t-slate-700' 
+          : 'border-t-slate-100'
+      } animate-spin`} style={{animationDuration: '1.5s', animationDirection: 'reverse'}}></div>
+    </div>
+    
+    <p className={`text-sm mt-3 font-medium ${
+      darkMode ? 'text-slate-400' : 'text-slate-500'
+    }`}>
+      Loading entries...
+    </p>
+  </div>
+) : journalEntries.length === 0 ? (
               <div className="text-center py-16">
                 <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${
                   darkMode 
