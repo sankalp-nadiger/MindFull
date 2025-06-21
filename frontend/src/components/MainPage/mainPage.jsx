@@ -7,6 +7,8 @@ import Navbar from "../Navbar/Navbar";
 import { ChatInterface } from "../ChatBot/ChatInterface";
 import { useNavigate } from "react-router-dom";
 import LazyLoadWrapper from "../LazyLoad/LazyLoadWrapper";
+import { useTranslation } from 'react-i18next';
+import LanguageSelector from '../common/LanguageSelector';
 
 // Lazy load heavy components
 const BentoGridDemo = React.lazy(() => import("./BentoGridDemo").then(module => ({ default: module.BentoGridDemo })));
@@ -21,6 +23,7 @@ const FloatingChatButton = React.lazy(() => import("../ChatBot/FloatingChatButto
 const MoodBasedMemories = React.lazy(() => import("../pages/MoodBasedMemories"));
 
 export function HeroHighlightDemo() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(true);
@@ -134,16 +137,14 @@ export function HeroHighlightDemo() {
               transition={{ duration: 0.5, ease: [0.4, 0.0, 0.2, 1] }}
               className="flex flex-wrap justify-center gap-4 text-4xl font-bold md:text-6xl lg:text-7xl text-neutral-700 dark:text-white"
             >
-              Welcome,
+              {t('dashboard.welcome')},
               <Highlight
                 className="inline-block px-3 py-1 text-3xl text-black rounded-md shadow-md dark:text-white md:text-5xl lg:text-6xl bg-gradient-to-r from-purple-500 to-blue-500"
               >
-                {loading ? "Loading..." : error ? `Error: ${error}` : username}
+                {loading ? t('common.loading') : error ? `${t('common.error')}: ${error}` : username}
               </Highlight>
-            </motion.h1>
-
-            <div className="block w-full mt-6 text-xl text-center md:text-2xl lg:text-3xl dark:text-white">
-              How's Your Day Today?
+            </motion.h1>            <div className="block w-full mt-6 text-xl text-center md:text-2xl lg:text-3xl dark:text-white">
+              {t('dashboard.todayQuestion')}
             </div>
           </div>
         </HeroHighlight>

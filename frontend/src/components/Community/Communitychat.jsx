@@ -3,8 +3,10 @@ import axios from 'axios';
 import Navbar from '../Navbar/Navbar';
 import { MessageCircle, Users, Plus, Hash, Send, X, Shield, Heart, UserPlus, ChevronDown } from 'lucide-react';
 import FloatingChatButton from "../ChatBot/FloatingChatButton";
+import { useTranslation } from 'react-i18next';
 
 const CommunityChat = () => {
+  const { t } = useTranslation();
   const [rooms, setRooms] = useState([]);
   const [joinedRoom, setJoinedRoom] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -323,28 +325,28 @@ const CommunityChat = () => {
             <div className="flex justify-center items-center gap-3 mb-4">
               <div className="p-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full">
                 <MessageCircle size={32} className="text-white" />
-              </div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-                Community Support
+              </div>              <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                {t('community.title')}
               </h1>
             </div>
             <p className="text-gray-300 text-lg max-w-2xl mx-auto">
-              Connect with others who understand your journey. Find support, share experiences, and build meaningful connections in a safe, moderated environment.
+              {t('community.description')}
             </p>
             
+
             {/* Trust Indicators */}
             <div className="mt-6 flex flex-wrap justify-center items-center gap-4 sm:gap-6 text-sm text-gray-400">
               <div className="flex items-center gap-2">
                 <Shield size={16} className="text-green-400" />
-                <span>Safe & Moderated</span>
+                <span>{t('community.safeModerated')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Heart size={16} className="text-red-400" />
-                <span>Mental Health Focused</span>
+                <span>{t('community.mentalHealthFocused')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Users size={16} className="text-blue-400" />
-                <span>Supportive Community</span>
+                <span>{t('community.supportive')}</span>
               </div>
             </div>
           </div>
