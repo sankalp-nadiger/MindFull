@@ -3,6 +3,10 @@ import {BrowserRouter as Router,Routes,Route} from "react-router-dom"
 import LoadingSpinner from "./components/LoadingSpinner/LoadingSpinner"
 import PageSkeleton from "./components/LoadingSpinner/PageSkeleton"
 
+// Import i18n setup
+import './i18n'
+import { LanguageProvider } from './contexts/LanguageContext'
+
 // Lazy load components for better performance
 const HomePage = React.lazy(() => import('./components/HomePage/HomePage'))
 const ParentDashboard = React.lazy(() => import("./components/ParentPage/ParentPage"))
@@ -45,7 +49,7 @@ const TodoListPage = React.lazy(() => import("./components/pages/Todolist"))
 
 function App() {
   return (
-    <>
+    <LanguageProvider>
       <Router>
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
@@ -240,11 +244,10 @@ function App() {
                 <VisionBoard />
               </Suspense>
             } />
-            {/* <Route path="/stats" element={<CounselorStats/>}/>  */}
-          </Routes>
+            {/* <Route path="/stats" element={<CounselorStats/>}/>  */}          </Routes>
         </Suspense>
       </Router>
-    </>
+    </LanguageProvider>
   )
 }
 

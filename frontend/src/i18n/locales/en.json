@@ -1,0 +1,315 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "home": "Home",
+    "logout": "Logout",
+    "login": "Login",
+    "signup": "Sign Up",
+    "signin": "Sign In",
+    "email": "Email",
+    "password": "Password",
+    "username": "Username",
+    "name": "Name",
+    "age": "Age",
+    "gender": "Gender",
+    "location": "Location",
+    "language": "Language",
+    "done": "Done",
+    "complete": "Complete",
+    "actions": "Actions"
+  },
+  "navigation": {
+    "title": "Navigation",
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "community": "Community",
+    "activities": "Activities",
+    "journals": "Journals",
+    "counsellor": "Counsellor",
+    "profile": "Profile",
+    "settings": "Settings",
+    "help": "Help",
+    "about": "About",
+    "contact": "Contact",
+    "leaderboard": "Leaderboard"
+  },
+  "auth": {
+    "welcomeBack": "Welcome Back",
+    "createAccount": "Create Account",
+    "signInToAccount": "Sign in to your account",
+    "dontHaveAccount": "Don't have an account?",
+    "alreadyHaveAccount": "Already have an account?",
+    "forgotPassword": "Forgot Password?",
+    "rememberMe": "Remember Me",
+    "signInWith": "Sign in with",
+    "orContinueWith": "Or continue with",
+    "fullName": "Full Name",
+    "confirmPassword": "Confirm Password",
+    "agreeToTerms": "I agree to the Terms and Conditions",
+    "selectRole": "Select Your Role",
+    "student": "Student",
+    "parent": "Parent",
+    "counsellor": "Counsellor",
+    "roleDescription": {
+      "student": "Access mental health resources, activities, and peer support",
+      "parent": "Monitor your child's mental health journey and progress",
+      "counsellor": "Provide professional mental health support and guidance"
+    },
+    "idCard": "ID Card/Verification Document",
+    "uploadFile": "Upload File",
+    "getLocation": "Get Location",
+    "currentMood": "How are you feeling today?",
+    "moodOptions": {
+      "excellent": "Excellent",
+      "good": "Good",
+      "okay": "Okay",
+      "sad": "Sad",
+      "terrible": "Terrible"
+    }
+  },
+  "homepage": {
+    "title": "MindFull",
+    "subtitle": "A Gamified Experience to Mental Wellness...",
+    "description": "Your one stop solution for Mental Fitness",
+    "getStarted": "Get Started",
+    "learnMore": "Learn More",
+    "features": {
+      "title": "Why Choose MindFull?",
+      "gamified": {
+        "title": "Gamified Experience",
+        "description": "Earn points, badges, and track your progress through engaging mental health activities"
+      },
+      "community": {
+        "title": "Supportive Community",
+        "description": "Connect with peers and share your journey in a safe, supportive environment"
+      },
+      "professional": {
+        "title": "Professional Support",
+        "description": "Access licensed counsellors and mental health professionals when you need them"
+      },
+      "personalized": {
+        "title": "Personalized Content",
+        "description": "AI-driven recommendations tailored to your specific mental health needs"
+      }
+    },
+    "testimonials": {
+      "title": "What Our Users Say",
+      "testimonial1": {
+        "content": "MindfullStudent has completely changed how I handle stress. The AI-driven exercises help me stay on track, and the peer support community makes me feel less alone. I've become more confident and focused!",
+        "author": "ALEX J",
+        "role": "High School Student"
+      },
+      "testimonial2": {
+        "content": "I used to struggle with anxiety before exams, but MindfullStudent's mindfulness techniques and expert guidance have helped me stay calm. Now, I feel more balanced and in control",
+        "author": "PRIYA S",
+        "role": "Under-Graduate"
+      },
+      "testimonial3": {
+        "content": "MindfullStudent provided me with the tools to manage my mental health effectively. The personalized approach made a huge difference in my daily routine. Highly recommended!",
+        "author": "ROBERT M",
+        "role": "High School Student"
+      }
+    },
+    "contact": {
+      "title": "Get in Touch",
+      "subtitle": "Any Queries or Feedback? We are Happy to help you out there!",
+      "email": "Email",
+      "phone": "Phone",
+      "feedback": "Feedback"
+    }
+  },
+  "dashboard": {
+    "welcome": "Welcome",
+    "howAreYouToday": "How's Your Day Today?",
+    "todaysQuote": "Today's Quote",
+    "suggestedActivities": "Suggested Activities",
+    "recentJournals": "Recent Journals",
+    "moodTracker": "Mood Tracker",
+    "streakCounter": "Day Streak",
+    "badges": "Badges",
+    "leaderboard": "Leaderboard",
+    "quickActions": "Quick Actions"
+  },
+  "activities": {
+    "title": "Mental Health Activities",
+    "description": "Curated activities to support your mental wellness journey",
+    "categories": {
+      "breathing": "Breathing Exercises",
+      "meditation": "Meditation",
+      "games": "Mind Games",
+      "music": "Music Therapy",
+      "journaling": "Journaling",
+      "exercise": "Physical Exercise"
+    },
+    "suggestions": {
+      "title": "Activity Recommendations Curated for YOU",
+      "seeActivities": "See Activities"
+    },
+    "breathingExercise": {
+      "title": "Breathing Exercise",
+      "description": "Practice mindful breathing to reduce stress and anxiety",
+      "startExercise": "Start Exercise"
+    },
+    "musicPlayer": {
+      "title": "Welcome to Your Music World",
+      "description": "Dive into a world of soothing melodies and rhythmic beats. Explore our mindful library of music and let the tunes play on.",
+      "openPlayer": "Open Music Player"
+    }
+  },
+  "journal": {
+    "title": "Journal Entry",
+    "newEntry": "New Entry",
+    "viewEntries": "View Entries",
+    "writeSomething": "Write something...",
+    "moodScore": "Mood Score",
+    "topic": "Topic",
+    "aiSuggestions": "AI Suggestions",
+    "getSuggestions": "Get AI Suggestions",
+    "saveEntry": "Save Entry",
+    "suggestedTopics": "Suggested Topics",
+    "loadingTopics": "Loading suggested topics...",
+    "loadingSuggestions": "Getting AI suggestions...",
+    "entryPlaceholder": "Share your thoughts, feelings, or experiences today...",
+    "topicPlaceholder": "What's on your mind today?",
+    "noEntries": "No journal entries yet. Start writing your first entry!",
+    "backToJournals": "Back to Journals"
+  },
+  "games": {
+    "quiz": {
+      "title": "Mind Quiz: Beginner",
+      "description": "Tickle your brain cells and unleash your potential",
+      "play": "Play",
+      "startQuiz": "Start Quiz"
+    },
+    "sudoku": {
+      "title": "Sudoku Challenge",
+      "description": "Challenge your logical thinking with our Sudoku puzzles",
+      "play": "Play Sudoku"
+    },
+    "crossword": {
+      "title": "Crossword Puzzle",
+      "description": "Exercise your vocabulary and problem-solving skills",
+      "play": "Play Crossword"
+    }
+  },
+  "music": {
+    "title": "Mental Health Podcasts",
+    "description": "Discover insightful discussions on mindfulness, stress relief, and positivity. Tune in and find your inner peace.",
+    "player": "Music Player",
+    "podcasts": "Podcasts",
+    "playlist": "Playlist"
+  },
+  "community": {
+    "title": "Community Support",
+    "description": "Connect with others who understand your journey. Find support, share experiences, and build meaningful connections in a safe, moderated environment.",
+    "safeModerated": "Safe & Moderated",
+    "mentalHealthFocused": "Mental Health Focused",
+    "supportive": "Supportive Community",
+    "posts": "Posts",
+    "createPost": "Create Post",
+    "comments": "Comments",
+    "likes": "Likes",
+    "share": "Share",
+    "discussion": "Discussion",
+    "support": "Support Group",
+    "guidelines": "Community Guidelines"
+  },
+  "counsellor": {
+    "title": "Counsellor Dashboard",
+    "sessions": "Sessions",
+    "students": "Students",
+    "schedule": "Schedule",
+    "reports": "Reports",
+    "profile": "Profile",
+    "availableSlots": "Available Slots",
+    "upcomingSessions": "Upcoming Sessions",
+    "totalSessions": "Total Sessions"
+  },
+  "parent": {
+    "title": "Parent Dashboard",
+    "subtitle": "Monitor your child's mental health journey",
+    "childProgress": "Child Progress",
+    "moodTrends": "Mood Trends",
+    "sessionHistory": "Session History",
+    "journalEntries": "Journal Entries",
+    "activeIssues": "Active Issues",
+    "avgMood": "Average Mood",
+    "criticalInfo": "Critical Info",
+    "counseling": "Counseling",
+    "dashboard": "Dashboard"
+  },
+  "profile": {
+    "title": "User Profile",
+    "personalInfo": "Personal Information",
+    "preferences": "Preferences",
+    "privacy": "Privacy Settings",
+    "notifications": "Notifications",
+    "accountSettings": "Account Settings",
+    "updateProfile": "Update Profile",
+    "changePassword": "Change Password",
+    "deleteAccount": "Delete Account"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "notifications": "Notifications",
+    "privacy": "Privacy",
+    "account": "Account",
+    "help": "Help & Support",
+    "about": "About",
+    "logout": "Logout"
+  },
+  "visionBoard": {
+    "title": "VisionFull: Visualize Your Dreams Into Reality",
+    "description": "Create digital vision boards that inspire and motivate. Collect images, quotes, and aspirations that help manifest your goals and dreams.",
+    "welcomeQuote": "Your vision board is a sacred space for your dreams. What you nurture with intention grows.",
+    "myBoards": "My Vision Boards",
+    "viewBoards": "View Vision Boards",
+    "createBoard": "Create Board",
+    "startCreating": "Start Creating",
+    "backToMainPage": "Back to Main Page",
+    "wellnessTips": "Wellness Tips"
+  },
+  "todoList": {
+    "title": "TaskMaster: Your Smart To-Do List Assistant",
+    "description": "Organize, prioritize, and complete your tasks efficiently. Keep track of progress, manage deadlines, and stay on top of your goals.",
+    "viewTasks": "View Tasks",
+    "addTask": "Add Task",
+    "completeTask": "Complete Task",
+    "editTask": "Edit Task",
+    "deleteTask": "Delete Task"
+  },
+  "example": {
+    "demo": "Demo",
+    "currentLanguage": "Current Language",
+    "title": "Multilingual Example"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "network": "Network error. Please check your connection.",
+    "unauthorized": "You are not authorized to access this resource.",
+    "notFound": "The requested resource was not found.",
+    "validation": "Please check your input and try again.",
+    "login": "Invalid credentials. Please try again.",
+    "signup": "Account creation failed. Please try again."
+  },
+  "success": {
+    "login": "Successfully logged in!",
+    "signup": "Account created successfully!",
+    "update": "Updated successfully!",
+    "delete": "Deleted successfully!",
+    "save": "Saved successfully!"
+  }
+}

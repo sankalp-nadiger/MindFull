@@ -3,19 +3,23 @@ import { BackgroundBeamsWithCollisionDemo } from './hero'
 import Footer from "../Footer/Footer";
 import Contactus from "./Contact";
 import { useEffect } from "react";
+import { useTranslation } from 'react-i18next';
+import LanguageSelector from '../common/LanguageSelector';
+
 function HomePage(){
+  const { t } = useTranslation();
   
  
 
 
 
 
-    
-    return(
+      return(
         <>
-       
-
-
+       {/* Language Selector in top right corner */}
+       <div className="fixed top-4 right-4 z-50">
+         <LanguageSelector />
+       </div>
 
    <BackgroundBeamsWithCollisionDemo/>        
 <div class="overflow-hidden bg-gradient-to-b from-purple-500 via-purple-950 to-black">
@@ -24,10 +28,10 @@ function HomePage(){
       
       <div class="text-center">
         <p class="text-xs font-semibold text-gray-500 tracking-wide uppercase mb-3 dark:text-neutral-200">
-          MindFull Student
+          {t('homepage.title')}
         </p>
         <h1 class="text-3xl text-gray-800 font-bold sm:text-5xl lg:text-6xl lg:leading-tight dark:text-neutral-200">
-          Your one stop solution  <span class="text-blue-500">for Mental Fitness</span>
+          {t('homepage.description')} <span class="text-blue-500">{t('homepage.subtitle')}</span>
         </h1>
       </div>
       
