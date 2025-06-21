@@ -145,9 +145,10 @@ const CommunityChat = () => {
               if (JSON.stringify(prev) !== JSON.stringify(currentRoomData.messages)) {
                 // Calculate new messages if user is not at bottom
                 if (showScrollButton && prev.length > 0) {
-                  const newMessagesCount = currentRoomData.messages.length - Math.max(lastSeenMessageIndex + 1, prev.length);
-                  if (newMessagesCount > 0) {
-                    setNewMessageCount(prevCount => prevCount + newMessagesCount);
+                  // Fix: Only count truly unread messages
+                  const unread = currentRoomData.messages.length - 1 - lastSeenMessageIndex;
+                  if (unread > 0) {
+                    setNewMessageCount(unread);
                   }
                 }
                 return currentRoomData.messages;
@@ -166,17 +167,21 @@ const CommunityChat = () => {
     return () => clearInterval(interval);
   }, [joinedRoom, accessToken, showScrollButton, lastSeenMessageIndex]);
 
+  // Fix chat container scroll and horizontal overflow
   useEffect(() => {
     if (messages.length > 0) {
-      // Auto-scroll only if user was already at bottom
-      const timer = setTimeout(() => {
-        if (!showScrollButton) {
-          scrollToBottom();
+      if (chatContainerRef.current && messagesEndRef.current) {
+        const chatContainer = chatContainerRef.current;
+        // Only scroll if user was at bottom before
+        const { scrollTop, clientHeight, scrollHeight } = chatContainer;
+        const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
+        // Prevent sudden jump: only scroll if at bottom and not user scrolling up
+        if (isAtBottom && !showScrollButton) {
+          messagesEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end', inline: 'nearest' });
         }
-      }, 100);
-      return () => clearTimeout(timer);
+      }
     }
-  }, [messages, showScrollButton]);
+  }, [messages]);
 
   const joinRoom = async (roomId) => {
     try {
@@ -234,7 +239,7 @@ const CommunityChat = () => {
       );
 
       setMessage('');
-      
+      // Do not scroll chat container or page after sending message
       const response = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/community/rooms`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -302,9 +307,17 @@ const CommunityChat = () => {
 
   return (
     <>
+    <style>
+        {`
+          body, html {
+            overflow-x: hidden !important;
+            max-width: 100vw !important;
+          }
+        `}
+      </style>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 py-8 overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-x-hidden w-full">
+        <div className="max-w-7xl mx-auto px-4 py-8 overflow-x-hidden">
           {/* Header Section */}
           <div className="text-center mb-8">
             <div className="flex justify-center items-center gap-3 mb-4">
@@ -358,7 +371,7 @@ const CommunityChat = () => {
 
           {/* Room List */}
           {!joinedRoom && !loading && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-hidden w-full max-w-full">
               {rooms.map((room) => (
                 <div 
                   key={room._id} 
@@ -420,10 +433,10 @@ const CommunityChat = () => {
                     <div className="min-w-0 flex-1 overflow-hidden">
                       <h3 className="text-xl font-semibold text-white truncate">{currentRoom.name}</h3>
                       <p className="text-gray-200 text-sm truncate">{currentRoom.description}</p>
-                      <div className="flex items-center gap-2 mt-1 text-xs text-gray-300 overflow-hidden">
-                        <Hash size={12} />
-                        <span className="truncate">Room ID: {currentRoom._id.slice(-8)}</span>
-                      </div>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-gray-300 overflow-hidden max-w-full">
+  <Hash size={12} className="flex-shrink-0" />
+  <span className="truncate min-w-0">Room ID: {currentRoom._id.slice(-8)}</span>
+</div>
                     </div>
                   </div>
                   <button
@@ -444,95 +457,115 @@ const CommunityChat = () => {
               </div>
 
               {/* Messages Container */}
-              <div className="relative">
-                <div 
-                  ref={chatContainerRef} 
-                  className="h-96 lg:h-[500px] overflow-y-auto overflow-x-hidden p-6 bg-gradient-to-b from-gray-900 to-slate-900 scroll-smooth"
-                >
-                  {messages?.length === 0 ? (
-                    <div className="text-center py-12">
-                      <MessageCircle size={48} className="mx-auto text-gray-500 mb-4" />
-                      <h4 className="text-lg font-semibold text-gray-400 mb-2">Start the conversation</h4>
-                      <p className="text-gray-500">Be the first to share your thoughts and connect with others.</p>
-                    </div>
-                  ) : (
-                    messages?.map((msg, idx) => {
-                      const storedUserId = userId || localStorage.getItem("userId");
-                      const isCurrentUser = msg.sender && storedUserId && msg.sender.toString() === storedUserId.toString();
-                      
-                      // Check if we need to show a date separator
-                      const showDateSeparator = idx === 0 || 
-                        (idx > 0 && isDifferentDay(messages[idx - 1].timestamp, msg.timestamp));
+ <div className="relative">
+  <div 
+  ref={chatContainerRef} 
+  className="h-96 lg:h-[500px] overflow-y-auto overflow-x-hidden p-6 bg-gradient-to-b from-gray-900 to-slate-900 scroll-smooth w-full"
+>
+    {messages?.length === 0 ? (
+      <div className="text-center py-12">
+        <MessageCircle size={48} className="mx-auto text-gray-500 mb-4" />
+        <h4 className="text-lg font-semibold text-gray-400 mb-2">Start the conversation</h4>
+        <p className="text-gray-500">Be the first to share your thoughts and connect with others.</p>
+      </div>
+    ) : (
+      messages?.map((msg, idx) => {
+        const storedUserId = userId || localStorage.getItem("userId");
+        const isCurrentUser = msg.sender && storedUserId && msg.sender.toString() === storedUserId.toString();
+        
+        // Check if we need to show a date separator
+        const showDateSeparator = idx === 0 || 
+          (idx > 0 && isDifferentDay(messages[idx - 1].timestamp, msg.timestamp));
 
-                      return (
-                        <React.Fragment key={idx}>
-                          {/* Date Separator */}
-                          {showDateSeparator && (
-                            <div className="flex justify-center mb-6 mt-4">
-                              <div className="bg-gray-800 border border-gray-600 rounded-full px-4 py-2 text-xs text-gray-300 font-medium shadow-md">
-                                {formatDateSeparator(msg.timestamp)}
-                              </div>
-                            </div>
-                          )}
-                          
-                          {/* Message */}
-                          <div className={`flex w-full mb-4 ${isCurrentUser ? "justify-end" : "justify-start"}`}>
-                            <div
-                              className={`relative p-4 max-w-[85%] sm:max-w-[75%] rounded-2xl shadow-lg break-words overflow-hidden ${
-                                isCurrentUser 
-                                  ? "bg-gradient-to-r from-green-600 to-green-700 text-white rounded-br-sm" 
-                                  : "bg-gradient-to-r from-gray-700 to-gray-800 text-white rounded-bl-sm border border-gray-600"
-                              }`}
-                            >
-                              {/* Message Header */}
-                              <div className="flex items-start justify-between mb-2 gap-3">
-                                <div className="flex-1 min-w-0 overflow-hidden">
-                                  <p className={`text-sm font-semibold truncate ${
-                                    isCurrentUser ? "text-green-100" : "text-gray-200"
-                                  }`}>
-                                    {isCurrentUser ? "You" : (msg.username || "Anonymous")}
-                                  </p>
-                                </div>
-                                <div className="flex-shrink-0">
-                                  <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                                    isCurrentUser 
-                                      ? "bg-green-800/30 text-green-200" 
-                                      : "bg-gray-600/30 text-gray-300"
-                                  }`}>
-                                    <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60"></span>
-                                    {formatMessageTime(msg.timestamp)}
-                                  </div>
-                                </div>
-                              </div>
-                              
-                              {/* Message Content */}
-                              <p className="text-sm leading-relaxed break-words overflow-hidden">{msg.message}</p>
-                              
-                              {/* Message Tail */}
-                              <div className={`absolute bottom-0 w-0 h-0 ${
-                                isCurrentUser 
-                                  ? "right-0 border-l-[12px] border-l-green-700 border-t-[12px] border-t-transparent"
-                                  : "left-0 border-r-[12px] border-r-gray-800 border-t-[12px] border-t-transparent"
-                              }`}></div>
-                            </div>
-                          </div>
-                        </React.Fragment>
-                      );
-                    })
-                  )}
-                  <div ref={messagesEndRef} />
+        return (
+          <React.Fragment key={idx}>
+            {/* Date Separator */}
+            {showDateSeparator && (
+              <div className="flex justify-center mb-6 mt-4">
+                <div className="bg-gray-800 border border-gray-600 rounded-full px-4 py-2 text-xs text-gray-300 font-medium shadow-md">
+                  {formatDateSeparator(msg.timestamp)}
                 </div>
+              </div>
+            )}
+            
+            {/* Message */}
+           <div className={`flex w-full mb-4 ${isCurrentUser ? "justify-end" : "justify-start"} min-w-0 overflow-hidden`}>
+             <div
+  className={`relative p-4 max-w-[85%] sm:max-w-[75%] rounded-2xl shadow-lg overflow-hidden ${
+    isCurrentUser 
+      ? "bg-gradient-to-r from-green-600 to-green-700 text-white rounded-br-sm" 
+      : "bg-gradient-to-r from-gray-700 to-gray-800 text-white rounded-bl-sm border border-gray-600"
+  }`}
+  style={{
+    overflowWrap: 'break-word',
+    wordBreak: 'break-word',
+    minWidth: 0,
+    maxWidth: '100%'
+  }}
+>   
+                {/* Message Header */}
+                <div className="flex items-start justify-between mb-2 gap-3">
+                  <div className="flex-1 min-w-0 overflow-hidden">
+                    <p className={`text-sm font-semibold truncate ${
+                      isCurrentUser ? "text-green-100" : "text-gray-200"
+                    }`}>
+                      {isCurrentUser ? "You" : (msg.username || "Anonymous")}
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                      isCurrentUser 
+                        ? "bg-green-800/30 text-green-200" 
+                        : "bg-gray-600/30 text-gray-300"
+                    }`}>
+                      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60"></span>
+                      {formatMessageTime(msg.timestamp)}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Message Content */}
+                <p className="text-sm leading-relaxed">{msg.message}</p>
+                
+                {/* Message Tail */}
+{/* Message Tail */}
+<div className={`absolute bottom-0 w-0 h-0 ${
+  isCurrentUser 
+    ? "right-0 border-l-[12px] border-l-green-700 border-t-[12px] border-t-transparent"
+    : "left-0 border-r-[12px] border-r-gray-800 border-t-[12px] border-t-transparent"
+}`} style={{ 
+  transform: 'translateY(1px)',
+  maxWidth: '12px',
+  overflow: 'hidden'
+}}></div>
+              </div>
+            </div>
+          </React.Fragment>
+        );
+      })
+    )}
+    <div ref={messagesEndRef} />
+  </div>
 
                 {/* Scroll to Bottom Button - Now centered */}
                 {showScrollButton && (
-                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10">
+                  <div className="absolute left-1/2 z-10" style={{ bottom: '1.5rem', transform: 'translateX(-50%)', pointerEvents: 'none', maxWidth: 'calc(100% - 2rem)' }}>
                     <button
-                      onClick={() => scrollToBottom(true)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (chatContainerRef.current && messagesEndRef.current) {
+                          const chatContainer = chatContainerRef.current;
+                          const end = messagesEndRef.current;
+                          // Calculate the offset needed to bring the last message into view
+                          const offset = end.offsetTop - chatContainer.offsetTop - chatContainer.clientHeight + end.clientHeight + 16; // 16px padding
+                          chatContainer.scrollTo({ top: offset, behavior: 'auto' });
+                        }
+                      }}
                       className="relative p-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 animate-bounce"
                       title="Scroll to latest message"
+                      style={{ pointerEvents: 'auto' }}
                     >
                       <ChevronDown size={20} className="text-white" />
-                      
                       {/* New Message Count Badge */}
                       {newMessageCount > 0 && (
                         <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1 shadow-lg animate-pulse">
@@ -546,7 +579,7 @@ const CommunityChat = () => {
 
               {/* Message Input */}
               <div className="p-6 bg-gradient-to-r from-gray-800 to-gray-900 border-t border-gray-700">
-                <form onSubmit={sendMessage} className="flex gap-3">
+                <form onSubmit={sendMessage} className="flex gap-3 w-full max-w-full overflow-hidden">
                   <input
                     type="text"
                     value={message}
@@ -634,15 +667,6 @@ const CommunityChat = () => {
                 <div className="p-6 border-b border-gray-700">
                   <h3 className="text-2xl font-bold text-white">Join Room</h3>
                   <p className="text-gray-400 text-sm mt-1">Enter the room ID to join a specific conversation</p>
-                </div>
-                
-                <div className="p-6">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Room ID</label>
-                  <input
-                    type="text"
-                    value={roomIdToJoin}
-                    onChange={(e) => setRoomIdToJoin(e.target.value)}
-                    placeholder="Enter the room ID to join a specific conversation</p>
                 </div>
                 
                 <div className="p-6">
