@@ -21,6 +21,8 @@ const CommunityChat = () => {
   const [userId, setUserId] = useState(null);
   const chatContainerRef = useRef(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [lastSeenMessageIndex, setLastSeenMessageIndex] = useState(0);
+  const [newMessageCount, setNewMessageCount] = useState(0);
   
   const accessToken = sessionStorage.getItem('accessToken');
 
@@ -69,6 +71,12 @@ const CommunityChat = () => {
       const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
       const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
       setShowScrollButton(!isNearBottom && messages.length > 0);
+      
+      // Update last seen message and reset new message count when user scrolls to bottom
+      if (isNearBottom) {
+        setLastSeenMessageIndex(messages.length - 1);
+        setNewMessageCount(0);
+      }
     }
   };
 
@@ -79,6 +87,8 @@ const CommunityChat = () => {
       if (force || !showScrollButton) {
         messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
         setShowScrollButton(false);
+        setLastSeenMessageIndex(messages.length - 1);
+        setNewMessageCount(0);
       }
     }
   };
@@ -133,6 +143,13 @@ const CommunityChat = () => {
           if (currentRoomData && currentRoomData.messages) {
             setMessages(prev => {
               if (JSON.stringify(prev) !== JSON.stringify(currentRoomData.messages)) {
+                // Calculate new messages if user is not at bottom
+                if (showScrollButton && prev.length > 0) {
+                  const newMessagesCount = currentRoomData.messages.length - Math.max(lastSeenMessageIndex + 1, prev.length);
+                  if (newMessagesCount > 0) {
+                    setNewMessageCount(prevCount => prevCount + newMessagesCount);
+                  }
+                }
                 return currentRoomData.messages;
               }
               return prev;
@@ -147,7 +164,7 @@ const CommunityChat = () => {
       interval = setInterval(pollRoomStatus, 2000);
     }
     return () => clearInterval(interval);
-  }, [joinedRoom, accessToken]);
+  }, [joinedRoom, accessToken, showScrollButton, lastSeenMessageIndex]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -189,6 +206,8 @@ const CommunityChat = () => {
       const currentRoomData = response.data.rooms.find(r => r._id === roomId);
       if (currentRoomData && currentRoomData.messages) {
         setMessages(currentRoomData.messages);
+        setLastSeenMessageIndex(currentRoomData.messages.length - 1);
+        setNewMessageCount(0);
       }
     } catch (error) {
       console.error('Error joining room:', error);
@@ -284,8 +303,8 @@ const CommunityChat = () => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-x-hidden">
-        <div className="max-w-7xl mx-auto px-4 py-8 overflow-x-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 py-8 overflow-hidden">
           {/* Header Section */}
           <div className="text-center mb-8">
             <div className="flex justify-center items-center gap-3 mb-4">
@@ -339,7 +358,7 @@ const CommunityChat = () => {
 
           {/* Room List */}
           {!joinedRoom && !loading && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-x-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-hidden">
               {rooms.map((room) => (
                 <div 
                   key={room._id} 
@@ -352,16 +371,16 @@ const CommunityChat = () => {
                     </div>
                   </div>
                   
-                  <h3 className="text-xl font-semibold text-white mb-2 line-clamp-1 break-words">
+                  <h3 className="text-xl font-semibold text-white mb-2 break-words overflow-hidden">
                     {room.name}
                   </h3>
                   
-                  <p className="text-gray-300 text-sm mb-4 line-clamp-2 leading-relaxed break-words">
+                  <p className="text-gray-300 text-sm mb-4 leading-relaxed break-words overflow-hidden">
                     {room.description}
                   </p>
                   
                   <div className="flex items-center justify-between text-xs text-gray-400 mb-4 overflow-hidden">
-                    <div className="flex items-center gap-1 min-w-0">
+                    <div className="flex items-center gap-1 min-w-0 overflow-hidden">
                       <Hash size={12} className="flex-shrink-0" />
                       <span className="font-mono truncate">{room._id.slice(-8)}</span>
                     </div>
@@ -396,12 +415,12 @@ const CommunityChat = () => {
               {/* Chat Header */}
               <div className="bg-gradient-to-r from-purple-800 to-blue-800 p-6 border-b border-gray-700">
                 <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-4 min-w-0 flex-1">
+                  <div className="flex items-center gap-4 min-w-0 flex-1 overflow-hidden">
                     <div className="text-2xl flex-shrink-0">{getRoomIcon(currentRoom.name)}</div>
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 flex-1 overflow-hidden">
                       <h3 className="text-xl font-semibold text-white truncate">{currentRoom.name}</h3>
-                      <p className="text-gray-200 text-sm line-clamp-1">{currentRoom.description}</p>
-                      <div className="flex items-center gap-2 mt-1 text-xs text-gray-300">
+                      <p className="text-gray-200 text-sm truncate">{currentRoom.description}</p>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-gray-300 overflow-hidden">
                         <Hash size={12} />
                         <span className="truncate">Room ID: {currentRoom._id.slice(-8)}</span>
                       </div>
@@ -413,6 +432,8 @@ const CommunityChat = () => {
                       setCurrentRoom(null);
                       setMessages([]);
                       setShowScrollButton(false);
+                      setNewMessageCount(0);
+                      setLastSeenMessageIndex(0);
                     }}
                     className="p-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors duration-200 flex-shrink-0"
                     title="Leave room"
@@ -426,7 +447,7 @@ const CommunityChat = () => {
               <div className="relative">
                 <div 
                   ref={chatContainerRef} 
-                  className="h-96 lg:h-[500px] overflow-y-auto p-6 bg-gradient-to-b from-gray-900 to-slate-900 scroll-smooth overflow-x-hidden"
+                  className="h-96 lg:h-[500px] overflow-y-auto overflow-x-hidden p-6 bg-gradient-to-b from-gray-900 to-slate-900 scroll-smooth"
                 >
                   {messages?.length === 0 ? (
                     <div className="text-center py-12">
@@ -457,7 +478,7 @@ const CommunityChat = () => {
                           {/* Message */}
                           <div className={`flex w-full mb-4 ${isCurrentUser ? "justify-end" : "justify-start"}`}>
                             <div
-                              className={`relative p-4 max-w-[85%] sm:max-w-[75%] rounded-2xl shadow-lg ${
+                              className={`relative p-4 max-w-[85%] sm:max-w-[75%] rounded-2xl shadow-lg break-words overflow-hidden ${
                                 isCurrentUser 
                                   ? "bg-gradient-to-r from-green-600 to-green-700 text-white rounded-br-sm" 
                                   : "bg-gradient-to-r from-gray-700 to-gray-800 text-white rounded-bl-sm border border-gray-600"
@@ -465,7 +486,7 @@ const CommunityChat = () => {
                             >
                               {/* Message Header */}
                               <div className="flex items-start justify-between mb-2 gap-3">
-                                <div className="flex-1 min-w-0">
+                                <div className="flex-1 min-w-0 overflow-hidden">
                                   <p className={`text-sm font-semibold truncate ${
                                     isCurrentUser ? "text-green-100" : "text-gray-200"
                                   }`}>
@@ -485,7 +506,7 @@ const CommunityChat = () => {
                               </div>
                               
                               {/* Message Content */}
-                              <p className="text-sm leading-relaxed break-words">{msg.message}</p>
+                              <p className="text-sm leading-relaxed break-words overflow-hidden">{msg.message}</p>
                               
                               {/* Message Tail */}
                               <div className={`absolute bottom-0 w-0 h-0 ${
@@ -502,15 +523,24 @@ const CommunityChat = () => {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Scroll to Bottom Button */}
+                {/* Scroll to Bottom Button - Now centered */}
                 {showScrollButton && (
-                  <button
-                    onClick={() => scrollToBottom(true)}
-                    className="absolute bottom-4 right-4 p-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 z-10 animate-bounce"
-                    title="Scroll to latest message"
-                  >
-                    <ChevronDown size={20} className="text-white" />
-                  </button>
+                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10">
+                    <button
+                      onClick={() => scrollToBottom(true)}
+                      className="relative p-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 animate-bounce"
+                      title="Scroll to latest message"
+                    >
+                      <ChevronDown size={20} className="text-white" />
+                      
+                      {/* New Message Count Badge */}
+                      {newMessageCount > 0 && (
+                        <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1 shadow-lg animate-pulse">
+                          {newMessageCount > 99 ? '99+' : newMessageCount}
+                        </div>
+                      )}
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -522,7 +552,7 @@ const CommunityChat = () => {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Share your thoughts..."
-                    className="flex-1 p-4 rounded-xl bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                    className="flex-1 p-4 rounded-xl bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 overflow-hidden"
                     maxLength={500}
                   />
                   <button
@@ -543,7 +573,7 @@ const CommunityChat = () => {
           {/* Create Room Modal */}
           {showCreateRoomModal && (
             <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4 overflow-y-auto">
-              <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl shadow-2xl w-full max-w-md mx-auto my-8">
+              <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl shadow-2xl w-full max-w-md mx-auto my-8 overflow-hidden">
                 <div className="p-6 border-b border-gray-700">
                   <h3 className="text-2xl font-bold text-white">Create Support Room</h3>
                   <p className="text-gray-400 text-sm mt-1">Create a safe space for meaningful conversations</p>
@@ -557,7 +587,7 @@ const CommunityChat = () => {
                       value={newRoomName}
                       onChange={(e) => setNewRoomName(e.target.value)}
                       placeholder="e.g., Anxiety Support Group"
-                      className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent overflow-hidden"
                       maxLength={50}
                     />
                   </div>
@@ -568,7 +598,7 @@ const CommunityChat = () => {
                       value={newRoomDescription}
                       onChange={(e) => setNewRoomDescription(e.target.value)}
                       placeholder="Describe the purpose and guidelines for this room..."
-                      className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent h-24 resize-none"
+                      className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent h-24 resize-none overflow-hidden"
                       maxLength={200}
                     />
                   </div>
@@ -600,10 +630,19 @@ const CommunityChat = () => {
           {/* Join Room Modal */}
           {showJoinRoomModal && (
             <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4 overflow-y-auto">
-              <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl shadow-2xl w-full max-w-md mx-auto my-8">
+              <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl shadow-2xl w-full max-w-md mx-auto my-8 overflow-hidden">
                 <div className="p-6 border-b border-gray-700">
                   <h3 className="text-2xl font-bold text-white">Join Room</h3>
                   <p className="text-gray-400 text-sm mt-1">Enter the room ID to join a specific conversation</p>
+                </div>
+                
+                <div className="p-6">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Room ID</label>
+                  <input
+                    type="text"
+                    value={roomIdToJoin}
+                    onChange={(e) => setRoomIdToJoin(e.target.value)}
+                    placeholder="Enter the room ID to join a specific conversation</p>
                 </div>
                 
                 <div className="p-6">
