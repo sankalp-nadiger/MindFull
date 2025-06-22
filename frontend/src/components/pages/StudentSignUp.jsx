@@ -125,12 +125,20 @@ const StudentSignUp = () => {
   return (
     <div className="auth-page">
     <div className="auth-container">
-      <h1 className="app-title student">MindFull</h1>
+      <a className="flex items-center flex-shrink-0 font-medium text-gray-900 transition-all duration-300 title-font group hover:scale-105" style={{ marginBottom: '1rem' }}>
+          <div className="relative">
+            <img src="plant.png" alt="Logo" className="w-8 h-8 transition-transform duration-300 group-hover:rotate-12" />
+            <div className="absolute inset-0 transition-opacity duration-300 rounded-full opacity-0 bg-gradient-to-r from-blue-400/20 to-green-400/20 group-hover:opacity-100 blur-sm"></div>
+          </div>
+          <span className="ml-3 text-3xl font-bold tracking-wide text-transparent bg-gradient-to-r from-blue-400 via-teal-400 to-green-400 bg-clip-text">
+            MindFull
+          </span>
+        </a>
 
       <div className="auth-card">
         <div className="card-header">
           <h2 className="card-title">Student Sign Up</h2>
-          <p>Create your account to get started</p>
+          <p className="text-indigo-600">Create your account to get started</p>
         </div>
 
         <form onSubmit={handleSubmit} className="form-container">

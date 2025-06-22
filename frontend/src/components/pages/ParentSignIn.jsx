@@ -88,94 +88,101 @@ const ParentSignIn = () => {
 
   return (
     <div className="auth-page">
-    <div className="auth-container">
-      <h1 className="app-title parent">MindFull</h1>
-
-      <div className="auth-card">
-        <div className="card-header">
-          <h2 className="card-title">Parent Sign In</h2>
-          <p>Access your account to track progress</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="form-container">
-          <div className="form-group">
-            <label htmlFor="phoneNumber" className="form-label">Phone Number</label>
-            <input
-              id="phoneNumber"
-              type="tel"
-              className="form-input"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              placeholder="Enter your 10-digit phone number"
-              maxLength={10}
-              required
-            />
+      <div className="auth-container">
+        <a className="flex items-center flex-shrink-0 font-medium text-gray-900 transition-all duration-300 title-font group hover:scale-105" style={{ marginBottom: '1rem' }}>
+          <div className="relative">
+            <img src="plant.png" alt="Logo" className="w-8 h-8 transition-transform duration-300 group-hover:rotate-12" />
+            <div className="absolute inset-0 transition-opacity duration-300 rounded-full opacity-0 bg-gradient-to-r from-blue-400/20 to-green-400/20 group-hover:opacity-100 blur-sm"></div>
           </div>
-          <div className="form-group">
-            <label htmlFor="otp" className="form-label">OTP Verification</label>
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <span className="ml-3 text-3xl font-bold tracking-wide text-transparent bg-gradient-to-r from-blue-400 via-teal-400 to-green-400 bg-clip-text">
+            MindFull
+          </span>
+        </a>
+        <div className="auth-card">
+          <div className="card-header">
+            <h2 className="card-title">Parent Sign In</h2>
+            <p>Access your account to track progress</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="form-container">
+            <div className="form-group">
+              <label htmlFor="phoneNumber" className="form-label">Phone Number</label>
               <input
-                id="otp"
-                type="text"
-                className={`form-input ${otpError ? 'error' : ''}`}
-                value={otp}
-                onChange={(e) => {
-                  setOtp(e.target.value);
-                  if (otpError) setOtpError(false);
-                }}
-                placeholder="Enter 6-digit OTP"
-                maxLength={6}
+                id="phoneNumber"
+                type="tel"
+                className="form-input"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="Enter your 10-digit phone number"
+                maxLength={10}
                 required
-                style={{ flex: 1 }}
               />
+            </div>
+            <div className="form-group">
+              <label htmlFor="otp" className="form-label">OTP Verification</label>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                <input
+                  id="otp"
+                  type="text"
+                  className={`form-input ${otpError ? 'error' : ''}`}
+                  value={otp}
+                  onChange={(e) => {
+                    setOtp(e.target.value);
+                    if (otpError) setOtpError(false);
+                  }}
+                  placeholder="Enter 6-digit OTP"
+                  maxLength={6}
+                  required
+                  style={{ flex: 1 }}
+                />
+                <button
+                  type="button"
+                  className="action-button parent-button"
+                  onClick={handleSendOtp}
+                  disabled={phoneNumber.length !== 10 || isSendingOtp}
+                  style={{ whiteSpace: 'nowrap' }}
+                >
+                  {isSendingOtp ? "Sending..." : "Send OTP"}
+                </button>
+              </div>
+              {otpError && (
+                <div className="error-message">Invalid OTP. Please try again.</div>
+              )}
+              {otpTimer > 0 && (
+                <div className="otp-timer">Resend available in {otpTimer} seconds</div>
+              )}
               <button
                 type="button"
-                className="action-button parent-button"
-                onClick={handleSendOtp}
-                disabled={phoneNumber.length !== 10 || isSendingOtp}
-                style={{ whiteSpace: 'nowrap' }}
+                className="secondary-button mt-2"
+                onClick={handleResendOtp}
+                disabled={otpTimer > 0}
               >
-                {isSendingOtp ? "Sending..." : "Send OTP"}
+                Resend OTP {otpTimer > 0 ? `(${otpTimer}s)` : ''}
               </button>
             </div>
-            {otpError && (
-              <div className="error-message">Invalid OTP. Please try again.</div>
-            )}
-            {otpTimer > 0 && (
-              <div className="otp-timer">Resend available in {otpTimer} seconds</div>
-            )}
             <button
-              type="button"
-              className="secondary-button mt-2"
-              onClick={handleResendOtp}
-              disabled={otpTimer > 0}
+              type="submit"
+              className="primary-button parent-button mt-4"
+              disabled={!otp || otp.length !== 6 || phoneNumber.length !== 10 || isSubmitting}
             >
-              Resend OTP {otpTimer > 0 ? `(${otpTimer}s)` : ''}
+              {isSubmitting ? "Signing In..." : "Sign In"}
             </button>
-          </div>
-          <button
-            type="submit"
-            className="primary-button parent-button mt-4"
-            disabled={!otp || otp.length !== 6 || phoneNumber.length !== 10 || isSubmitting}
-          >
-            {isSubmitting ? "Signing In..." : "Sign In"}
-          </button>
-        </form>
+          </form>
 
-        <div className="auth-links">
-          <p>
-            <Link to="/parent-signup" className="auth-link parent">
-              Don't have an account? Sign Up
-            </Link>
-          </p>
-          <p>
-            <Link to="/role-selection" className="auth-link parent">
-              Return to role selection
-            </Link>
-          </p>
+          <div className="auth-links">
+            <p>
+              <Link to="/parent-signup" className="auth-link parent">
+                Don't have an account? Sign Up
+              </Link>
+            </p>
+            <p>
+              <Link to="/role-selection" className="auth-link parent">
+                Return to role selection
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
-    </div>
     </div>
   );
 };

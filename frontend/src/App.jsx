@@ -32,8 +32,6 @@ const StudentSignUp = React.lazy(() => import('./components/pages/StudentSignUp'
 const JournalEntryWithSuggestions = React.lazy(() => import('./components/pages/JournalPage'))
 const ResultPage = React.lazy(() => import('./components/pages/ResultPage'))
 const ActivityRecommendations = React.lazy(() => import('./components/pages/Activity'))
-const Stories = React.lazy(() => import('./components/pages/FetchStory'))
-const CreateStory = React.lazy(() => import('./components/pages/CreateStory'))
 const CreatePost = React.lazy(() => import('./components/pages/CreatePost'))
 const SuccessStories = React.lazy(() => import("./components/HomePage/SuccessStories"))
 const VideoChat = React.lazy(() => import("./components/Videochat/Videochat"))
@@ -174,16 +172,7 @@ function App() {
                 <ActivityRecommendations />
               </Suspense>
             } />
-            <Route path="/storyfetch" element={
-              <Suspense fallback={<PageSkeleton />}>
-                <Stories />
-              </Suspense>
-            } />
-            <Route path="/createStory" element={
-              <Suspense fallback={<PageSkeleton />}>
-                <CreateStory />
-              </Suspense>
-            } />
+        
             <Route path="/createPost" element={
               <Suspense fallback={<PageSkeleton />}>
                 <CreatePost />
