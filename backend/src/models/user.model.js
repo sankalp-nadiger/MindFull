@@ -102,7 +102,9 @@ const userSchema = new Schema( {
         },    
         fcmToken: String,
         refreshToken: String,
-        achievements: String
+        achievements: String,
+        district: String,
+        state: String,
 }, { timestamps: true})
 
 userSchema.methods.assignRandomAvatar = async function () {

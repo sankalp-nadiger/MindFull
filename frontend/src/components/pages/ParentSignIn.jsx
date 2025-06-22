@@ -4,9 +4,9 @@ import { useNavigate, Link } from "react-router-dom";
 import "./StudentSignIn.css";
 const ParentSignIn = () => {
   const navigate = useNavigate();
-  const [fullName, setFullName] = useState("");
+
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [password, setPassword] = useState("");
+
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [otpError, setOtpError] = useState(false);
@@ -68,10 +68,8 @@ const ParentSignIn = () => {
     setIsSubmitting(true);
     try {
       const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/parent/login`, {
-        fullName,
         mobileNumber: phoneNumber,
         otp,
-        password,
       });
       
       if (response.status === 200) {
@@ -100,48 +98,22 @@ const ParentSignIn = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="form-container">
-          {!otpSent && (
-            <div className="form-group">
-              <label htmlFor="fullName" className="form-label">Full Name</label>
-              <input
-                id="fullName"
-                type="text"
-                className="form-input"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Enter your full name"
-                required
-              />
-            </div>
-          )}
-
-          {!otpSent && (
-            <div className="form-group">
-              <label htmlFor="phoneNumber" className="form-label">Phone Number</label>
-              <input
-                id="phoneNumber"
-                type="tel"
-                className="form-input"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="Enter your 10-digit phone number"
-                maxLength={10}
-                required
-              />
-              <button
-                type="button"
-                className="action-button parent-button mt-3"
-                onClick={handleSendOtp}
-                disabled={phoneNumber.length !== 10 || !fullName || isSendingOtp}
-              >
-                {isSendingOtp ? "Sending..." : "Send OTP"}
-              </button>
-            </div>
-          )}
-
-          {otpSent && (
-            <div className="form-group">
-              <label htmlFor="otp" className="form-label">OTP Verification</label>
+          <div className="form-group">
+            <label htmlFor="phoneNumber" className="form-label">Phone Number</label>
+            <input
+              id="phoneNumber"
+              type="tel"
+              className="form-input"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              placeholder="Enter your 10-digit phone number"
+              maxLength={10}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="otp" className="form-label">OTP Verification</label>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
               <input
                 id="otp"
                 type="text"
@@ -154,60 +126,40 @@ const ParentSignIn = () => {
                 placeholder="Enter 6-digit OTP"
                 maxLength={6}
                 required
+                style={{ flex: 1 }}
               />
-              {otpError && (
-                <div className="error-message">Invalid OTP. Please try again.</div>
-              )}
-              {otpTimer > 0 && (
-                <div className="otp-timer">Resend available in {otpTimer} seconds</div>
-              )}
+              <button
+                type="button"
+                className="action-button parent-button"
+                onClick={handleSendOtp}
+                disabled={phoneNumber.length !== 10 || isSendingOtp}
+                style={{ whiteSpace: 'nowrap' }}
+              >
+                {isSendingOtp ? "Sending..." : "Send OTP"}
+              </button>
             </div>
-          )}
-
-          {otpSent && (
-            <div className="form-group">
-              <label htmlFor="password" className="form-label">Password</label>
-              <div className="input-with-button">
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  className="form-input"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  required
-                />
-                <button
-                  type="button"
-                  className="input-button"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? "Hide" : "Show"}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {otpSent && (
-            <button
-              type="submit"
-              className="primary-button parent-button"
-              disabled={!otp || !password || otp.length !== 6 || isSubmitting}
-            >
-              {isSubmitting ? "Signing In..." : "Sign In"}
-            </button>
-          )}
-
-          {otpSent && (
+            {otpError && (
+              <div className="error-message">Invalid OTP. Please try again.</div>
+            )}
+            {otpTimer > 0 && (
+              <div className="otp-timer">Resend available in {otpTimer} seconds</div>
+            )}
             <button
               type="button"
-              className="secondary-button"
+              className="secondary-button mt-2"
               onClick={handleResendOtp}
               disabled={otpTimer > 0}
             >
               Resend OTP {otpTimer > 0 ? `(${otpTimer}s)` : ''}
             </button>
-          )}
+          </div>
+          <button
+            type="submit"
+            className="primary-button parent-button mt-4"
+            disabled={!otp || otp.length !== 6 || phoneNumber.length !== 10 || isSubmitting}
+          >
+            {isSubmitting ? "Signing In..." : "Sign In"}
+          </button>
         </form>
 
         <div className="auth-links">

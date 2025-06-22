@@ -15,7 +15,7 @@ import ApiResponse from "../utils/API_Response.js";
 import jwt from "jsonwebtoken";
 import { Session } from "../models/session.model.js";
 import Tesseract from 'tesseract.js';
-import {server,io} from "../index.js"
+import { getDistrictAndState } from "../utils/getDistrict.js";
 
 const additionalActivities = [
   // Stress Relief
@@ -179,13 +179,27 @@ const registerUser = asyncHandler(async (req, res) => {
       // Process location
       let parsedLocation;
       try {
-          parsedLocation = JSON.parse(location);
-          if (!parsedLocation.type || !parsedLocation.coordinates) {
-              throw new Error("Invalid location format");
-          }
-      } catch (error) {
-          return res.status(400).json({ success: false, message: "Invalid location JSON format" });
-      }
+      parsedLocation = JSON.parse(location);
+    } catch {
+      return res.status(400).json({ success: false, message: "Invalid location JSON format" });
+    }
+    if (
+      parsedLocation.type !== "Point" ||
+      !Array.isArray(parsedLocation.coordinates) ||
+      parsedLocation.coordinates.length !== 2
+    ) {
+      return res.status(400).json({ success: false, message: "Invalid location format" });
+    }
+
+    // 5) Reverse‐geocode district/state
+    const [lng, lat] = parsedLocation.coordinates;
+    let district = null;
+    let state = null;
+    try {
+      ({ district, state } = await getDistrictFromCoords(lat, lng) || {});
+    } catch (geocodeError) {
+      console.error("Geocoding failed:", geocodeError);
+    }
 
       // Create user
       const user = await User.create({
@@ -197,6 +211,8 @@ const registerUser = asyncHandler(async (req, res) => {
           username: username.toLowerCase(),
           idCard: idCardFile,
           location: parsedLocation,
+          district,
+          state,
       });
 
       console.log("User successfully created:", user);
@@ -393,13 +409,12 @@ const addInterests = asyncHandler(async (req, res) => {
   
   
   const loginUser = asyncHandler(async (req, res) => {
-    const { username, password, email, mood } = req.body;
-    console.log("Request body:", req.body);
+    const { username, password, mood } = req.body;
     if (!username) {
       throw new ApiError(400, "Username is required");
     }
   
-    const user = await User.findOne({ $or: [{ username }, { email }] });
+    const user = await User.findOne({ username });
     if (!user) {
       throw new ApiError(404, "User does not exist");
     }

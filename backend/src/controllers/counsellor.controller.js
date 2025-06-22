@@ -8,6 +8,8 @@ import { Session } from "../models/session.model.js";
 import { verifyOTP } from "./parent.controller.js";
 import app from "../app.js"
 import {server,io} from "../index.js"
+import nodemailer from "nodemailer";
+import { OTP } from "../models/otp.model.js";
 
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
@@ -268,59 +270,88 @@ export const registerCounsellor = asyncHandler(async (req, res) => {
         .json(new ApiResponse(201, { createdCounsellor }, "Counsellor registered successfully"));
 });
 
+// Helper to send code via email
+const sendCodeByEmail = async (email, code) => {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+  await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: 'Your MindFull Login Code',
+    text: `Your login code is: ${code}`,
+  });
+};
+
 // Login Counsellor
 export const loginCounsellor = asyncHandler(async (req, res) => {
-    const { password, email, mobileNumber, otp } = req.body;
+    const { password, email, mobileNumber, otp, code } = req.body;
 
-    // Validate user credentials
-    if (!(mobileNumber && otp)) {
-        throw new ApiError(400, "Mobile number and OTP are required");
-    }
-
-    const otpVerification = await verifyOTP(mobileNumber, otp);
-    if (!otpVerification.success) {
+    // Option 1: Login with mobile + OTP
+    if (mobileNumber && otp) {
+      const otpVerification = await verifyOTP(mobileNumber, otp);
+      if (!otpVerification.success) {
         throw new ApiError(400, otpVerification.message);
-    }
-
-    const counsellor = await Counsellor.findOne({
-        $or: [{ email }, { mobileNumber }],
-    });
-
-    if (!counsellor) {
+      }
+      const counsellor = await Counsellor.findOne({ mobileNumber });
+      if (!counsellor) {
         throw new ApiError(404, "User does not exist");
-    }
-
-    const isPasswordValid = await counsellor.isPasswordCorrect(password);
-
-    if (!isPasswordValid) {
-        throw new ApiError(401, "Invalid user credentials");
-    }
-    counsellor.isAvailable = true;
-    await counsellor.save();
-
-    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(counsellor._id);
-
-    const loggedInCounsellor = await Counsellor.findById(counsellor._id).select("-password -refreshToken");
-
-    const options = {
-        httpOnly: true,
-        secure: true,
-    };
-
-    return res
-        .status(200)
+      }
+      counsellor.isAvailable = true;
+      await counsellor.save();
+      const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(counsellor._id);
+      const loggedInCounsellor = await Counsellor.findById(counsellor._id).select("-password -refreshToken");
+      const options = { httpOnly: true, secure: true };
+      return res.status(200)
         .cookie("accessToken", accessToken, options)
         .cookie("refreshToken", refreshToken, options)
-        .json(
-            new ApiResponse(
-                200,
-                { user: loggedInCounsellor, accessToken, refreshToken },
-                "User logged in successfully"
-            )
-        );
+        .json(new ApiResponse(200, { user: loggedInCounsellor, accessToken, refreshToken }, "User logged in successfully"));
+    }
+
+    // Option 2: Login with email + code
+    if (email && code) {
+      // Find the code in DB (reuse OTP model for code)
+      const record = await OTP.findOne({ email }).setOptions({ bypassHooks: true }).sort({ createdAt: -1 });
+      if (!record || record.otp !== code) {
+        throw new ApiError(400, "Invalid code");
+      }
+      const isExpired = (new Date() - record.createdAt) > 5 * 60 * 1000;
+      if (isExpired) {
+        throw new ApiError(400, "Code expired");
+      }
+      const counsellor = await Counsellor.findOne({ email });
+      if (!counsellor) {
+        throw new ApiError(404, "User does not exist");
+      }
+      counsellor.isAvailable = true;
+      await counsellor.save();
+      const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(counsellor._id);
+      const loggedInCounsellor = await Counsellor.findById(counsellor._id).select("-password -refreshToken");
+      const options = { httpOnly: true, secure: true };
+      return res.status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json(new ApiResponse(200, { user: loggedInCounsellor, accessToken, refreshToken }, "User logged in successfully"));
+    }
+
+    throw new ApiError(400, "Provide either mobile+otp or email+code");
 });
 
-// Logout Counsellor
+// Send code via email
+export const sendEmailCode = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    throw new ApiError(400, "Email is required");
+  }
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  await OTP.create({ email, otp: code, createdAt: new Date() });
+  await sendCodeByEmail(email, code);
+  res.json({ success: true, message: "Code sent to email" });
+});
 export const logoutCounsellor = asyncHandler(async (req, res) => {
     const { mobileNumber, otp } = req.body;
 
