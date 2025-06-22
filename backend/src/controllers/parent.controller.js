@@ -42,7 +42,26 @@ try {
         from: Twilio_Number });
 
     res.json({ success: true, messageSid: message.sid });
-} catch (error) {
+}
+//  try {
+//     const response = await axios.get("https://www.fast2sms.com/dev/bulkV2", {
+//       params: {
+//         route: "v3",
+//         api_key: process.env.FAST2SMS_API_KEY,
+//         numbers: mobileNumber,
+//         message: `Your OTP is ${otp}. Do not share with anyone.`,
+//         flash: 0
+//       }
+//     });
+//     if (response.data.return) {
+//       console.log("Fast2SMS success:", response.data);
+//       return res.json({ success: true, provider: "Fast2SMS" });
+//     } else {
+//       console.error("Fast2SMS error:", response.data);
+//       return res.status(500).json({ success: false, error: response.data });
+//     }
+// }
+ catch (error) {
     res.status(500).json({ success: false, error: error.message });
 }
 };
@@ -140,7 +159,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
 
 // Login with OTP authentication
 const loginParent = asyncHandler(async (req, res) => {
-    const { password, fullName, mobileNumber, otp } = req.body;
+    const {mobileNumber, otp } = req.body;
 
     // Validate user credentials
     if (!(mobileNumber&&otp) ){
@@ -154,17 +173,11 @@ const loginParent = asyncHandler(async (req, res) => {
     }
 
     const parent = await Parent.findOne({
-        $or: [{ fullName }],
+        $or: [{ mobileNumber }],
     });
     
     if (!parent) {
         throw new ApiError(404, "User does not exist");
-    }
-
-    const isPasswordValid = await parent.isPasswordCorrect(password);
-
-    if (!isPasswordValid) {
-        throw new ApiError(401, "Invalid user credentials");
     }
 
     const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(parent._id);

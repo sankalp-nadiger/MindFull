@@ -131,7 +131,7 @@
   },
   "dashboard": {
     "welcome": "Welcome",
-    "howAreYouToday": "How's Your Day Today?",
+    "todayQuestion": "How's Your Day Today?",
     "todaysQuote": "Today's Quote",
     "suggestedActivities": "Suggested Activities",
     "recentJournals": "Recent Journals",

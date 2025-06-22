@@ -13,13 +13,12 @@ const StudentSignIn = () => {
 
     // Collect form data
     const username = event.target.username.value;
-    const email = event.target.email.value;
     const password = event.target.password.value;
     sessionStorage.setItem("password", password);
     const mood = event.target.mood.value;
 
     // Validate fields
-    if (!email || !password || !mood || !username) {
+    if (!password || !mood || !username) {
       alert("Please fill in all fields.");
       return;
     }
@@ -31,7 +30,6 @@ const StudentSignIn = () => {
       const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/users/login`, {
         username,
         password,
-        email,
         mood
       });
 
@@ -91,17 +89,6 @@ const StudentSignIn = () => {
               name="username"
               className="form-input"
               placeholder="Enter your username"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="email" className="form-label">Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              className="form-input"
-              placeholder="Enter your email"
             />
           </div>
 
