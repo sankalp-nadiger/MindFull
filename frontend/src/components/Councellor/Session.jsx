@@ -4,6 +4,7 @@ import { io } from "socket.io-client";
 import { motion } from 'framer-motion';
 import { Bell, Calendar, Users, Settings, LogOut, Video } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import CounsellorReview from './CounselorReview'; 
 
 const socket = io(`${import.meta.env.VITE_BASE_URL}`, {
   transports: ["websocket"],
@@ -18,6 +19,9 @@ const Session = () => {
   const [activeRoom, setActiveRoom] = useState(null);
   const [activeTab, setActiveTab] = useState('sessions');
   const navigate = useNavigate();
+  const [showReview, setShowReview] = useState(false);
+const [reviewSessionData, setReviewSessionData] = useState(null);
+const [currentUserId, setCurrentUserId] = useState(null);
 
   useEffect(() => {
     const fetchActiveSessions = async () => {
@@ -85,31 +89,41 @@ const Session = () => {
     }
   };
 
-  const endSession = async (sessionId) => {
-    try {
-      setEnding(true);
-      await axios.post(
-        `${import.meta.env.VITE_BASE_API_URL}/counsellor/end`,
-        { sessionId },
-        {
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
-          },
-        }
-      );
+ const endSession = async (sessionId) => {
+  try {
+    setEnding(true);
+    const response = await axios.post(
+      `${import.meta.env.VITE_BASE_API_URL}/counsellor/end`,
+      { sessionId },
+      {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
+        },
+      }
+    );
 
-      socket.emit('sessionEnded', { sessionId });
-      setSessions((prevSessions) =>
-        prevSessions.filter((session) => session._id !== sessionId)
-      );
-      setActiveRoom(null);
-      setError('');
-    } catch (error) {
-      setError("Failed to end session.");
-    } finally {
-      setEnding(false);
+    // Check if user's sittingProgress is 0
+    if (response.data.user?.sittingProgress === 0) {
+      setReviewSessionData({
+        sessionId: sessionId,
+        duration: response.data.duration || 'N/A'
+      });
+      setCurrentUserId(response.data.user.userId);
+      setShowReview(true);
     }
-  };
+
+    socket.emit('sessionEnded', { sessionId });
+    setSessions((prevSessions) =>
+      prevSessions.filter((session) => session._id !== sessionId)
+    );
+    setActiveRoom(null);
+    setError('');
+  } catch (error) {
+    setError("Failed to end session.");
+  } finally {
+    setEnding(false);
+  }
+};
 
   useEffect(() => {
     const handleSessionEnd = ({ sessionId }) => {
@@ -274,6 +288,12 @@ const Session = () => {
           </div>
         </div>
       </div>
+<CounsellorReview
+  isOpen={showReview}
+  onClose={() => setShowReview(false)}
+  sessionData={reviewSessionData}
+  userId={currentUserId}
+/>
     </div>
   );
 };
