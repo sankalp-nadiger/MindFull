@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import { Mail, Phone, ArrowLeft, Send, RefreshCw } from "lucide-react";
 import "./StudentSignIn.css";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 const CounselorSignIn = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState("");
@@ -41,12 +44,14 @@ const CounselorSignIn = () => {
     if (loginMethod === "sms") {
       if (phoneNumber.length === 10) {
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 1500));
+          const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/counsellor/send-otp`, {
+            mobileNumber: phoneNumber,
+          });
+          if (response.data.success) {
           setOtpSent(true);
           setInputChanged(false);
           startOtpTimer();
-        } catch (error) {
+        } }catch (error) {
           setOtpError("Error sending OTP. Please try again.");
         }
       } else {
@@ -54,13 +59,16 @@ const CounselorSignIn = () => {
       }
     } else if (loginMethod === "email") {
       if (email && email.includes("@")) {
+        console.log("Sending email code to:", email);
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 1500));
+          const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/counsellor/send-email-code`, {
+            email: email,
+          });
+          if (response.data.success) {
           setOtpSent(true);
           setInputChanged(false);
           startOtpTimer();
-        } catch (error) {
+        } }catch (error) {
           setOtpError("Error sending code. Please try again.");
         }
       } else {
@@ -101,13 +109,39 @@ const CounselorSignIn = () => {
       return;
     }
     
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      alert("Sign In successful!");
-      // navigate("/councellor");
-    } catch (error) {
-      setOtpError("Invalid code. Please try again.");
+    if (loginMethod === "sms") {
+     
+      try {
+        const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/counsellor/login-counsellor`, {
+          mobileNumber: phoneNumber,
+          otp,
+        });
+        if (response.status === 200) {
+          const { accessToken } = response.data.data;
+          sessionStorage.setItem("accessToken", accessToken);
+          alert("Sign In successful!");
+          navigate("/councellor");
+        }
+      } catch (error) {
+        setOtpError(error.response?.data?.message || "Error during login.");
+      }
+    } else if (loginMethod === "email") {
+     
+      try {
+        const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/counsellor/login-counsellor`, {
+          email,
+          code: otp,
+        });
+        if (response.status === 200) {
+          const { accessToken } = response.data.data;
+          sessionStorage.setItem("accessToken", accessToken);
+          alert("Sign In successful!");
+          navigate("/councellor");
+        }
+      } catch (error) {
+        setOtpError(error.response?.data?.message || "Error during login.");
+      }
+    
     }
     
     setIsLoading(false);
@@ -255,7 +289,7 @@ const CounselorSignIn = () => {
                     </label>
                     <input
                       type="text"
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-center text-lg font-mono bg-white ${
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-center text-lg font-mono text-gray-700 bg-white ${
                         otpError ? 'border-red-300 bg-red-50' : 'border-gray-300'
                       }`}
                       value={otp}
