@@ -11,7 +11,9 @@ import {
   getActiveSessions,
   getCounselorStats,
   addNotesToSession,
-  sendEmailCode
+  sendEmailCode,
+  addCounsellorReview,
+  getCounsellorDashboardStats
 } from "../controllers/counsellor.controller.js";
 import { sendOTP } from "../controllers/parent.controller.js";
 import { upload } from "../middleware/multer.middleware.js"
@@ -30,5 +32,7 @@ router.get('/stats', counsellor_verifyJWT, getCounselorStats);
 router.post('/send-email-code',sendEmailCode)
 router.get('/feedback', counsellor_verifyJWT, getCounselorStats);
 router.post("/logout-counsellor", counsellor_verifyJWT, logoutCounsellor);
+router.post('/review', counsellor_verifyJWT, addCounsellorReview);
+router.get('/dashboard-stats', counsellor_verifyJWT, getCounsellorDashboardStats);
 
 export default router;

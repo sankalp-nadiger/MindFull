@@ -6,6 +6,10 @@ import PageSkeleton from "./components/LoadingSpinner/PageSkeleton"
 // Import i18n setup
 import './i18n'
 import { LanguageProvider } from './contexts/LanguageContext'
+import Notifications from "./components/Councellor/Notifications/Notifications"
+import Clients from "./components/Councellor/Clients/Client"
+import Profile from "./components/Councellor/Profile/Profile"
+import Schedule from "./components/Councellor/Schedule/Schedule"
 
 // Lazy load components for better performance
 const HomePage = React.lazy(() => import('./components/HomePage/HomePage'))
@@ -37,7 +41,7 @@ const SuccessStories = React.lazy(() => import("./components/HomePage/SuccessSto
 const VideoChat = React.lazy(() => import("./components/Videochat/Videochat"))
 const AIrecommendation = React.lazy(() => import("./components/Materialrecommendation/AIrecommendation"))
 const CommunityChat = React.lazy(() => import("./components/Community/Communitychat"))
-const Session = React.lazy(() => import("./components/Councellor/Session"))
+const Session = React.lazy(() => import("./components/Councellor/Session/Session"))
 const UserProfile = React.lazy(() => import("./components/Profiles/userprofile"))
 const CounsellorProfile = React.lazy(() => import("./components/Profiles/Councellorprofile"))
 const ChatBox = React.lazy(() => import("./components/pages/Chatbot"))
@@ -233,7 +237,26 @@ function App() {
                 <VisionBoard />
               </Suspense>
             } />
-            {/* <Route path="/stats" element={<CounselorStats/>}/>  */}          </Routes>
+            <Route path="/notifications" element={
+              <Suspense fallback={<PageSkeleton />}>
+                <Notifications />
+              </Suspense>
+            } />    
+            <Route path="/clients" element={
+              <Suspense fallback={<PageSkeleton />}>
+                <Clients />
+              </Suspense>
+            } />  
+            <Route path="/profile" element={
+              <Suspense fallback={<PageSkeleton />}>
+                <Profile />
+              </Suspense>
+            } /> 
+            <Route path="/schedule" element={
+              <Suspense fallback={<PageSkeleton />}>
+                <Schedule />
+              </Suspense>
+            } />    </Routes>
         </Suspense>
       </Router>
     </LanguageProvider>

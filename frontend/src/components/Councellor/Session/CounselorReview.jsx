@@ -124,6 +124,7 @@ const CounsellorReview = ({ isOpen, onClose, sessionData, userId }) => {
                 <span className="font-semibold text-gray-800">Patient Information</span>
               </div>
               <p className="text-sm text-gray-600">
+                Name: {sessionData?.fullName || 'N/A'}<br />
                 Session Duration: {sessionData?.duration || 'N/A'} | 
                 Date: {new Date().toLocaleDateString()}
               </p>
