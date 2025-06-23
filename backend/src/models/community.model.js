@@ -8,7 +8,7 @@ const communitySchema = new mongoose.Schema({
     description: String,
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     messages: [{
-        sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        sender: { type: String},
         message: String,
         timestamp: Date
     }]

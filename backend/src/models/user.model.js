@@ -105,6 +105,7 @@ const userSchema = new Schema( {
         achievements: String,
         district: String,
         state: String,
+        sittingProgress: { type: Number, default:0}
 }, { timestamps: true})
 
 userSchema.methods.assignRandomAvatar = async function () {
