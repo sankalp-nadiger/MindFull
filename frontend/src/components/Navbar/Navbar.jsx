@@ -2,7 +2,6 @@ import React, { useState, memo, useCallback } from "react";
 import { Bot, User, LogOut } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import Chatbox from "../pages/Chatbot";
-import LanguageSelector from '../common/LanguageSelector';
 
 const Navbar = memo(({ onStoryClick }) => {
   const { t } = useTranslation();
@@ -100,11 +99,6 @@ const Navbar = memo(({ onStoryClick }) => {
                 <User size={24} className="text-gray-300 transition-colors duration-300 xl:w-7 xl:h-7 hover:text-white" />
               </a>
               
-              {/* Language Selector */}
-              <div className="ml-2 xl:ml-4">
-                <LanguageSelector className="text-sm" />
-              </div>
-              
               <button 
                 onClick={handleLogout} 
                 className="flex items-center flex-shrink-0 gap-1 p-2 ml-2 text-red-400 transition-all duration-300 rounded-lg xl:ml-4 hover:text-red-300 xl:gap-2 hover:bg-red-500/10 hover:scale-105"
@@ -142,9 +136,6 @@ const Navbar = memo(({ onStoryClick }) => {
                 >
                   <User size={28} className="text-gray-300 transition-colors duration-300 hover:text-white" />
                 </a>
-                
-                {/* Language Selector for Mobile */}
-                <LanguageSelector className="text-sm" />
                   
                 <button 
                   onClick={handleLogout} 
