@@ -1,62 +1,90 @@
-import React, { useState } from 'react';
-import { Users, Search, Filter, MoreVertical } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Users, Search, Filter, MoreVertical, AlertCircle, Loader, Eye } from 'lucide-react';
 
-const ClientsContent = () => {
-  const [clients, setClients] = useState([
-    {
-      id: 1,
-      name: 'Anonymous Client A',
-      email: 'client.a@anonymous.com',
-      phone: '+1 (555) 0123',
-      sessions: 8,
-      lastSession: '2025-06-20',
-      status: 'active',
-      notes: 'Making good progress with anxiety management'
-    },
-    {
-      id: 2,
-      name: 'Anonymous Client B',
-      email: 'client.b@anonymous.com',
-      phone: '+1 (555) 0124',
-      sessions: 3,
-      lastSession: '2025-06-18',
-      status: 'active',
-      notes: 'Working on relationship communication'
-    },
-    {
-      id: 3,
-      name: 'Anonymous Client C',
-      email: 'client.c@anonymous.com',
-      phone: '+1 (555) 0125',
-      sessions: 12,
-      lastSession: '2025-06-15',
-      status: 'completed',
-      notes: 'Successfully completed therapy program'
-    }
-  ]);
-
+const ClientsContent = ({ onViewCaseHistory }) => {
+  const [clients, setClients] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const API_BASE_URL = import.meta.env.VITE_BASE_API_URL;
+
+  useEffect(() => {
+    fetchClientsData();
+  }, []);
+
+  const fetchClientsData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(`${API_BASE_URL}/counselor/clients`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch clients data');
+      }
+      const data = await response.json();
+      setClients(data);
+    } catch (err) {
+      setError(err.message);
+      console.error('Error fetching clients:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredClients = clients.filter(client => {
-    const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         client.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (client.name || client.clientName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (client.email || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || client.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const getStatusColor = (status) => {
-    switch (status) {
+    switch (status?.toLowerCase()) {
       case 'active':
         return 'bg-green-100 text-green-800';
       case 'inactive':
         return 'bg-gray-100 text-gray-800';
       case 'completed':
         return 'bg-blue-100 text-blue-800';
+      case 'on-hold':
+        return 'bg-yellow-100 text-yellow-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
   };
+
+  const handleViewCaseHistory = (clientId) => {
+    if (onViewCaseHistory) {
+      onViewCaseHistory(clientId);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader className="h-8 w-8 animate-spin text-blue-600" />
+        <span className="ml-2 text-gray-600">Loading clients...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+        <div className="flex items-center">
+          <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
+          <span className="text-red-800">Error loading clients: {error}</span>
+        </div>
+        <button 
+          onClick={fetchClientsData}
+          className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -96,6 +124,7 @@ const ClientsContent = () => {
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
             <option value="completed">Completed</option>
+            <option value="on-hold">On Hold</option>
           </select>
         </div>
       </div>
@@ -139,34 +168,43 @@ const ClientsContent = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">
-                          {client.name}
+                          {client.name || client.clientName || 'Client'}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {client.notes}
+                          {client.notes || client.description || 'No notes available'}
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{client.email}</div>
-                      <div className="text-sm text-gray-500">{client.phone}</div>
+                      <div className="text-sm text-gray-900">{client.email || 'No email'}</div>
+                      <div className="text-sm text-gray-500">{client.phone || 'No phone'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
-                        {client.sessions} sessions
+                        {client.sessions || client.sessionCount || 0} sessions
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(client.lastSession).toLocaleDateString()}
+                      {client.lastSession ? new Date(client.lastSession).toLocaleDateString() : 'No sessions'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(client.status)}`}>
-                        {client.status}
+                        {client.status || 'active'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button className="text-gray-400 hover:text-gray-600">
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center justify-end space-x-2">
+                        <button 
+                          onClick={() => handleViewCaseHistory(client.id)}
+                          className="text-blue-600 hover:text-blue-800 transition-colors"
+                          title="View Case History"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button className="text-gray-400 hover:text-gray-600">
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -178,4 +216,5 @@ const ClientsContent = () => {
     </div>
   );
 };
+
 export default ClientsContent;

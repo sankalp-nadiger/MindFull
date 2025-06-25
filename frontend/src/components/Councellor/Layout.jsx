@@ -1,10 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bell, Calendar, Users, Settings, LogOut, Video, Home, Heart } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import axios from 'axios';
 
-const Layout = ({ children }) => {
+const Layout = ({ children, onViewCaseHistory }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [counselor, setCounselor] = useState(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchCounselorProfile = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_BASE_API_URL}/counsellor/profile`,
+          {
+            headers: {
+              Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
+            },
+          }
+        );
+        setCounselor(response.data.counselor);
+      } catch (error) {
+        console.error('Error fetching counselor profile:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCounselorProfile();
+  }, []);
   
   const handleLogout = () => {
     sessionStorage.removeItem('accessToken');
@@ -35,6 +60,14 @@ const Layout = ({ children }) => {
       </button>
     );
   };
+
+  // Clone children and pass onViewCaseHistory prop
+  const childrenWithProps = React.Children.map(children, child => {
+    if (React.isValidElement(child)) {
+      return React.cloneElement(child, { onViewCaseHistory });
+    }
+    return child;
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -68,15 +101,23 @@ const Layout = ({ children }) => {
               </button>
               
               <div className="flex items-center space-x-3 border-l pl-4">
-                <img
-                  className="h-8 w-8 rounded-full object-cover"
-                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                  alt="Profile"
-                />
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Dr. Sarah Johnson</p>
-                  <p className="text-xs text-gray-500">Licensed Therapist</p>
-                </div>
+                {!loading && (
+                  <>
+                    <img
+                      className="h-8 w-8 rounded-full object-cover"
+                      src={counselor?.profilePic || `https://api.dicebear.com/7.x/avataaars/svg?seed=${counselor?._id}`}
+                      alt="Profile"
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">
+                        {counselor?.fullName || 'Loading...'}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {counselor?.specification?.[0] || 'Counselor'} • {counselor?.yearexp || 0} Years Exp.
+                      </p>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -136,7 +177,7 @@ const Layout = ({ children }) => {
 
           {/* Main Content Area */}
           <div className="col-span-9">
-            {children}
+            {childrenWithProps}
           </div>
         </div>
       </div>

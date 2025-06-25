@@ -1,24 +1,55 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, MapPin, Save, Edit } from 'lucide-react';
+import axios from 'axios';
 
 const ProfileContent = () => {
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState({
-    fullName: 'Dr. Sarah Johnson',
-    email: 'sarah.johnson@mindcare.com',
-    phone: '+1 (555) 0123',
-    specialization: 'Clinical Psychology',
-    experience: '8 years',
-    location: 'New York, NY',
-    bio: 'Experienced clinical psychologist specializing in anxiety, depression, and relationship counseling. Passionate about helping individuals achieve mental wellness.',
-    credentials: 'Ph.D. in Clinical Psychology, Licensed Professional Counselor',
-    languages: 'English, Spanish'
-  });
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleSave = () => {
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_BASE_API_URL}/counsellor/profile`,
+          {
+            headers: {
+              Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
+            },
+          }
+        );
+        setProfile(response.data.counselor);
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  const handleSave = async () => {
     setIsEditing(false);
-    // Here you would typically save to backend
+    try {
+      await axios.post(
+        `${import.meta.env.VITE_BASE_API_URL}/counsellor/profile`,
+        { updates: profile },
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
+          },
+        }
+      );
+      // Optionally show a success message
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      // Optionally show an error message
+    }
   };
+
+  if (loading || !profile) {
+    return <div className="p-8 text-center text-gray-500">Loading profile...</div>;
+  }
 
   return (
     <div className="space-y-8">
@@ -50,8 +81,8 @@ const ProfileContent = () => {
               </label>
               <input
                 type="text"
-                value={profile.fullName}
-                onChange={(e) => setProfile({...profile, fullName: e.target.value})}
+                value={profile.fullName || ''}
+                onChange={(e) => setProfile({ ...profile, fullName: e.target.value })}
                 disabled={!isEditing}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
               />
@@ -63,8 +94,8 @@ const ProfileContent = () => {
               </label>
               <input
                 type="email"
-                value={profile.email}
-                onChange={(e) => setProfile({...profile, email: e.target.value})}
+                value={profile.email || ''}
+                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
                 disabled={!isEditing}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
               />
@@ -76,8 +107,8 @@ const ProfileContent = () => {
               </label>
               <input
                 type="tel"
-                value={profile.phone}
-                onChange={(e) => setProfile({...profile, phone: e.target.value})}
+                value={profile.mobileNumber || ''}
+                onChange={(e) => setProfile({ ...profile, mobileNumber: e.target.value })}
                 disabled={!isEditing}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
               />
@@ -89,8 +120,8 @@ const ProfileContent = () => {
               </label>
               <input
                 type="text"
-                value={profile.specialization}
-                onChange={(e) => setProfile({...profile, specialization: e.target.value})}
+                value={profile.specification ? profile.specification.join(', ') : ''}
+                onChange={(e) => setProfile({ ...profile, specification: e.target.value.split(',').map(s => s.trim()) })}
                 disabled={!isEditing}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
               />
@@ -101,12 +132,12 @@ const ProfileContent = () => {
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Experience
+                Experience (Years)
               </label>
               <input
-                type="text"
-                value={profile.experience}
-                onChange={(e) => setProfile({...profile, experience: e.target.value})}
+                type="number"
+                value={profile.yearexp || ''}
+                onChange={(e) => setProfile({ ...profile, yearexp: e.target.value })}
                 disabled={!isEditing}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
               />
@@ -118,8 +149,8 @@ const ProfileContent = () => {
               </label>
               <input
                 type="text"
-                value={profile.location}
-                onChange={(e) => setProfile({...profile, location: e.target.value})}
+                value={profile.location || ''}
+                onChange={(e) => setProfile({ ...profile, location: e.target.value })}
                 disabled={!isEditing}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
               />
@@ -131,8 +162,8 @@ const ProfileContent = () => {
               </label>
               <input
                 type="text"
-                value={profile.credentials}
-                onChange={(e) => setProfile({...profile, credentials: e.target.value})}
+                value={profile.credentials || ''}
+                onChange={(e) => setProfile({ ...profile, credentials: e.target.value })}
                 disabled={!isEditing}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
               />
@@ -144,8 +175,8 @@ const ProfileContent = () => {
               </label>
               <input
                 type="text"
-                value={profile.languages}
-                onChange={(e) => setProfile({...profile, languages: e.target.value})}
+                value={profile.languages || ''}
+                onChange={(e) => setProfile({ ...profile, languages: e.target.value })}
                 disabled={!isEditing}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
               />
@@ -159,8 +190,8 @@ const ProfileContent = () => {
             Professional Bio
           </label>
           <textarea
-            value={profile.bio}
-            onChange={(e) => setProfile({...profile, bio: e.target.value})}
+            value={profile.bio || ''}
+            onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
             disabled={!isEditing}
             rows={4}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"

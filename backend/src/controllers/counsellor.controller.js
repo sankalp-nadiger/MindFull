@@ -512,6 +512,24 @@ export const addCounsellorReview = asyncHandler(async (req, res) => {
         reviewedAt: new Date()
     };
     await session.save();
+
+    // Also push review to user's counsellorReviews array
+    const user = await User.findById(userId);
+    if (user) {
+        user.counsellorReviews = user.counsellorReviews || [];
+        user.counsellorReviews.push({
+            sessionId,
+            counselorId: session.counselor,
+            diagnosis,
+            symptoms,
+            needsSittings,
+            recommendedSittings,
+            willingToTreat,
+            notes,
+            reviewedAt: new Date()
+        });
+        await user.save();
+    }
     return res.status(200).json({ message: "Review submitted successfully!" });
 });
 
@@ -547,6 +565,26 @@ export const getCounsellorDashboardStats = asyncHandler(async (req, res) => {
         upcomingSessions,
         avgSessionRating,
         totalHours
+    });
+});
+
+// Get Counselor Profile
+export const getCounselorProfile = asyncHandler(async (req, res) => {
+    const counselorId = req.counsellor._id;
+    const counselor = await Counsellor.findById(counselorId).select("-password -refreshToken");
+    
+    if (!counselor) {
+        throw new ApiError(404, "Counselor not found");
+    }
+
+    const defaultProfilePic = "https://api.dicebear.com/7.x/avataaars/svg"; // Fallback avatar
+    
+    return res.status(200).json({
+        success: true,
+        counselor: {
+            ...counselor.toObject(),
+            profilePic: counselor.profilePic || defaultProfilePic
+        }
     });
 });
 
