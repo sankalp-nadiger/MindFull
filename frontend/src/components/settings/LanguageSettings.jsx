@@ -12,11 +12,7 @@ const LanguageSettings = () => {
   };
 
   return (
-    <div className={`max-w-md mx-auto p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg ${isRTL() ? 'text-right' : 'text-left'}`}>
-      <h2 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">
-        {t('settings.language')}
-      </h2>
-      
+    <>
       <div className="space-y-3">
         {SUPPORTED_LANGUAGES.map((language) => (
           <div
@@ -58,7 +54,6 @@ const LanguageSettings = () => {
           </div>
         ))}
       </div>
-      
       <div className="p-4 mt-6 rounded-lg bg-gray-50 dark:bg-gray-700">
         <h3 className="mb-2 font-medium text-gray-900 dark:text-white">
           {t('settings.about')}
@@ -67,7 +62,7 @@ const LanguageSettings = () => {
           {t('common.language')} settings will be saved automatically and applied across the entire application.
         </p>
       </div>
-    </div>
+    </>
   );
 };
 
