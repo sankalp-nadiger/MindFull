@@ -105,7 +105,21 @@ const userSchema = new Schema( {
         achievements: String,
         district: String,
         state: String,
-        sittingProgress: { type: Number, default:0}
+        sittingProgress: { type: Number, default:0},
+        counsellorReviews: [
+          {
+            sessionId: { type: Schema.Types.ObjectId, ref: 'Session' },
+            counselorId: { type: Schema.Types.ObjectId, ref: 'Counsellor' },
+            diagnosis: String,
+            symptoms: [String],
+            needsSittings: Boolean,
+            recommendedSittings: Number,
+            willingToTreat: Boolean,
+            notes: String,
+            reviewedAt: Date
+          }
+        ],
+        
 }, { timestamps: true})
 
 userSchema.methods.assignRandomAvatar = async function () {
