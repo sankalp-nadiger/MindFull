@@ -1,7 +1,12 @@
 import React, { useState } from "react";
 import { Mail, Phone, ArrowLeft, Send, RefreshCw } from "lucide-react";
 import "./StudentSignIn.css";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import Toast from "./Toast";
+
 const CounselorSignIn = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState("");
@@ -11,6 +16,12 @@ const CounselorSignIn = () => {
   const [loginMethod, setLoginMethod] = useState(null);
   const [inputChanged, setInputChanged] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [toast, setToast] = useState({ message: "", type: "info" });
+  const [errorCount, setErrorCount] = useState(0);
+
+  // Email/phone validation
+  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const validatePhone = (num) => /^\d{10}$/.test(num);
 
   // Reset all state when login method changes
   const handleLoginMethodChange = (method) => {
@@ -34,40 +45,58 @@ const CounselorSignIn = () => {
     setInputChanged(true);
   };
 
+  const showErrorToast = (msg) => {
+    setErrorCount((prev) => prev + 1);
+    const suffix = errorCount >= 2 ? " If the issue persists, please contact the developer." : "";
+    setToast({ message: msg + suffix, type: "error" });
+  };
+
   const handleSendOtpOrCode = async () => {
     setOtpError("");
     setIsLoading(true);
-    
     if (loginMethod === "sms") {
-      if (phoneNumber.length === 10) {
-        try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 1500));
+      if (!validatePhone(phoneNumber)) {
+        setOtpError("Please enter a valid 10-digit phone number.");
+        showErrorToast("Please enter a valid 10-digit phone number.");
+        setIsLoading(false);
+        return;
+      }
+      try {
+        const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/counsellor/send-otp`, {
+          mobileNumber: phoneNumber,
+        });
+        if (response.data.success) {
           setOtpSent(true);
           setInputChanged(false);
+          setToast({ message: "OTP sent to your phone!", type: "success" });
           startOtpTimer();
-        } catch (error) {
-          setOtpError("Error sending OTP. Please try again.");
         }
-      } else {
-        setOtpError("Please enter a valid 10-digit phone number.");
+      } catch (error) {
+        setOtpError(error.response?.data?.message || "Error sending OTP. Please try again.");
+        showErrorToast(error.response?.data?.message || "Error sending OTP. Please try again.");
       }
     } else if (loginMethod === "email") {
-      if (email && email.includes("@")) {
-        try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 1500));
+      if (!validateEmail(email)) {
+        setOtpError("Please enter a valid email address.");
+        showErrorToast("Please enter a valid email address.");
+        setIsLoading(false);
+        return;
+      }
+      try {
+        const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/counsellor/send-email-code`, {
+          email: email,
+        });
+        if (response.data.success) {
           setOtpSent(true);
           setInputChanged(false);
+          setToast({ message: "Code sent to your email!", type: "success" });
           startOtpTimer();
-        } catch (error) {
-          setOtpError("Error sending code. Please try again.");
         }
-      } else {
-        setOtpError("Please enter a valid email address.");
+      } catch (error) {
+        setOtpError(error.response?.data?.message || "Error sending code. Please try again.");
+        showErrorToast(error.response?.data?.message || "Error sending code. Please try again.");
       }
     }
-    
     setIsLoading(false);
   };
 
@@ -94,28 +123,78 @@ const CounselorSignIn = () => {
     e.preventDefault();
     setOtpError("");
     setIsLoading(true);
-    
-    if (otp.length !== 6) {
-      setOtpError(`Please enter the 6-digit ${loginMethod === "sms" ? "OTP" : "code"}.`);
-      setIsLoading(false);
-      return;
+    if (loginMethod === "sms") {
+      if (!validatePhone(phoneNumber)) {
+        setOtpError("Please enter a valid 10-digit phone number.");
+        showErrorToast("Please enter a valid 10-digit phone number.");
+        setIsLoading(false);
+        return;
+      }
+      if (otp.length !== 6) {
+        setOtpError("Please enter the 6-digit OTP.");
+        showErrorToast("Please enter the 6-digit OTP.");
+        setIsLoading(false);
+        return;
+      }
+      try {
+        const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/counsellor/login`, {
+          mobileNumber: phoneNumber,
+          otp,
+        });
+        if (response.status === 200) {
+          const { accessToken } = response.data.data;
+          sessionStorage.setItem("accessToken", accessToken);
+          setToast({ message: "Login successful!", type: "success" });
+          setTimeout(() => navigate("/CounsellorDashboard"), 1200);
+        }
+      } catch (error) {
+        setOtpError(error.response?.data?.message || "Error during login. Please try again.");
+        showErrorToast(error.response?.data?.message || "Error during login. Please try again.");
+      }
+    } else if (loginMethod === "email") {
+      if (!validateEmail(email)) {
+        setOtpError("Please enter a valid email address.");
+        showErrorToast("Please enter a valid email address.");
+        setIsLoading(false);
+        return;
+      }
+      if (otp.length !== 6) {
+        setOtpError("Please enter the 6-digit code.");
+        showErrorToast("Please enter the 6-digit code.");
+        setIsLoading(false);
+        return;
+      }
+      try {
+        const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/counsellor/login`, {
+          email,
+          code: otp,
+        });
+        if (response.status === 200) {
+          const { accessToken } = response.data.data;
+          sessionStorage.setItem("accessToken", accessToken);
+          setToast({ message: "Login successful!", type: "success" });
+          setTimeout(() => navigate("/CounsellorDashboard"), 1200);
+        }
+      } catch (error) {
+        setOtpError(error.response?.data?.message || "Error during login. Please try again.");
+        showErrorToast(error.response?.data?.message || "Error during login. Please try again.");
+      }
     }
-    
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      alert("Sign In successful!");
-      // navigate("/councellor");
-    } catch (error) {
-      setOtpError("Invalid code. Please try again.");
-    }
-    
     setIsLoading(false);
   };
 
   return (
     <div className="auth-page">
-    <div className="auth-container">
+      <div className="auth-container">
+        <a className="flex items-center flex-shrink-0 font-medium text-gray-900 transition-all duration-300 title-font group hover:scale-105" style={{ marginBottom: '1rem' }}>
+          <div className="relative">
+            <img src="plant.png" alt="Logo" className="w-8 h-8 transition-transform duration-300 group-hover:rotate-12" />
+            <div className="absolute inset-0 transition-opacity duration-300 rounded-full opacity-0 bg-gradient-to-r from-blue-400/20 to-green-400/20 group-hover:opacity-100 blur-sm"></div>
+          </div>
+          <span className="ml-3 text-3xl font-bold tracking-wide text-transparent bg-gradient-to-r from-blue-400 via-teal-400 to-green-400 bg-clip-text">
+            MindFull
+          </span>
+        </a>
          <div className="auth-card">
           {/* Header */}
           <div className="card-header">
@@ -214,6 +293,7 @@ const CounselorSignIn = () => {
                         required
                       />
                     </div>
+                    {otpError && <p className="text-sm text-red-600">{otpError}</p>}
                   </div>
                 )}
 
@@ -235,6 +315,7 @@ const CounselorSignIn = () => {
                         required
                       />
                     </div>
+                    {otpError && <p className="text-sm text-red-600">{otpError}</p>}
                   </div>
                 )}
 
@@ -246,7 +327,7 @@ const CounselorSignIn = () => {
                     </label>
                     <input
                       type="text"
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-center text-lg font-mono bg-white ${
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-center text-lg font-mono text-gray-700 bg-white ${
                         otpError ? 'border-red-300 bg-red-50' : 'border-gray-300'
                       }`}
                       value={otp}
@@ -345,6 +426,7 @@ const CounselorSignIn = () => {
           </div>
         </div>
       </div>
+      <Toast message={toast.message} type={toast.type} />
     </div>
   );
 };

@@ -231,7 +231,8 @@ const CommunityChat = () => {
         `${import.meta.env.VITE_BASE_API_URL}/community/message`,
         {
           roomId: joinedRoom,
-          message: message.trim()
+          message: message.trim(),
+          username: senderUsername || localStorage.getItem('username') || 'Anonymous',
         },
         {
           headers: {
@@ -464,88 +465,90 @@ const CommunityChat = () => {
   ref={chatContainerRef} 
   className="h-96 lg:h-[500px] overflow-y-auto overflow-x-hidden p-6 bg-gradient-to-b from-gray-900 to-slate-900 scroll-smooth w-full"
 >
-    {messages?.length === 0 ? (
-      <div className="text-center py-12">
-        <MessageCircle size={48} className="mx-auto text-gray-500 mb-4" />
-        <h4 className="text-lg font-semibold text-gray-400 mb-2">Start the conversation</h4>
-        <p className="text-gray-500">Be the first to share your thoughts and connect with others.</p>
-      </div>
-    ) : (
-      messages?.map((msg, idx) => {
-        const storedUserId = userId || localStorage.getItem("userId");
-        const isCurrentUser = msg.sender && storedUserId && msg.sender.toString() === storedUserId.toString();
-        
-        // Check if we need to show a date separator
-        const showDateSeparator = idx === 0 || 
-          (idx > 0 && isDifferentDay(messages[idx - 1].timestamp, msg.timestamp));
 
-        return (
-          <React.Fragment key={idx}>
-            {/* Date Separator */}
-            {showDateSeparator && (
-              <div className="flex justify-center mb-6 mt-4">
-                <div className="bg-gray-800 border border-gray-600 rounded-full px-4 py-2 text-xs text-gray-300 font-medium shadow-md">
-                  {formatDateSeparator(msg.timestamp)}
-                </div>
+
+{messages?.length === 0 ? (
+  <div className="text-center py-12">
+    <MessageCircle size={48} className="mx-auto text-gray-500 mb-4" />
+    <h4 className="text-lg font-semibold text-gray-400 mb-2">Start the conversation</h4>
+    <p className="text-gray-500">Be the first to share your thoughts and connect with others.</p>
+  </div>
+) : (
+  messages?.map((msg, idx) => {
+    // Fix: Compare msg.sender (which contains username) with current user's senderUsername
+    const isCurrentUser = msg.sender && senderUsername && 
+      msg.sender.toString() === senderUsername.toString();
+    
+    // Check if we need to show a date separator
+    const showDateSeparator = idx === 0 || 
+      (idx > 0 && isDifferentDay(messages[idx - 1].timestamp, msg.timestamp));
+
+    return (
+      <React.Fragment key={idx}>
+        {/* Date Separator */}
+        {showDateSeparator && (
+          <div className="flex justify-center mb-6 mt-4">
+            <div className="bg-gray-800 border border-gray-600 rounded-full px-4 py-2 text-xs text-gray-300 font-medium shadow-md">
+              {formatDateSeparator(msg.timestamp)}
+            </div>
+          </div>
+        )}
+        
+        {/* Message */}
+        <div className={`flex w-full mb-4 ${isCurrentUser ? "justify-end" : "justify-start"} min-w-0 overflow-hidden`}>
+          <div
+            className={`relative p-4 max-w-[85%] sm:max-w-[75%] rounded-2xl shadow-lg overflow-hidden ${
+              isCurrentUser 
+                ? "bg-gradient-to-r from-green-600 to-green-700 text-white rounded-br-sm" 
+                : "bg-gradient-to-r from-gray-700 to-gray-800 text-white rounded-bl-sm border border-gray-600"
+            }`}
+            style={{
+              overflowWrap: 'break-word',
+              wordBreak: 'break-word',
+              minWidth: 0,
+              maxWidth: '100%'
+            }}
+          >   
+            {/* Message Header */}
+            <div className="flex items-start justify-between mb-2 gap-3">
+              <div className="flex-1 min-w-0 overflow-hidden">
+                <p className={`text-sm font-semibold truncate ${
+                  isCurrentUser ? "text-green-100" : "text-gray-200"
+                }`}>
+                  {isCurrentUser ? "You" : (msg.sender || "Anonymous")}
+                </p>
               </div>
-            )}
-            
-            {/* Message */}
-           <div className={`flex w-full mb-4 ${isCurrentUser ? "justify-end" : "justify-start"} min-w-0 overflow-hidden`}>
-             <div
-  className={`relative p-4 max-w-[85%] sm:max-w-[75%] rounded-2xl shadow-lg overflow-hidden ${
-    isCurrentUser 
-      ? "bg-gradient-to-r from-green-600 to-green-700 text-white rounded-br-sm" 
-      : "bg-gradient-to-r from-gray-700 to-gray-800 text-white rounded-bl-sm border border-gray-600"
-  }`}
-  style={{
-    overflowWrap: 'break-word',
-    wordBreak: 'break-word',
-    minWidth: 0,
-    maxWidth: '100%'
-  }}
->   
-                {/* Message Header */}
-                <div className="flex items-start justify-between mb-2 gap-3">
-                  <div className="flex-1 min-w-0 overflow-hidden">
-                    <p className={`text-sm font-semibold truncate ${
-                      isCurrentUser ? "text-green-100" : "text-gray-200"
-                    }`}>
-                      {isCurrentUser ? "You" : (msg.username || "Anonymous")}
-                    </p>
-                  </div>
-                  <div className="flex-shrink-0">
-                    <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                      isCurrentUser 
-                        ? "bg-green-800/30 text-green-200" 
-                        : "bg-gray-600/30 text-gray-300"
-                    }`}>
-                      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60"></span>
-                      {formatMessageTime(msg.timestamp)}
-                    </div>
-                  </div>
+              <div className="flex-shrink-0">
+                <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                  isCurrentUser 
+                    ? "bg-green-800/30 text-green-200" 
+                    : "bg-gray-600/30 text-gray-300"
+                }`}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60"></span>
+                  {formatMessageTime(msg.timestamp)}
                 </div>
-                
-                {/* Message Content */}
-                <p className="text-sm leading-relaxed">{msg.message}</p>
-                
-                {/* Message Tail */}
-{/* Message Tail */}
-<div className={`absolute bottom-0 w-0 h-0 ${
-  isCurrentUser 
-    ? "right-0 border-l-[12px] border-l-green-700 border-t-[12px] border-t-transparent"
-    : "left-0 border-r-[12px] border-r-gray-800 border-t-[12px] border-t-transparent"
-}`} style={{ 
-  transform: 'translateY(1px)',
-  maxWidth: '12px',
-  overflow: 'hidden'
-}}></div>
               </div>
             </div>
-          </React.Fragment>
-        );
-      })
-    )}
+            
+            {/* Message Content */}
+            <p className="text-sm leading-relaxed">{msg.message}</p>
+            
+            {/* Message Tail */}
+            <div className={`absolute bottom-0 w-0 h-0 ${
+              isCurrentUser 
+                ? "right-0 border-l-[12px] border-l-green-700 border-t-[12px] border-t-transparent"
+                : "left-0 border-r-[12px] border-r-gray-800 border-t-[12px] border-t-transparent"
+            }`} style={{ 
+              transform: 'translateY(1px)',
+              maxWidth: '12px',
+              overflow: 'hidden'
+            }}></div>
+          </div>
+        </div>
+      </React.Fragment>
+    );
+  })
+)}
     <div ref={messagesEndRef} />
   </div>
 

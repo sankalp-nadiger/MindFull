@@ -124,12 +124,13 @@ export const acceptSession = asyncHandler(async (req, res) => {
     if (session.status !== "Pending") {
         throw new ApiError(400, "Session is not in pending state");
     }
-    session.counselor=counselorId;
-        // Mark counselor as unavailable
-        counselor.isAvailable = false;
-        await counselor.save();
-    
+    session.counselor = counselorId;
+    // Mark counselor as unavailable
+    counselor.isAvailable = false;
+    await counselor.save();
+
     session.status = "Active";
+    session.startTime = new Date(); 
     await session.save();
 
     res.status(200).json({
@@ -163,9 +164,19 @@ export const endSession = asyncHandler(async (req, res) => {
     if (![session.counselor.toString(), session.user.toString()].includes(userId.toString())) {
         throw new ApiError(403, "Not authorized to end this session");
     }
-    
     session.status = "Completed";
+    // Set endTime and calculate duration
+    session.endTime = new Date();
+    if (session.startTime) {
+        session.duration = Math.round((session.endTime - session.startTime) / 1000); // duration in seconds
+    }
     await session.save();
+    // Reduce user's sittingProgress if > 0
+    const user = await User.findById(session.user);
+    if (user && user.sittingProgress && user.sittingProgress > 0) {
+        user.sittingProgress -= 1;
+        await user.save();
+    }
     io.emit(`sessionEnded-${sessionId}`, { sessionId });
     // Make counselor available again
     const counselor = await Counsellor.findById(session.counselor);
@@ -176,7 +187,9 @@ export const endSession = asyncHandler(async (req, res) => {
 
     res.status(200).json({
         success: true,
-        message: "Session ended successfully"
+        message: "Session ended successfully",
+        user: user ? { userId: user._id, sittingProgress: user.sittingProgress, fullName: user.fullName } : null,
+        duration: session.duration || null
     });
 });
 
@@ -477,6 +490,102 @@ export const updateProfile = asyncHandler(async (req, res) => {
     return res
         .status(200)
         .json(new ApiResponse(200, { updatedCounsellor: counsellor }, "Profile updated successfully"));
+});
+// Add Review to Session (Counselor Review)
+export const addCounsellorReview = asyncHandler(async (req, res) => {
+    const { sessionId, userId, diagnosis, symptoms, needsSittings, recommendedSittings, willingToTreat, notes } = req.body;
+    if (!sessionId || !userId || !diagnosis) {
+        return res.status(400).json({ message: "Session ID, user ID, and diagnosis are required." });
+    }
+    const session = await Session.findById(sessionId);
+    if (!session) {
+        return res.status(404).json({ message: "Session not found." });
+    }
+    // Attach review fields to session
+    session.counsellorReview = {
+        diagnosis,
+        symptoms,
+        needsSittings,
+        recommendedSittings,
+        willingToTreat,
+        notes,
+        reviewedAt: new Date()
+    };
+    await session.save();
+
+    // Also push review to user's counsellorReviews array
+    const user = await User.findById(userId);
+    if (user) {
+        user.counsellorReviews = user.counsellorReviews || [];
+        user.counsellorReviews.push({
+            sessionId,
+            counselorId: session.counselor,
+            diagnosis,
+            symptoms,
+            needsSittings,
+            recommendedSittings,
+            willingToTreat,
+            notes,
+            reviewedAt: new Date()
+        });
+        await user.save();
+    }
+    return res.status(200).json({ message: "Review submitted successfully!" });
+});
+
+// Dashboard Stats for Counsellor
+export const getCounsellorDashboardStats = asyncHandler(async (req, res) => {
+    const counsellorId = req.counsellor._id;
+    const counsellor = await Counsellor.findById(counsellorId);
+    if (!counsellor) {
+        return res.status(404).json({ message: "Counsellor not found" });
+    }
+    // Sessions taken (completed)
+    const sessionsTaken = await Session.countDocuments({ counselor: counsellorId, status: "Completed" });
+    // Upcoming sessions (today, status Active or Pending)
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    const upcomingSessions = await Session.countDocuments({
+        counselor: counsellorId,
+        status: { $in: ["Pending", "Active"] },
+        startTime: { $gte: today, $lt: tomorrow }
+    });
+    // Average session rating
+    const sessionsWithRating = await Session.find({ counselor: counsellorId, rating: { $gt: 0 } });
+    const avgSessionRating = sessionsWithRating.length > 0 ?
+        (sessionsWithRating.reduce((sum, s) => sum + s.rating, 0) / sessionsWithRating.length).toFixed(1) : 0;
+    // Total hours (sum of durations in hours)
+    const completedSessions = await Session.find({ counselor: counsellorId, status: "Completed" });
+    const totalHours = (completedSessions.reduce((sum, s) => sum + (s.duration || 0), 0) / 3600).toFixed(1);
+    res.status(200).json({
+        counselorName: counsellor.fullName,
+        sessionsTaken,
+        upcomingSessions,
+        avgSessionRating,
+        totalHours
+    });
+});
+
+// Get Counselor Profile
+export const getCounselorProfile = asyncHandler(async (req, res) => {
+    const counselorId = req.counsellor._id;
+    const counselor = await Counsellor.findById(counselorId).select("-password -refreshToken");
+    
+    if (!counselor) {
+        throw new ApiError(404, "Counselor not found");
+    }
+
+    const defaultProfilePic = "https://api.dicebear.com/7.x/avataaars/svg"; // Fallback avatar
+    
+    return res.status(200).json({
+        success: true,
+        counselor: {
+            ...counselor.toObject(),
+            profilePic: counselor.profilePic || defaultProfilePic
+        }
+    });
 });
 
 

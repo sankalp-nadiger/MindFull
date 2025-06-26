@@ -8,6 +8,8 @@ const counsellorSchema= new Schema({
         type: String,
         required: true
     }],
+    gender: {type:String,enum:["Male","Female","Other"],
+        required:true },
     fullName: {
       type: String,
       required: true,
@@ -59,6 +61,9 @@ const counsellorSchema= new Schema({
     {
       type: Boolean,
       default: false
+    },
+    profilePic: {
+      type: String
     }
 });
 counsellorSchema.pre("save", async function (next) {

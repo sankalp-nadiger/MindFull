@@ -37,18 +37,10 @@ function ParentDashboard({ parentId }) {
   const [journals, setJournals] = useState([]);
   const [issues, setIssues] = useState([]);
   const [report, setReport] = useState(null);
-
-  // Mock data for new sections
-  const criticalAlerts = [
-    { id: 1, type: "urgent", message: "Significant mood decline detected over the past 3 days", timestamp: "2 hours ago" },
-    { id: 2, type: "warning", message: "Missed counseling session scheduled for today", timestamp: "5 hours ago" },
-    { id: 3, type: "info", message: "Weekly progress report ready for review", timestamp: "1 day ago" }
-  ];
-
-  const upcomingSessions = [
-    { id: 1, counselor: "Dr. Sarah Johnson", date: "June 22, 2025", time: "2:00 PM", type: "Individual Therapy" },
-    { id: 2, counselor: "Dr. Michael Chen", date: "June 24, 2025", time: "10:30 AM", type: "Family Session" }
-  ];
+  const [criticalAlerts, setCriticalAlerts] = useState([]);
+  const [upcomingSessions, setUpcomingSessions] = useState([]);
+  const [requestForm, setRequestForm] = useState({ preferredDate: '', preferredTime: '', reason: '' });
+  const [requestLoading, setRequestLoading] = useState(false);
 
   useEffect(() => {
     const token = sessionStorage.getItem("accessToken");
@@ -85,13 +77,21 @@ function ParentDashboard({ parentId }) {
           setActivityData(moodRes.activitiesCompleted || Array(7).fill(0));
         }
         setSessions(sessionsRes.sessions || []);
-        if (journalsRes && journalsRes.journals) {
-          setJournals(journalsRes.journals);
-        } else {
-          setJournals([]);
-        }
+        setJournals(journalsRes && journalsRes.journals ? journalsRes.journals : []);
         setIssues(issuesRes.issues || []);
         setReport(reportRes.data || null);
+
+        // Fetch critical alerts and upcoming sessions
+        const [alertsRes, upcomingRes] = await Promise.all([
+          fetch(`https://api.mindfull.com/parent/parent/critical-alerts`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }).then((res) => res.json()),
+          fetch(`https://api.mindfull.com/parent/parent/upcoming-sessions`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }).then((res) => res.json()),
+        ]);
+        setCriticalAlerts(alertsRes.alerts || []);
+        setUpcomingSessions(upcomingRes.sessions || []);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -108,6 +108,38 @@ function ParentDashboard({ parentId }) {
 
   const handleRequestCounselor = () => {
     setShowRequestModal(true);
+  };
+
+  const handleRequestFormChange = (e) => {
+    const { name, value } = e.target;
+    setRequestForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleRequestSubmit = async () => {
+    setRequestLoading(true);
+    const token = sessionStorage.getItem("accessToken");
+    try {
+      const res = await fetch("https://api.mindfull.com/parent/parent/request-counselor", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestForm),
+      });
+      const data = await res.json();
+      setShowRequestModal(false);
+      setRequestForm({ preferredDate: '', preferredTime: '', reason: '' });
+      if (data.success) {
+        alert("Counselor meeting request submitted successfully!");
+      } else {
+        alert(data.message || "Failed to submit request");
+      }
+    } catch (err) {
+      alert("Failed to submit request");
+    } finally {
+      setRequestLoading(false);
+    }
   };
 
   const renderDashboard = () => (
@@ -310,7 +342,7 @@ function ParentDashboard({ parentId }) {
           Critical Alerts
         </h3>
         <div className="space-y-4">
-          {criticalAlerts.map((alert) => (
+          {criticalAlerts.length > 0 ? criticalAlerts.map((alert) => (
             <div key={alert.id} className={`p-4 rounded-lg border-l-4 ${
               alert.type === 'urgent' ? 'bg-red-50 border-red-500' :
               alert.type === 'warning' ? 'bg-yellow-50 border-yellow-500' :
@@ -322,10 +354,10 @@ function ParentDashboard({ parentId }) {
                   alert.type === 'warning' ? 'text-yellow-800' :
                   'text-blue-800'
                 }`}>{alert.message}</p>
-                <span className="text-xs text-gray-500">{alert.timestamp}</span>
+                <span className="text-xs text-gray-500">{typeof alert.timestamp === 'string' ? alert.timestamp : new Date(alert.timestamp).toLocaleString()}</span>
               </div>
             </div>
-          ))}
+          )) : <p className="text-gray-500 text-center py-8">No critical alerts.</p>}
         </div>
       </div>
 
@@ -402,16 +434,16 @@ function ParentDashboard({ parentId }) {
           <div>
             <h4 className="text-lg font-semibold text-gray-800 mb-4">Upcoming Sessions</h4>
             <div className="space-y-4">
-              {upcomingSessions.map((session) => (
+              {upcomingSessions.length > 0 ? upcomingSessions.map((session) => (
                 <div key={session.id} className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <div className="flex justify-between items-start mb-2">
                     <h5 className="font-semibold text-gray-800">{session.counselor}</h5>
                     <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Scheduled</span>
                   </div>
                   <p className="text-sm text-gray-600 mb-1">{session.type}</p>
-                  <p className="text-sm text-gray-500">{session.date} at {session.time}</p>
+                  <p className="text-sm text-gray-500">{session.date} {session.time && `at ${session.time}`}</p>
                 </div>
-              ))}
+              )) : <p className="text-gray-500 text-center py-8">No upcoming sessions.</p>}
             </div>
           </div>
         </div>
@@ -501,37 +533,36 @@ function ParentDashboard({ parentId }) {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Date</label>
-                <input type="date" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                <input type="date" name="preferredDate" value={requestForm.preferredDate} onChange={handleRequestFormChange} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Time</label>
-                <select className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                  <option>Morning (9:00 AM - 12:00 PM)</option>
-                  <option>Afternoon (12:00 PM - 5:00 PM)</option>
-                  <option>Evening (5:00 PM - 8:00 PM)</option>
+                <select name="preferredTime" value={requestForm.preferredTime} onChange={handleRequestFormChange} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                  <option value="">Select a time</option>
+                  <option value="Morning (9:00 AM - 12:00 PM)">Morning (9:00 AM - 12:00 PM)</option>
+                  <option value="Afternoon (12:00 PM - 5:00 PM)">Afternoon (12:00 PM - 5:00 PM)</option>
+                  <option value="Evening (5:00 PM - 8:00 PM)">Evening (5:00 PM - 8:00 PM)</option>
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Reason for Meeting</label>
-                <textarea className="w-full border border-gray-300 rounded-lg px-3 py-2 h-20 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Brief description of concerns..."></textarea>
+                <textarea name="reason" value={requestForm.reason} onChange={handleRequestFormChange} className="w-full border border-gray-300 rounded-lg px-3 py-2 h-20 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Brief description of concerns..."></textarea>
               </div>
             </div>
             <div className="flex space-x-3 mt-6">
               <button
                 onClick={() => setShowRequestModal(false)}
                 className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+                disabled={requestLoading}
               >
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  setShowRequestModal(false);
-                  // Here you would typically make an API call to submit the request
-                  alert("Counselor meeting request submitted successfully!");
-                }}
+                onClick={handleRequestSubmit}
                 className="flex-1 bg-gradient-to-r from-blue-500 to-teal-500 text-white py-2 px-4 rounded-lg hover:from-blue-600 hover:to-teal-600 transition-all"
+                disabled={requestLoading}
               >
-                Submit Request
+                {requestLoading ? "Submitting..." : "Submit Request"}
               </button>
             </div>
           </div>

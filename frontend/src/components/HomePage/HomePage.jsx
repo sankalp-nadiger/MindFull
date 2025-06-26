@@ -8,18 +8,27 @@ import LanguageSelector from '../common/LanguageSelector';
 
 function HomePage(){
   const { t } = useTranslation();
-  
- 
+  const [showLang, setShowLang] = useState(false);
 
-
-
-
-      return(
-        <>
-       {/* Language Selector in top right corner */}
-       <div className="fixed top-4 right-4 z-50">
-         <LanguageSelector />
-       </div>
+  return(
+    <>
+      {/* Floating Globe Button */}
+      <div className="fixed top-4 right-4 z-50">
+        <button
+          aria-label="Select Language"
+          className="bg-slate-800 hover:bg-slate-700 border-2 border-emerald-500 rounded-full p-3 shadow-lg transition-colors duration-200 focus:outline-none"
+          onClick={() => setShowLang((v) => !v)}
+        >
+          <svg className="w-7 h-7 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+          </svg>
+        </button>
+        {showLang && (
+          <div className="absolute right-0 mt-2 w-80 max-w-xs z-50 animate-fade-in">
+            <LanguageSelector horizontal onClose={() => setShowLang(false)} />
+          </div>
+        )}
+      </div>
 
    <BackgroundBeamsWithCollisionDemo/>        
 <div class="overflow-hidden bg-gradient-to-b from-purple-500 via-purple-950 to-black">
