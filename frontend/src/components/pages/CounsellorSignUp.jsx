@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import "./StudentSignIn.css"
+import "./StudentSignIn.css";
+import Toast from "./Toast";
 
 const CounsellorSignUp = () => {
   const navigate = useNavigate();
@@ -34,6 +35,8 @@ const CounsellorSignUp = () => {
   const [errors, setErrors] = useState({});
   const [otpTimer, setOtpTimer] = useState(0);
   const [currentStep, setCurrentStep] = useState(1);
+  const [toast, setToast] = useState({ message: "", type: "info" });
+  const [errorCount, setErrorCount] = useState(0);
 
   // Start OTP timer
   const startOtpTimer = () => {
@@ -49,19 +52,10 @@ const CounsellorSignUp = () => {
     }, 1000);
   };
 
-  // Validation functions
-  const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  const validateMobile = (mobile) => {
-    return mobile.length === 10 && /^\d+$/.test(mobile);
-  };
-
-  const validatePassword = (password) => {
-    return password.length >= 6;
-  };
+  // Validation helpers
+  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const validateMobile = (mobile) => mobile.length === 10 && /^\d+$/.test(mobile);
+  const validatePassword = (password) => password.length >= 6;
 
   const handleChange = (e) => {
     const { name, value, type } = e.target;
@@ -127,12 +121,13 @@ const CounsellorSignUp = () => {
       if (response.data.success) {
         setOtpSent(true);
         startOtpTimer();
-        alert("OTP sent successfully!");
+        setToast({ message: "OTP sent to your phone!", type: "success" });
         setErrors({ ...errors, mobileNumber: "" });
+      } else {
+        setToast({ message: (response.data?.message || "Failed to send OTP.") + " If the issue persists, please contact the developer.", type: "error" });
       }
     } catch (error) {
-      console.error("OTP error:", error);
-      setErrors({ ...errors, otp: error.response?.data?.message || "Error sending OTP" });
+      setToast({ message: (error.response?.data?.message || "Error sending OTP.") + " If the issue persists, please contact the developer.", type: "error" });
     } finally {
       setOtpLoading(false);
     }
@@ -157,11 +152,55 @@ const CounsellorSignUp = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const showErrorToast = (msg) => {
+    setErrorCount((prev) => prev + 1);
+    const suffix = errorCount >= 2 ? " If the issue persists, please contact the developer." : "";
+    setToast({ message: msg + suffix, type: "error" });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) {
-      alert("Please fix the errors in the form");
+      setToast({ message: "Please fix the errors in the form", type: "error" });
+      return;
+    }
+
+    // Additional client-side validation
+    if (!formData.fullName.trim() || !formData.email.trim() || !formData.password.trim() || !formData.mobileNumber.trim()) {
+      showErrorToast("Please fill all required fields.");
+      return;
+    }
+    if (!validateEmail(formData.email)) {
+      showErrorToast("Please enter a valid email address.");
+      return;
+    }
+    if (!validateMobile(formData.mobileNumber)) {
+      showErrorToast("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+    if (!validatePassword(formData.password)) {
+      showErrorToast("Password must be at least 6 characters.");
+      return;
+    }
+    if (!otpSent) {
+      try {
+        const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/counsellor/send-otp`, { mobileNumber: formData.mobileNumber });
+        if (response.data.success) {
+          setOtpSent(true);
+          setOtpTimer(60);
+          setToast({ message: "OTP sent to your phone!", type: "success" });
+          // ...existing timer code...
+        } else {
+          setToast({ message: (response.data?.message || "Failed to send OTP.") + " If the issue persists, please contact the developer.", type: "error" });
+        }
+      } catch (error) {
+        setToast({ message: (error.response?.data?.message || "Error sending OTP.") + " If the issue persists, please contact the developer.", type: "error" });
+      }
+      return;
+    }
+    if (formData.otp.length !== 6) {
+      showErrorToast("Please enter a valid 6-digit OTP.");
       return;
     }
 
@@ -192,7 +231,7 @@ const CounsellorSignUp = () => {
       });
 
       const response = await axios.post(
-        `${import.meta.env.VITE_BASE_API_URL}/counsellor/register-counsellor`,
+        `${import.meta.env.VITE_BASE_API_URL}/counsellor/register`,
         formDataObj,
         {
           headers: {
@@ -202,12 +241,13 @@ const CounsellorSignUp = () => {
       );
 
       if (response.status === 201) {
-        alert("Counsellor Sign-up successful!");
-        navigate("/counsellor");
+        setToast({ message: "Counsellor Sign-up successful!", type: "success" });
+        setTimeout(() => navigate("/counsellorDashboard"), 1200);
+      } else {
+        setToast({ message: (response.data?.message || "Registration failed.") + " If the issue persists, please contact the developer.", type: "error" });
       }
     } catch (error) {
-      console.error("Submission error:", error);
-      alert("Registration failed: " + (error.response?.data?.message || error.message));
+      setToast({ message: (error.response?.data?.message || "Error during registration.") + " If the issue persists, please contact the developer.", type: "error" });
     } finally {
       setLoading(false);
     }
@@ -286,6 +326,7 @@ const CounsellorSignUp = () => {
 
   return (
     <div className="auth-page">
+      <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: "", type: "info" })} />
       <div className="auth-container">
         <a className="flex items-center flex-shrink-0 font-medium text-gray-900 transition-all duration-300 title-font group hover:scale-105" style={{ marginBottom: '1rem' }}>
           <div className="relative">

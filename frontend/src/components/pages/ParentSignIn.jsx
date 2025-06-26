@@ -2,44 +2,56 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import "./StudentSignIn.css";
+import Toast from "./Toast";
+
 const ParentSignIn = () => {
   const navigate = useNavigate();
-
   const [phoneNumber, setPhoneNumber] = useState("");
-
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
-  const [otpError, setOtpError] = useState(false);
+  const [otpError, setOtpError] = useState("");
   const [otpTimer, setOtpTimer] = useState(30);
-  const [showPassword, setShowPassword] = useState(false);
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [toast, setToast] = useState({ message: "", type: "info" });
+  const [errorCount, setErrorCount] = useState(0);
+
+  // Validate phone number (10 digits, numeric)
+  const validatePhone = (num) => /^\d{10}$/.test(num);
+
+  const showErrorToast = (msg) => {
+    setErrorCount((prev) => prev + 1);
+    const suffix = errorCount >= 2 ? " If the issue persists, please contact the developer." : "";
+    setToast({ message: msg + suffix, type: "error" });
+  };
 
   const handleSendOtp = async () => {
-    if (phoneNumber.length === 10) {
-      setIsSendingOtp(true);
-      try {
-        const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/parent/send-otp`, {
-          mobileNumber: phoneNumber,
-        });
-        if (response.data.success) {
-          setOtpSent(true);
-          setOtpError(false);
-          alert("OTP sent to your phone!");
-          startOtpTimer();
-        }
-      } catch (error) {
-        alert("Error sending OTP: " + error.response?.data?.error || "Please try again");
-      } finally {
-        setIsSendingOtp(false);
+    if (!validatePhone(phoneNumber)) {
+      setOtpError("Please enter a valid 10-digit phone number.");
+      showErrorToast("Please enter a valid 10-digit phone number.");
+      return;
+    }
+    setIsSendingOtp(true);
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/parent/send-otp`, {
+        mobileNumber: phoneNumber,
+      });
+      if (response.data.success) {
+        setOtpSent(true);
+        setOtpError("");
+        setToast({ message: "OTP sent to your phone!", type: "success" });
+        startOtpTimer();
       }
-    } else {
-      alert("Please enter a valid phone number.");
+    } catch (error) {
+      setToast({ message: error.response?.data?.error || "Error sending OTP. Please try again.", type: "error" });
+    } finally {
+      setIsSendingOtp(false);
     }
   };
 
   const startOtpTimer = () => {
     let timer = 30;
+    setOtpTimer(timer);
     const intervalId = setInterval(() => {
       timer -= 1;
       setOtpTimer(timer);
@@ -58,29 +70,32 @@ const ParentSignIn = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (otp.length !== 6) {
-      setOtpError(true);
-      alert("Please enter a valid 6-digit OTP.");
+    setOtpError("");
+    if (!validatePhone(phoneNumber)) {
+      setOtpError("Please enter a valid 10-digit phone number.");
+      showErrorToast("Please enter a valid 10-digit phone number.");
       return;
     }
-
+    if (otp.length !== 6) {
+      setOtpError("Please enter a valid 6-digit OTP.");
+      showErrorToast("Please enter a valid 6-digit OTP.");
+      return;
+    }
     setIsSubmitting(true);
     try {
       const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/parent/login`, {
         mobileNumber: phoneNumber,
         otp,
       });
-      
       if (response.status === 200) {
         const { accessToken } = response.data.data;
         sessionStorage.setItem("accessToken", accessToken);
-        alert("Login successful!");
-        navigate("/ParentDashboard");
+        setToast({ message: "Login successful!", type: "success" });
+        setTimeout(() => navigate("/ParentDashboard"), 1200);
       }
     } catch (error) {
-      setOtpError(true);
-      alert("Error during login: " + (error.response?.data?.message || "Please try again"));
+      setOtpError(error.response?.data?.message || "Error during login. Please try again.");
+      setToast({ message: error.response?.data?.message || "Error during login. Please try again.", type: "error" });
     } finally {
       setIsSubmitting(false);
     }
@@ -88,6 +103,7 @@ const ParentSignIn = () => {
 
   return (
     <div className="auth-page">
+      <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: "", type: "info" })} />
       <div className="auth-container">
         <a className="flex items-center flex-shrink-0 font-medium text-gray-900 transition-all duration-300 title-font group hover:scale-105" style={{ marginBottom: '1rem' }}>
           <div className="relative">
@@ -103,20 +119,20 @@ const ParentSignIn = () => {
             <h2 className="card-title">Parent Sign In</h2>
             <p>Access your account to track progress</p>
           </div>
-
           <form onSubmit={handleSubmit} className="form-container">
             <div className="form-group">
               <label htmlFor="phoneNumber" className="form-label">Phone Number</label>
               <input
                 id="phoneNumber"
                 type="tel"
-                className="form-input"
+                className={`form-input${otpError && !otpSent ? ' error' : ''}`}
                 value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
+                onChange={(e) => { setPhoneNumber(e.target.value); setOtpError(""); }}
                 placeholder="Enter your 10-digit phone number"
                 maxLength={10}
                 required
               />
+              {otpError && !otpSent && <div className="error-message">{otpError}</div>}
             </div>
             <div className="form-group">
               <label htmlFor="otp" className="form-label">OTP Verification</label>
@@ -124,12 +140,9 @@ const ParentSignIn = () => {
                 <input
                   id="otp"
                   type="text"
-                  className={`form-input ${otpError ? 'error' : ''}`}
+                  className={`form-input${otpError && otpSent ? ' error' : ''}`}
                   value={otp}
-                  onChange={(e) => {
-                    setOtp(e.target.value);
-                    if (otpError) setOtpError(false);
-                  }}
+                  onChange={(e) => { setOtp(e.target.value); setOtpError(""); }}
                   placeholder="Enter 6-digit OTP"
                   maxLength={6}
                   required
@@ -145,9 +158,7 @@ const ParentSignIn = () => {
                   {isSendingOtp ? "Sending..." : "Send OTP"}
                 </button>
               </div>
-              {otpError && (
-                <div className="error-message">Invalid OTP. Please try again.</div>
-              )}
+              {otpError && otpSent && <div className="error-message">{otpError}</div>}
               {otpTimer > 0 && (
                 <div className="otp-timer">Resend available in {otpTimer} seconds</div>
               )}
@@ -168,7 +179,6 @@ const ParentSignIn = () => {
               {isSubmitting ? "Signing In..." : "Sign In"}
             </button>
           </form>
-
           <div className="auth-links">
             <p>
               <Link to="/parent-signup" className="auth-link parent">
