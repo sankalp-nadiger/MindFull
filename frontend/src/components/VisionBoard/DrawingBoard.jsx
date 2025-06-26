@@ -82,6 +82,9 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
 
   const handleMouseDown = (e) => {
     if (tool !== 'select') return;
+    if (e.target !== e.target.getStage()) {
+    return;
+  }
     
     e.cancelBubble = true;
     if (e.evt) {
@@ -1296,27 +1299,49 @@ const ToolBar = () => {
               {/* Canvas Controls */}
               <div className="flex gap-2 justify-end">
                 <button
-                  onClick={handleUndo}
-                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 cursor-pointer"
-                  disabled={elements.length === 0}
-                  title="Undo (Ctrl+Z)"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 14L4 9l5-5"/>
-                    <path d="M4 9h11c4 0 7 3 7 7v0c0 4-3 7-7 7H8"/>
-                  </svg>
-                </button>
+  onClick={handleUndo}
+  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 cursor-pointer"
+  disabled={elements.length === 0}
+  title="Undo (Ctrl+Z)"
+>
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width="16" 
+    height="16" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className="text-black" 
+  >
+    <path d="M9 14L4 9l5-5"/>
+    <path d="M4 9h11c4 0 7 3 7 7v0c0 4-3 7-7 7H8"/>
+  </svg>
+</button>
                 <button
-                  onClick={handleRedo}
-                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 cursor-pointer"
-                  disabled={redoStack.length === 0}
-                  title="Redo (Ctrl+Y)"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M15 14l5-5-5-5"/>
-                    <path d="M20 9H9C5 9 2 12 2 16v0c0 4 3 7 7 7h8"/>
-                  </svg>
-                </button>
+  onClick={handleRedo}
+  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 cursor-pointer"
+  disabled={redoStack.length === 0}
+  title="Redo (Ctrl+Y)"
+>
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width="16" 
+    height="16" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor"
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className="text-black" 
+  >
+    <path d="M15 14l5-5-5-5"/>
+    <path d="M20 9H9C5 9 2 12 2 16v0c0 4 3 7 7 7h8"/>
+  </svg>
+</button>
 
                 <button
                   onClick={() => handleZoom('out')}
@@ -1644,40 +1669,57 @@ const handleEraser = (e) => {
   
   // Erase from elements array (finished drawings)
   setElements(prevElements => {
-    const newElements = prevElements.filter(element => {
+    return prevElements.filter(element => {
       if (element.type === 'drawing') {
         const points = element.points;
-        
-        // Check if any point in the drawing is within eraser radius
-        for (let i = 0; i < points.length; i += 2) {
-          const dx = points[i] - actualPos.x;
-          const dy = points[i + 1] - actualPos.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
+        for (let i = 0; i < points.length - 2; i += 2) {
+          // Check line segment between points
+          const start = { x: points[i], y: points[i+1] };
+          const end = { x: points[i+2], y: points[i+3] };
           
+          // Calculate distance from point to line segment
+          const distance = pointToLineDistance(actualPos, start, end);
           if (distance < eraserRadius) {
-            return false; // Remove this element
+            return false;
           }
         }
       }
-      return true; // Keep non-drawing elements and drawings not touched by eraser
+      return true;
     });
-    
-    // If any elements were removed, save to undo stack
-    if (newElements.length < prevElements.length) {
-      const removedElements = prevElements.filter(el => !newElements.includes(el));
-      setUndoStack(prev => [...prev, {
-        action: 'erase',
-        elements: prevElements,
-        removedElements
-      }]);
-      setRedoStack([]);
-    }
-    
-    return newElements;
   });
 
-  // Create a copy of pen points before modification for history
-  const prevPenPoints = [...penPoints];
+
+  const pointToLineDistance = (point, lineStart, lineEnd) => {
+  const A = point.x - lineStart.x;
+  const B = point.y - lineStart.y;
+  const C = lineEnd.x - lineStart.x;
+  const D = lineEnd.y - lineStart.y;
+
+  const dot = A * C + B * D;
+  const lenSq = C * C + D * D;
+  let param = -1;
+  
+  if (lenSq !== 0) {
+    param = dot / lenSq;
+  }
+
+  let xx, yy;
+
+  if (param < 0) {
+    xx = lineStart.x;
+    yy = lineStart.y;
+  } else if (param > 1) {
+    xx = lineEnd.x;
+    yy = lineEnd.y;
+  } else {
+    xx = lineStart.x + param * C;
+    yy = lineStart.y + param * D;
+  }
+
+  const dx = point.x - xx;
+  const dy = point.y - yy;
+  return Math.sqrt(dx * dx + dy * dy);
+};
   
   // Erase from pen points (currently being drawn)
   setPenPoints(prevPoints => {
