@@ -119,7 +119,13 @@ const userSchema = new Schema( {
             reviewedAt: Date
           }
         ],
-        
+        counselorProgress: [
+  {
+    counselor: { type: Schema.Types.ObjectId, ref: "Counsellor" },
+    sittingProgress: { type: Number, default: 0 },
+    lastSession: { type: Date }
+  }
+],
 }, { timestamps: true})
 
 userSchema.methods.assignRandomAvatar = async function () {

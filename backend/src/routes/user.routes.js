@@ -49,7 +49,8 @@ router.get("/progress", user_verifyJWT, userProgress);
 router.post("/feedback",user_verifyJWT,updateFeedback)
 
 router.get("/month-avg-mood", user_verifyJWT, calculateAverageMood); 
-
+router.get('/last-counselor-progress', auth, getLastCounselorProgress);
+router.post('/update-counselor-progress', auth, updateCounselorProgress);
 router.get("/week-mood-chart", user_verifyJWT, getWeeklyMoodData); 
 router.get("/sessions",user_verifyJWT,getActiveSessions)
 router.get('/generate-report', async (req, res) => {

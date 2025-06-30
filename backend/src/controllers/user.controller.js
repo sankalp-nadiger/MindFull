@@ -928,6 +928,33 @@ const getJournals = async (req, res) => {
   }
 };
 
+export const getLastCounselorProgress = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  // Find last session
+  const lastSession = await Session.findOne({ user: userId })
+    .sort({ endedAt: -1 })
+    .populate('counselor');
+  if (!lastSession || !lastSession.counselor) {
+    return res.json({ hasProgress: false });
+  }
+  // Find progress for this counselor
+  const user = await User.findById(userId);
+  const progress = user.counselorProgress.find(
+    (cp) => cp.counselor.toString() === lastSession.counselor._id.toString()
+  );
+  if (progress && progress.sittingProgress > 0) {
+    return res.json({
+      hasProgress: true,
+      counselor: {
+        _id: lastSession.counselor._id,
+        fullName: lastSession.counselor.fullName,
+        sittingProgress: progress.sittingProgress
+      }
+    });
+  }
+  return res.json({ hasProgress: false });
+});
+
 export {
   registerUser, extractMobileNumber,
   loginUser,
