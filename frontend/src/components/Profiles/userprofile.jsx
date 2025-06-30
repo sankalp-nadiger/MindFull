@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { User, Users, Mail, Book, Edit2, Upload, Star, Heart, Shield, Clock, Target } from "lucide-react";
 import Navbar from "../Navbar/Navbar";
 import Footer from "../Footer/Footer";
@@ -9,69 +9,77 @@ import FloatingChatButton from "../ChatBot/FloatingChatButton";
 export default function UserProfile() {
   const [isEditing, setIsEditing] = useState(false);
   const [userDetails, setUserDetails] = useState(null);
-  const [image, setImage] = useState("profile.png");
   const [newInterest, setNewInterest] = useState("");
   const [isGoal, setIsGoal] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Memoized fetch function to prevent unnecessary re-renders
+  const fetchUserProfile = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const accessToken = sessionStorage.getItem("accessToken");
+      if (!accessToken) {
+        console.error("No access token found");
+        setIsLoading(false);
+        return;
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/users/current`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUserDetails(data.data);
+      } else {
+        console.error("Failed to fetch user profile");
+      }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const accessToken = sessionStorage.getItem("accessToken");
-        if (!accessToken) {
-          console.error("No access token found");
-          return;
-        }
-
-        const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/users/current`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setUserDetails(data.data);
-          setImage(data.data.avatar || "profile.png");
-        } else {
-          console.error("Failed to fetch user profile");
-        }
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
-      }
-    };
-
     fetchUserProfile();
-  }, []);
+  }, [fetchUserProfile]);
 
   const handleImageChange = async (event) => {
     const file = event.target.files[0];
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setImage(imageUrl);
+    if (!file) return;
 
-      const formData = new FormData();
-      formData.append("avatar", file);
+    const formData = new FormData();
+    formData.append("avatar", file);
 
-      try {
-        const accessToken = sessionStorage.getItem("accessToken");
-        const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/users/update-avatar`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: formData,
-        });
+    try {
+      const accessToken = sessionStorage.getItem("accessToken");
+      const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/users/update-avatar`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: formData,
+      });
 
-        if (!response.ok) {
-          throw new Error("Failed to update avatar");
-        }
-      } catch (error) {
-        console.error("Error updating avatar:", error);
-        setImage(userDetails.avatar || "profile.png");
+      if (response.ok) {
+        const updatedData = await response.json();
+        // Update userDetails with new avatar URL instead of managing separate image state
+        setUserDetails(prev => ({
+          ...prev,
+          avatar: updatedData.avatar || URL.createObjectURL(file)
+        }));
+      } else {
+        throw new Error("Failed to update avatar");
       }
+    } catch (error) {
+      console.error("Error updating avatar:", error);
+      // You might want to show an error message to the user here
     }
   };
 
@@ -171,7 +179,7 @@ export default function UserProfile() {
     }
   };
 
-  if (!userDetails) {
+  if (isLoading || !userDetails) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-900 via-gray-900 to-black flex items-center justify-center">
         <div className="text-center">
@@ -184,10 +192,9 @@ export default function UserProfile() {
 
   return (
     <>
-
-      <div className="min-h-screen bg-gradient-to-b from-slate-900 via-gray-900 to-black text-gray-100">
-              <Navbar />
-        <div className="max-w-6xl mx-auto p-6">
+      <div className="min-h-screen bg-gradient-to-b from-slate-900 via-gray-900 to-black text-gray-100 overflow-x-hidden">
+        <Navbar />
+        <div className="max-w-6xl mx-auto p-4 sm:p-6">
           <div className="bg-gray-900 rounded-2xl shadow-2xl border border-gray-800 overflow-hidden">
             {/* Header Section */}
             <div className="bg-gradient-to-r from-emerald-800/30 to-teal-800/30 p-6 border-b border-gray-800">
@@ -195,15 +202,18 @@ export default function UserProfile() {
               <p className="text-gray-300">Manage your personal information and wellness preferences</p>
             </div>
 
-            <div className="flex flex-col lg:flex-row">
+            <div className="flex flex-col xl:flex-row min-h-0">
               {/* Profile Sidebar */}
-              <div className="w-full lg:w-1/3 bg-gray-800/50 p-8 border-r border-gray-800">
+              <div className="w-full xl:w-1/3 bg-gray-800/50 p-4 sm:p-6 lg:p-8 xl:border-r xl:border-gray-800 flex-shrink-0">
                 <div className="text-center">
                   <div className="relative inline-block">
                     <img
-                      src={image}
+                      src={userDetails.avatar || "profile.png"}
                       className="w-32 h-32 rounded-full object-cover border-4 border-emerald-500/50 shadow-lg"
                       alt="Profile"
+                      onError={(e) => {
+                        e.target.src = "profile.png";
+                      }}
                     />
                     <input
                       type="file"
@@ -248,9 +258,9 @@ export default function UserProfile() {
               </div>
 
               {/* Main Content */}
-              <div className="w-full lg:w-2/3 p-8">
-                <div className="flex justify-between items-center mb-8">
-                  <h3 className="text-2xl font-semibold text-white">Personal Information</h3>
+              <div className="w-full xl:w-2/3 p-4 sm:p-6 lg:p-8 min-w-0 flex-1">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 mb-8">
+                  <h3 className="text-xl sm:text-2xl font-semibold text-white">Personal Information</h3>
                   <button
                     onClick={() => {
                       if (isEditing) {
@@ -259,16 +269,16 @@ export default function UserProfile() {
                         setIsEditing(true);
                       }
                     }}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-6 rounded-lg flex items-center transition-all duration-200 shadow-lg hover:shadow-emerald-500/25"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 sm:px-6 rounded-lg flex items-center transition-all duration-200 shadow-lg hover:shadow-emerald-500/25 text-sm sm:text-base"
                   >
-                    <Edit2 size={18} className="mr-2" />
+                    <Edit2 size={16} className="mr-2" />
                     {isEditing ? "Save Changes" : "Edit Profile"}
                   </button>
                 </div>
 
                 <div className="space-y-6">
                   {/* Basic Information Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                     {Object.entries(userDetails).map(([field, value]) => {
                       const excludedFields = [
                         "interests", "journals", "_id", "avatar", "goals", "events", 
@@ -292,7 +302,7 @@ export default function UserProfile() {
                             value={value || ''}
                             onChange={(e) => handleEdit(field, e.target.value)}
                             disabled={!isEditing || isReadOnly}
-                            className={`w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-400 transition-all duration-200 ${
+                            className={`w-full bg-gray-800 border border-gray-700 rounded-lg px-3 sm:px-4 py-2 sm:py-3 text-white placeholder-gray-400 transition-all duration-200 text-sm sm:text-base ${
                               isEditing && !isReadOnly 
                                 ? 'focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500' 
                                 : 'cursor-default'
@@ -313,60 +323,64 @@ export default function UserProfile() {
                     
                     <div className="space-y-3">
                       {userDetails.interests?.map((interest, index) => (
-                        <div key={index} className="flex items-center space-x-3 bg-gray-900/50 rounded-lg p-3 border border-gray-700">
+                        <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 bg-gray-900/50 rounded-lg p-3 border border-gray-700">
                           <input
                             type="text"
                             value={interest.name}
                             onChange={(e) => handleInterestEdit(index, "name", e.target.value)}
                             disabled={!isEditing}
-                            className="flex-1 bg-gray-800 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                            className="w-full sm:flex-1 bg-gray-800 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm"
                           />
-                          <label className="flex items-center space-x-2 text-sm">
-                            <input
-                              type="checkbox"
-                              checked={interest.goal}
-                              onChange={(e) => handleInterestEdit(index, "goal", e.target.checked)}
-                              disabled={!isEditing}
-                              className="w-4 h-4 text-emerald-600 bg-gray-700 border-gray-600 rounded focus:ring-emerald-500"
-                            />
-                            <span className="text-gray-300">Goal</span>
-                          </label>
-                          {isEditing && (
-                            <button
-                              onClick={() => handleRemoveInterest(index)}
-                              className="text-red-400 hover:text-red-300 p-1 rounded transition-colors"
-                            >
-                              <span className="text-lg">×</span>
-                            </button>
-                          )}
+                          <div className="flex items-center justify-between w-full sm:w-auto space-x-3">
+                            <label className="flex items-center space-x-2 text-sm">
+                              <input
+                                type="checkbox"
+                                checked={interest.goal}
+                                onChange={(e) => handleInterestEdit(index, "goal", e.target.checked)}
+                                disabled={!isEditing}
+                                className="w-4 h-4 text-emerald-600 bg-gray-700 border-gray-600 rounded focus:ring-emerald-500"
+                              />
+                              <span className="text-gray-300">Goal</span>
+                            </label>
+                            {isEditing && (
+                              <button
+                                onClick={() => handleRemoveInterest(index)}
+                                className="text-red-400 hover:text-red-300 p-1 rounded transition-colors"
+                              >
+                                <span className="text-lg">×</span>
+                              </button>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
 
                     {isEditing && (
-                      <div className="mt-4 flex space-x-3">
+                      <div className="mt-4 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                         <input
                           type="text"
                           value={newInterest}
                           onChange={(e) => setNewInterest(e.target.value)}
-                          className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                          className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm"
                           placeholder="Add a new wellness interest..."
                         />
-                        <label className="flex items-center space-x-2 text-sm px-3">
-                          <input
-                            type="checkbox"
-                            checked={isGoal}
-                            onChange={(e) => setIsGoal(e.target.checked)}
-                            className="w-4 h-4 text-emerald-600 bg-gray-700 border-gray-600 rounded focus:ring-emerald-500"
-                          />
-                          <span className="text-gray-300">Goal</span>
-                        </label>
-                        <button
-                          onClick={handleAddInterest}
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
-                        >
-                          Add
-                        </button>
+                        <div className="flex items-center space-x-3">
+                          <label className="flex items-center space-x-2 text-sm px-3">
+                            <input
+                              type="checkbox"
+                              checked={isGoal}
+                              onChange={(e) => setIsGoal(e.target.checked)}
+                              className="w-4 h-4 text-emerald-600 bg-gray-700 border-gray-600 rounded focus:ring-emerald-500"
+                            />
+                            <span className="text-gray-300">Goal</span>
+                          </label>
+                          <button
+                            onClick={handleAddInterest}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors font-medium text-sm whitespace-nowrap"
+                          >
+                            Add
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -389,7 +403,7 @@ export default function UserProfile() {
           </div>
         </div>
       </div>
-            {/* Floating Chat Button */}
+      {/* Floating Chat Button */}
       <FloatingChatButton />
       <Footer />
     </>

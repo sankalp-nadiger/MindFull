@@ -12,8 +12,10 @@ import {
   ChevronDown
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 
 const VisionBoard = () => {
+  const { t } = useTranslation();
   const [isDrawingBoardVisible, setIsDrawingBoardVisible] = useState(false);
   const [visionBoards, setVisionBoards] = useState([]);
   const [infoOpen, setInfoOpen] = useState(false);
@@ -301,17 +303,15 @@ useEffect(() => {
 <div className="absolute top-36 right-80 text-green-200 opacity-40 text-2xl">💫</div>
 <div className="absolute top-68 right-56 text-cyan-200 opacity-40 text-2xl">🦋</div>
 <div className="absolute top-92 left-56 text-violet-200 opacity-40 text-2xl">🌺</div>
-<div className="absolute top-84 right-72 text-rose-200 opacity-40 text-2xl">🌈</div>
-
-        {/* Small wellness quote */}
+<div className="absolute top-84 right-72 text-rose-200 opacity-40 text-2xl">🌈</div>        {/* Small wellness quote */}
         <div className={`${themeClasses.quote} p-4 rounded-lg shadow-sm mb-8 max-w-3xl relative z-10`}>
           <p className={`text-center ${themeClasses.text}`}>
-            "Your vision board is a sacred space for your dreams. What you nurture with intention grows."
+            {t('visionBoard.welcomeQuote')}
           </p>
         </div>
 
         <div className="flex items-center justify-center mb-5 relative">
-          <h1 className={`text-2xl font-bold text-center ${themeClasses.text}`}>My Vision Boards</h1>
+          <h1 className={`text-2xl font-bold text-center ${themeClasses.text}`}>{t('visionBoard.myBoards')}</h1>
           <button 
             onClick={fetchVisionBoards}
             className={`ml-3 p-2 ${darkMode ? 'bg-indigo-100/10 text-indigo-400 hover:bg-indigo-100/20' : 'bg-blue-100 text-blue-600 hover:bg-blue-200'} rounded-full transition-all flex items-center justify-center`}

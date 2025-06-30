@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import "./StudentSignIn.css";
+import Toast from "./Toast";
+
 const StudentSignUp = () => {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -17,6 +17,8 @@ const StudentSignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [toast, setToast] = useState({ message: "", type: "info" });
+  const [errorCount, setErrorCount] = useState(0);
 
   const navigate = useNavigate();
 
@@ -35,37 +37,57 @@ const StudentSignUp = () => {
           };
 
           setLocation(locationData);
-          toast.success("Location retrieved successfully!");
+          setToast({ message: "Location retrieved successfully!", type: "success" });
           setIsLocating(false);
         },
         (error) => {
-          toast.error("Unable to retrieve your location. Please enable geolocation.");
+          setToast({ message: "Unable to retrieve your location. Please enable geolocation.", type: "error" });
           setIsLocating(false);
         }
       );
     } else {
-      toast.error("Geolocation is not supported by this browser.");
+      setToast({ message: "Geolocation is not supported by this browser.", type: "error" });
     }
+  };
+
+  // Validation helpers
+  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const validateUsername = (username) => username && username.length >= 3 && !username.includes(" ");
+  const validatePassword = (password) => password.length >= 6;
+
+  const showErrorToast = (msg) => {
+    setErrorCount((prev) => prev + 1);
+    const suffix = errorCount >= 2 ? " If the issue persists, please contact the developer." : "";
+    setToast({ message: msg + suffix, type: "error" });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if ([fullName, email, username, password].some((field) => field.trim() === "")) {
-      toast.error("Please fill out all required fields.");
+      showErrorToast("Please fill out all required fields.");
       return;
     }
-
+    if (!validateEmail(email)) {
+      showErrorToast("Please enter a valid email address.");
+      return;
+    }
+    if (!validateUsername(username)) {
+      showErrorToast("Please enter a valid username (min 3 chars, no spaces).");
+      return;
+    }
+    if (!validatePassword(password)) {
+      showErrorToast("Password must be at least 6 characters.");
+      return;
+    }
     if (parseInt(age, 10) < 18 && !idCardFile) {
-      toast.error("ID card upload is required for users under 18.");
+      showErrorToast("ID card upload is required for users under 18.");
       return;
     }
-
     if (!location) {
-      toast.error("Location is required. Please allow location access.");
+      showErrorToast("Location is required. Please allow location access.");
       return;
     }
-
     setIsSubmitting(true);
 
     const formData = new FormData();
@@ -91,7 +113,8 @@ const StudentSignUp = () => {
       if (response.status === 201) {
         const { accessToken, createdUser } = response.data.data || {};
 
-        toast.success("User registered successfully!");
+        setToast({ message: "Sign up successful!", type: "success" });
+        setTimeout(() => navigate("/MainPage"), 1200);
 
         if (accessToken) {
           sessionStorage.setItem("accessToken", accessToken);
@@ -100,14 +123,11 @@ const StudentSignUp = () => {
         if (createdUser) {
           sessionStorage.setItem("user", JSON.stringify(createdUser));
         }
-
-        navigate("/phase1");
       } else {
-        toast.error("Unexpected response from server.");
+        setToast({ message: (response.data?.message || "Registration failed.") + " If the issue persists, please contact the developer.", type: "error" });
       }
     } catch (error) {
-      console.error("Registration failed:", error);
-      toast.error(error.response?.data?.message || "Error during registration");
+      setToast({ message: (error.response?.data?.message || "Error during registration. Please try again.") + " If the issue persists, please contact the developer.", type: "error" });
     } finally {
       setIsSubmitting(false);
     }
@@ -118,19 +138,28 @@ const StudentSignUp = () => {
     if (file) {
       setIdCardFile(file);
       setIdCardFileName(file.name);
-      toast.success("ID card uploaded successfully!");
+      setToast({ message: "ID card uploaded successfully!", type: "success" });
     }
   };
 
   return (
     <div className="auth-page">
+      <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: "", type: "info" })} />
     <div className="auth-container">
-      <h1 className="app-title student">MindFull</h1>
+      <a className="flex items-center flex-shrink-0 font-medium text-gray-900 transition-all duration-300 title-font group hover:scale-105" style={{ marginBottom: '1rem' }}>
+          <div className="relative">
+            <img src="plant.png" alt="Logo" className="w-8 h-8 transition-transform duration-300 group-hover:rotate-12" />
+            <div className="absolute inset-0 transition-opacity duration-300 rounded-full opacity-0 bg-gradient-to-r from-blue-400/20 to-green-400/20 group-hover:opacity-100 blur-sm"></div>
+          </div>
+          <span className="ml-3 text-3xl font-bold tracking-wide text-transparent bg-gradient-to-r from-blue-400 via-teal-400 to-green-400 bg-clip-text">
+            MindFull
+          </span>
+        </a>
 
       <div className="auth-card">
         <div className="card-header">
           <h2 className="card-title">Student Sign Up</h2>
-          <p>Create your account to get started</p>
+          <p className="text-indigo-600">Create your account to get started</p>
         </div>
 
         <form onSubmit={handleSubmit} className="form-container">
@@ -291,18 +320,6 @@ const StudentSignUp = () => {
         </div>
       </div>
       </div>
-      <ToastContainer 
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        className="toast-container"
-      />
     </div>
   );
 };
