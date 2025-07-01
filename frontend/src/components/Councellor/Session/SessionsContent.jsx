@@ -233,7 +233,28 @@ const SessionsContent = () => {
   const [showReview, setShowReview] = useState(false);
   const [reviewSessionData, setReviewSessionData] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [inSittingSeries, setInSittingSeries] = useState(false);
+  const [sittingNotes, setSittingNotes] = useState('');
 
+  // Helper to check sitting series for a user
+  const fetchSittingSeries = async (userId) => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_BASE_API_URL}/counsellor/check-sitting-series`,
+        {
+          params: { userId },
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
+          },
+        }
+      );
+      setInSittingSeries(response.data.inSittingSeries);
+      setSittingNotes(response.data.sittingNotes || '');
+    } catch (err) {
+      setInSittingSeries(false);
+      setSittingNotes('');
+    }
+  };
   useEffect(() => {
     const fetchActiveSessions = async () => {
       try {
@@ -286,6 +307,12 @@ const SessionsContent = () => {
         }
       );
 
+      // Find userId for this session
+      const session = sessions.find(s => s._id === sessionId);
+      if (session && session.user && session.user._id) {
+        await fetchSittingSeries(session.user._id);
+      }
+
       setSessions((prevSessions) =>
         prevSessions.map((session) =>
           session._id === sessionId ? { ...session, status: 'Active' } : session
@@ -313,8 +340,13 @@ const SessionsContent = () => {
         }
       );
 
-      // Check if user's sittingProgress is 0
-      if (response.data.user?.sittingProgress === 0) {
+      // Always check sitting series after session ends
+      if (response.data.user?.userId) {
+        await fetchSittingSeries(response.data.user.userId);
+      }
+
+      // Show review modal if not in sitting series or sittings just ended
+      if (!response.data.user?.inSittingSeries) {
         setReviewSessionData({
           sessionId: sessionId,
           duration: response.data.duration || 'N/A',
@@ -582,6 +614,8 @@ const SessionsContent = () => {
         onClose={() => setShowReview(false)}
         sessionData={reviewSessionData}
         userId={currentUserId}
+        inSittingSeries={inSittingSeries}
+        sittingNotes={sittingNotes}
       />
     </div>
   );

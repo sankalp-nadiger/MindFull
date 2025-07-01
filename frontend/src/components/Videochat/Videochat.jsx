@@ -24,6 +24,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { Link } from "react-router-dom";
+import Toast from "../pages/Toast";
 
 const getSocket = () => {
   if (!window.socketInstance) {
@@ -414,6 +415,9 @@ const VideoChat = () => {
   const [rating, setRating] = useState(5);
   const [sessions, setSessions] = useState([]);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+  const [showCounselorChoice, setShowCounselorChoice] = useState(false);
+  const [lastCounselor, setLastCounselor] = useState(null);
+  const [toast, setToast] = useState({ message: "", type: "info" });
 
   // Memoized API functions to prevent re-creation
   const requestSession = useCallback(async () => {
@@ -596,6 +600,52 @@ const VideoChat = () => {
     fetchSessions(); // Refresh sessions
   }, [fetchSessions]);
 
+  // On mount, check for last counselor progress
+  useEffect(() => {
+    const checkProgress = async () => {
+      try {
+        const token = sessionStorage.getItem('accessToken');
+        const res = await axios.get(
+          `${import.meta.env.VITE_BASE_API_URL}/users/last-counselor-progress`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (res.data.hasProgress) {
+          setLastCounselor(res.data.counselor);
+          setShowCounselorChoice(true);
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+    checkProgress();
+  }, []);
+
+  // Handler for user choice
+  const handleCounselorChoice = async (continueWithSame) => {
+    setShowCounselorChoice(false);
+    try {
+      const token = sessionStorage.getItem('accessToken');
+      await axios.post(
+        `${import.meta.env.VITE_BASE_API_URL}/users/update-counselor-progress`,
+        { counselorId: lastCounselor._id, continueWithSame },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!continueWithSame) {
+        setToast({
+          message: "You chose to change counselor. Your sittings & progress with the previous counselor will be retained. We won't connect you with the previous counselor.",
+          type: "warning"
+        });
+      } else {
+        setToast({
+          message: "Continuing with the same counselor. Your sittings & progress will continue.",
+          type: "success"
+        });
+      }
+    } catch (e) {
+      setToast({ message: "Error updating counselor progress.", type: "error" });
+    }
+  };
+
   // Effects
   useEffect(() => {
     fetchSessions();
@@ -653,6 +703,33 @@ const VideoChat = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      {toast.message && <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: "", type: "info" })} />}
+      {/* Counselor choice modal */}
+      {showCounselorChoice && lastCounselor && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-slate-900 rounded-xl p-8 max-w-md w-full border border-emerald-500/30 shadow-2xl">
+            <h2 className="text-xl font-bold text-white mb-4">Continue with previous counselor?</h2>
+            <p className="text-slate-300 mb-4">
+              You have <span className="font-semibold text-emerald-400">{lastCounselor.sittingProgress}</span> sittings in progress with <span className="font-semibold">{lastCounselor.fullName}</span>.<br />
+              <span className="text-amber-400">If you change counselor, your sittings & progress with the previous counselor will be reset.</span>
+            </p>
+            <div className="flex gap-4">
+              <button
+                className="flex-1 py-2 px-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg font-semibold"
+                onClick={() => handleCounselorChoice(true)}
+              >
+                Continue with Same
+              </button>
+              <button
+                className="flex-1 py-2 px-4 bg-slate-700 text-slate-200 rounded-lg font-semibold border border-slate-600"
+                onClick={() => handleCounselorChoice(false)}
+              >
+                Change Counselor
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-700 shadow-xl">
         <div className="max-w-7xl mx-auto px-4 py-4">

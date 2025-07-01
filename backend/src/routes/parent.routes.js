@@ -13,6 +13,7 @@ import {
   getCriticalAlerts,
   getUpcomingSessions,
   requestCounselorMeeting,
+  getParentCounselorMeetings
 } from "../controllers/parent.controller.js";
 import { getWeeklyMoodData } from "../controllers/user.controller.js";
 
@@ -31,5 +32,6 @@ router.get("/week-mood-chart", parent_verifyJWT, getWeeklyMoodData);
 router.get("/parent/critical-alerts", parent_verifyJWT, getCriticalAlerts);
 router.get("/parent/upcoming-sessions", parent_verifyJWT, getUpcomingSessions);
 router.post("/parent/request-counselor", parent_verifyJWT, requestCounselorMeeting);
+router.get("/parent/counselor-meetings", parent_verifyJWT, getParentCounselorMeetings);
 
 export default router;

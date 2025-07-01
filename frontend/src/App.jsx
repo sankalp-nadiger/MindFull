@@ -2,6 +2,7 @@ import React, { Suspense } from "react"
 import {BrowserRouter as Router,Routes,Route} from "react-router-dom"
 import LoadingSpinner from "./components/LoadingSpinner/LoadingSpinner"
 import PageSkeleton from "./components/LoadingSpinner/PageSkeleton"
+import HealthNutritionWebsite from "./components/HomePage/testing"
 
 // Import i18n setup
 import './i18n'
@@ -56,6 +57,7 @@ function App() {
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             <Route path="/" element={<HomePage />} />
+             <Route path="/test" element={<HealthNutritionWebsite />} />
             <Route path="/ParentDashboard" element={
               <Suspense fallback={<PageSkeleton />}>
                 <ParentDashboard />

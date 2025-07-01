@@ -12,7 +12,6 @@ const parentSchema = new Schema({
   },
   email: {
     type: String,
-    //required: true,
     unique: true,
     lowercase: true,
   },
@@ -29,6 +28,24 @@ const parentSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'User', 
   },
+  parentCounselorMeetings: [
+    {
+      counselor: {
+        type: Schema.Types.ObjectId,
+        ref: 'Counsellor',
+      },
+      date: { type: Date },
+      time: { type: String },
+      reason: { type: String },
+      status: {
+        type: String,
+        enum: ['Requested', 'Scheduled', 'Completed', 'Rejected'],
+        default: 'Requested',
+      },
+      createdAt: { type: Date, default: Date.now },
+      updatedAt: { type: Date, default: Date.now },
+    }
+  ],
 }, { timestamps: true });
 parentSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next();

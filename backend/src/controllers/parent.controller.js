@@ -1,3 +1,20 @@
+// Fetch all parent-counselor meetings for the logged-in parent
+const getParentCounselorMeetings = async (req, res) => {
+    const parentId = req.parent._id;
+    try {
+        const parent = await Parent.findById(parentId).populate({
+            path: 'parentCounselorMeetings.counselor',
+            select: 'fullName email specialization',
+        });
+        if (!parent) {
+            return res.status(404).json({ success: false, message: 'Parent not found' });
+        }
+        return res.status(200).json({ success: true, meetings: parent.parentCounselorMeetings });
+    } catch (error) {
+        console.error('Error fetching parent-counselor meetings:', error);
+        return res.status(500).json({ success: false, message: 'Failed to fetch meetings', error: error.message });
+    }
+};
 import mongoose from "mongoose";
 import asyncHandler from "../utils/asynchandler.utils.js";
 import {ApiError} from "../utils/API_Error.js";
@@ -517,21 +534,25 @@ const getUpcomingSessions = async (req, res) => {
 // Request a counselor meeting
 const requestCounselorMeeting = async (req, res) => {
     const parentId = req.parent._id;
-    const { preferredDate, preferredTime, reason } = req.body;
+    const { counselorId, preferredDate, preferredTime, reason } = req.body;
     try {
-        const student = await User.findOne({ parent: parentId });
-        if (!student) {
-            return res.status(404).json({ success: false, message: 'No student found for this parent' });
+        // Add the meeting request to the parent's parentCounselorMeetings array
+        const parent = await Parent.findById(parentId);
+        if (!parent) {
+            return res.status(404).json({ success: false, message: 'Parent not found' });
         }
-        // Save as a new Session with status 'Requested' (or create a separate Request model if needed)
-        const session = await Session.create({
-            user: student._id,
-            status: 'Requested',
+        const meeting = {
+            counselor: counselorId,
             date: preferredDate,
             time: preferredTime,
-            issueDetails: reason,
-        });
-        return res.status(201).json({ success: true, message: 'Counselor meeting requested', sessionId: session._id });
+            reason,
+            status: 'Requested',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        };
+        parent.parentCounselorMeetings.push(meeting);
+        await parent.save();
+        return res.status(201).json({ success: true, message: 'Counselor meeting requested', meeting });
     } catch (error) {
         console.error('Error requesting counselor meeting:', error);
         return res.status(500).json({ success: false, message: 'Failed to request counselor meeting', error: error.message });
@@ -549,4 +570,5 @@ export {
     getCriticalAlerts,
     getUpcomingSessions,
     requestCounselorMeeting,
+    getParentCounselorMeetings,
 }

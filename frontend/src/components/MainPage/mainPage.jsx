@@ -34,6 +34,7 @@ export function HeroHighlightDemo() {
   const [userMood, setUserMood] = useState(null);
 
   const token = useMemo(() => sessionStorage.getItem("accessToken"), []);
+  
   // Memoized fetch functions
   const fetchUsername = useCallback(async () => {
     try {
@@ -123,6 +124,7 @@ export function HeroHighlightDemo() {
       <div className="w-8 h-8 border-b-2 border-purple-500 rounded-full animate-spin"></div>
     </div>
   );
+  
   return (
     <div className="w-full overflow-x-hidden">
       <Navbar />
@@ -143,7 +145,8 @@ export function HeroHighlightDemo() {
               >
                 {loading ? t('common.loading') : error ? `${t('common.error')}: ${error}` : username}
               </Highlight>
-            </motion.h1>            <div className="block w-full mt-6 text-xl text-center md:text-2xl lg:text-3xl dark:text-white">
+            </motion.h1>            
+            <div className="block w-full mt-6 text-xl text-center md:text-2xl lg:text-3xl dark:text-white">
               {t('dashboard.todayQuestion')}
             </div>
           </div>
@@ -159,47 +162,59 @@ export function HeroHighlightDemo() {
       </div>
 
       <div className="w-full p-6 bg-black">
-      <div className="max-w-[85rem] text-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto backdrop-blur-lg bg-gray-900 p-8 rounded-lg shadow-lg shadow-blue-500/50 hover:shadow-green-500/50 transition-shadow flex flex-col items-center text-center">
-    <DynamicCarousel />
-  </div>
-</div>
-
-
-      <div className="w-full p-6 bg-black">
-        <div className="max-w-[85rem] text-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto backdrop-blur-lg bg-gray-900 p-8 rounded-lg shadow-lg shadow-purple-500/50 hover:shadow-green-500/50 transition-shadow flex flex-col items-center text-center">
-          <h2 className="text-2xl font-bold md:text-3xl">
-            TaskMaster: Your Smart To-Do List Assistant
-          </h2>
-          <p className="mt-2 text-sm text-gray-300 md:text-lg">
-            Organize, prioritize, and complete your tasks efficiently. 
-            Keep track of progress, manage deadlines, and stay on top of your goals.
-          </p>
-          <Link
-            to="/todo"
-            className="px-6 py-2 mt-4 font-medium text-white transition rounded-lg bg-violet-600 hover:bg-blue-600"
-          >
-            View Tasks
-          </Link>
-        </div>      </div>
-
-      <div className="w-full p-6 bg-black">
-        <div className="max-w-[85rem] text-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto backdrop-blur-lg bg-gray-900 p-8 rounded-lg shadow-lg shadow-purple-500/50 hover:shadow-green-500/50 transition-shadow flex flex-col items-center text-center">
-          <h2 className="text-2xl font-bold md:text-3xl">
-            VisionFull: Visualize Your Dreams Into Reality
-          </h2>
-          <p className="mt-2 text-sm text-gray-300 md:text-lg">
-            Create digital vision boards that inspire and motivate. 
-            Collect images, quotes, and aspirations that help manifest your goals and dreams.
-          </p>
-          <Link
-            to="/vision-board"
-            className="px-6 py-2 mt-4 font-medium text-white transition rounded-lg bg-violet-600 hover:bg-blue-600"
-          >
-            View Vision Boards
-          </Link>
+        <div className="max-w-[85rem] text-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto backdrop-blur-lg bg-gray-900 p-8 rounded-lg shadow-lg shadow-blue-500/50 hover:shadow-green-500/50 transition-shadow flex flex-col items-center text-center">
+          <DynamicCarousel />
         </div>
       </div>
 
+      {/* Horizontal Layout for TaskMaster and VisionFull */}
+      <div className="w-full p-6 bg-black">
+        <div className="max-w-[85rem] mx-auto">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {/* TaskMaster Card */}
+            <div className="text-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14 backdrop-blur-lg bg-gray-900 rounded-lg shadow-lg shadow-purple-500/50 hover:shadow-blue-500/50 transition-all duration-300 transform hover:scale-105 flex flex-col items-center text-center">
+              <div className="mb-4 text-4xl">📋</div>
+              <h2 className="text-2xl font-bold md:text-3xl">
+                TaskMaster
+              </h2>
+              <p className="text-sm font-medium text-purple-400 mb-2">
+                Your Smart To-Do List Assistant
+              </p>
+              <p className="mt-2 text-sm text-gray-300 md:text-base flex-grow">
+                Organize, prioritize, and complete your tasks efficiently. 
+                Keep track of progress, manage deadlines, and stay on top of your goals.
+              </p>
+              <Link
+                to="/todo"
+                className="px-6 py-3 mt-6 font-medium text-white transition-all duration-300 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 transform hover:scale-105 shadow-lg"
+              >
+                Manage Tasks
+              </Link>
+            </div>
+
+            {/* VisionFull Card */}
+            <div className="text-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14 backdrop-blur-lg bg-gray-900 rounded-lg shadow-lg shadow-purple-500/50 hover:shadow-green-500/50 transition-all duration-300 transform hover:scale-105 flex flex-col items-center text-center">
+              <div className="mb-4 text-4xl">🎯</div>
+              <h2 className="text-2xl font-bold md:text-3xl">
+                VisionFull
+              </h2>
+              <p className="text-sm font-medium text-green-400 mb-2">
+                Visualize Your Dreams Into Reality
+              </p>
+              <p className="mt-2 text-sm text-gray-300 md:text-base flex-grow">
+                Create digital vision boards that inspire and motivate. 
+                Collect images, quotes, and aspirations that help manifest your goals and dreams.
+              </p>
+              <Link
+                to="/vision-board"
+                className="px-6 py-3 mt-6 font-medium text-white transition-all duration-300 rounded-lg bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 transform hover:scale-105 shadow-lg"
+              >
+                Create Vision Board
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="flex flex-col items-center justify-center w-full px-4 py-12 text-gray-100 bg-gradient-to-b from-black via-violet-700 to-black sm:px-6 lg:px-8">
         <div className="flex flex-col items-center justify-between w-full mx-auto lg:flex-row max-w-7xl">
@@ -229,7 +244,8 @@ export function HeroHighlightDemo() {
       </div>
 
       <div className="w-full">
-        <ExerciseCards/>      </div>
+        <ExerciseCards/>      
+      </div>
 
       <section className="w-full text-white bg-black body-font">
         <div className="container px-3 py-24 mx-auto">
