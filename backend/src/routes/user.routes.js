@@ -15,7 +15,9 @@ import {
   getActiveSessions,
   getJournals,
   updateFeedback,
-  getUserSessions
+  getUserSessions,
+  getLastCounselorProgress,
+  updateCounselorProgress,
 } from "../controllers/user.controller.js";
 import { addNotesToSession, endSession } from "../controllers/counsellor.controller.js";
 import {upload} from "../middleware/multer.middleware.js"
@@ -49,8 +51,8 @@ router.get("/progress", user_verifyJWT, userProgress);
 router.post("/feedback",user_verifyJWT,updateFeedback)
 
 router.get("/month-avg-mood", user_verifyJWT, calculateAverageMood); 
-router.get('/last-counselor-progress', auth, getLastCounselorProgress);
-router.post('/update-counselor-progress', auth, updateCounselorProgress);
+router.get('/last-counselor-progress', user_verifyJWT, getLastCounselorProgress);
+router.post('/update-counselor-progress', user_verifyJWT, updateCounselorProgress);
 router.get("/week-mood-chart", user_verifyJWT, getWeeklyMoodData); 
 router.get("/sessions",user_verifyJWT,getActiveSessions)
 router.get('/generate-report', async (req, res) => {

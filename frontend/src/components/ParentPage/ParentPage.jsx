@@ -1,5 +1,7 @@
+  const [counselorMeetings, setCounselorMeetings] = useState([]);
 "use client";
 import React, { useState, useEffect } from "react";
+import { BACKEND_URL } from "../../constants/config";
 // Navigation will be handled by parent component
 import { Bar, Line } from "react-chartjs-2";
 import {
@@ -61,7 +63,7 @@ function ParentDashboard({ parentId }) {
         ];
 
         const requests = urls.map(({ url }) =>
-          fetch(`https://api.mindfull.com${url}`, {
+          fetch(`${BACKEND_URL}${url}`, {
             method: "GET",
             headers: {
               Authorization: `Bearer ${token}`,
@@ -70,8 +72,16 @@ function ParentDashboard({ parentId }) {
           }).then((res) => res.json())
         );
 
-        const [moodRes, sessionsRes, journalsRes, issuesRes, reportRes] = await Promise.all(requests);
-        
+        // Fetch parent-counselor meetings in parallel
+        const meetingsPromise = fetch(`${BACKEND_URL}/parent/parent/counselor-meetings`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).then((res) => res.json());
+
+        const [moodRes, sessionsRes, journalsRes, issuesRes, reportRes, meetingsRes] = await Promise.all([
+          ...requests,
+          meetingsPromise,
+        ]);
+
         if (moodRes.data) {
           setMoodData(moodRes.data.map((val) => (val !== null ? val + 1 : 0)));
           setActivityData(moodRes.activitiesCompleted || Array(7).fill(0));
@@ -80,13 +90,14 @@ function ParentDashboard({ parentId }) {
         setJournals(journalsRes && journalsRes.journals ? journalsRes.journals : []);
         setIssues(issuesRes.issues || []);
         setReport(reportRes.data || null);
+        setCounselorMeetings(meetingsRes.meetings || []);
 
         // Fetch critical alerts and upcoming sessions
         const [alertsRes, upcomingRes] = await Promise.all([
-          fetch(`https://api.mindfull.com/parent/parent/critical-alerts`, {
+          fetch(`${BACKEND_URL}/parent/parent/critical-alerts`, {
             headers: { Authorization: `Bearer ${token}` },
           }).then((res) => res.json()),
-          fetch(`https://api.mindfull.com/parent/parent/upcoming-sessions`, {
+          fetch(`${BACKEND_URL}/parent/parent/upcoming-sessions`, {
             headers: { Authorization: `Bearer ${token}` },
           }).then((res) => res.json()),
         ]);
@@ -119,7 +130,7 @@ function ParentDashboard({ parentId }) {
     setRequestLoading(true);
     const token = sessionStorage.getItem("accessToken");
     try {
-      const res = await fetch("https://api.mindfull.com/parent/parent/request-counselor", {
+      const res = await fetch(`${BACKEND_URL}/parent/parent/request-counselor`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -432,18 +443,19 @@ function ParentDashboard({ parentId }) {
           </div>
 
           <div>
-            <h4 className="text-lg font-semibold text-gray-800 mb-4">Upcoming Sessions</h4>
+            <h4 className="text-lg font-semibold text-gray-800 mb-4">Parent-Counselor Meetings</h4>
             <div className="space-y-4">
-              {upcomingSessions.length > 0 ? upcomingSessions.map((session) => (
-                <div key={session.id} className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              {counselorMeetings.length > 0 ? counselorMeetings.map((meeting, idx) => (
+                <div key={meeting._id || idx} className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <div className="flex justify-between items-start mb-2">
-                    <h5 className="font-semibold text-gray-800">{session.counselor}</h5>
-                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Scheduled</span>
+                    <h5 className="font-semibold text-gray-800">{meeting.counselor?.fullName || 'N/A'}</h5>
+                    <span className={`px-2 py-1 text-xs rounded-full ${meeting.status === 'Completed' ? 'bg-green-100 text-green-800' : meeting.status === 'Scheduled' ? 'bg-blue-100 text-blue-800' : meeting.status === 'Rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>{meeting.status}</span>
                   </div>
-                  <p className="text-sm text-gray-600 mb-1">{session.type}</p>
-                  <p className="text-sm text-gray-500">{session.date} {session.time && `at ${session.time}`}</p>
+                  <p className="text-sm text-gray-600 mb-1">{meeting.counselor?.specialization || ''}</p>
+                  <p className="text-sm text-gray-500">{meeting.date ? new Date(meeting.date).toLocaleDateString() : ''} {meeting.time && `at ${meeting.time}`}</p>
+                  <p className="text-sm text-gray-500">Reason: {meeting.reason}</p>
                 </div>
-              )) : <p className="text-gray-500 text-center py-8">No upcoming sessions.</p>}
+              )) : <p className="text-gray-500 text-center py-8">No parent-counselor meetings found.</p>}
             </div>
           </div>
         </div>

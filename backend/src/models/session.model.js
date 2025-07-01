@@ -8,7 +8,7 @@ const sessionSchema = new mongoose.Schema({
     rating: { type: Number, default: 0 },
     status: { 
         type: String, 
-        enum: ["Pending", "Active", "Completed"], // added "Active" status for when session is ongoing
+        enum: ["Pending", "Active", "Completed"],
         default: "Pending" 
     },
     counselorFeedback: { type: String, default: "" },
@@ -16,7 +16,7 @@ const sessionSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now },
     startTime: { type: Date, required: true },
     endTime: { type: Date, },
-    duration: { type: Number}, // duration in minutes
+    duration: { type: Number}, 
     counsellorReview: {
         diagnosis: { type: String },
         symptoms: [{ type: String }],

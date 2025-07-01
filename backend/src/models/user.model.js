@@ -105,7 +105,7 @@ const userSchema = new Schema( {
         achievements: String,
         district: String,
         state: String,
-        sittingProgress: { type: Number, default:0},
+        sessionProgress: { type: Number, default: 15 },
         counsellorReviews: [
           {
             sessionId: { type: Schema.Types.ObjectId, ref: 'Session' },
@@ -120,12 +120,15 @@ const userSchema = new Schema( {
           }
         ],
         counselorProgress: [
-  {
-    counselor: { type: Schema.Types.ObjectId, ref: "Counsellor" },
-    sittingProgress: { type: Number, default: 0 },
-    lastSession: { type: Date }
-  }
-],
+          {
+            counselor: { type: Schema.Types.ObjectId, ref: "Counsellor" },
+            sittingProgress: { type: Number, default: 0 },
+            lastSession: { type: Date },
+            excludeNext: { type: Boolean, default: false }
+          }
+        ],
+        sittingNotes: { type: [String], default: [] },
+        inSittingSeries: { type: Boolean, default: false },
 }, { timestamps: true})
 
 userSchema.methods.assignRandomAvatar = async function () {

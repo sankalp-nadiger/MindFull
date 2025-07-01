@@ -955,6 +955,37 @@ export const getLastCounselorProgress = asyncHandler(async (req, res) => {
   return res.json({ hasProgress: false });
 });
 
+const updateCounselorProgress = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const { counselorId, sittingProgress, continueWithSame } = req.body;
+
+  if (!counselorId || typeof sittingProgress !== 'number') {
+    return res.status(400).json({ success: false, message: 'counselorId and sittingProgress (number) are required.' });
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    return res.status(404).json({ success: false, message: 'User not found.' });
+  }
+
+  // Only update or add progress for the specified counselor; do NOT reset or remove any previous progress
+  let progress = user.counselorProgress?.find(cp => cp.counselor.toString() === counselorId);
+  if (progress) {
+    progress.sittingProgress = sittingProgress;
+    // If user chose to change counselor, mark this counselor as excluded for next session
+    if (continueWithSame === false) {
+      progress.excludeNext = true;
+    } else {
+      progress.excludeNext = false;
+    }
+  } else {
+    if (!user.counselorProgress) user.counselorProgress = [];
+    user.counselorProgress.push({ counselor: counselorId, sittingProgress, excludeNext: continueWithSame === false });
+  }
+  await user.save();
+  return res.status(200).json({ success: true, message: 'Counselor progress updated', counselorProgress: user.counselorProgress });
+});
+
 export {
   registerUser, extractMobileNumber,
   loginUser,
@@ -965,5 +996,6 @@ export {
   getCurrentUser, getJournals,
   updateAccountDetails,
   addInterests, userProgress, calculateAverageMood,
-  getWeeklyMoodData, getUserSessions
+  getWeeklyMoodData, getUserSessions,
+  updateCounselorProgress
 };

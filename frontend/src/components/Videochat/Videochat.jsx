@@ -632,7 +632,7 @@ const VideoChat = () => {
       );
       if (!continueWithSame) {
         setToast({
-          message: "You chose to change counselor. Your sittings & progress with the previous counselor will be reset.",
+          message: "You chose to change counselor. Your sittings & progress with the previous counselor will be retained. We won't connect you with the previous counselor.",
           type: "warning"
         });
       } else {
