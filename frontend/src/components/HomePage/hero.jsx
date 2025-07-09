@@ -6,7 +6,7 @@ export function BackgroundBeamsWithCollisionDemo() {
   const navigate = useNavigate();
 
   const handleclick = () => {
-    navigate("/student-signin");
+    navigate("/signin");
   };
   
   return (

@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import RoleSelectionModal from "../../ui/RoleSelectModal";
+import { useDarkMode } from '../../contexts/DarkModeContext';
 import {
   Bot,
   HeartHandshake,
@@ -21,7 +23,7 @@ import {
 
 function FeatureCard({ icon, title, description }) {
   return (
-    <div className="bg-gray-50 dark:bg-gray-700 p-8 rounded-2xl shadow hover:shadow-lg transition duration-300 text-center">
+    <div className="bg-green-200  dark:bg-gray-700 p-8 rounded-2xl shadow hover:shadow-lg transition duration-300 text-center">
       <div className="mb-4">{icon}</div>
       <h3 className="text-xl font-semibold text-primaryblue dark:text-blue-400  mb-2">
         {title}
@@ -92,32 +94,7 @@ export default function HeroSection() {
   ];
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const useDarkMode = () => {
-    const [darkMode, setDarkMode] = useState(() => {
-      const storedPreference = localStorage.getItem("darkMode");
-      if (storedPreference !== null) {
-        return storedPreference === "true";
-      }
-
-      return window.matchMedia("(prefers-color-scheme: dark)").matches;
-    });
-
-    useEffect(() => {
-      if (darkMode) {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
-
-      localStorage.setItem("darkMode", darkMode);
-    }, [darkMode]);
-
-    const toggleDarkMode = () => {
-      setDarkMode((prev) => !prev);
-    };
-
-    return [darkMode, toggleDarkMode];
-  };
+  
 
   const [darkMode, toggleDarkMode] = useDarkMode();
   return (
@@ -187,10 +164,11 @@ export default function HeroSection() {
                   <Moon className="w-5 h-5 text-gray-600" />
                 )}
               </button>
+             
             </nav>
 
             <button className="hidden lg:block bg-green-500 dark:bg-green-600 text-white px-6 py-2 rounded-full font-medium hover:bg-green-600 dark:hover:bg-green-700 transition-colors shadow-lg">
-              Sign Up
+               <RoleSelectionModal btn="Signup"/>
             </button>
 
             {/* Mobile section */}
@@ -274,7 +252,7 @@ export default function HeroSection() {
 
           {/* Hero Section */}
           <div className="flex flex-col lg:flex-row items-center justify-center dark:bg-gray-900  ">
-            <div className="flex-1 lg:pr-12 mb-8 lg:ml-24   lg:mb-0">
+            <div className="flex-1 lg:pr-12 mb-8 lg:ml-24   lg:mb-16">
               <h1 className="text-5xl lg:text-7xl font-bold text-gray-900 dark:text-gray-50 leading-tight mb-6">
                 Your one stop
                 <br />
@@ -289,11 +267,9 @@ export default function HeroSection() {
                 Make sure your daily nutrition is sufficient. Consult your
                 problem about nutrition with us and live a healthier lifestyle.
               </p>
-              <div className="flex items-center space-x-6 mb-12">
-                <button className="bg-gradient-to-r from-green-500 to-blue-600 text-white px-10 py-4 rounded-full font-semibold hover:from-green-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
-                  Get Started
-                </button>
-              </div>
+            
+              
+             
               <div className="flex flex-wrap sm:justify-center gap-2 sm:gap-3 px-2 sm:px-0">
                 <span className="px-4 py-2 sm:px-6 sm:py-3 bg-white/80 dark:bg-gray-700 dark:border-gray-800 dark:text-white backdrop-blur-sm text-gray-700 rounded-full text-xs sm:text-sm font-medium border border-gray-200 hover:border-green-300 transition-colors shadow-sm">
                   Mental Wellness
@@ -363,25 +339,32 @@ export default function HeroSection() {
           </div>
         </div>
       </section>
-      <section className="bg-white dark:bg-gray-900 px-6 lg:px-24 font-poppins ">
+      <section className="bg-white dark:bg-gray-900   font-poppins ">
+        <div className="  ">
+      
+      <div
+        id="mind"
+        className=" py-10 text-center mb-12 px-36 relative dark:bg-gray-900  "
+      >
         <div
-          id="mind"
-          className="max-w-6xl mx-auto py-10 text-center mb-12 px-36 "
-        >
-          <div
-            className="absolute w-24 h-24 bg-green-300 rounded-full opacity-7 -top-10 -left-24  animate-pulse"
-            style={{ animationDuration: "2s" }}
-          ></div>
-          <h2 className="text-4xl lg:text-5xl font-bold text-primarygreen mb-4 ">
-            How It Works
-          </h2>
-          <p className="text-primaryblue text-lg font-semibold max-w-2xl mx-auto ">
-            Discover how Mindfull helps you create a calm, guided, and
-            personalized wellness experience — at your pace, in your way.
-          </p>
-        </div>
+          className="absolute w-24 h-24 bg-green-300 rounded-full opacity-7 -top-10 -left-24 animate-pulse"
+          style={{ animationDuration: "2s" }}
+        ></div>
+        <h2 className="text-4xl lg:text-6xl font-bold text-primarygreen mb-4 relative z-10 bg-white/20 dark:bg-black/20 backdrop-blur-sm rounded-lg px-4 py-2 inline-block">
+          How It Works
+        </h2>
+        <p className="text-primaryblue text-lg font-semibold max-w-2xl mx-auto relative z-10 bg-white/15 dark:bg-black/20 dark:brightness-75 backdrop-blur-sm rounded-lg px-6 py-3 inline-block">
+          Discover how Mindfull helps you create a calm, guided, and
+          personalized wellness experience — at your pace, in your way.
+        </p>
+      </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10 px-10 lg:px-0 max-w-6xl mx-auto">
+      
+
+      
+    </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10 px-10 lg:px-0 lg:pb-14 max-w-6xl mx-auto ">
           <FeatureCard
             icon={<Bot className="w-10 h-10 mx-auto text-yellow-500" />}
             title="MindFull Bot"
@@ -421,16 +404,29 @@ export default function HeroSection() {
           />
         </div>
       </section>
-      <div className="min-h-screen bg-white dark:bg-gray-900 p-4 sm:p-6 lg:p-8">
+      <div className="min-h-screen bg-white dark:bg-gray-900 p-4 sm:p-14 ">
         {/* Header */}
-        <div className="text-center mb-8 sm:mb-12">
-          <h1 className="text-6xl sm:text-4xl font-bold text-primarygreen mb-4">
-            Your Wellness Journey
-          </h1>
-          <p className="text-primaryblue text-lg font-semibold">
-            Follow the path to transform your wellness experience
-          </p>
-        </div>
+        <div className="bg-white dark:bg-gray-900  flex flex-col sm:flex-row items-center justify-between">
+  {/* Left Content */}
+  <div className="sm:w-1/2 text-left  sm:mb-0">
+    <h1 className="text-4xl sm:text-6xl font-bold text-primarygreen mb-4">
+      Your Wellness Journey
+    </h1>
+    <p className="text-primaryblue text-lg font-semibold">
+      Follow the path to transform your wellness experience
+    </p>
+  </div>
+
+  {/* Right Image */}
+  <div className="sm:w-1/2 flex justify-center">
+    <img
+      src={darkMode ? "/hea8.png" : "/hea7.png"}
+      alt="Wellness Journey"
+      className="max-w-full h-auto "
+    />
+  </div>
+</div>
+
 
         {/* Desktop Journey Map */}
         <div className="hidden lg:block relative">
@@ -580,11 +576,12 @@ export default function HeroSection() {
         </div>
       </div>
 
-      <footer className=" border-t border-gray-200 dark:bg-blue-950 bg-blue-200  font-poppins">
+      <footer className=" border-t border-gray-200 bg-[url('/hea6.jpg')] bg-cover bg-center min-h-screen
+             relative dark:brightness-75  font-poppins">
         <div className="max-w-7xl mx-auto px-6 py-16 ">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
             <div className="lg:col-span-2">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-blue-300 mb-6">
+              <h2 className="text-2xl font-bold text-gray-900  mb-6">
                 JOIN THE
                 <br />
                 MINDFULL
@@ -606,14 +603,14 @@ export default function HeroSection() {
               </div>
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-blue-300 mb-6">
+              <h3 className="text-lg font-bold text-gray-900  mb-6">
                 HELP
               </h3>
               <ul className="space-y-3">
                 <li>
                   <a
                     href="#"
-                    className="text-gray-700 dark:text-blue-50 hover:text-blue-600 transition-colors"
+                    className="text-gray-700  hover:text-blue-600 transition-colors"
                   >
                     Contact Us
                   </a>
@@ -621,7 +618,7 @@ export default function HeroSection() {
                 <li>
                   <a
                     href="#"
-                    className="text-gray-700 dark:text-blue-50 hover:text-blue-600 transition-colors"
+                    className="text-gray-700  hover:text-blue-600 transition-colors"
                   >
                     FAQ
                   </a>
@@ -630,14 +627,14 @@ export default function HeroSection() {
             </div>
             <div>
               <div className="mb-8">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-blue-300 mb-6">
+                <h3 className="text-lg font-bold text-gray-900  mb-6">
                   LEGAL INFO
                 </h3>
                 <ul className="space-y-3">
                   <li>
                     <a
                       href="#"
-                      className="text-gray-700 dark:text-blue-50 hover:text-blue-600 transition-colors"
+                      className="text-gray-700  hover:text-blue-600 transition-colors"
                     >
                       Privacy Policy
                     </a>
@@ -645,7 +642,7 @@ export default function HeroSection() {
                   <li>
                     <a
                       href="#"
-                      className="text-gray-700 dark:text-blue-50 hover:text-blue-600 transition-colors"
+                      className="text-gray-700  hover:text-blue-600 transition-colors"
                     >
                       Terms & Conditions
                     </a>
@@ -653,7 +650,7 @@ export default function HeroSection() {
                   <li>
                     <a
                       href="#"
-                      className="text-gray-700 dark:text-blue-50 hover:text-blue-600 transition-colors"
+                      className="text-gray-700  hover:text-blue-600 transition-colors"
                     >
                       Cookie Policy
                     </a>
@@ -661,7 +658,7 @@ export default function HeroSection() {
                   <li>
                     <a
                       href="#"
-                      className="text-gray-700 dark:text-blue-50 hover:text-blue-600 transition-colors"
+                      className="text-gray-700  hover:text-blue-600 transition-colors"
                     >
                       Gift Card
                     </a>
@@ -670,14 +667,14 @@ export default function HeroSection() {
               </div>
 
               <div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-blue-300 mb-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-6">
                   FOLLOW US
                 </h3>
                 <ul className="space-y-3">
                   <li>
                     <a
                       href="#"
-                      className="text-gray-700 dark:text-blue-50 hover:text-green-600 transition-colors"
+                      className="text-gray-700  hover:text-green-600 transition-colors"
                     >
                       Instagram
                     </a>
@@ -685,7 +682,7 @@ export default function HeroSection() {
                   <li>
                     <a
                       href="#"
-                      className="text-gray-700 dark:text-blue-50 hover:text-green-600 transition-colors"
+                      className="text-gray-700  hover:text-green-600 transition-colors"
                     >
                       Facebook
                     </a>
@@ -693,7 +690,7 @@ export default function HeroSection() {
                   <li>
                     <a
                       href="#"
-                      className="text-gray-700 dark:text-blue-50 hover:text-green-600 transition-colors"
+                      className="text-gray-700  hover:text-green-600 transition-colors"
                     >
                       Twitter
                     </a>
@@ -701,7 +698,7 @@ export default function HeroSection() {
                   <li>
                     <a
                       href="#"
-                      className="text-gray-700 dark:text-blue-50 hover:text-green-600 transition-colors"
+                      className="text-gray-700  hover:text-green-600 transition-colors"
                     >
                       LinkedIn
                     </a>
