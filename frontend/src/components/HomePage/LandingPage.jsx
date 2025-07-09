@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import RoleSelectionModal from "../../ui/RoleSelectModal";
+import { useNavigate } from "react-router-dom";
 import { useDarkMode } from '../../contexts/DarkModeContext';
 import {
   Bot,
@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 function FeatureCard({ icon, title, description }) {
+  
   return (
     <div className="bg-green-200  dark:bg-gray-700 p-8 rounded-2xl shadow hover:shadow-lg transition duration-300 text-center">
       <div className="mb-4">{icon}</div>
@@ -34,6 +35,7 @@ function FeatureCard({ icon, title, description }) {
 }
 
 export default function HeroSection() {
+  const navigate = useNavigate();
   const journeySteps = [
     {
       id: 1,
@@ -96,7 +98,8 @@ export default function HeroSection() {
 
   
 
-  const [darkMode, toggleDarkMode] = useDarkMode();
+ const { darkMode, toggleDarkMode } = useDarkMode();
+
   return (
     <>
       <div className="min-h-screen font-poppins  bg-white relative overflow-hidden">
@@ -130,29 +133,24 @@ export default function HeroSection() {
                 Home
               </a>
               <a
-                href="#"
+                href="#about"
                 className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors"
               >
                 About
               </a>
               <a
-                href="#"
+                href="#features"
                 className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors"
               >
                 Features
               </a>
               <a
-                href="#"
+                href="#journey"
                 className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors"
               >
                 Journey
               </a>
-              <a
-                href="#"
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors"
-              >
-                Contact
-              </a>
+              
               <button
                 onClick={toggleDarkMode}
                 className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
@@ -167,8 +165,8 @@ export default function HeroSection() {
              
             </nav>
 
-            <button className="hidden lg:block bg-green-500 dark:bg-green-600 text-white px-6 py-2 rounded-full font-medium hover:bg-green-600 dark:hover:bg-green-700 transition-colors shadow-lg">
-               <RoleSelectionModal btn="Signup"/>
+            <button onClick={() =>navigate('/signin')} className="hidden lg:block bg-green-500 dark:bg-green-600 text-white px-6 py-2 rounded-full font-medium hover:bg-green-600 dark:hover:bg-green-700 transition-colors shadow-lg">
+               SignUp / SignIn
             </button>
 
             {/* Mobile section */}
@@ -214,36 +212,31 @@ export default function HeroSection() {
               </div>
               <nav className="flex flex-col space-y-4 p-6">
                 <a
-                  href="#"
+                  href="/"
                   className="text-gray-800 dark:text-gray-200 font-medium hover:text-green-600 dark:hover:text-green-400 transition-colors"
                 >
                   Home
                 </a>
                 <a
-                  href="#"
+                  href="#about"
                   className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors"
                 >
                   About
                 </a>
                 <a
-                  href="#"
+                  href="#features"
                   className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors"
                 >
                   Features
                 </a>
                 <a
-                  href="#"
+                  href="#journey"
                   className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors"
                 >
                   Journey
                 </a>
-                <a
-                  href="#"
-                  className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors"
-                >
-                  Contact
-                </a>
-                <button className="mt-4 bg-green-500 dark:bg-green-600 text-white px-6 py-2 rounded-full font-medium hover:bg-green-600 dark:hover:bg-green-700 transition-colors shadow-lg">
+                
+                <button onClick={() =>navigate('/signin')} className="mt-4 bg-green-500 dark:bg-green-600 text-white px-6 py-2 rounded-full font-medium hover:bg-green-600 dark:hover:bg-green-700 transition-colors shadow-lg">
                   Sign Up
                 </button>
               </nav>
@@ -300,7 +293,7 @@ export default function HeroSection() {
           </div>
         </div>
       </div>
-      <section className=" relative bg-white dark:bg-gray-900 px-6 lg:px-24 font-poppins">
+      <section id="about" className="scroll-smooth relative bg-white dark:bg-gray-900 px-6 lg:px-24 font-poppins">
         <div
           className="absolute w-40 h-40 bg-green-300 rounded-full opacity-7 right-1 animate-pulse"
           style={{ animationDuration: "2s" }}
@@ -310,7 +303,7 @@ export default function HeroSection() {
           style={{ animationDuration: "2s" }}
         ></div>
 
-        <div className="max-w-6xl mx-auto flex flex-col lg:flex-row  gap-10 ">
+        <div  className="max-w-6xl mx-auto flex flex-col lg:flex-row  gap-10 ">
           <div className="w-1/2 lg:w-1/2 ">
             <img
               src={darkMode ? "/hea5.png" : "/hea4.png"}
@@ -339,7 +332,7 @@ export default function HeroSection() {
           </div>
         </div>
       </section>
-      <section className="bg-white dark:bg-gray-900   font-poppins ">
+      <section id="features" className="bg-white dark:bg-gray-900   font-poppins ">
         <div className="  ">
       
       <div
@@ -404,7 +397,7 @@ export default function HeroSection() {
           />
         </div>
       </section>
-      <div className="min-h-screen bg-white dark:bg-gray-900 p-4 sm:p-14 ">
+      <div id="journey" className="min-h-screen bg-white dark:bg-gray-900 p-4 sm:p-14 ">
         {/* Header */}
         <div className="bg-white dark:bg-gray-900  flex flex-col sm:flex-row items-center justify-between">
   {/* Left Content */}
