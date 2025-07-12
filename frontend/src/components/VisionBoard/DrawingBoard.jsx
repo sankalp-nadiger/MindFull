@@ -80,18 +80,22 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
     setIsTransforming(false);
   };
 
-  const handleMouseDown = (e) => {
+   const handleMouseDown = (e) => {
+    // Only handle events in select mode
     if (tool !== 'select') return;
     
     e.cancelBubble = true;
-    if (e.evt) {
-      e.evt.stopPropagation();
-    }
+    if (e.evt) e.evt.stopPropagation();
     
-    const pos = e.target.getStage().getPointerPosition();
-    setMouseStartPos(pos);
-    setIsDragging(false);
+    // Select immediately on mouse down
     onSelect(element.id);
+    
+    // Only set up dragging if we're in select mode
+    if (tool === 'select') {
+      const pos = e.target.getStage().getPointerPosition();
+      setMouseStartPos(pos);
+      setIsDragging(false);
+    }
   };
 
   const handleMouseMove = (e) => {
@@ -145,15 +149,14 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
   };
 
   const handleClick = (e) => {
-    e.cancelBubble = true;
-    if (e.evt) {
-      e.evt.stopPropagation();
-    }
-    // Only select if not dragging and not transforming
-    if (!isDragging && !isTransforming) {
-      onSelect(element.id);
-    }
-  };
+  e.cancelBubble = true;
+  if (e.evt) e.evt.stopPropagation();
+  
+  // Only select if we're not already selected
+  if (!isSelected) {
+    onSelect(element.id);
+  }
+};
 
   return (
     <Group>
@@ -223,24 +226,26 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
 };
 // Enhanced FlowLine component with fixed dragging and endpoint positioning
 const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, tool }) => {
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStartPos, setDragStartPos] = useState(null);
-  const lineRef = useRef();
+  const [draggingLine, setDraggingLine] = useState(false);
+  const [draggingEndpoint, setDraggingEndpoint] = useState(null);
+  const [startPoints, setStartPoints] = useState(null);
   const groupRef = useRef();
+  const lineRef = useRef();
 
-  // Use line.points directly, no local state
   const points = line.points || [50, 50, 200, 50];
+  
+  // Handle endpoint dragging
+  const handleEndpointDragStart = (index) => {
+    setDraggingEndpoint(index);
+    setStartPoints([...points]);
+    onSelect(line.id);
+  };
 
-  const handleEndpointDrag = (index, e) => {
-    if (tool !== 'select') return;
-    
-    e.cancelBubble = true;
-    if (e.evt) {
-      e.evt.stopPropagation();
-    }
+  const handleEndpointDragMove = (index, e) => {
+    if (tool !== 'select' || draggingEndpoint === null) return;
     
     const pos = e.target.position();
-    const newPoints = [...points];
+    const newPoints = [...startPoints];
     newPoints[index * 2] = pos.x;
     newPoints[index * 2 + 1] = pos.y;
     
@@ -249,75 +254,49 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
     }
   };
 
-  const handleLineClick = (e) => {
-    e.cancelBubble = true;
-    if (e.evt) {
-      e.evt.stopPropagation();
-    }
-    if (!isDragging) {
-      onSelect(line.id);
-    }
+  const handleEndpointDragEnd = () => {
+    setDraggingEndpoint(null);
+    setStartPoints(null);
   };
 
+  // Handle line dragging
   const handleLineDragStart = (e) => {
     if (tool !== 'select') return;
     
-    const pos = e.target.position();
-    setDragStartPos({ x: pos.x, y: pos.y });
-    setIsDragging(false);
-    onSelect(line.id);
+    e.cancelBubble = true;
+    if (e.evt) e.evt.stopPropagation();
     
-    // Prevent line from moving during drag start
-    e.target.position({ x: 0, y: 0 });
+    const stage = e.target.getStage();
+    const pos = stage.getPointerPosition();
+    setStartPoints([...points]);
+    setDraggingLine(true);
+    onSelect(line.id);
   };
 
   const handleLineDragMove = (e) => {
-    if (tool !== 'select' || !dragStartPos) return;
+    if (tool !== 'select' || !draggingLine || !startPoints) return;
     
-    const pos = e.target.position();
-    const distance = Math.sqrt(
-      Math.pow(pos.x - dragStartPos.x, 2) + Math.pow(pos.y - dragStartPos.y, 2)
-    );
+    const stage = e.target.getStage();
+    const pos = stage.getPointerPosition();
     
-    // Only start dragging if moved more than 5 pixels
-    if (distance > 5 && !isDragging) {
-      setIsDragging(true);
+    const deltaX = pos.x - startPoints[0];
+    const deltaY = pos.y - startPoints[1];
+    
+    const newPoints = [
+      startPoints[0] + deltaX,
+      startPoints[1] + deltaY,
+      startPoints[2] + deltaX,
+      startPoints[3] + deltaY
+    ];
+    
+    if (onUpdate) {
+      onUpdate(line.id, { ...line, points: newPoints });
     }
-    
-    if (isDragging) {
-      // Calculate delta from drag start
-      const deltaX = pos.x - dragStartPos.x;
-      const deltaY = pos.y - dragStartPos.y;
-      
-      // Update line points by adding delta
-      const newPoints = [
-        points[0] + deltaX,
-        points[1] + deltaY,
-        points[2] + deltaX,
-        points[3] + deltaY
-      ];
-      
-      if (onUpdate) {
-        onUpdate(line.id, { ...line, points: newPoints });
-      }
-      
-      // Update drag start position for next movement
-      setDragStartPos({ x: pos.x, y: pos.y });
-    }
-    
-    // Keep line at origin to prevent double movement
-    e.target.position({ x: 0, y: 0 });
   };
 
-  const handleLineDragEnd = (e) => {
-    if (tool !== 'select') return;
-    
-    // Reset drag state
-    setIsDragging(false);
-    setDragStartPos(null);
-    
-    // Ensure line stays at origin
-    e.target.position({ x: 0, y: 0 });
+  const handleLineDragEnd = () => {
+    setDraggingLine(false);
+    setStartPoints(null);
   };
 
   return (
@@ -329,15 +308,23 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
         strokeWidth={line.strokeWidth || 2}
         hitStrokeWidth={Math.max(20, (line.strokeWidth || 2) * 4)}
         draggable={tool === 'select' && isSelected}
-        onClick={handleLineClick}
-        onTap={handleLineClick}
+        onClick={(e) => {
+          e.cancelBubble = true;
+          if (e.evt) e.evt.stopPropagation();
+          onSelect(line.id);
+        }}
+        onTap={(e) => {
+          e.cancelBubble = true;
+          if (e.evt) e.evt.stopPropagation();
+          onSelect(line.id);
+        }}
         onDragStart={handleLineDragStart}
         onDragMove={handleLineDragMove}
         onDragEnd={handleLineDragEnd}
         listening={true}
         lineCap="round"
         lineJoin="round"
-        tension={line.style === 'curved' ? 0.5 : 0} // Add tension for curved lines
+        tension={line.style === 'curved' ? 0.5 : 0}
       />
       
       {isSelected && tool === 'select' && points.length >= 4 && (
@@ -350,7 +337,9 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
             stroke={line.color || "#000000"}
             strokeWidth={2}
             draggable={true}
-            onDragMove={(e) => handleEndpointDrag(0, e)}
+            onDragStart={() => handleEndpointDragStart(0)}
+            onDragMove={(e) => handleEndpointDragMove(0, e)}
+            onDragEnd={handleEndpointDragEnd}
             onMouseDown={(e) => {
               e.cancelBubble = true;
               if (e.evt) e.evt.stopPropagation();
@@ -365,7 +354,9 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
             stroke={line.color || "#000000"}
             strokeWidth={2}
             draggable={true}
-            onDragMove={(e) => handleEndpointDrag(1, e)}
+            onDragStart={() => handleEndpointDragStart(1)}
+            onDragMove={(e) => handleEndpointDragMove(1, e)}
+            onDragEnd={handleEndpointDragEnd}
             onMouseDown={(e) => {
               e.cancelBubble = true;
               if (e.evt) e.evt.stopPropagation();
@@ -377,7 +368,6 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
     </Group>
   );
 };
-
 
 const ColorPalette = ({ onColorSelect, currentColor }) => {
   const colors = [
@@ -628,14 +618,15 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
     if (tool !== 'select') return;
     
     e.cancelBubble = true;
-    if (e.evt) {
-      e.evt.stopPropagation();
-    }
-    
-    const pos = e.target.getStage().getPointerPosition();
-    setMouseStartPos(pos);
-    setIsDragging(false);
+    if (e.evt) e.evt.stopPropagation();
+ 
     onSelect(text.id);
+
+    if (tool === 'select') {
+      const pos = e.target.getStage().getPointerPosition();
+      setMouseStartPos(pos);
+      setIsDragging(false);
+    }
   };
 
   const handleMouseMove = (e) => {
@@ -645,22 +636,19 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
     const distance = Math.sqrt(
       Math.pow(pos.x - mouseStartPos.x, 2) + Math.pow(pos.y - mouseStartPos.y, 2)
     );
-    
-    // Only start dragging if moved more than 5 pixels
+
     if (distance > 5 && !isDragging) {
       setIsDragging(true);
       setDragStartPos({ x: text.x, y: text.y });
     }
-    
-    // If dragging, update position
+
     if (isDragging && dragStartPos) {
       const deltaX = pos.x - mouseStartPos.x;
       const deltaY = pos.y - mouseStartPos.y;
       
       const newX = dragStartPos.x + deltaX;
       const newY = dragStartPos.y + deltaY;
-      
-      // Update position in real-time
+
       if (textRef.current) {
         textRef.current.x(newX);
         textRef.current.y(newY);
@@ -689,15 +677,14 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
   };
 
   const handleClick = (e) => {
-    e.cancelBubble = true;
-    if (e.evt) {
-      e.evt.stopPropagation();
-    }
-    // Only select if not dragging and not transforming
-    if (!isDragging && !isTransforming) {
-      onSelect(text.id);
-    }
-  };
+  e.cancelBubble = true;
+  if (e.evt) e.evt.stopPropagation();
+  
+  // Only select if we're not already selected
+  if (!isSelected) {
+    onSelect(text.id);
+  }
+};
 
   return (
     <Group>
@@ -709,7 +696,7 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
   fontSize={text.fontSize || 24}
   fontFamily={text.fontFamily || 'Arial'}
   fill={text.color || text.fill || '#000000'}
-        draggable={false} // Always false, we handle dragging manually
+        draggable={false} 
         rotation={text.rotation || 0}
         fontStyle={text.fontStyle || 'normal'}
         onClick={handleClick}
@@ -1296,27 +1283,49 @@ const ToolBar = () => {
               {/* Canvas Controls */}
               <div className="flex gap-2 justify-end">
                 <button
-                  onClick={handleUndo}
-                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 cursor-pointer"
-                  disabled={elements.length === 0}
-                  title="Undo (Ctrl+Z)"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 14L4 9l5-5"/>
-                    <path d="M4 9h11c4 0 7 3 7 7v0c0 4-3 7-7 7H8"/>
-                  </svg>
-                </button>
+  onClick={handleUndo}
+  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 cursor-pointer"
+  disabled={elements.length === 0}
+  title="Undo (Ctrl+Z)"
+>
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width="16" 
+    height="16" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className="text-black" 
+  >
+    <path d="M9 14L4 9l5-5"/>
+    <path d="M4 9h11c4 0 7 3 7 7v0c0 4-3 7-7 7H8"/>
+  </svg>
+</button>
                 <button
-                  onClick={handleRedo}
-                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 cursor-pointer"
-                  disabled={redoStack.length === 0}
-                  title="Redo (Ctrl+Y)"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M15 14l5-5-5-5"/>
-                    <path d="M20 9H9C5 9 2 12 2 16v0c0 4 3 7 7 7h8"/>
-                  </svg>
-                </button>
+  onClick={handleRedo}
+  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 cursor-pointer"
+  disabled={redoStack.length === 0}
+  title="Redo (Ctrl+Y)"
+>
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width="16" 
+    height="16" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor"
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className="text-black" 
+  >
+    <path d="M15 14l5-5-5-5"/>
+    <path d="M20 9H9C5 9 2 12 2 16v0c0 4 3 7 7 7h8"/>
+  </svg>
+</button>
 
                 <button
                   onClick={() => handleZoom('out')}
@@ -1644,40 +1653,57 @@ const handleEraser = (e) => {
   
   // Erase from elements array (finished drawings)
   setElements(prevElements => {
-    const newElements = prevElements.filter(element => {
+    return prevElements.filter(element => {
       if (element.type === 'drawing') {
         const points = element.points;
-        
-        // Check if any point in the drawing is within eraser radius
-        for (let i = 0; i < points.length; i += 2) {
-          const dx = points[i] - actualPos.x;
-          const dy = points[i + 1] - actualPos.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
+        for (let i = 0; i < points.length - 2; i += 2) {
+          // Check line segment between points
+          const start = { x: points[i], y: points[i+1] };
+          const end = { x: points[i+2], y: points[i+3] };
           
+          // Calculate distance from point to line segment
+          const distance = pointToLineDistance(actualPos, start, end);
           if (distance < eraserRadius) {
-            return false; // Remove this element
+            return false;
           }
         }
       }
-      return true; // Keep non-drawing elements and drawings not touched by eraser
+      return true;
     });
-    
-    // If any elements were removed, save to undo stack
-    if (newElements.length < prevElements.length) {
-      const removedElements = prevElements.filter(el => !newElements.includes(el));
-      setUndoStack(prev => [...prev, {
-        action: 'erase',
-        elements: prevElements,
-        removedElements
-      }]);
-      setRedoStack([]);
-    }
-    
-    return newElements;
   });
 
-  // Create a copy of pen points before modification for history
-  const prevPenPoints = [...penPoints];
+
+  const pointToLineDistance = (point, lineStart, lineEnd) => {
+  const A = point.x - lineStart.x;
+  const B = point.y - lineStart.y;
+  const C = lineEnd.x - lineStart.x;
+  const D = lineEnd.y - lineStart.y;
+
+  const dot = A * C + B * D;
+  const lenSq = C * C + D * D;
+  let param = -1;
+  
+  if (lenSq !== 0) {
+    param = dot / lenSq;
+  }
+
+  let xx, yy;
+
+  if (param < 0) {
+    xx = lineStart.x;
+    yy = lineStart.y;
+  } else if (param > 1) {
+    xx = lineEnd.x;
+    yy = lineEnd.y;
+  } else {
+    xx = lineStart.x + param * C;
+    yy = lineStart.y + param * D;
+  }
+
+  const dx = point.x - xx;
+  const dy = point.y - yy;
+  return Math.sqrt(dx * dx + dy * dy);
+};
   
   // Erase from pen points (currently being drawn)
   setPenPoints(prevPoints => {

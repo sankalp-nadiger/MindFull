@@ -1,10 +1,9 @@
 import React, { useState } from "react";
 import { Mail, Phone, ArrowLeft, Send, RefreshCw } from "lucide-react";
 import "./StudentSignIn.css";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Toast from "./Toast";
-
+import { Link, useNavigate } from "react-router-dom";
 const CounselorSignIn = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -184,17 +183,91 @@ const CounselorSignIn = () => {
   };
 
   return (
+    <>
+<div className="min-h-screen font-poppins bg-gradient-to-b from-primarygreen via-[#1fa313] to-primaryblue flex items-center justify-center p-4 ">
+      {/* Animated background elements */}
+     
+        <div className="absolute -top-40 -right-40 w-80 h-80  rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-50 animate-pulse delay-500"></div>
+      
+
+      {/* Main container */}
+      <div className="relative w-full max-w-6xl bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 overflow-hidden ">
+        <div className="flex flex-col-reverse lg:flex-row min-h-[600px] ">
+          
+          {/* Left Panel - Welcome Section */}
+          <div className="lg:w-1/2 bg-white p-8 lg:p-12 flex flex-col justify-between relative overflow-hidden">
+            
+            {/* Decorative floating elements */}
+            <div className="absolute top-10 right-10 w-20 h-20 bg-green-600/50 rounded-full animate-bounce delay-300"></div>
+            
+            
+            
+            {/* Logo and branding */}
+            <div className="relative z-10">
+              <div className="flex items-center mb-8">
+                <div className="w-16 h-12 bg-green/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30">
+                  <div className="w-20 h-6 border-2 border-white rounded-full flex items-center justify-center">
+                    <img
+                src="/plant.png"
+                className="w-auto lg:h-16 h-10"
+                alt="Logo"
+              />
+                  </div>
+                </div>
+                <span className="ml-3 text-green-900 text-3xl font-bold tracking-wide">MindFull</span>
+              </div>
+              
+              <h1 className="text-4xl lg:text-5xl font-bold text-primarygreen mb-6 leading-tight">
+                Your Wellness
+                <span className="block bg-gradient-to-r from-primaryblue to-primarygreen bg-clip-text text-transparent">
+                  Matters
+                </span>
+              </h1>
+              
+              <p className="text-gray-700 text-lg mb-8 leading-relaxed">
+                You’ve shown up today, and that’s already progress. Mental wellness is not about perfection—it’s about choosing yourself, every single day
+              </p>
+              <div className="w-full flex justify-center items-center p-4">
+      <img
+        src="/hea9.png" // replace with your image path
+        alt="Descriptive Alt Text"
+        className="w-full max-w-4xl h-auto object-contain "
+      />
+    </div>
+            </div>
+
+            
+
+            {/* Geometric decorations */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-white/10 to-transparent transform rotate-45 translate-x-16 -translate-y-16"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-cyan-400/20 to-transparent transform -rotate-12 -translate-x-8 translate-y-8"></div>
+          </div>
+
+          {/* Right Panel - Form Section */}
+          <div className="lg:w-1/2 bg-white/5 backdrop-blur-sm p-8 lg:p-12 flex flex-col  relative">
+            
+            {/* Subtle background pattern */}
+            <div className="absolute inset-0 opacity-5">
+              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-500 to-pink-500"></div>
+              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
+                <defs>
+                  <pattern id="grid" width="4" height="4" patternUnits="userSpaceOnUse">
+                    <path d="M 4 0 L 0 0 0 4" fill="none" stroke="currentColor" strokeWidth="0.5"/>
+                  </pattern>
+                </defs>
+                <rect width="100" height="100" fill="url(#grid)" />
+              </svg>
+            </div>
+
+            <div className="relative z-10 w-full  "></div>
+
+
+
     <div className="auth-page">
       <div className="auth-container">
-        <a className="flex items-center flex-shrink-0 font-medium text-gray-900 transition-all duration-300 title-font group hover:scale-105" style={{ marginBottom: '1rem' }}>
-          <div className="relative">
-            <img src="plant.png" alt="Logo" className="w-8 h-8 transition-transform duration-300 group-hover:rotate-12" />
-            <div className="absolute inset-0 transition-opacity duration-300 rounded-full opacity-0 bg-gradient-to-r from-blue-400/20 to-green-400/20 group-hover:opacity-100 blur-sm"></div>
-          </div>
-          <span className="ml-3 text-3xl font-bold tracking-wide text-transparent bg-gradient-to-r from-blue-400 via-teal-400 to-green-400 bg-clip-text">
-            MindFull
-          </span>
-        </a>
+       
          <div className="auth-card">
           {/* Header */}
           <div className="card-header">
@@ -417,17 +490,32 @@ const CounselorSignIn = () => {
                   Sign Up
                 </a>
               </p>
-              <p className="text-sm">
-                <a href="/" className="text-gray-500 hover:text-gray-700">
-                  ← Back to Home Page
-                </a>
-              </p>
+             <p>
+                                       
+                                       <Link to="/signin" className="auth-link text-primaryblue">
+                                         Return to role selection
+                                       </Link>
+                                     </p>
             </div>
           </div>
         </div>
       </div>
       <Toast message={toast.message} type={toast.type} />
     </div>
+
+
+      <div className="mb-4 text-center">
+                <p className="text-gray-700 text-xs">
+                  By signing in, you agree to our 
+                  <a href="#" className="text-primaryblue hover:text-blue-800 ml-1">Terms of Service</a>
+                </p>
+              </div>
+
+    </div>
+            </div>
+          </div>
+        </div>
+        </>
   );
 };
 

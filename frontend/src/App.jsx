@@ -2,7 +2,8 @@ import React, { Suspense } from "react"
 import {BrowserRouter as Router,Routes,Route} from "react-router-dom"
 import LoadingSpinner from "./components/LoadingSpinner/LoadingSpinner"
 import PageSkeleton from "./components/LoadingSpinner/PageSkeleton"
-
+import HealthNutritionWebsite from "./components/HomePage/LandingPage"
+import { DarkModeProvider } from './contexts/DarkModeContext';
 // Import i18n setup
 import './i18n'
 import { LanguageProvider } from './contexts/LanguageContext'
@@ -52,10 +53,12 @@ const TodoListPage = React.lazy(() => import("./components/pages/Todolist"))
 function App() {
   return (
     <LanguageProvider>
+      <DarkModeProvider>
       <Router>
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
-            <Route path="/" element={<HomePage />} />
+            <Route path="/" element={<HealthNutritionWebsite/>} />
+             
             <Route path="/ParentDashboard" element={
               <Suspense fallback={<PageSkeleton />}>
                 <ParentDashboard />
@@ -121,7 +124,7 @@ function App() {
                 <RoleSelection />
               </Suspense>
             } />
-            <Route path="/student-signup" element={
+            <Route path="/signup" element={
               <Suspense fallback={<PageSkeleton />}>
                 <StudentSignUp />
               </Suspense>
@@ -151,7 +154,7 @@ function App() {
                 <Counsellorphase1 />
               </Suspense>
             } />
-            <Route path="/student-signin" element={
+            <Route path="/signin" element={
               <Suspense fallback={<PageSkeleton />}>
                 <StudentSignIn />
               </Suspense>
@@ -259,6 +262,7 @@ function App() {
             } />    </Routes>
         </Suspense>
       </Router>
+      </DarkModeProvider>
     </LanguageProvider>
   )
 }

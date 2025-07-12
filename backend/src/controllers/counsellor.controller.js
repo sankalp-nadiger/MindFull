@@ -1,3 +1,18 @@
+// Route to check if user is in a sitting series
+export const checkSittingSeries = asyncHandler(async (req, res) => {
+    const { userId } = req.query;
+    if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+    }
+    const user = await User.findById(userId);
+    if (!user) {
+        return res.status(404).json({ message: "User not found" });
+    }
+    res.status(200).json({
+        inSittingSeries: user.inSittingSeries,
+        sittingNotes: user.sittingNotes
+    });
+});
 import asyncHandler from "../utils/asynchandler.utils.js";
 import {ApiError} from "../utils/API_Error.js";
 import ApiResponse from "../utils/API_Response.js";
@@ -38,7 +53,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
 
 export const requestSession = asyncHandler(async (req, res) => {
     const { issueDetails } = req.body;
-    const userId=req.user._id;
+    const userId = req.user._id;
     if (!userId || !issueDetails) {
         throw new ApiError(400, "User ID and issue details are required");
     }
@@ -48,15 +63,25 @@ export const requestSession = asyncHandler(async (req, res) => {
         throw new ApiError(404, "User not found");
     }
 
-    // Find an available counselor
-    const counselor = await Counsellor.findOne({ isAvailable: true });
+    // If user has a previous counselor and chose to change, exclude that counselor from being assigned
+    let excludeCounselorIds = [];
+    if (user.counselorProgress && Array.isArray(user.counselorProgress)) {
+        // Find the last counselor with nonzero sittings
+        const lastProgress = user.counselorProgress.find(cp => cp.sittingProgress > 0 && cp.excludeNext === true);
+        if (lastProgress) {
+            excludeCounselorIds.push(lastProgress.counselor);
+        }
+    }
+
+    // Find an available counselor, excluding previous if needed
+    const counselor = await Counsellor.findOne({ isAvailable: true, _id: { $nin: excludeCounselorIds } });
     if (!counselor) {
         throw new ApiError(404, "No available counselors at the moment");
     }
 
     // Create a unique room name
     const roomName = `counseling-${userId}-${counselor._id}-${Date.now()}`;
-    
+
     // Create a session
     const session = await Session.create({
         user: user._id,
@@ -150,16 +175,14 @@ export const endSession = asyncHandler(async (req, res) => {
     const { sessionId } = req.body;
     let userId;
     if(!req.isCounsellor){
-    userId= req.user._id;}
-    else{
-     userId= req.counsellor._id;
+      userId= req.user._id;
+    } else {
+      userId= req.counsellor._id;
     }
     const session = await Session.findById(sessionId);
     if (!session) {
         throw new ApiError(404, "Session not found");
     }
-    console.log(session.counselor.toString())
-    console.log(userId)
     // Verify that the user ending the session is either the counselor or the user
     if (![session.counselor.toString(), session.user.toString()].includes(userId.toString())) {
         throw new ApiError(403, "Not authorized to end this session");
@@ -171,24 +194,71 @@ export const endSession = asyncHandler(async (req, res) => {
         session.duration = Math.round((session.endTime - session.startTime) / 1000); // duration in seconds
     }
     await session.save();
-    // Reduce user's sittingProgress if > 0
+
+    // Reduce user's sessionProgress if > 0
     const user = await User.findById(session.user);
-    if (user && user.sittingProgress && user.sittingProgress > 0) {
-        user.sittingProgress -= 1;
-        await user.save();
+    let sittingSeriesJustEnded = false;
+    if (user) {
+      // Find the latest counselor review with needsSittings and recommendedSittings
+      const lastReview = (user.counsellorReviews || []).slice().reverse().find(r => r.needsSittings && r.recommendedSittings > 0);
+      if (lastReview) {
+        // Update or add to counselorProgress
+        let progressArr = user.counselorProgress || [];
+        let found = false;
+        for (let cp of progressArr) {
+          if (cp.counselor.toString() === session.counselor.toString()) {
+            cp.sittingProgress = (cp.sittingProgress || 0) + 1;
+            cp.lastSession = new Date();
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          progressArr.push({
+            counselor: session.counselor,
+            sittingProgress: 1,
+            lastSession: new Date(),
+            excludeNext: false
+          });
+        }
+        // Sum all sittingProgress
+        const totalSittings = progressArr.reduce((sum, cp) => sum + (cp.sittingProgress || 0), 0);
+        if (totalSittings >= lastReview.recommendedSittings) {
+          // Sittings completed, clear progress and mark as not in series
+          user.counselorProgress = [];
+          user.inSittingSeries = false;
+          user.sittingNotes = '';
+          sittingSeriesJustEnded = true;
+        } else {
+          user.counselorProgress = progressArr;
+          user.inSittingSeries = true;
+        }
+      } else {
+        user.inSittingSeries = false;
+        user.sittingNotes = '';
+      }
+      if (user.sessionProgress && user.sessionProgress > 0) {
+        user.sessionProgress -= 1;
+      }
+      await user.save();
     }
+
     io.emit(`sessionEnded-${sessionId}`, { sessionId });
     // Make counselor available again
     const counselor = await Counsellor.findById(session.counselor);
     if (counselor) {
         counselor.isAvailable = true;
         await counselor.save();
+        // Notify counselor if sittings are now 0
+        if (sittingSeriesJustEnded) {
+          io.emit(`sittingSeriesEnded-${counselor._id}`, { userId: user._id, message: 'Sittings recommended are now 0.' });
+        }
     }
 
     res.status(200).json({
         success: true,
         message: "Session ended successfully",
-        user: user ? { userId: user._id, sittingProgress: user.sittingProgress, fullName: user.fullName } : null,
+        user: user ? { userId: user._id, sessionProgress: user.sessionProgress, fullName: user.fullName, inSittingSeries: user.inSittingSeries, sittingNotes: user.sittingNotes } : null,
         duration: session.duration || null
     });
 });
@@ -493,7 +563,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
 });
 // Add Review to Session (Counselor Review)
 export const addCounsellorReview = asyncHandler(async (req, res) => {
-    const { sessionId, userId, diagnosis, symptoms, needsSittings, recommendedSittings, willingToTreat, notes } = req.body;
+    const { sessionId, userId, diagnosis, symptoms, needsSittings, recommendedSittings, willingToTreat, notes, sittingNotes, curedSittingReason } = req.body;
     if (!sessionId || !userId || !diagnosis) {
         return res.status(400).json({ message: "Session ID, user ID, and diagnosis are required." });
     }
@@ -509,6 +579,8 @@ export const addCounsellorReview = asyncHandler(async (req, res) => {
         recommendedSittings,
         willingToTreat,
         notes,
+        sittingNotes,
+        curedSittingReason,
         reviewedAt: new Date()
     };
     await session.save();
@@ -526,8 +598,28 @@ export const addCounsellorReview = asyncHandler(async (req, res) => {
             recommendedSittings,
             willingToTreat,
             notes,
+            sittingNotes,
+            curedSittingReason,
             reviewedAt: new Date()
         });
+        // Update user sittingNotes and inSittingSeries
+        if (needsSittings && recommendedSittings > 0) {
+            // If counselor says user is cured, clear sittingNotes and mark not in series
+            if (curedSittingReason) {
+                user.sittingNotes = [];
+                user.inSittingSeries = false;
+            } else {
+                // Not cured, append sittingNotes if provided
+                if (sittingNotes && sittingNotes.trim()) {
+                    if (!Array.isArray(user.sittingNotes)) user.sittingNotes = [];
+                    user.sittingNotes.push(sittingNotes.trim());
+                }
+                user.inSittingSeries = true;
+            }
+        } else {
+            user.sittingNotes = [];
+            user.inSittingSeries = false;
+        }
         await user.save();
     }
     return res.status(200).json({ message: "Review submitted successfully!" });

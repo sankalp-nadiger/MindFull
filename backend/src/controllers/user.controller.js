@@ -928,6 +928,64 @@ const getJournals = async (req, res) => {
   }
 };
 
+export const getLastCounselorProgress = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  // Find last session
+  const lastSession = await Session.findOne({ user: userId })
+    .sort({ endedAt: -1 })
+    .populate('counselor');
+  if (!lastSession || !lastSession.counselor) {
+    return res.json({ hasProgress: false });
+  }
+  // Find progress for this counselor
+  const user = await User.findById(userId);
+  const progress = user.counselorProgress.find(
+    (cp) => cp.counselor.toString() === lastSession.counselor._id.toString()
+  );
+  if (progress && progress.sittingProgress > 0) {
+    return res.json({
+      hasProgress: true,
+      counselor: {
+        _id: lastSession.counselor._id,
+        fullName: lastSession.counselor.fullName,
+        sittingProgress: progress.sittingProgress
+      }
+    });
+  }
+  return res.json({ hasProgress: false });
+});
+
+const updateCounselorProgress = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const { counselorId, sittingProgress, continueWithSame } = req.body;
+
+  if (!counselorId || typeof sittingProgress !== 'number') {
+    return res.status(400).json({ success: false, message: 'counselorId and sittingProgress (number) are required.' });
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    return res.status(404).json({ success: false, message: 'User not found.' });
+  }
+
+  // Only update or add progress for the specified counselor; do NOT reset or remove any previous progress
+  let progress = user.counselorProgress?.find(cp => cp.counselor.toString() === counselorId);
+  if (progress) {
+    progress.sittingProgress = sittingProgress;
+    // If user chose to change counselor, mark this counselor as excluded for next session
+    if (continueWithSame === false) {
+      progress.excludeNext = true;
+    } else {
+      progress.excludeNext = false;
+    }
+  } else {
+    if (!user.counselorProgress) user.counselorProgress = [];
+    user.counselorProgress.push({ counselor: counselorId, sittingProgress, excludeNext: continueWithSame === false });
+  }
+  await user.save();
+  return res.status(200).json({ success: true, message: 'Counselor progress updated', counselorProgress: user.counselorProgress });
+});
+
 export {
   registerUser, extractMobileNumber,
   loginUser,
@@ -938,5 +996,6 @@ export {
   getCurrentUser, getJournals,
   updateAccountDetails,
   addInterests, userProgress, calculateAverageMood,
-  getWeeklyMoodData, getUserSessions
+  getWeeklyMoodData, getUserSessions,
+  updateCounselorProgress
 };

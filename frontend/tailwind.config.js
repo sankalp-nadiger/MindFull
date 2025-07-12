@@ -4,15 +4,24 @@ import flattenColorPalette from "tailwindcss/lib/util/flattenColorPalette";
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [ "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",],
+    "./src/**/*.{js,ts,jsx,tsx,html}",],
     theme: {
       extend: {
         skew: {
           '-10': '-10deg', // Skew left for the current user
           '10': '10deg',   // Skew right for other users
         },
+        fontFamily: {
+        poppins: ['Poppins', 'sans-serif'],
+      },
+       colors: {
+        primaryblue: '#453cf0',      
+        primarygreen: '#00bf63',    
+      },
+      
       },
     },
+    darkMode: 'class',
   plugins: [
       addVariablesForColors,
       function ({
