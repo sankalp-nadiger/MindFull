@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Stage, Layer, Line, Rect, Text as KonvaText, Transformer, Group } from 'react-konva';
+import { Stage, Layer, Line, Rect, Text as KonvaText, Transformer, Group, Image, Circle } from 'react-konva';
 import useImage from "use-image";
 import SaveCanvasModal from "./SaveCanvasModal";
 import { 
@@ -711,21 +711,20 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
     if (tool === 'select') {
       const pos = e.target.getStage().getPointerPosition();
       setMouseStartPos(pos);
-      setIsDragging(false);
+      setDragStartPos({ x: text.x, y: text.y });
     }
   };
 
   const handleMouseMove = (e) => {
-    if (tool !== 'select' || !mouseStartPos || isTransforming) return;
+    if (tool !== 'select' || !mouseStartPos || isTransforming || !e.evt.buttons) return;
     
     const pos = e.target.getStage().getPointerPosition();
     const distance = Math.sqrt(
       Math.pow(pos.x - mouseStartPos.x, 2) + Math.pow(pos.y - mouseStartPos.y, 2)
     );
 
-    if (distance > 5 && !isDragging) {
+    if (distance > 3 && !isDragging) {
       setIsDragging(true);
-      setDragStartPos({ x: text.x, y: text.y });
     }
 
     if (isDragging && dragStartPos) {
@@ -1041,8 +1040,12 @@ const handleImageUpload = (e) => {
   if (file) {
     const reader = new FileReader();
     reader.onload = (event) => {
-      const img = new window.Image();
-      img.src = event.target.result;
+      const img = document.createElement('img');
+      img.crossOrigin = 'anonymous';
+      img.onerror = (error) => {
+        console.error('Error loading image:', error);
+      };
+      
       img.onload = () => {
         // Scale down large images to a reasonable size
         const maxWidth = 300;
@@ -1071,12 +1074,20 @@ const handleImageUpload = (e) => {
           originalHeight: img.height,
           rotation: 0
         };
-       addElementWithHistory(imageElement);
+        
+        addElementWithHistory(imageElement);
         setSelectedId(imageElement.id);
         // Force tool to select for immediate interaction
         setTool('select');
       };
+      
+      img.src = event.target.result;
     };
+    
+    reader.onerror = (error) => {
+      console.error('Error reading file:', error);
+    };
+    
     reader.readAsDataURL(file);
   }
 };
