@@ -2,6 +2,15 @@ import React, { Suspense } from "react"
 import {BrowserRouter as Router,Routes,Route} from "react-router-dom"
 import LoadingSpinner from "./components/LoadingSpinner/LoadingSpinner"
 import PageSkeleton from "./components/LoadingSpinner/PageSkeleton"
+import HealthNutritionWebsite from "./components/HomePage/LandingPage"
+import { DarkModeProvider } from './contexts/DarkModeContext';
+// Import i18n setup
+import './i18n'
+import { LanguageProvider } from './contexts/LanguageContext'
+import Notifications from "./components/Councellor/Notifications/Notifications"
+import Clients from "./components/Councellor/Clients/Client"
+import Profile from "./components/Councellor/Profile/Profile"
+import Schedule from "./components/Councellor/Schedule/Schedule"
 
 // Lazy load components for better performance
 const HomePage = React.lazy(() => import('./components/HomePage/HomePage'))
@@ -28,14 +37,12 @@ const StudentSignUp = React.lazy(() => import('./components/pages/StudentSignUp'
 const JournalEntryWithSuggestions = React.lazy(() => import('./components/pages/JournalPage'))
 const ResultPage = React.lazy(() => import('./components/pages/ResultPage'))
 const ActivityRecommendations = React.lazy(() => import('./components/pages/Activity'))
-const Stories = React.lazy(() => import('./components/pages/FetchStory'))
-const CreateStory = React.lazy(() => import('./components/pages/CreateStory'))
 const CreatePost = React.lazy(() => import('./components/pages/CreatePost'))
 const SuccessStories = React.lazy(() => import("./components/HomePage/SuccessStories"))
 const VideoChat = React.lazy(() => import("./components/Videochat/Videochat"))
 const AIrecommendation = React.lazy(() => import("./components/Materialrecommendation/AIrecommendation"))
 const CommunityChat = React.lazy(() => import("./components/Community/Communitychat"))
-const Session = React.lazy(() => import("./components/Councellor/Session"))
+const Session = React.lazy(() => import("./components/Councellor/Session/Session"))
 const UserProfile = React.lazy(() => import("./components/Profiles/userprofile"))
 const CounsellorProfile = React.lazy(() => import("./components/Profiles/Councellorprofile"))
 const ChatBox = React.lazy(() => import("./components/pages/Chatbot"))
@@ -45,11 +52,13 @@ const TodoListPage = React.lazy(() => import("./components/pages/Todolist"))
 
 function App() {
   return (
-    <>
+    <LanguageProvider>
+      <DarkModeProvider>
       <Router>
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
-            <Route path="/" element={<HomePage />} />
+            <Route path="/" element={<HealthNutritionWebsite/>} />
+             
             <Route path="/ParentDashboard" element={
               <Suspense fallback={<PageSkeleton />}>
                 <ParentDashboard />
@@ -115,7 +124,7 @@ function App() {
                 <RoleSelection />
               </Suspense>
             } />
-            <Route path="/student-signup" element={
+            <Route path="/signup" element={
               <Suspense fallback={<PageSkeleton />}>
                 <StudentSignUp />
               </Suspense>
@@ -145,7 +154,7 @@ function App() {
                 <Counsellorphase1 />
               </Suspense>
             } />
-            <Route path="/student-signin" element={
+            <Route path="/signin" element={
               <Suspense fallback={<PageSkeleton />}>
                 <StudentSignIn />
               </Suspense>
@@ -170,16 +179,7 @@ function App() {
                 <ActivityRecommendations />
               </Suspense>
             } />
-            <Route path="/storyfetch" element={
-              <Suspense fallback={<PageSkeleton />}>
-                <Stories />
-              </Suspense>
-            } />
-            <Route path="/createStory" element={
-              <Suspense fallback={<PageSkeleton />}>
-                <CreateStory />
-              </Suspense>
-            } />
+        
             <Route path="/createPost" element={
               <Suspense fallback={<PageSkeleton />}>
                 <CreatePost />
@@ -240,11 +240,30 @@ function App() {
                 <VisionBoard />
               </Suspense>
             } />
-            {/* <Route path="/stats" element={<CounselorStats/>}/>  */}
-          </Routes>
+            <Route path="/notifications" element={
+              <Suspense fallback={<PageSkeleton />}>
+                <Notifications />
+              </Suspense>
+            } />    
+            <Route path="/clients" element={
+              <Suspense fallback={<PageSkeleton />}>
+                <Clients />
+              </Suspense>
+            } />  
+            <Route path="/profile" element={
+              <Suspense fallback={<PageSkeleton />}>
+                <Profile />
+              </Suspense>
+            } /> 
+            <Route path="/schedule" element={
+              <Suspense fallback={<PageSkeleton />}>
+                <Schedule />
+              </Suspense>
+            } />    </Routes>
         </Suspense>
       </Router>
-    </>
+      </DarkModeProvider>
+    </LanguageProvider>
   )
 }
 

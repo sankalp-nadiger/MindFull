@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, 
@@ -24,8 +24,20 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { Link } from "react-router-dom";
+import Toast from "../pages/Toast";
 
-const getSocket = () => {
+// WebRTC Configuration
+  const rtcConfig = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun3.l.google.com:19302' },
+    { urls: 'stun:stun4.l.google.com:19302' }
+  ],
+  iceTransportPolicy: 'all',
+  iceCandidatePoolSize: 10
+};const getSocket = () => {
   if (!window.socketInstance) {
     window.socketInstance = io(`${import.meta.env.VITE_BASE_URL}`, {
       transports: ['websocket'],
@@ -128,8 +140,228 @@ const ActiveSession = ({
   notes, 
   handleNotesChange, 
   handleAddNotes, 
-  noteStatus 
-}) => (
+  noteStatus,
+  userId,
+  userType = 'user'
+}) => {
+  const [isVideoOn, setIsVideoOn] = useState(true);
+  const [isAudioOn, setIsAudioOn] = useState(true);
+  const [connectionStatus, setConnectionStatus] = useState('connecting');
+  const [remoteUserConnected, setRemoteUserConnected] = useState(false);
+
+  const localVideoRef = useRef(null);
+  const remoteVideoRef = useRef(null);
+  const peerConnectionRef = useRef(null);
+  const localStreamRef = useRef(null);
+  const socket = getSocket();
+
+  useEffect(() => {
+    console.log('🎥 Initializing WebRTC session:', session?.roomName);
+    if (session?.status === 'Active') {
+      initializeWebRTC();
+    }
+    return () => cleanupWebRTC();
+  }, [session?.status, session?.roomName]);
+
+  const initializeWebRTC = async () => {
+    try {
+      console.log('📡 Starting WebRTC initialization');
+      
+      // Check if media devices are available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Media devices not supported in this browser');
+      }
+
+      // Try to get media stream with fallbacks
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            facingMode: 'user'
+          }, 
+          audio: true 
+        });
+      } catch (err) {
+        console.warn('Failed to get HD video, trying lower quality:', err);
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: true, 
+          audio: true 
+        });
+      }
+      
+      console.log('🎥 Got media stream:', stream.getTracks().map(t => `${t.kind}: ${t.label}`));
+      localStreamRef.current = stream;
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
+
+      peerConnectionRef.current = new RTCPeerConnection(rtcConfig);
+      
+      stream.getTracks().forEach(track => {
+        peerConnectionRef.current.addTrack(track, stream);
+      });
+
+      peerConnectionRef.current.ontrack = (event) => {
+        console.log('📺 Received remote track');
+        if (remoteVideoRef.current) {
+          remoteVideoRef.current.srcObject = event.streams[0];
+          setRemoteUserConnected(true);
+        }
+      };
+
+      peerConnectionRef.current.onicecandidate = (event) => {
+        if (event.candidate) {
+          console.log('🧊 Sending ICE candidate');
+          socket.emit('ice-candidate', {
+            room: session.roomName,
+            candidate: event.candidate,
+            from: userId
+          });
+        }
+      };
+
+      peerConnectionRef.current.onconnectionstatechange = () => {
+        const state = peerConnectionRef.current.connectionState;
+        setConnectionStatus(state);
+        console.log('🔌 Connection state:', state);
+
+        if (state === 'failed' || state === 'disconnected') {
+          console.log('🔄 Connection lost, attempting to reconnect...');
+          // Wait a bit before attempting reconnection
+          setTimeout(() => {
+            if (session?.status === 'Active') {
+              console.log('♻️ Reinitializing WebRTC connection');
+              cleanupWebRTC();
+              initializeWebRTC();
+            }
+          }, 2000);
+        }
+      };
+
+      // Join WebRTC room
+      console.log('🏠 Joining WebRTC room:', session.roomName);
+      socket.emit('join-room', {
+        room: session.roomName,
+        userId: userId,
+        userType: userType
+      });
+
+      // Socket event handlers
+      socket.on('user-joined', handleUserJoined);
+      socket.on('offer', handleOffer);
+      socket.on('answer', handleAnswer);
+      socket.on('ice-candidate', handleIceCandidate);
+      socket.on('user-left', handleUserLeft);
+
+      setConnectionStatus('connecting');
+    } catch (error) {
+      console.error('❌ Error initializing WebRTC:', error);
+      setConnectionStatus('failed');
+    }
+  };
+
+  const handleUserJoined = async (data) => {
+    console.log('👥 User joined:', data);
+    if (data.userId !== userId && peerConnectionRef.current) {
+      try {
+        const offer = await peerConnectionRef.current.createOffer();
+        await peerConnectionRef.current.setLocalDescription(offer);
+        
+        socket.emit('offer', {
+          room: session.roomName,
+          offer: offer,
+          from: userId,
+          to: data.userId
+        });
+      } catch (error) {
+        console.error('❌ Error creating offer:', error);
+      }
+    }
+  };
+
+  const handleOffer = async (data) => {
+    if (data.to === userId && peerConnectionRef.current) {
+      try {
+        console.log('📨 Received offer from:', data.from);
+        await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.offer));
+        const answer = await peerConnectionRef.current.createAnswer();
+        await peerConnectionRef.current.setLocalDescription(answer);
+        
+        socket.emit('answer', {
+          room: session.roomName,
+          answer: answer,
+          from: userId,
+          to: data.from
+        });
+      } catch (error) {
+        console.error('❌ Error handling offer:', error);
+      }
+    }
+  };
+
+  const handleAnswer = async (data) => {
+    if (data.to === userId && peerConnectionRef.current) {
+      try {
+        console.log('📨 Received answer from:', data.from);
+        await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.answer));
+      } catch (error) {
+        console.error('❌ Error handling answer:', error);
+      }
+    }
+  };
+
+  const handleIceCandidate = async (data) => {
+    if (data.from !== userId && peerConnectionRef.current) {
+      try {
+        console.log('🧊 Adding ICE candidate');
+        await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(data.candidate));
+      } catch (error) {
+        console.error('❌ Error handling ICE candidate:', error);
+      }
+    }
+  };
+
+  const handleUserLeft = (data) => {
+    console.log('👋 User left:', data);
+    setRemoteUserConnected(false);
+  };
+
+  const toggleVideo = () => {
+    if (localStreamRef.current) {
+      localStreamRef.current.getVideoTracks().forEach(track => {
+        track.enabled = !track.enabled;
+      });
+      setIsVideoOn(!isVideoOn);
+    }
+  };
+
+  const toggleAudio = () => {
+    if (localStreamRef.current) {
+      localStreamRef.current.getAudioTracks().forEach(track => {
+        track.enabled = !track.enabled;
+      });
+      setIsAudioOn(!isAudioOn);
+    }
+  };
+
+  const cleanupWebRTC = () => {
+    console.log('🧹 Cleaning up WebRTC');
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(track => track.stop());
+    }
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close();
+    }
+    socket.off('user-joined');
+    socket.off('offer');
+    socket.off('answer');
+    socket.off('ice-candidate');
+    socket.off('user-left');
+  };
+
+  return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -147,7 +379,7 @@ const ActiveSession = ({
           {session?.status === 'Active' && (
             <div className="flex items-center space-x-1 text-emerald-400 text-sm font-medium">
               <Clock className="w-4 h-4" />
-              <span>Active</span>
+              <span>{connectionStatus === 'connected' ? 'Connected' : 'Connecting...'}</span>
             </div>
           )}
         </div>
@@ -167,25 +399,45 @@ const ActiveSession = ({
       </div>
 
       {/* Video Interface */}
-      {session?.status === 'Active' ? (
+      {session?.status === 'Active' && (
         <div className="relative bg-slate-900 rounded-xl overflow-hidden shadow-2xl border border-slate-700">
-          <div className="aspect-video w-full">
-            <iframe
-              src={`https://meet.jit.si/${session.roomName}`}
-              width="100%"
-              height="100%"
-              allow="camera; microphone; fullscreen; display-capture"
-              className="rounded-xl"
+          <div className="aspect-video w-full relative">
+            <video
+              ref={remoteVideoRef}
+              autoPlay
+              playsInline
+              className="w-full h-full object-cover"
+            />
+            <video
+              ref={localVideoRef}
+              autoPlay
+              playsInline
+              muted
+              className="absolute bottom-4 right-4 w-1/4 aspect-video object-cover rounded-lg border-2 border-slate-600"
             />
           </div>
           
           {/* Video Controls */}
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center space-x-3 bg-black/70 backdrop-blur-md rounded-full px-4 py-2 border border-slate-700">
-            <button className="p-2 bg-slate-700 hover:bg-slate-600 rounded-full transition-colors border border-slate-600">
-              <Mic className="w-4 h-4 text-white" />
+            <button 
+              onClick={toggleAudio}
+              className={`p-2 ${isAudioOn ? 'bg-slate-700 hover:bg-slate-600' : 'bg-red-600 hover:bg-red-700'} rounded-full transition-colors border border-slate-600`}
+            >
+              {isAudioOn ? (
+                <Mic className="w-4 h-4 text-white" />
+              ) : (
+                <MicOff className="w-4 h-4 text-white" />
+              )}
             </button>
-            <button className="p-2 bg-slate-700 hover:bg-slate-600 rounded-full transition-colors border border-slate-600">
-              <Camera className="w-4 h-4 text-white" />
+            <button 
+              onClick={toggleVideo}
+              className={`p-2 ${isVideoOn ? 'bg-slate-700 hover:bg-slate-600' : 'bg-red-600 hover:bg-red-700'} rounded-full transition-colors border border-slate-600`}
+            >
+              {isVideoOn ? (
+                <Camera className="w-4 h-4 text-white" />
+              ) : (
+                <VideoOff className="w-4 h-4 text-white" />
+              )}
             </button>
             <button 
               onClick={endSession}
@@ -200,7 +452,9 @@ const ActiveSession = ({
             </button>
           </div>
         </div>
-      ) : (
+      )}
+
+      {!session?.status === 'Active' && (
         <div className="bg-gradient-to-br from-slate-800 to-slate-700 rounded-xl p-8 text-center border border-slate-600">
           <div className="animate-pulse mb-4">
             <div className="w-16 h-16 bg-emerald-500/20 rounded-full mx-auto flex items-center justify-center border border-emerald-500/30">
@@ -249,6 +503,7 @@ const ActiveSession = ({
       </div>
     </motion.div>
   );
+};
 
   // Feedback form component
   const FeedbackForm = ({ 
@@ -414,6 +669,9 @@ const VideoChat = () => {
   const [rating, setRating] = useState(5);
   const [sessions, setSessions] = useState([]);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+  const [showCounselorChoice, setShowCounselorChoice] = useState(false);
+  const [lastCounselor, setLastCounselor] = useState(null);
+  const [toast, setToast] = useState({ message: "", type: "info" });
 
   // Memoized API functions to prevent re-creation
   const requestSession = useCallback(async () => {
@@ -596,6 +854,52 @@ const VideoChat = () => {
     fetchSessions(); // Refresh sessions
   }, [fetchSessions]);
 
+  // On mount, check for last counselor progress
+  useEffect(() => {
+    const checkProgress = async () => {
+      try {
+        const token = sessionStorage.getItem('accessToken');
+        const res = await axios.get(
+          `${import.meta.env.VITE_BASE_API_URL}/users/last-counselor-progress`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (res.data.hasProgress) {
+          setLastCounselor(res.data.counselor);
+          setShowCounselorChoice(true);
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+    checkProgress();
+  }, []);
+
+  // Handler for user choice
+  const handleCounselorChoice = async (continueWithSame) => {
+    setShowCounselorChoice(false);
+    try {
+      const token = sessionStorage.getItem('accessToken');
+      await axios.post(
+        `${import.meta.env.VITE_BASE_API_URL}/users/update-counselor-progress`,
+        { counselorId: lastCounselor._id, continueWithSame },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!continueWithSame) {
+        setToast({
+          message: "You chose to change counselor. Your sittings & progress with the previous counselor will be retained. We won't connect you with the previous counselor.",
+          type: "warning"
+        });
+      } else {
+        setToast({
+          message: "Continuing with the same counselor. Your sittings & progress will continue.",
+          type: "success"
+        });
+      }
+    } catch (e) {
+      setToast({ message: "Error updating counselor progress.", type: "error" });
+    }
+  };
+
   // Effects
   useEffect(() => {
     fetchSessions();
@@ -653,6 +957,33 @@ const VideoChat = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      {toast.message && <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: "", type: "info" })} />}
+      {/* Counselor choice modal */}
+      {showCounselorChoice && lastCounselor && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-slate-900 rounded-xl p-8 max-w-md w-full border border-emerald-500/30 shadow-2xl">
+            <h2 className="text-xl font-bold text-white mb-4">Continue with previous counselor?</h2>
+            <p className="text-slate-300 mb-4">
+              You have <span className="font-semibold text-emerald-400">{lastCounselor.sittingProgress}</span> sittings in progress with <span className="font-semibold">{lastCounselor.fullName}</span>.<br />
+              <span className="text-amber-400">If you change counselor, your sittings & progress with the previous counselor will be reset.</span>
+            </p>
+            <div className="flex gap-4">
+              <button
+                className="flex-1 py-2 px-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg font-semibold"
+                onClick={() => handleCounselorChoice(true)}
+              >
+                Continue with Same
+              </button>
+              <button
+                className="flex-1 py-2 px-4 bg-slate-700 text-slate-200 rounded-lg font-semibold border border-slate-600"
+                onClick={() => handleCounselorChoice(false)}
+              >
+                Change Counselor
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-700 shadow-xl">
         <div className="max-w-7xl mx-auto px-4 py-4">

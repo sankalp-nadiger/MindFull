@@ -1,8 +1,10 @@
 import React from "react";
 import Navbar from "../Navbar/Navbar";
 import { useState,useEffect } from "react";
+import { useTranslation } from 'react-i18next';
 
 export default function Activity(){
+    const { t } = useTranslation();
     const activities1= [
         {
           "name": "Shooting Stars",
@@ -84,15 +86,19 @@ export default function Activity(){
     //   if (loading) {
     //     return <p>Loading activities...</p>;
     //   }
-    
-    //   if (error) {
+      //   if (error) {
     //     return <p>Error: {error}</p>;
     //   }
 
     return(
         <>
+        <Navbar />
         <section className="text-yellow-400 body-font bg-gray-900">
       <div className="container px-5 py-24 mx-auto flex flex-wrap">
+        <div className="text-center w-full mb-10">
+          <h1 className="text-3xl font-bold text-white mb-4">{t('activities.title')}</h1>
+          <p className="text-gray-300">{t('activities.description')}</p>
+        </div>
         {activities1.map((activity, index) => (
           <div key={index} className="flex relative pb-20 sm:items-center md:w-2/3 mx-auto">
             <div className="h-full w-6 absolute inset-0 flex items-center justify-center">
@@ -119,20 +125,18 @@ export default function Activity(){
                 <h2 className="font-medium title-font text-yellow-700 mb-1 text-xl">
                   {activity.name}
                 </h2>
-                <p className="leading-relaxed">{activity.description}</p>
-                <button
+                <p className="leading-relaxed">{activity.description}</p>                <button
                   className="mt-4 px-6 py-2 bg-indigo-500 text-white rounded-lg"
-                  onClick={() => handleClick(activity.id)} 
+                  // onClick={() => handleClick(activity.id)} 
                 >
-                  Done
+                  {t('common.done')}
                 </button>
               </div>
             </div>
-          </div>
-        ))}
+          </div>        ))}
       </div>
     </section>
-</>
+        </>
     )
 
 }

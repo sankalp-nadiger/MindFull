@@ -76,8 +76,7 @@ const sendMessageToCommunityRoom = asyncHandler(async (req, res) => {
         throw new ApiError(400, 'Room ID, User ID, and Message are required');
     }
 
-    // Find the user to get the username (Assuming you have a User model)
-    
+    const username = req.user.username;
     // Save the message in the database (or similar)
     const room = await Community.findById(roomId);
     if (!room) {
@@ -87,7 +86,7 @@ const sendMessageToCommunityRoom = asyncHandler(async (req, res) => {
     // Here, we assume you have a Message model where messages are stored
     const newMessage = {
         roomId,
-        sender: userId,
+        sender: username,
         message,
         timestamp: new Date(),
     };

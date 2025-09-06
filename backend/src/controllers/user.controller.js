@@ -15,7 +15,7 @@ import ApiResponse from "../utils/API_Response.js";
 import jwt from "jsonwebtoken";
 import { Session } from "../models/session.model.js";
 import Tesseract from 'tesseract.js';
-import {server,io} from "../index.js"
+import { getDistrictAndState } from "../utils/getDistrict.js";
 
 const additionalActivities = [
   // Stress Relief
@@ -179,13 +179,27 @@ const registerUser = asyncHandler(async (req, res) => {
       // Process location
       let parsedLocation;
       try {
-          parsedLocation = JSON.parse(location);
-          if (!parsedLocation.type || !parsedLocation.coordinates) {
-              throw new Error("Invalid location format");
-          }
-      } catch (error) {
-          return res.status(400).json({ success: false, message: "Invalid location JSON format" });
-      }
+      parsedLocation = JSON.parse(location);
+    } catch {
+      return res.status(400).json({ success: false, message: "Invalid location JSON format" });
+    }
+    if (
+      parsedLocation.type !== "Point" ||
+      !Array.isArray(parsedLocation.coordinates) ||
+      parsedLocation.coordinates.length !== 2
+    ) {
+      return res.status(400).json({ success: false, message: "Invalid location format" });
+    }
+
+    // 5) Reverse‐geocode district/state
+    const [lng, lat] = parsedLocation.coordinates;
+    let district = null;
+    let state = null;
+    try {
+      ({ district, state } = await getDistrictFromCoords(lat, lng) || {});
+    } catch (geocodeError) {
+      console.error("Geocoding failed:", geocodeError);
+    }
 
       // Create user
       const user = await User.create({
@@ -197,6 +211,8 @@ const registerUser = asyncHandler(async (req, res) => {
           username: username.toLowerCase(),
           idCard: idCardFile,
           location: parsedLocation,
+          district,
+          state,
       });
 
       console.log("User successfully created:", user);
@@ -393,13 +409,12 @@ const addInterests = asyncHandler(async (req, res) => {
   
   
   const loginUser = asyncHandler(async (req, res) => {
-    const { username, password, email, mood } = req.body;
-    console.log("Request body:", req.body);
+    const { username, password, mood } = req.body;
     if (!username) {
       throw new ApiError(400, "Username is required");
     }
   
-    const user = await User.findOne({ $or: [{ username }, { email }] });
+    const user = await User.findOne({ username });
     if (!user) {
       throw new ApiError(404, "User does not exist");
     }
@@ -913,6 +928,64 @@ const getJournals = async (req, res) => {
   }
 };
 
+export const getLastCounselorProgress = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  // Find last session
+  const lastSession = await Session.findOne({ user: userId })
+    .sort({ endedAt: -1 })
+    .populate('counselor');
+  if (!lastSession || !lastSession.counselor) {
+    return res.json({ hasProgress: false });
+  }
+  // Find progress for this counselor
+  const user = await User.findById(userId);
+  const progress = user.counselorProgress.find(
+    (cp) => cp.counselor.toString() === lastSession.counselor._id.toString()
+  );
+  if (progress && progress.sittingProgress > 0) {
+    return res.json({
+      hasProgress: true,
+      counselor: {
+        _id: lastSession.counselor._id,
+        fullName: lastSession.counselor.fullName,
+        sittingProgress: progress.sittingProgress
+      }
+    });
+  }
+  return res.json({ hasProgress: false });
+});
+
+const updateCounselorProgress = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const { counselorId, sittingProgress, continueWithSame } = req.body;
+
+  if (!counselorId || typeof sittingProgress !== 'number') {
+    return res.status(400).json({ success: false, message: 'counselorId and sittingProgress (number) are required.' });
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    return res.status(404).json({ success: false, message: 'User not found.' });
+  }
+
+  // Only update or add progress for the specified counselor; do NOT reset or remove any previous progress
+  let progress = user.counselorProgress?.find(cp => cp.counselor.toString() === counselorId);
+  if (progress) {
+    progress.sittingProgress = sittingProgress;
+    // If user chose to change counselor, mark this counselor as excluded for next session
+    if (continueWithSame === false) {
+      progress.excludeNext = true;
+    } else {
+      progress.excludeNext = false;
+    }
+  } else {
+    if (!user.counselorProgress) user.counselorProgress = [];
+    user.counselorProgress.push({ counselor: counselorId, sittingProgress, excludeNext: continueWithSame === false });
+  }
+  await user.save();
+  return res.status(200).json({ success: true, message: 'Counselor progress updated', counselorProgress: user.counselorProgress });
+});
+
 export {
   registerUser, extractMobileNumber,
   loginUser,
@@ -923,5 +996,6 @@ export {
   getCurrentUser, getJournals,
   updateAccountDetails,
   addInterests, userProgress, calculateAverageMood,
-  getWeeklyMoodData, getUserSessions
+  getWeeklyMoodData, getUserSessions,
+  updateCounselorProgress
 };

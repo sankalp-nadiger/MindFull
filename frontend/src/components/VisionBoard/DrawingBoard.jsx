@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Stage, Layer, Text as KonvaText, Image, Line, Circle, Group, Transformer, Rect } from "react-konva";
+import { Stage, Layer, Line, Rect, Text as KonvaText, Transformer, Group } from 'react-konva';
 import useImage from "use-image";
 import SaveCanvasModal from "./SaveCanvasModal";
 import { 
@@ -28,29 +28,28 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
   const handleTransformStart = () => {
     setIsTransforming(true);
   };
+
   const handleTransformerInteraction = (e) => {
     e.cancelBubble = true;
     if (e.evt) {
       e.evt.stopPropagation();
     }
   };
+
   const handleTransform = () => {
     if (imageRef.current && onResize) {
       const node = imageRef.current;
       const scaleX = node.scaleX();
       const scaleY = node.scaleY();
       
-      const newWidth = Math.max(10, node.width() * scaleX);
-      const newHeight = Math.max(10, node.height() * scaleY);
-      
-      // Update element with new dimensions but keep scale for live preview
+      // Update element with current scale for live preview
       onResize(element.id, {
         ...element,
         x: node.x(),
         y: node.y(),
-        width: newWidth,
-        height: newHeight,
-        rotation: node.rotation()
+        rotation: node.rotation(),
+        scaleX: scaleX,
+        scaleY: scaleY
       });
     }
   };
@@ -61,10 +60,14 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
       const scaleX = node.scaleX();
       const scaleY = node.scaleY();
       
-      const newWidth = Math.max(10, node.width() * scaleX);
-      const newHeight = Math.max(10, node.height() * scaleY);
+      // Calculate actual dimensions after scaling
+      const originalWidth = element.originalWidth || element.width || (img ? img.width : 100);
+      const originalHeight = element.originalHeight || element.height || (img ? img.height : 100);
       
-      // Reset scale to 1 after applying to width/height
+      const newWidth = Math.max(10, originalWidth * scaleX);
+      const newHeight = Math.max(10, originalHeight * scaleY);
+      
+      // Reset scale to 1 and update actual dimensions
       node.scaleX(1);
       node.scaleY(1);
       
@@ -74,7 +77,11 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
         y: node.y(),
         width: newWidth,
         height: newHeight,
-        rotation: node.rotation()
+        originalWidth: originalWidth,
+        originalHeight: originalHeight,
+        rotation: node.rotation(),
+        scaleX: 1,
+        scaleY: 1
       });
     }
     setIsTransforming(false);
@@ -84,14 +91,15 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
     if (tool !== 'select') return;
     
     e.cancelBubble = true;
-    if (e.evt) {
-      e.evt.stopPropagation();
-    }
+    if (e.evt) e.evt.stopPropagation();
     
-    const pos = e.target.getStage().getPointerPosition();
-    setMouseStartPos(pos);
-    setIsDragging(false);
     onSelect(element.id);
+    
+    if (tool === 'select') {
+      const pos = e.target.getStage().getPointerPosition();
+      setMouseStartPos(pos);
+      setIsDragging(false);
+    }
   };
 
   const handleMouseMove = (e) => {
@@ -102,13 +110,11 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
       Math.pow(pos.x - mouseStartPos.x, 2) + Math.pow(pos.y - mouseStartPos.y, 2)
     );
     
-    // Only start dragging if moved more than 5 pixels
     if (distance > 5 && !isDragging) {
       setIsDragging(true);
       setDragStartPos({ x: element.x, y: element.y });
     }
     
-    // If dragging, update position
     if (isDragging && dragStartPos) {
       const deltaX = pos.x - mouseStartPos.x;
       const deltaY = pos.y - mouseStartPos.y;
@@ -116,7 +122,6 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
       const newX = dragStartPos.x + deltaX;
       const newY = dragStartPos.y + deltaY;
       
-      // Update position in real-time
       if (imageRef.current) {
         imageRef.current.x(newX);
         imageRef.current.y(newY);
@@ -128,7 +133,6 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
   const handleMouseUp = (e) => {
     if (tool !== 'select') return;
     
-    // If we were dragging, update the final position
     if (isDragging && onResize && imageRef.current) {
       const node = imageRef.current;
       onResize(element.id, {
@@ -138,7 +142,6 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
       });
     }
     
-    // Reset states
     setIsDragging(false);
     setMouseStartPos(null);
     setDragStartPos(null);
@@ -146,12 +149,57 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
 
   const handleClick = (e) => {
     e.cancelBubble = true;
-    if (e.evt) {
-      e.evt.stopPropagation();
+    if (e.evt) e.evt.stopPropagation();
+    
+    // Always select on click
+    onSelect(element.id);
+  };
+
+  const handleContextMenu = (e) => {
+    e.evt.preventDefault();
+    e.cancelBubble = true;
+    onSelect(element.id);
+  };
+
+  const handleDragStart = (e) => {
+    if (tool !== 'select') return;
+    
+    e.cancelBubble = true;
+    if (e.evt) e.evt.stopPropagation();
+    
+    onSelect(element.id);
+    setIsDragging(true);
+    setDragStartPos({ x: element.x, y: element.y });
+  };
+
+  const handleDragMove = (e) => {
+    if (tool !== 'select' || !isDragging) return;
+    
+    // Update position in real-time during Konva drag
+    if (onResize && imageRef.current) {
+      const node = imageRef.current;
+      onResize(element.id, {
+        ...element,
+        x: node.x(),
+        y: node.y()
+      });
     }
-    // Only select if not dragging and not transforming
-    if (!isDragging && !isTransforming) {
-      onSelect(element.id);
+  };
+
+  const handleDragEnd = (e) => {
+    if (tool !== 'select') return;
+    
+    setIsDragging(false);
+    setDragStartPos(null);
+    
+    // Final position update
+    if (onResize && imageRef.current) {
+      const node = imageRef.current;
+      onResize(element.id, {
+        ...element,
+        x: node.x(),
+        y: node.y()
+      });
     }
   };
 
@@ -164,13 +212,19 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
         y={element.y}
         width={element.width || (img ? img.width : 100)}
         height={element.height || (img ? img.height : 100)}
+        scaleX={element.scaleX || 1}
+        scaleY={element.scaleY || 1}
         rotation={element.rotation || 0}
-        draggable={false} // Always false, we handle dragging manually
+        draggable={tool === 'select'} // Enable Konva dragging
         onClick={handleClick}
         onTap={handleClick}
+        onContextMenu={handleContextMenu}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onDragStart={handleDragStart}
+        onDragMove={handleDragMove}
+        onDragEnd={handleDragEnd}
         listening={true}
         onTransformStart={handleTransformStart}
         onTransform={handleTransform}
@@ -181,19 +235,27 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
         <Transformer
           ref={trRef}
           boundBoxFunc={(oldBox, newBox) => {
-            // Minimum size constraints
+            // Prevent extreme distortion by maintaining minimum size
             if (newBox.width < 10 || newBox.height < 10) {
               return oldBox;
             }
+            
+            // Optional: maintain aspect ratio if needed
+            // const aspectRatio = oldBox.width / oldBox.height;
+            // if (Math.abs((newBox.width / newBox.height) - aspectRatio) > 0.1) {
+            //   return oldBox;
+            // }
+            
             return newBox;
           }}
           onTransformStart={handleTransformStart}
           onTransform={handleTransform}
           onTransformEnd={handleTransformEnd}
-         onMouseDown={handleTransformerInteraction}
+          onMouseDown={handleTransformerInteraction}
           onTouchStart={handleTransformerInteraction}
           onClick={handleTransformerInteraction}
           onTap={handleTransformerInteraction}
+          onContextMenu={handleTransformerInteraction}
           enabledAnchors={[
             'top-left', 'top-right', 
             'bottom-left', 'bottom-right',
@@ -209,7 +271,7 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
           anchorSize={10}
           anchorStrokeWidth={2}
           anchorCornerRadius={2}
-          keepRatio={false}
+          keepRatio={false} // Set to true if you want to maintain aspect ratio
           centeredScaling={false}
           ignoreStroke={true}
           padding={5}
@@ -223,24 +285,29 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
 };
 // Enhanced FlowLine component with fixed dragging and endpoint positioning
 const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, tool }) => {
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStartPos, setDragStartPos] = useState(null);
-  const lineRef = useRef();
+  const [draggingLine, setDraggingLine] = useState(false);
+  const [draggingEndpoint, setDraggingEndpoint] = useState(null);
+  const [startPoints, setStartPoints] = useState(null);
   const groupRef = useRef();
+  const lineRef = useRef();
 
-  // Use line.points directly, no local state
   const points = line.points || [50, 50, 200, 50];
+  
+  // Handle endpoint dragging
+  const handleEndpointDragStart = (index) => {
+    setDraggingEndpoint(index);
+    setStartPoints([...points]);
+    onSelect(line.id);
+  };
 
-  const handleEndpointDrag = (index, e) => {
-    if (tool !== 'select') return;
+  const handleEndpointDragMove = (index, e) => {
+    if (tool !== 'select' || draggingEndpoint === null) return;
     
-    e.cancelBubble = true;
-    if (e.evt) {
-      e.evt.stopPropagation();
-    }
+    const stage = e.target.getStage();
+    const pos = stage.getPointerPosition();
+    const newPoints = [...startPoints];
     
-    const pos = e.target.position();
-    const newPoints = [...points];
+    // Update the specific endpoint position
     newPoints[index * 2] = pos.x;
     newPoints[index * 2 + 1] = pos.y;
     
@@ -249,75 +316,69 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
     }
   };
 
-  const handleLineClick = (e) => {
-    e.cancelBubble = true;
-    if (e.evt) {
-      e.evt.stopPropagation();
-    }
-    if (!isDragging) {
-      onSelect(line.id);
+  const handleEndpointDragEnd = () => {
+    setDraggingEndpoint(null);
+    setStartPoints(null);
+    if (onDragEnd) {
+      onDragEnd(line.id, { ...line, points });
     }
   };
 
+  // Handle line dragging
   const handleLineDragStart = (e) => {
     if (tool !== 'select') return;
     
-    const pos = e.target.position();
-    setDragStartPos({ x: pos.x, y: pos.y });
-    setIsDragging(false);
-    onSelect(line.id);
+    e.cancelBubble = true;
+    if (e.evt) e.evt.stopPropagation();
     
-    // Prevent line from moving during drag start
-    e.target.position({ x: 0, y: 0 });
+    const stage = e.target.getStage();
+    const pos = stage.getPointerPosition();
+    setStartPoints([...points]);
+    setDraggingLine(true);
+    onSelect(line.id);
   };
 
   const handleLineDragMove = (e) => {
-    if (tool !== 'select' || !dragStartPos) return;
+    if (tool !== 'select' || !draggingLine || !startPoints) return;
     
-    const pos = e.target.position();
-    const distance = Math.sqrt(
-      Math.pow(pos.x - dragStartPos.x, 2) + Math.pow(pos.y - dragStartPos.y, 2)
-    );
+    const stage = e.target.getStage();
+    const pos = stage.getPointerPosition();
     
-    // Only start dragging if moved more than 5 pixels
-    if (distance > 5 && !isDragging) {
-      setIsDragging(true);
+    const deltaX = pos.x - startPoints[0];
+    const deltaY = pos.y - startPoints[1];
+    
+    const newPoints = [
+      startPoints[0] + deltaX,
+      startPoints[1] + deltaY,
+      startPoints[2] + deltaX,
+      startPoints[3] + deltaY
+    ];
+    
+    if (onUpdate) {
+      onUpdate(line.id, { ...line, points: newPoints });
     }
-    
-    if (isDragging) {
-      // Calculate delta from drag start
-      const deltaX = pos.x - dragStartPos.x;
-      const deltaY = pos.y - dragStartPos.y;
-      
-      // Update line points by adding delta
-      const newPoints = [
-        points[0] + deltaX,
-        points[1] + deltaY,
-        points[2] + deltaX,
-        points[3] + deltaY
-      ];
-      
-      if (onUpdate) {
-        onUpdate(line.id, { ...line, points: newPoints });
-      }
-      
-      // Update drag start position for next movement
-      setDragStartPos({ x: pos.x, y: pos.y });
-    }
-    
-    // Keep line at origin to prevent double movement
-    e.target.position({ x: 0, y: 0 });
   };
 
-  const handleLineDragEnd = (e) => {
-    if (tool !== 'select') return;
+  const handleLineDragEnd = () => {
+    setDraggingLine(false);
+    setStartPoints(null);
+    if (onDragEnd) {
+      onDragEnd(line.id, { ...line, points });
+    }
+  };
+
+  const handleClick = (e) => {
+    e.cancelBubble = true;
+    if (e.evt) e.evt.stopPropagation();
+    onSelect(line.id);
+  };
+
+  const handleContextMenu = (e) => {
+    e.evt.preventDefault();
+    e.cancelBubble = true;
+    onSelect(line.id);
     
-    // Reset drag state
-    setIsDragging(false);
-    setDragStartPos(null);
-    
-    // Ensure line stays at origin
-    e.target.position({ x: 0, y: 0 });
+    // Context menu will be handled by the parent component
   };
 
   return (
@@ -328,16 +389,17 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
         stroke={line.color || "#000000"}
         strokeWidth={line.strokeWidth || 2}
         hitStrokeWidth={Math.max(20, (line.strokeWidth || 2) * 4)}
-        draggable={tool === 'select' && isSelected}
-        onClick={handleLineClick}
-        onTap={handleLineClick}
+        draggable={tool === 'select'}
+        onClick={handleClick}
+        onTap={handleClick}
+        onContextMenu={handleContextMenu}
         onDragStart={handleLineDragStart}
         onDragMove={handleLineDragMove}
         onDragEnd={handleLineDragEnd}
         listening={true}
         lineCap="round"
         lineJoin="round"
-        tension={line.style === 'curved' ? 0.5 : 0} // Add tension for curved lines
+        tension={line.style === 'curved' ? 0.5 : 0}
       />
       
       {isSelected && tool === 'select' && points.length >= 4 && (
@@ -350,11 +412,18 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
             stroke={line.color || "#000000"}
             strokeWidth={2}
             draggable={true}
-            onDragMove={(e) => handleEndpointDrag(0, e)}
+            onDragStart={() => handleEndpointDragStart(0)}
+            onDragMove={(e) => handleEndpointDragMove(0, e)}
+            onDragEnd={handleEndpointDragEnd}
             onMouseDown={(e) => {
               e.cancelBubble = true;
               if (e.evt) e.evt.stopPropagation();
             }}
+            onClick={(e) => {
+              e.cancelBubble = true;
+              if (e.evt) e.evt.stopPropagation();
+            }}
+            onContextMenu={handleContextMenu}
             listening={true}
           />
           <Circle
@@ -365,11 +434,18 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
             stroke={line.color || "#000000"}
             strokeWidth={2}
             draggable={true}
-            onDragMove={(e) => handleEndpointDrag(1, e)}
+            onDragStart={() => handleEndpointDragStart(1)}
+            onDragMove={(e) => handleEndpointDragMove(1, e)}
+            onDragEnd={handleEndpointDragEnd}
             onMouseDown={(e) => {
               e.cancelBubble = true;
               if (e.evt) e.evt.stopPropagation();
             }}
+            onClick={(e) => {
+              e.cancelBubble = true;
+              if (e.evt) e.evt.stopPropagation();
+            }}
+            onContextMenu={handleContextMenu}
             listening={true}
           />
         </>
@@ -377,7 +453,6 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
     </Group>
   );
 };
-
 
 const ColorPalette = ({ onColorSelect, currentColor }) => {
   const colors = [
@@ -559,6 +634,7 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
   const [dragStartPos, setDragStartPos] = useState(null);
   const [isTransforming, setIsTransforming] = useState(false);
   const [mouseStartPos, setMouseStartPos] = useState(null);
+  
   const handleTransformerMouseDown = (e) => {
     e.cancelBubble = true;
     if (e.evt) e.evt.stopPropagation();
@@ -628,14 +704,15 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
     if (tool !== 'select') return;
     
     e.cancelBubble = true;
-    if (e.evt) {
-      e.evt.stopPropagation();
-    }
-    
-    const pos = e.target.getStage().getPointerPosition();
-    setMouseStartPos(pos);
-    setIsDragging(false);
+    if (e.evt) e.evt.stopPropagation();
+ 
     onSelect(text.id);
+
+    if (tool === 'select') {
+      const pos = e.target.getStage().getPointerPosition();
+      setMouseStartPos(pos);
+      setIsDragging(false);
+    }
   };
 
   const handleMouseMove = (e) => {
@@ -645,22 +722,19 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
     const distance = Math.sqrt(
       Math.pow(pos.x - mouseStartPos.x, 2) + Math.pow(pos.y - mouseStartPos.y, 2)
     );
-    
-    // Only start dragging if moved more than 5 pixels
+
     if (distance > 5 && !isDragging) {
       setIsDragging(true);
       setDragStartPos({ x: text.x, y: text.y });
     }
-    
-    // If dragging, update position
+
     if (isDragging && dragStartPos) {
       const deltaX = pos.x - mouseStartPos.x;
       const deltaY = pos.y - mouseStartPos.y;
       
       const newX = dragStartPos.x + deltaX;
       const newY = dragStartPos.y + deltaY;
-      
-      // Update position in real-time
+
       if (textRef.current) {
         textRef.current.x(newX);
         textRef.current.y(newY);
@@ -690,26 +764,66 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
 
   const handleClick = (e) => {
     e.cancelBubble = true;
-    if (e.evt) {
-      e.evt.stopPropagation();
+    if (e.evt) e.evt.stopPropagation();
+    
+    // Always select on click, regardless of current selection state
+    onSelect(text.id);
+  };
+
+  const handleDragStart = (e) => {
+    if (tool !== 'select') return;
+    
+    e.cancelBubble = true;
+    if (e.evt) e.evt.stopPropagation();
+    
+    onSelect(text.id);
+    setIsDragging(true);
+    setDragStartPos({ x: text.x, y: text.y });
+  };
+
+  const handleDragMove = (e) => {
+    if (tool !== 'select' || !isDragging) return;
+    
+    // Dragging is handled by Konva internally when draggable=true
+    // We just need to update the position in our state
+    if (onChange && textRef.current) {
+      const node = textRef.current;
+      onChange(text.id, {
+        ...text,
+        x: node.x(),
+        y: node.y()
+      });
     }
-    // Only select if not dragging and not transforming
-    if (!isDragging && !isTransforming) {
-      onSelect(text.id);
+  };
+
+  const handleDragEnd = (e) => {
+    if (tool !== 'select') return;
+    
+    setIsDragging(false);
+    setDragStartPos(null);
+    
+    // Final position update
+    if (onChange && textRef.current) {
+      const node = textRef.current;
+      onChange(text.id, {
+        ...text,
+        x: node.x(),
+        y: node.y()
+      });
     }
   };
 
   return (
     <Group>
       <KonvaText
-  ref={textRef}
-  text={text.text || text.content}
-  x={text.x}
-  y={text.y}
-  fontSize={text.fontSize || 24}
-  fontFamily={text.fontFamily || 'Arial'}
-  fill={text.color || text.fill || '#000000'}
-        draggable={false} // Always false, we handle dragging manually
+        ref={textRef}
+        text={text.text || text.content}
+        x={text.x}
+        y={text.y}
+        fontSize={text.fontSize || 24}
+        fontFamily={text.fontFamily || 'Arial'}
+        fill={text.color || text.fill || '#000000'}
+        draggable={tool === 'select'} // Enable dragging when select tool is active
         rotation={text.rotation || 0}
         fontStyle={text.fontStyle || 'normal'}
         onClick={handleClick}
@@ -717,6 +831,9 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onDragStart={handleDragStart}
+        onDragMove={handleDragMove}
+        onDragEnd={handleDragEnd}
         listening={true}
         onTransformStart={handleTransformStart}
         onTransform={handleTransform}
@@ -1296,27 +1413,49 @@ const ToolBar = () => {
               {/* Canvas Controls */}
               <div className="flex gap-2 justify-end">
                 <button
-                  onClick={handleUndo}
-                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 cursor-pointer"
-                  disabled={elements.length === 0}
-                  title="Undo (Ctrl+Z)"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 14L4 9l5-5"/>
-                    <path d="M4 9h11c4 0 7 3 7 7v0c0 4-3 7-7 7H8"/>
-                  </svg>
-                </button>
+  onClick={handleUndo}
+  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 cursor-pointer"
+  disabled={elements.length === 0}
+  title="Undo (Ctrl+Z)"
+>
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width="16" 
+    height="16" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className="text-black" 
+  >
+    <path d="M9 14L4 9l5-5"/>
+    <path d="M4 9h11c4 0 7 3 7 7v0c0 4-3 7-7 7H8"/>
+  </svg>
+</button>
                 <button
-                  onClick={handleRedo}
-                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 cursor-pointer"
-                  disabled={redoStack.length === 0}
-                  title="Redo (Ctrl+Y)"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M15 14l5-5-5-5"/>
-                    <path d="M20 9H9C5 9 2 12 2 16v0c0 4 3 7 7 7h8"/>
-                  </svg>
-                </button>
+  onClick={handleRedo}
+  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 cursor-pointer"
+  disabled={redoStack.length === 0}
+  title="Redo (Ctrl+Y)"
+>
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width="16" 
+    height="16" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor"
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className="text-black" 
+  >
+    <path d="M15 14l5-5-5-5"/>
+    <path d="M20 9H9C5 9 2 12 2 16v0c0 4 3 7 7 7h8"/>
+  </svg>
+</button>
 
                 <button
                   onClick={() => handleZoom('out')}
@@ -1644,40 +1783,57 @@ const handleEraser = (e) => {
   
   // Erase from elements array (finished drawings)
   setElements(prevElements => {
-    const newElements = prevElements.filter(element => {
+    return prevElements.filter(element => {
       if (element.type === 'drawing') {
         const points = element.points;
-        
-        // Check if any point in the drawing is within eraser radius
-        for (let i = 0; i < points.length; i += 2) {
-          const dx = points[i] - actualPos.x;
-          const dy = points[i + 1] - actualPos.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
+        for (let i = 0; i < points.length - 2; i += 2) {
+          // Check line segment between points
+          const start = { x: points[i], y: points[i+1] };
+          const end = { x: points[i+2], y: points[i+3] };
           
+          // Calculate distance from point to line segment
+          const distance = pointToLineDistance(actualPos, start, end);
           if (distance < eraserRadius) {
-            return false; // Remove this element
+            return false;
           }
         }
       }
-      return true; // Keep non-drawing elements and drawings not touched by eraser
+      return true;
     });
-    
-    // If any elements were removed, save to undo stack
-    if (newElements.length < prevElements.length) {
-      const removedElements = prevElements.filter(el => !newElements.includes(el));
-      setUndoStack(prev => [...prev, {
-        action: 'erase',
-        elements: prevElements,
-        removedElements
-      }]);
-      setRedoStack([]);
-    }
-    
-    return newElements;
   });
 
-  // Create a copy of pen points before modification for history
-  const prevPenPoints = [...penPoints];
+
+  const pointToLineDistance = (point, lineStart, lineEnd) => {
+  const A = point.x - lineStart.x;
+  const B = point.y - lineStart.y;
+  const C = lineEnd.x - lineStart.x;
+  const D = lineEnd.y - lineStart.y;
+
+  const dot = A * C + B * D;
+  const lenSq = C * C + D * D;
+  let param = -1;
+  
+  if (lenSq !== 0) {
+    param = dot / lenSq;
+  }
+
+  let xx, yy;
+
+  if (param < 0) {
+    xx = lineStart.x;
+    yy = lineStart.y;
+  } else if (param > 1) {
+    xx = lineEnd.x;
+    yy = lineEnd.y;
+  } else {
+    xx = lineStart.x + param * C;
+    yy = lineStart.y + param * D;
+  }
+
+  const dx = point.x - xx;
+  const dy = point.y - yy;
+  return Math.sqrt(dx * dx + dy * dy);
+};
   
   // Erase from pen points (currently being drawn)
   setPenPoints(prevPoints => {

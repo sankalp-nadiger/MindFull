@@ -3,19 +3,32 @@ import { BackgroundBeamsWithCollisionDemo } from './hero'
 import Footer from "../Footer/Footer";
 import Contactus from "./Contact";
 import { useEffect } from "react";
+import { useTranslation } from 'react-i18next';
+import LanguageSelector from '../common/LanguageSelector';
+
 function HomePage(){
-  
- 
+  const { t } = useTranslation();
+  const [showLang, setShowLang] = useState(false);
 
-
-
-
-    
-    return(
-        <>
-       
-
-
+  return(
+    <>
+      {/* Floating Globe Button */}
+      <div className="fixed top-4 right-4 z-50">
+        <button
+          aria-label="Select Language"
+          className="bg-slate-800 hover:bg-slate-700 border-2 border-emerald-500 rounded-full p-3 shadow-lg transition-colors duration-200 focus:outline-none"
+          onClick={() => setShowLang((v) => !v)}
+        >
+          <svg className="w-7 h-7 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+          </svg>
+        </button>
+        {showLang && (
+          <div className="absolute right-0 mt-2 w-80 max-w-xs z-50 animate-fade-in">
+            <LanguageSelector horizontal onClose={() => setShowLang(false)} />
+          </div>
+        )}
+      </div>
 
    <BackgroundBeamsWithCollisionDemo/>        
 <div class="overflow-hidden bg-gradient-to-b from-purple-500 via-purple-950 to-black">
@@ -24,10 +37,10 @@ function HomePage(){
       
       <div class="text-center">
         <p class="text-xs font-semibold text-gray-500 tracking-wide uppercase mb-3 dark:text-neutral-200">
-          MindFull Student
+          {t('homepage.title')}
         </p>
         <h1 class="text-3xl text-gray-800 font-bold sm:text-5xl lg:text-6xl lg:leading-tight dark:text-neutral-200">
-          Your one stop solution  <span class="text-blue-500">for Mental Fitness</span>
+          {t('homepage.description')} <span class="text-blue-500">{t('homepage.subtitle')}</span>
         </h1>
       </div>
       

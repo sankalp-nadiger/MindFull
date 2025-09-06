@@ -1,3 +1,20 @@
+// Fetch all parent-counselor meetings for the logged-in parent
+const getParentCounselorMeetings = async (req, res) => {
+    const parentId = req.parent._id;
+    try {
+        const parent = await Parent.findById(parentId).populate({
+            path: 'parentCounselorMeetings.counselor',
+            select: 'fullName email specialization',
+        });
+        if (!parent) {
+            return res.status(404).json({ success: false, message: 'Parent not found' });
+        }
+        return res.status(200).json({ success: true, meetings: parent.parentCounselorMeetings });
+    } catch (error) {
+        console.error('Error fetching parent-counselor meetings:', error);
+        return res.status(500).json({ success: false, message: 'Failed to fetch meetings', error: error.message });
+    }
+};
 import mongoose from "mongoose";
 import asyncHandler from "../utils/asynchandler.utils.js";
 import {ApiError} from "../utils/API_Error.js";
@@ -42,7 +59,26 @@ try {
         from: Twilio_Number });
 
     res.json({ success: true, messageSid: message.sid });
-} catch (error) {
+}
+//  try {
+//     const response = await axios.get("https://www.fast2sms.com/dev/bulkV2", {
+//       params: {
+//         route: "v3",
+//         api_key: process.env.FAST2SMS_API_KEY,
+//         numbers: mobileNumber,
+//         message: `Your OTP is ${otp}. Do not share with anyone.`,
+//         flash: 0
+//       }
+//     });
+//     if (response.data.return) {
+//       console.log("Fast2SMS success:", response.data);
+//       return res.json({ success: true, provider: "Fast2SMS" });
+//     } else {
+//       console.error("Fast2SMS error:", response.data);
+//       return res.status(500).json({ success: false, error: response.data });
+//     }
+// }
+ catch (error) {
     res.status(500).json({ success: false, error: error.message });
 }
 };
@@ -140,7 +176,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
 
 // Login with OTP authentication
 const loginParent = asyncHandler(async (req, res) => {
-    const { password, fullName, mobileNumber, otp } = req.body;
+    const {mobileNumber, otp } = req.body;
 
     // Validate user credentials
     if (!(mobileNumber&&otp) ){
@@ -154,17 +190,11 @@ const loginParent = asyncHandler(async (req, res) => {
     }
 
     const parent = await Parent.findOne({
-        $or: [{ fullName }],
+        $or: [{ mobileNumber }],
     });
     
     if (!parent) {
         throw new ApiError(404, "User does not exist");
-    }
-
-    const isPasswordValid = await parent.isPasswordCorrect(password);
-
-    if (!isPasswordValid) {
-        throw new ApiError(401, "Invalid user credentials");
     }
 
     const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(parent._id);
@@ -434,6 +464,101 @@ const getIssues=(async(req,res) =>{
     }
 })
 
+// Get critical alerts for parent's student (e.g., low mood, high severity issues)
+const getCriticalAlerts = async (req, res) => {
+    const parentId = req.parent._id;
+    try {
+        const student = await User.findOne({ parent: parentId }).populate('issues');
+        if (!student) {
+            return res.status(404).json({ success: false, alerts: [] });
+        }
+        const alerts = [];
+        // Check for high severity issues
+        if (student.issues && student.issues.length > 0) {
+            student.issues.forEach(issue => {
+                if (issue.severity === 'High') {
+                    alerts.push({
+                        id: issue._id,
+                        type: 'urgent',
+                        message: `High severity issue: ${issue.illnessType}`,
+                        timestamp: issue.createdAt || new Date(),
+                    });
+                }
+            });
+        }
+        // Check for low mood in last 7 days
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const moods = await Mood.find({ user: student._id, timestamp: { $gte: sevenDaysAgo } });
+        const lowMoods = moods.filter(m => m.mood === 'Sad' || m.mood === 'Angry');
+        if (lowMoods.length >= 5) {
+            alerts.push({
+                id: 'mood-low',
+                type: 'warning',
+                message: "Your child's mood has been low for several days.",
+                timestamp: new Date(),
+            });
+        }
+        return res.status(200).json({ success: true, alerts });
+    } catch (error) {
+        console.error('Error fetching critical alerts:', error);
+        return res.status(500).json({ success: false, alerts: [], error: error.message });
+    }
+};
+
+// Get upcoming counseling sessions for parent's student
+const getUpcomingSessions = async (req, res) => {
+    const parentId = req.parent._id;
+    try {
+        const student = await User.findOne({ parent: parentId });
+        if (!student) {
+            return res.status(404).json({ success: false, sessions: [] });
+        }
+        const sessions = await Session.find({ user: student._id, status: 'Scheduled' })
+            .populate('counselor', 'fullName specification')
+            .exec();
+        const formatted = sessions.map(session => ({
+            id: session._id,
+            counselor: session.counselor?.fullName || 'Unknown',
+            type: session.counselor?.specification || 'N/A',
+            date: session.date ? session.date.toISOString().split('T')[0] : '',
+            time: session.time || '',
+        }));
+        return res.status(200).json({ success: true, sessions: formatted });
+    } catch (error) {
+        console.error('Error fetching upcoming sessions:', error);
+        return res.status(500).json({ success: false, sessions: [], error: error.message });
+    }
+};
+
+// Request a counselor meeting
+const requestCounselorMeeting = async (req, res) => {
+    const parentId = req.parent._id;
+    const { counselorId, preferredDate, preferredTime, reason } = req.body;
+    try {
+        // Add the meeting request to the parent's parentCounselorMeetings array
+        const parent = await Parent.findById(parentId);
+        if (!parent) {
+            return res.status(404).json({ success: false, message: 'Parent not found' });
+        }
+        const meeting = {
+            counselor: counselorId,
+            date: preferredDate,
+            time: preferredTime,
+            reason,
+            status: 'Requested',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        };
+        parent.parentCounselorMeetings.push(meeting);
+        await parent.save();
+        return res.status(201).json({ success: true, message: 'Counselor meeting requested', meeting });
+    } catch (error) {
+        console.error('Error requesting counselor meeting:', error);
+        return res.status(500).json({ success: false, message: 'Failed to request counselor meeting', error: error.message });
+    }
+};
+
 export {
     sendOTP,
     verifyOTP,
@@ -441,5 +566,9 @@ export {
     loginParent,
     logoutParent,
     getStudentReport,
-    getSessions, getJournals, getIssues, checkMoodAndNotifyParent
+    getSessions, getJournals, getIssues, checkMoodAndNotifyParent,
+    getCriticalAlerts,
+    getUpcomingSessions,
+    requestCounselorMeeting,
+    getParentCounselorMeetings,
 }
