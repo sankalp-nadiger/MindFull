@@ -9,7 +9,7 @@ const counsellorSchema= new Schema({
         required: true
     }],
     gender: {type:String,enum:["Male","Female","Other"],
-        required:true },
+},
     fullName: {
       type: String,
       required: true,

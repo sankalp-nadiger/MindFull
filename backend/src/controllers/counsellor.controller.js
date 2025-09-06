@@ -135,28 +135,37 @@ export const addNotesToSession = async (req, res) => {
 // Accept Session (Counselor Side)
 export const acceptSession = asyncHandler(async (req, res) => {
     const { sessionId } = req.body;
-    const counselorId= req.counsellor._id;
+    const counselorId = req.counsellor._id;
+    
+    console.log('✅ Accepting session:', sessionId, 'by counselor:', counselorId);
+    
     const counselor = await Counsellor.findById(counselorId);
     const session = await Session.findById(sessionId);
+    
     if (!session) {
         throw new ApiError(404, "Session not found");
     }
 
-    // if (session.counselor.toString() !== counselorId) {
-    //     throw new ApiError(403, "Not authorized to accept this session");
-    // }
-
     if (session.status !== "Pending") {
         throw new ApiError(400, "Session is not in pending state");
     }
+    
+    // Update session
     session.counselor = counselorId;
+    session.status = "Active";
+    session.startTime = new Date();
+    
+    // Generate WebRTC room name (using session ID for uniqueness)
+    session.roomName = `session-${sessionId}-${Date.now()}`;
+    
+    await session.save();
+
     // Mark counselor as unavailable
     counselor.isAvailable = false;
     await counselor.save();
 
-    session.status = "Active";
-    session.startTime = new Date(); 
-    await session.save();
+    console.log('🏠 WebRTC room created:', session.roomName);
+    console.log('📞 Session activated:', sessionId);
 
     res.status(200).json({
         success: true,
@@ -165,7 +174,6 @@ export const acceptSession = asyncHandler(async (req, res) => {
             _id: session._id,
             roomName: session.roomName,
             status: "Active",
-            
         }
     });
 });
@@ -174,92 +182,133 @@ export const acceptSession = asyncHandler(async (req, res) => {
 export const endSession = asyncHandler(async (req, res) => {
     const { sessionId } = req.body;
     let userId;
-    if(!req.isCounsellor){
-      userId= req.user._id;
+    
+    if (!req.isCounsellor) {
+        userId = req.user._id;
     } else {
-      userId= req.counsellor._id;
+        userId = req.counsellor._id;
     }
+    
+    console.log('🔚 Ending session:', sessionId, 'by user:', userId);
+    
     const session = await Session.findById(sessionId);
     if (!session) {
         throw new ApiError(404, "Session not found");
     }
+    
     // Verify that the user ending the session is either the counselor or the user
     if (![session.counselor.toString(), session.user.toString()].includes(userId.toString())) {
         throw new ApiError(403, "Not authorized to end this session");
     }
+    
+    // Update session status
     session.status = "Completed";
-    // Set endTime and calculate duration
     session.endTime = new Date();
+    
+    // Calculate duration
     if (session.startTime) {
         session.duration = Math.round((session.endTime - session.startTime) / 1000); // duration in seconds
     }
+    
     await session.save();
+    console.log('⏱️ Session duration:', session.duration, 'seconds');
 
-    // Reduce user's sessionProgress if > 0
+    // Handle user progress and sitting series logic
     const user = await User.findById(session.user);
     let sittingSeriesJustEnded = false;
+    
     if (user) {
-      // Find the latest counselor review with needsSittings and recommendedSittings
-      const lastReview = (user.counsellorReviews || []).slice().reverse().find(r => r.needsSittings && r.recommendedSittings > 0);
-      if (lastReview) {
-        // Update or add to counselorProgress
-        let progressArr = user.counselorProgress || [];
-        let found = false;
-        for (let cp of progressArr) {
-          if (cp.counselor.toString() === session.counselor.toString()) {
-            cp.sittingProgress = (cp.sittingProgress || 0) + 1;
-            cp.lastSession = new Date();
-            found = true;
-            break;
-          }
-        }
-        if (!found) {
-          progressArr.push({
-            counselor: session.counselor,
-            sittingProgress: 1,
-            lastSession: new Date(),
-            excludeNext: false
-          });
-        }
-        // Sum all sittingProgress
-        const totalSittings = progressArr.reduce((sum, cp) => sum + (cp.sittingProgress || 0), 0);
-        if (totalSittings >= lastReview.recommendedSittings) {
-          // Sittings completed, clear progress and mark as not in series
-          user.counselorProgress = [];
-          user.inSittingSeries = false;
-          user.sittingNotes = '';
-          sittingSeriesJustEnded = true;
+        // Find the latest counselor review with needsSittings and recommendedSittings
+        const lastReview = (user.counsellorReviews || []).slice().reverse().find(r => r.needsSittings && r.recommendedSittings > 0);
+        
+        if (lastReview) {
+            // Update or add to counselorProgress
+            let progressArr = user.counselorProgress || [];
+            let found = false;
+            
+            for (let cp of progressArr) {
+                if (cp.counselor.toString() === session.counselor.toString()) {
+                    cp.sittingProgress = (cp.sittingProgress || 0) + 1;
+                    cp.lastSession = new Date();
+                    found = true;
+                    break;
+                }
+            }
+            
+            if (!found) {
+                progressArr.push({
+                    counselor: session.counselor,
+                    sittingProgress: 1,
+                    lastSession: new Date(),
+                    excludeNext: false
+                });
+            }
+            
+            // Sum all sittingProgress
+            const totalSittings = progressArr.reduce((sum, cp) => sum + (cp.sittingProgress || 0), 0);
+            
+            if (totalSittings >= lastReview.recommendedSittings) {
+                // Sittings completed, clear progress and mark as not in series
+                user.counselorProgress = [];
+                user.inSittingSeries = false;
+                user.sittingNotes = '';
+                sittingSeriesJustEnded = true;
+                console.log('🎯 Sitting series completed for user:', user._id);
+            } else {
+                user.counselorProgress = progressArr;
+                user.inSittingSeries = true;
+                console.log('📈 Sitting progress updated:', totalSittings, '/', lastReview.recommendedSittings);
+            }
         } else {
-          user.counselorProgress = progressArr;
-          user.inSittingSeries = true;
+            user.inSittingSeries = false;
+            user.sittingNotes = '';
         }
-      } else {
-        user.inSittingSeries = false;
-        user.sittingNotes = '';
-      }
-      if (user.sessionProgress && user.sessionProgress > 0) {
-        user.sessionProgress -= 1;
-      }
-      await user.save();
+        
+        // Update session progress
+        if (user.sessionProgress && user.sessionProgress > 0) {
+            user.sessionProgress -= 1;
+        }
+        
+        await user.save();
     }
 
-    io.emit(`sessionEnded-${sessionId}`, { sessionId });
+    // Emit session ended event to all participants
+    io.emit(`sessionEnded-${sessionId}`, { 
+        sessionId,
+        roomName: session.roomName,
+        endedBy: userId 
+    });
+    
+    console.log('📡 Session ended event emitted for session:', sessionId);
     // Make counselor available again
     const counselor = await Counsellor.findById(session.counselor);
     if (counselor) {
         counselor.isAvailable = true;
         await counselor.save();
+        
         // Notify counselor if sittings are now 0
         if (sittingSeriesJustEnded) {
-          io.emit(`sittingSeriesEnded-${counselor._id}`, { userId: user._id, message: 'Sittings recommended are now 0.' });
+            io.emit(`sittingSeriesEnded-${counselor._id}`, { 
+                userId: user._id, 
+                message: 'Sittings recommended are now 0.' 
+            });
         }
+        
+        console.log('✅ Counselor marked as available:', counselor._id);
     }
 
     res.status(200).json({
         success: true,
         message: "Session ended successfully",
-        user: user ? { userId: user._id, sessionProgress: user.sessionProgress, fullName: user.fullName, inSittingSeries: user.inSittingSeries, sittingNotes: user.sittingNotes } : null,
-        duration: session.duration || null
+        user: user ? { 
+            userId: user._id, 
+            sessionProgress: user.sessionProgress, 
+            fullName: user.fullName, 
+            inSittingSeries: user.inSittingSeries, 
+            sittingNotes: user.sittingNotes 
+        } : null,
+        duration: session.duration || null,
+        roomName: session.roomName // Include room name for cleanup
     });
 });
 

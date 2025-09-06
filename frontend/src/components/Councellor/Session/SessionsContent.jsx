@@ -2,227 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { io } from "socket.io-client";
 import { motion } from 'framer-motion';
-import CounsellorReview from './CounselorReview'; 
+import CounsellorReview from './CounselorReview';
+import VideoMeetWindow from './VideoMeetWindow'; //WebRTC Component
 
 const socket = io(`${import.meta.env.VITE_BASE_URL}`, {
   transports: ["websocket"],
   withCredentials: true
 });
-
-// Draggable Video Meet Window Component
-const VideoMeetWindow = ({ activeRoom, onClose }) => {
-  const [position, setPosition] = useState({ x: 50, y: 50 });
-  const [size, setSize] = useState({ width: 800, height: 600 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [isResizing, setIsResizing] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [isMinimized, setIsMinimized] = useState(false);
-  const windowRef = useRef(null);
-
-  const handleMouseDown = (e) => {
-    if (e.target.closest('.window-controls') || e.target.closest('.resize-handle')) return;
-    setIsDragging(true);
-    setDragStart({
-      x: e.clientX - position.x,
-      y: e.clientY - position.y
-    });
-  };
-
-  const handleMouseMove = (e) => {
-    if (isDragging) {
-      setPosition({
-        x: Math.max(0, Math.min(window.innerWidth - size.width, e.clientX - dragStart.x)),
-        y: Math.max(0, Math.min(window.innerHeight - size.height, e.clientY - dragStart.y))
-      });
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    setIsResizing(false);
-  };
-
-  const handleResize = (e, direction) => {
-    e.preventDefault();
-    setIsResizing(true);
-    
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const startWidth = size.width;
-    const startHeight = size.height;
-    const startPosX = position.x;
-    const startPosY = position.y;
-
-    const onMouseMove = (e) => {
-      const deltaX = e.clientX - startX;
-      const deltaY = e.clientY - startY;
-
-      let newWidth = startWidth;
-      let newHeight = startHeight;
-      let newX = startPosX;
-      let newY = startPosY;
-
-      if (direction.includes('right')) {
-        newWidth = Math.max(400, startWidth + deltaX);
-      }
-      if (direction.includes('left')) {
-        newWidth = Math.max(400, startWidth - deltaX);
-        newX = startPosX + (startWidth - newWidth);
-      }
-      if (direction.includes('bottom')) {
-        newHeight = Math.max(300, startHeight + deltaY);
-      }
-      if (direction.includes('top')) {
-        newHeight = Math.max(300, startHeight - deltaY);
-        newY = startPosY + (startHeight - newHeight);
-      }
-
-      setSize({ width: newWidth, height: newHeight });
-      setPosition({ x: newX, y: newY });
-    };
-
-    const onMouseUp = () => {
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-      setIsResizing(false);
-    };
-
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-  };
-
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
-  }, [isDragging, dragStart, position.x, position.y, size.width, size.height]);
-
-  return (
-    <motion.div
-      ref={windowRef}
-      className={`fixed z-50 bg-white rounded-2xl shadow-2xl border border-slate-300 overflow-hidden ${
-        isDragging ? 'cursor-grabbing' : 'cursor-grab'
-      } ${isResizing ? 'select-none' : ''}`}
-      style={{
-        left: `${position.x}px`,
-        top: `${position.y}px`,
-        width: `${size.width}px`,
-        height: isMinimized ? 'auto' : `${size.height}px`,
-      }}
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ duration: 0.3 }}
-    >
-      {/* Window Header */}
-      <div 
-        className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 cursor-grab active:cursor-grabbing select-none"
-        onMouseDown={handleMouseDown}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="p-1.5 bg-white/20 rounded-lg">
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="text-white font-semibold text-sm">Live Video Session</h3>
-              <div className="flex items-center space-x-1">
-                <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
-                <span className="text-blue-100 text-xs">LIVE</span>
-              </div>
-            </div>
-          </div>
-          
-          {/* Window Controls */}
-          <div className="window-controls flex items-center space-x-2">
-            <button
-              onClick={() => setIsMinimized(!isMinimized)}
-              className="w-6 h-6 bg-yellow-500 hover:bg-yellow-600 rounded-full flex items-center justify-center transition-colors duration-200"
-              title={isMinimized ? "Restore" : "Minimize"}
-            >
-              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {isMinimized ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" />
-                )}
-              </svg>
-            </button>
-            <button
-              onClick={onClose}
-              className="w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center transition-colors duration-200"
-              title="Close"
-            >
-              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Window Content */}
-      {!isMinimized && (
-        <div className="relative bg-slate-900" style={{ height: `${size.height - 60}px` }}>
-          <iframe
-            src={`https://meet.jit.si/${activeRoom}`}
-            className="w-full h-full"
-            allow="camera; microphone; fullscreen; display-capture"
-            title="Video Session"
-          ></iframe>
-        </div>
-      )}
-
-      {/* Resize Handles */}
-      {!isMinimized && (
-        <>
-          {/* Corner handles */}
-          <div 
-            className="absolute top-0 left-0 w-3 h-3 cursor-nw-resize resize-handle"
-            onMouseDown={(e) => handleResize(e, 'top-left')}
-          />
-          <div 
-            className="absolute top-0 right-0 w-3 h-3 cursor-ne-resize resize-handle"
-            onMouseDown={(e) => handleResize(e, 'top-right')}
-          />
-          <div 
-            className="absolute bottom-0 left-0 w-3 h-3 cursor-sw-resize resize-handle"
-            onMouseDown={(e) => handleResize(e, 'bottom-left')}
-          />
-          <div 
-            className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize resize-handle bg-gradient-to-tl from-blue-500/20 to-transparent"
-            onMouseDown={(e) => handleResize(e, 'bottom-right')}
-          />
-          
-          {/* Edge handles */}
-          <div 
-            className="absolute top-0 left-3 right-3 h-1 cursor-n-resize resize-handle"
-            onMouseDown={(e) => handleResize(e, 'top')}
-          />
-          <div 
-            className="absolute bottom-0 left-3 right-3 h-1 cursor-s-resize resize-handle"
-            onMouseDown={(e) => handleResize(e, 'bottom')}
-          />
-          <div 
-            className="absolute left-0 top-3 bottom-3 w-1 cursor-w-resize resize-handle"
-            onMouseDown={(e) => handleResize(e, 'left')}
-          />
-          <div 
-            className="absolute right-0 top-3 bottom-3 w-1 cursor-e-resize resize-handle"
-            onMouseDown={(e) => handleResize(e, 'right')}
-          />
-        </>
-      )}
-    </motion.div>
-  );
-};
 
 const SessionsContent = () => {
   const [sessions, setSessions] = useState([]);
@@ -235,6 +21,60 @@ const SessionsContent = () => {
   const [currentUserId, setCurrentUserId] = useState(null);
   const [inSittingSeries, setInSittingSeries] = useState(false);
   const [sittingNotes, setSittingNotes] = useState('');
+  const [counselorData, setCounselorData] = useState(null);
+  const [isCounselorDataLoading, setIsCounselorDataLoading] = useState(true);
+
+  // Get counselor data on mount
+  useEffect(() => {
+    const fetchCounselorData = async () => {
+      setIsCounselorDataLoading(true);
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_BASE_API_URL}/counsellor/profile`,
+          {
+            headers: {
+              Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
+            },
+          }
+        );
+        
+        if (response.data.success && response.data.counselor) {
+          setCounselorData(response.data.counselor);
+          setError(null); // Clear any previous errors
+          console.log('👨‍⚕️ Counselor data loaded:', response.data.counselor);
+        } else {
+          throw new Error('Invalid counselor data format');
+        }
+      } catch (error) {
+        console.error('❌ Error fetching counselor data:', error);
+        setError(error.response?.data?.message || "Failed to load counselor data");
+        setCounselorData(null); // Reset counselor data on error
+      } finally {
+        setIsCounselorDataLoading(false);
+      }
+    };
+
+    // Initial fetch
+    fetchCounselorData();
+
+    // Retry on failure every 5 seconds up to 3 times
+    let retryCount = 0;
+    const retryInterval = setInterval(() => {
+      if (!counselorData && !isCounselorDataLoading && retryCount < 3) {
+        console.log('🔄 Retrying counselor data fetch, attempt:', retryCount + 1);
+        fetchCounselorData();
+        retryCount++;
+      } else {
+        clearInterval(retryInterval);
+      }
+    }, 5000);
+    
+    // Cleanup function
+    return () => {
+      clearInterval(retryInterval);
+      setIsCounselorDataLoading(false);
+    };
+  }, []);
 
   // Helper to check sitting series for a user
   const fetchSittingSeries = async (userId) => {
@@ -255,6 +95,7 @@ const SessionsContent = () => {
       setSittingNotes('');
     }
   };
+
   useEffect(() => {
     const fetchActiveSessions = async () => {
       try {
@@ -269,8 +110,10 @@ const SessionsContent = () => {
         );
         setSessions(response.data.sessions);
         setError('');
+        console.log('📋 Loaded sessions:', response.data.sessions);
       } catch (error) {
         setError("Failed to load active sessions.");
+        console.error('❌ Error loading sessions:', error);
       } finally {
         setLoading(false);
       }
@@ -280,6 +123,7 @@ const SessionsContent = () => {
 
     // Listen for new session requests
     socket.on('sessionRequested', (data) => {
+      console.log('🔔 New session requested:', data);
       setSessions(prevSessions => [...prevSessions, {
         _id: data.sessionId,
         issueDetails: data.issueDetails,
@@ -296,7 +140,20 @@ const SessionsContent = () => {
 
   const acceptSession = async (sessionId) => {
     try {
+      if (isCounselorDataLoading) {
+        setError("Please wait while counselor data is loading...");
+        return;
+      }
+      if (!counselorData?._id) {
+        console.error('❌ Counselor data not loaded yet');
+        setError("Unable to start session: Counselor data not available");
+        return;
+      }
+
       setLoading(true);
+      setError(null); // Clear any previous errors
+      console.log('✅ Accepting session:', sessionId, 'as counselor:', counselorData._id);
+      
       const response = await axios.post(
         `${import.meta.env.VITE_BASE_API_URL}/counsellor/accept`,
         { sessionId },
@@ -306,6 +163,8 @@ const SessionsContent = () => {
           },
         }
       );
+
+      console.log('📞 Session accepted:', response.data);
 
       // Find userId for this session
       const session = sessions.find(s => s._id === sessionId);
@@ -319,9 +178,17 @@ const SessionsContent = () => {
         )
       );
 
+      // Set active room for WebRTC
+      console.log('📄 Full response data:', response.data);
+      if (!response.data.session?.roomName) {
+        console.error('❌ No room name in response');
+        throw new Error('No room name provided in session response');
+      }
       setActiveRoom(response.data.session.roomName);
+      console.log('🏠 Video room activated:', response.data.session.roomName);
     } catch (error) {
       setError("Failed to accept session.");
+      console.error('❌ Error accepting session:', error);
     } finally {
       setLoading(false);
     }
@@ -330,6 +197,8 @@ const SessionsContent = () => {
   const endSession = async (sessionId) => {
     try {
       setEnding(true);
+      console.log('🔚 Ending session:', sessionId);
+      
       const response = await axios.post(
         `${import.meta.env.VITE_BASE_API_URL}/counsellor/end`,
         { sessionId },
@@ -339,6 +208,8 @@ const SessionsContent = () => {
           },
         }
       );
+
+      console.log('✅ Session ended:', response.data);
 
       // Always check sitting series after session ends
       if (response.data.user?.userId) {
@@ -364,13 +235,26 @@ const SessionsContent = () => {
       setError('');
     } catch (error) {
       setError("Failed to end session.");
+      console.error('❌ Error ending session:', error);
     } finally {
       setEnding(false);
     }
   };
 
+  // Monitor activeRoom changes
+  useEffect(() => {
+    if (activeRoom) {
+      console.log('🎥 Attempting to open VideoMeetWindow with:', {
+        activeRoom,
+        counselorId: counselorData?._id,
+        userType: 'counselor'
+      });
+    }
+  }, [activeRoom, counselorData]);
+
   useEffect(() => {
     const handleSessionEnd = ({ sessionId }) => {
+      console.log('🔚 Session ended event received:', sessionId);
       setSessions((prevSessions) =>
         prevSessions.filter((session) => session._id !== sessionId)
       );
@@ -600,13 +484,21 @@ const SessionsContent = () => {
           )}
         </motion.div>
 
-        {/* Live Video Session - Draggable Window */}
-        {activeRoom && (
+        {/* WebRTC Video Session - Draggable Window */}
+        {activeRoom && counselorData?._id ? (
           <VideoMeetWindow 
             activeRoom={activeRoom}
             onClose={() => setActiveRoom(null)}
+            socket={socket}
+            userId={counselorData._id}
+            userType="counselor"
           />
-        )}
+        ) : activeRoom ? (
+          <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            <p className="font-medium">Unable to start video session</p>
+            <p className="text-sm">Counselor data not loaded. Please refresh the page.</p>
+          </div>
+        ) : null}
       </div>
 
       <CounsellorReview

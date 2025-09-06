@@ -136,7 +136,7 @@ const CounselorSignIn = () => {
         return;
       }
       try {
-        const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/counsellor/login`, {
+        const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/counsellor/login-counsellor`, {
           mobileNumber: phoneNumber,
           otp,
         });
@@ -144,7 +144,7 @@ const CounselorSignIn = () => {
           const { accessToken } = response.data.data;
           sessionStorage.setItem("accessToken", accessToken);
           setToast({ message: "Login successful!", type: "success" });
-          setTimeout(() => navigate("/CounsellorDashboard"), 1200);
+          setTimeout(() => navigate("/councellor"), 1200);
         }
       } catch (error) {
         setOtpError(error.response?.data?.message || "Error during login. Please try again.");
@@ -164,7 +164,7 @@ const CounselorSignIn = () => {
         return;
       }
       try {
-        const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/counsellor/login`, {
+        const response = await axios.post(`${import.meta.env.VITE_BASE_API_URL}/counsellor/login-counsellor`, {
           email,
           code: otp,
         });
@@ -172,7 +172,7 @@ const CounselorSignIn = () => {
           const { accessToken } = response.data.data;
           sessionStorage.setItem("accessToken", accessToken);
           setToast({ message: "Login successful!", type: "success" });
-          setTimeout(() => navigate("/CounsellorDashboard"), 1200);
+          setTimeout(() => navigate("/councellor"), 1200);
         }
       } catch (error) {
         setOtpError(error.response?.data?.message || "Error during login. Please try again.");
