@@ -301,7 +301,7 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
   };
 
   const handleEndpointDragMove = (index, e) => {
-    if (tool !== 'select' || draggingEndpoint === null) return;
+    if (tool !== 'select' || draggingEndpoint === null || !e.evt.buttons) return;
     
     const stage = e.target.getStage();
     const pos = stage.getPointerPosition();
@@ -333,16 +333,25 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
     
     const stage = e.target.getStage();
     const pos = stage.getPointerPosition();
-    setStartPoints([...points]);
-    setDraggingLine(true);
+    
+    if (e.evt.buttons === 1) { // Only start drag if mouse button is held
+      setStartPoints([...points]);
+      setDraggingLine(true);
+    }
     onSelect(line.id);
   };
 
   const handleLineDragMove = (e) => {
-    if (tool !== 'select' || !draggingLine || !startPoints) return;
+    if (tool !== 'select' || !draggingLine || !startPoints || !e.evt.buttons) return;
     
     const stage = e.target.getStage();
     const pos = stage.getPointerPosition();
+    
+    // Calculate the center of the line
+    const lineCenter = {
+      x: (points[0] + points[2]) / 2,
+      y: (points[1] + points[3]) / 2
+    };
     
     const deltaX = pos.x - startPoints[0];
     const deltaY = pos.y - startPoints[1];
@@ -381,6 +390,10 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
     // Context menu will be handled by the parent component
   };
 
+  // Calculate endpoints for circles
+  const startPoint = { x: points[0], y: points[1] };
+  const endPoint = { x: points[2], y: points[3] };
+
   return (
     <Group ref={groupRef}>
       <Line
@@ -407,13 +420,23 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
           <Circle
             x={points[0]}
             y={points[1]}
-            radius={8}
+            radius={6}
             fill="#fff"
             stroke={line.color || "#000000"}
             strokeWidth={2}
-            draggable={true}
-            onDragStart={() => handleEndpointDragStart(0)}
-            onDragMove={(e) => handleEndpointDragMove(0, e)}
+            draggable={tool === 'select'}
+            onDragStart={(e) => {
+              if (e.evt.buttons === 1) {  // Only start drag if mouse button is held
+                handleEndpointDragStart(0);
+              }
+              e.cancelBubble = true;
+              if (e.evt) e.evt.stopPropagation();
+            }}
+            onDragMove={(e) => {
+              if (e.evt.buttons) {  // Only drag while button is held
+                handleEndpointDragMove(0, e);
+              }
+            }}
             onDragEnd={handleEndpointDragEnd}
             onMouseDown={(e) => {
               e.cancelBubble = true;
@@ -429,13 +452,23 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
           <Circle
             x={points[2]}
             y={points[3]}
-            radius={8}
+            radius={6}
             fill="#fff"
             stroke={line.color || "#000000"}
             strokeWidth={2}
-            draggable={true}
-            onDragStart={() => handleEndpointDragStart(1)}
-            onDragMove={(e) => handleEndpointDragMove(1, e)}
+            draggable={tool === 'select'}
+            onDragStart={(e) => {
+              if (e.evt.buttons === 1) {  // Only start drag if mouse button is held
+                handleEndpointDragStart(1);
+              }
+              e.cancelBubble = true;
+              if (e.evt) e.evt.stopPropagation();
+            }}
+            onDragMove={(e) => {
+              if (e.evt.buttons) {  // Only drag while button is held
+                handleEndpointDragMove(1, e);
+              }
+            }}
             onDragEnd={handleEndpointDragEnd}
             onMouseDown={(e) => {
               e.cancelBubble = true;
