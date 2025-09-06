@@ -36,7 +36,6 @@ dotenv.config();
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
 const sendOTP = async (req, res) => {
- 
     console.log('Received request to send OTP:', req.body);
     const mobileNumber= req.body.mobileNumber;
     const otp=generateOTP();
