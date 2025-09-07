@@ -1065,42 +1065,7 @@ const handleMouseDown = (e) => {
       break;
   }
 };
-const handleMouseUp = () => {
-  // Handle pen tool completion
-  if (tool === 'pen' && isDrawing.current && penPoints.length > 0) {
-    const lastLine = penPoints[penPoints.length - 1];
-    if (lastLine && lastLine.points.length >= 4) {
-      const newElement = {
-        id: Date.now().toString(),
-        type: 'drawing',
-        points: lastLine.points,
-        color: lastLine.color,
-        strokeWidth: lastLine.width
-      };
-      addElementWithHistory(newElement);
-      setPenPoints([]);
-      // Don't switch to select tool for pen - keep drawing
-    }
-  }
-  
-  // Handle flow line completion
-  if (tool === 'flowLine' && flowLine && isDrawing.current) {
-    const [x1, y1, x2, y2] = flowLine.points;
-    const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-    if (distance > 5) {
-      const newFlowLine = { ...flowLine };
-      addElementWithHistory(newFlowLine);
-      setSelectedId(newFlowLine.id);
-      setTool('select'); // Switch to select after creating flow line
-    }
-    setFlowLine(null);
-  }
-  
-  isDrawing.current = false;
-  setIsErasing(false);
-};
 
-};
 
 
 
@@ -2055,5 +2020,40 @@ onContextMenu={(e) => {
     </div>
   );
 };
+const handleMouseUp = () => {
+  // Handle pen tool completion
+  if (tool === 'pen' && isDrawing.current && penPoints.length > 0) {
+    const lastLine = penPoints[penPoints.length - 1];
+    if (lastLine && lastLine.points.length >= 4) {
+      const newElement = {
+        id: Date.now().toString(),
+        type: 'drawing',
+        points: lastLine.points,
+        color: lastLine.color,
+        strokeWidth: lastLine.width
+      };
+      addElementWithHistory(newElement);
+      setPenPoints([]);
+      // Don't switch to select tool for pen - keep drawing
+    }
+  }
+  
+  // Handle flow line completion
+  if (tool === 'flowLine' && flowLine && isDrawing.current) {
+    const [x1, y1, x2, y2] = flowLine.points;
+    const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    if (distance > 5) {
+      const newFlowLine = { ...flowLine };
+      addElementWithHistory(newFlowLine);
+      setSelectedId(newFlowLine.id);
+      setTool('select'); // Switch to select after creating flow line
+    }
+    setFlowLine(null);
+  }
+  
+  isDrawing.current = false;
+  setIsErasing(false);
+};
+}
 
 export default DrawingBoard;
