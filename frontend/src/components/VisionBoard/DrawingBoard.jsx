@@ -194,7 +194,6 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
     if (isSelected && groupRef.current) {
       groupRef.current.moveToTop();
       
-      // Ensure endpoints are on top of the line
       const layer = groupRef.current.getLayer();
       if (layer) {
         const startCircle = layer.findOne(`#${line.id}-start`);
@@ -236,11 +235,10 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
       const deltaY = node.y();
       
       if (deltaX !== 0 || deltaY !== 0) {
-        const newPoints = [...points];
-        newPoints[0] += deltaX;
-        newPoints[1] += deltaY;
-        newPoints[2] += deltaX;
-        newPoints[3] += deltaY;
+        const newPoints = points.map((point, index) => {
+          if (index % 2 === 0) return point + deltaX; // x coordinates
+          return point + deltaY; // y coordinates
+        });
         
         node.x(0);
         node.y(0);
@@ -280,7 +278,6 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
       scaleY: 1
     });
     
-    // Ensure the line stays selected after dragging endpoint
     onSelect(line.id);
   };
 
@@ -319,7 +316,6 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
       
       {isSelected && tool === 'select' && (
         <>
-          {/* Start endpoint circle */}
           <Circle
             x={points[0]}
             y={points[1]}
@@ -337,21 +333,16 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
               if (e.evt) e.evt.stopPropagation();
             }}
             onMouseEnter={() => {
-              if (!isDraggingLine) {
-                document.body.style.cursor = 'crosshair';
-              }
+              document.body.style.cursor = 'crosshair';
             }}
             onMouseLeave={() => {
-              if (!isDraggingLine) {
-                document.body.style.cursor = 'default';
-              }
+              document.body.style.cursor = 'default';
             }}
             perfectDrawEnabled={false}
             id={`${line.id}-start`}
             name={`flowline-endpoint-${line.id}-start`}
           />
           
-          {/* End endpoint circle */}
           <Circle
             x={points[2]}
             y={points[3]}
@@ -369,14 +360,10 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
               if (e.evt) e.evt.stopPropagation();
             }}
             onMouseEnter={() => {
-              if (!isDraggingLine) {
-                document.body.style.cursor = 'crosshair';
-              }
+              document.body.style.cursor = 'crosshair';
             }}
             onMouseLeave={() => {
-              if (!isDraggingLine) {
-                document.body.style.cursor = 'default';
-              }
+              document.body.style.cursor = 'default';
             }}
             perfectDrawEnabled={false}
             id={`${line.id}-end`}
@@ -438,6 +425,7 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
         shadowOpacity: 0
       });
       
+      // Update the position
       onChange(text.id, {
         x: e.target.x(),
         y: e.target.y()
@@ -451,41 +439,49 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
       const scaleX = node.scaleX();
       const scaleY = node.scaleY();
       
+      // Calculate new font size based on scale
       const avgScale = (scaleX + scaleY) / 2;
       const newFontSize = Math.max(8, Math.round((text.fontSize || 24) * avgScale));
       
+      // Reset scale
       node.scaleX(1);
       node.scaleY(1);
       
+      // Update with new properties
       onChange(text.id, {
         x: node.x(),
         y: node.y(),
         rotation: node.rotation(),
-        fontSize: newFontSize
+        fontSize: newFontSize,
+        width: node.width() * scaleX,
+        height: node.height() * scaleY
       });
     }
     setIsTransforming(false);
   };
   
   return (
-    <Group>
+    <Group
+      x={text.x}
+      y={text.y}
+      draggable={tool === 'select' && isSelected}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
       <KonvaText
         ref={textRef}
         text={text.text || text.content}
-        x={text.x}
-        y={text.y}
+        x={0}
+        y={0}
         fontSize={text.fontSize || 24}
         fontFamily={text.fontFamily || 'Arial'}
         fill={text.color || text.fill || '#000000'}
-        draggable={tool === 'select'}
         rotation={text.rotation || 0}
         fontStyle={text.fontStyle || 'normal'}
         listening={true}
         onClick={handleSelect}
         onTap={handleSelect}
         onMouseDown={handleSelect}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
         onTransformEnd={handleTransformEnd}
         onMouseEnter={() => {
           if (tool === 'select' && !isDragging) {
@@ -536,19 +532,19 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
 };
 
 // Fixed URLImage Component
-const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) => {
+const URLImage = ({ element, onSelect, isSelected, onUpdate, tool }) => {
   const [img] = useImage(element.src);
   const imageRef = useRef();
   const trRef = useRef();
+  const groupRef = useRef();
   const [isTransforming, setIsTransforming] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
   // Improved transformer attachment
   useEffect(() => {
     if (isSelected && tool === 'select' && imageRef.current) {
-      // Force immediate transformer attachment
       if (trRef.current) {
-        trRef.current.nodes([imageRef.current]);
+        trRef.current.nodes([groupRef.current]);
         trRef.current.getLayer().batchDraw();
       }
     } else if (trRef.current) {
@@ -580,35 +576,36 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
 
   const handleDragEnd = (e) => {
     setIsDragging(false);
-    if (tool === 'select' && onResize) {
+    if (tool === 'select' && onUpdate) {
       e.target.to({
         duration: 0.2,
         shadowOffset: { x: 0, y: 0 },
         shadowOpacity: 0
       });
       
-      onResize(element.id, {
+      onUpdate(element.id, {
         x: e.target.x(),
-        y: e.target.y(),
-        rotation: e.target.rotation()
+        y: e.target.y()
       });
     }
   };
 
-  const handleTransformEnd = (e) => {
-    if (!imageRef.current || !onResize) return;
+  const handleTransformEnd = () => {
+    if (!groupRef.current || !onUpdate) return;
 
-    const node = imageRef.current;
+    const node = groupRef.current;
     const scaleX = node.scaleX();
     const scaleY = node.scaleY();
 
+    // Calculate new dimensions
+    const newWidth = Math.max(20, element.width * scaleX);
+    const newHeight = Math.max(20, element.height * scaleY);
+
+    // Reset scale and update position/size
     node.scaleX(1);
     node.scaleY(1);
 
-    const newWidth = Math.max(20, node.width() * scaleX);
-    const newHeight = Math.max(20, node.height() * scaleY);
-
-    onResize(element.id, {
+    onUpdate(element.id, {
       x: node.x(),
       y: node.y(),
       width: newWidth,
@@ -620,23 +617,29 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
   };
 
   return (
-    <Group>
+    <Group
+      ref={groupRef}
+      x={element.x}
+      y={element.y}
+      width={element.width}
+      height={element.height}
+      rotation={element.rotation || 0}
+      draggable={tool === 'select' && isSelected}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onTransformEnd={handleTransformEnd}
+    >
       <Image
         ref={imageRef}
         image={img}
-        x={element.x}
-        y={element.y}
+        x={0}
+        y={0}
         width={element.width}
         height={element.height}
-        rotation={element.rotation || 0}
-        draggable={tool === 'select'}
         listening={true}
         onClick={handleSelect}
         onTap={handleSelect}
         onMouseDown={handleSelect}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        onTransformEnd={handleTransformEnd}
         onMouseEnter={() => {
           if (tool === 'select' && !isDragging) {
             document.body.style.cursor = isSelected ? 'move' : 'pointer';
@@ -1120,7 +1123,7 @@ if (tool === 'select' && clickedOnBackground && !clickedElementId) {
 const handleElementSelect = (id) => {
   console.log('Selecting element:', id);
   
-  // If clicking on already selected element, KEEP it selected
+  // If clicking on already selected element, keep it selected
   if (selectedId === id) {
     // Just ensure it's on top and transformer is attached
     const stage = stageRef.current;
@@ -1128,6 +1131,15 @@ const handleElementSelect = (id) => {
       const selectedNode = stage.findOne(`#${id}`);
       if (selectedNode) {
         selectedNode.moveToTop();
+        
+        // Also move endpoints to top for flowlines
+        if (selectedNode.attrs.name && selectedNode.attrs.name.startsWith('flowline-')) {
+          const startEndpoint = stage.findOne(`#${id}-start`);
+          const endEndpoint = stage.findOne(`#${id}-end`);
+          if (startEndpoint) startEndpoint.moveToTop();
+          if (endEndpoint) endEndpoint.moveToTop();
+        }
+        
         stage.batchDraw();
       }
     }
@@ -1147,7 +1159,6 @@ const handleElementSelect = (id) => {
       if (selectedNode) {
         selectedNode.moveToTop();
         
-        // Also move endpoints to top for flowlines
         if (selectedNode.attrs.name && selectedNode.attrs.name.startsWith('flowline-')) {
           const startEndpoint = stage.findOne(`#${id}-start`);
           const endEndpoint = stage.findOne(`#${id}-end`);
@@ -2063,8 +2074,7 @@ onContextMenu={(e) => {
           element={element}
           isSelected={selectedId === element.id}
           onSelect={handleElementSelect}
-          onDragEnd={handleElementUpdate}
-          onResize={handleElementUpdate}
+          onUpdate={handleElementUpdate}  // ← CHANGED from onDragEnd and onResize
           tool={tool}
         />
       );
@@ -2075,8 +2085,7 @@ onContextMenu={(e) => {
           line={element}
           isSelected={selectedId === element.id}
           onSelect={handleElementSelect}
-          onDragEnd={handleElementUpdate}
-          onUpdate={handleElementUpdate}
+          onUpdate={handleElementUpdate}  // ← CHANGED from onDragEnd
           tool={tool}
         />
       );
