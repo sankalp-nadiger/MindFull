@@ -370,7 +370,8 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
   const textRef = useRef();
   const trRef = useRef();
   const [isTransforming, setIsTransforming] = useState(false);
-  const [isDragStart, setIsDragStart] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragTimeoutRef = useRef(null);
   
   useEffect(() => {
     if (isSelected && trRef.current && textRef.current && tool === 'select') {
@@ -381,34 +382,51 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
     }
   }, [isSelected, tool]);
 
-  // Only select on click/tap, not on drag
+  useEffect(() => {
+    return () => {
+      if (dragTimeoutRef.current) {
+        clearTimeout(dragTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const handleSelect = (e) => {
     if (tool === 'select') {
       e.cancelBubble = true;
       if (e.evt) e.evt.stopPropagation();
-      setIsDragStart(false);
       onSelect(text.id);
       e.evt.preventDefault();
     }
-  } 
+  }
 
   const handleDragStart = (e) => {
-    if (tool === 'select') {
-      setIsDragStart(true);
+    if (tool === 'select' && isSelected) {
       e.cancelBubble = true;
       if (e.evt) e.evt.stopPropagation();
+      
+      // Set a timeout to start dragging
+      dragTimeoutRef.current = setTimeout(() => {
+        setIsDragging(true);
+      }, 200); // 200ms delay before drag starts
     }
-  };
+  }
 
   const handleDragEnd = (e) => {
-    if (tool === 'select' && isDragStart && onChange) {
+    if (dragTimeoutRef.current) {
+      clearTimeout(dragTimeoutRef.current);
+    }
+
+    if (tool === 'select' && isSelected && isDragging) {
+      e.cancelBubble = true;
+      if (e.evt) e.evt.stopPropagation();
+      
       onChange(text.id, {
         x: e.target.x(),
         y: e.target.y()
       });
     }
-    setIsDragStart(false);
-  };
+    setIsDragging(false);
+  } 
 
   const handleTransformEnd = () => {
     if (textRef.current && onChange) {
@@ -442,14 +460,13 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
         fontSize={text.fontSize || 24}
         fontFamily={text.fontFamily || 'Arial'}
         fill={text.color || text.fill || '#000000'}
-        draggable={tool === 'select' && isSelected}
+        draggable={tool === 'select' && isSelected && isDragging}
         rotation={text.rotation || 0}
         fontStyle={text.fontStyle || 'normal'}
         listening={true}
         onClick={handleSelect}
         onTap={handleSelect}
-        onMouseDown={handleSelect}
-        onDragStart={handleDragStart}
+        onMouseDown={handleDragStart}
         onDragEnd={handleDragEnd}
         onMouseEnter={() => {
           if (tool === 'select' && isSelected && !isTransforming) {
@@ -503,8 +520,8 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
   const imageRef = useRef();
   const trRef = useRef();
   const [isTransforming, setIsTransforming] = useState(false);
-  const [isDragStart, setIsDragStart] = useState(false);
-  const dragStartPos = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragTimeoutRef = useRef(null);
 
   useEffect(() => {
     if (isSelected && imageRef.current && trRef.current && tool === 'select') {
@@ -515,15 +532,52 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
     }
   }, [isSelected, tool]);
 
-  // Only select on click/tap, not on drag
+  useEffect(() => {
+    return () => {
+      if (dragTimeoutRef.current) {
+        clearTimeout(dragTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const handleSelect = (e) => {
     if (tool === 'select') {
       e.cancelBubble = true;
       if (e.evt) e.evt.stopPropagation();
-      setIsDragStart(false);
       onSelect(element.id);
       e.evt.preventDefault();
     }
+  }
+
+  const handleImageDragStart = (e) => {
+    if (tool === 'select' && isSelected) {
+      e.cancelBubble = true;
+      if (e.evt) e.evt.stopPropagation();
+      
+      dragTimeoutRef.current = setTimeout(() => {
+        setIsDragging(true);
+      }, 200); // 200ms delay before drag starts
+    }
+  }
+
+  const handleImageDragEnd = (e) => {
+    if (dragTimeoutRef.current) {
+      clearTimeout(dragTimeoutRef.current);
+    }
+
+    if (tool === 'select' && isSelected && isDragging) {
+      e.cancelBubble = true;
+      if (e.evt) e.evt.stopPropagation();
+      
+      onResize(element.id, {
+        x: e.target.x(),
+        y: e.target.y(),
+        width: element.width,
+        height: element.height,
+        rotation: e.target.rotation()
+      });
+    }
+    setIsDragging(false);
   } 
 
   const handleDragStart = (e) => {
@@ -935,43 +989,45 @@ const handleMouseDown = (e) => {
   if (!pos) return;
 
   const clickedElement = e.target;
+  const isTransformerAnchor = clickedElement.getParent() && 
+                             clickedElement.getParent().className === 'Transformer';
+  
   const clickedOnBackground = clickedElement === stage || 
                             (clickedElement.getClassName() === 'Rect' && clickedElement.attrs?.id === 'background');
-  
+
   const actualPos = {
     x: (pos.x - stagePos.x) / scale,
     y: (pos.y - stagePos.y) / scale
   };
 
-  // Only clear selection if clicked on background AND tool is select
-  // AND not clicking on a transformer anchor
-  const isTransformerAnchor = clickedElement.getParent && 
-                             clickedElement.getParent().className === 'Transformer';
-  
+  // Deselect when clicking on background in select mode
   if (clickedOnBackground && tool === 'select' && !isTransformerAnchor) {
     setSelectedId(null);
     return;
   }
 
-  // Handle other tool actions only on background clicks
-  if (!clickedOnBackground && !isTransformerAnchor) return;
-
-  switch (tool) {
+  // Only handle drawing tools on background or when not in select mode
+  if ((clickedOnBackground || tool !== 'select') && !isTransformerAnchor) {
+    switch (tool) {
     case 'pen':
-      isDrawing.current = true;
-      setPenPoints([
-        ...penPoints,
-        { points: [actualPos.x, actualPos.y], color: penColor, width: penWidth }
-      ]);
+      if (clickedOnBackground) {
+        isDrawing.current = true;
+        setPenPoints([
+          ...penPoints,
+          { points: [actualPos.x, actualPos.y], color: penColor, width: penWidth }
+        ]);
+      }
       break;
 
     case 'eraser':
-      setIsErasing(true);
-      handleEraser(e);
+      if (clickedOnBackground) {
+        setIsErasing(true);
+        handleEraser(e);
+      }
       break;
 
     case 'text':
-      if (text.content.trim()) {
+      if (clickedOnBackground && text.content.trim()) {
         const newText = {
           id: Date.now().toString(),
           type: 'text',
@@ -988,54 +1044,62 @@ const handleMouseDown = (e) => {
         };
         addElementWithHistory(newText);
         setText({ ...text, content: '' });
+        setSelectedId(newText.id);
         setTool('select');
       }
       break;
 
     case 'flowLine':
-      isDrawing.current = true;
-      const newLine = {
-        id: Date.now().toString(),
-        type: 'flowLine',
-        points: [actualPos.x, actualPos.y, actualPos.x + 100, actualPos.y],
-        color: penColor,
-        strokeWidth: penWidth,
-        style: lineStyle
-      };
-      setFlowLine(newLine);
+      if (clickedOnBackground) {
+        isDrawing.current = true;
+        const newLine = {
+          id: Date.now().toString(),
+          type: 'flowLine',
+          points: [actualPos.x, actualPos.y, actualPos.x + 100, actualPos.y],
+          color: penColor,
+          strokeWidth: penWidth,
+          style: lineStyle
+        };
+        setFlowLine(newLine);
+      }
       break;
   }
 };
 const handleMouseUp = () => {
-  // In handleMouseUp for pen tool
-if (tool === 'pen' && isDrawing.current && penPoints.length > 0) {
-  const lastLine = penPoints[penPoints.length - 1];
-  if (lastLine && lastLine.points.length >= 4) {
-    const newElement = {
-      id: Date.now().toString(),
-      type: 'drawing',  // Make sure this matches the type we check for eraser
-      points: lastLine.points,
-      color: lastLine.color,
-      strokeWidth: lastLine.width
-    };
-    addElementWithHistory(newElement);
-    setPenPoints([]);
+  // Handle pen tool completion
+  if (tool === 'pen' && isDrawing.current && penPoints.length > 0) {
+    const lastLine = penPoints[penPoints.length - 1];
+    if (lastLine && lastLine.points.length >= 4) {
+      const newElement = {
+        id: Date.now().toString(),
+        type: 'drawing',
+        points: lastLine.points,
+        color: lastLine.color,
+        strokeWidth: lastLine.width
+      };
+      addElementWithHistory(newElement);
+      setPenPoints([]);
+      // Don't switch to select tool for pen - keep drawing
+    }
   }
-}
   
-  // In handleMouseUp, fix flow line creation
-if (tool === 'flowLine' && flowLine && isDrawing.current) {
-  const [x1, y1, x2, y2] = flowLine.points;
-  const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-  if (distance > 5) {
-    addElementWithHistory({ ...flowLine });
-    setSelectedId(flowLine.id);
+  // Handle flow line completion
+  if (tool === 'flowLine' && flowLine && isDrawing.current) {
+    const [x1, y1, x2, y2] = flowLine.points;
+    const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    if (distance > 5) {
+      const newFlowLine = { ...flowLine };
+      addElementWithHistory(newFlowLine);
+      setSelectedId(newFlowLine.id);
+      setTool('select'); // Switch to select after creating flow line
+    }
+    setFlowLine(null);
   }
-  setFlowLine(null);
-}
   
   isDrawing.current = false;
   setIsErasing(false);
+};
+
 };
 
 
@@ -1052,21 +1116,23 @@ if (tool === 'flowLine' && flowLine && isDrawing.current) {
     y: (pos.y - stagePos.y) / scale
   };
 
-  if (tool === 'pen' && isDrawing.current && penPoints.length > 0) {
-    const lastLine = penPoints[penPoints.length - 1];
-    if (lastLine) {
-      const newPoints = [...lastLine.points, actualPos.x, actualPos.y];
-      setPenPoints(prevPoints => [
-        ...prevPoints.slice(0, -1),
-        { ...lastLine, points: newPoints }
-      ]);
+  // Only handle drawing if we're actually drawing and on the background
+  if (isDrawing.current) {
+    if (tool === 'pen' && penPoints.length > 0) {
+      const lastLine = penPoints[penPoints.length - 1];
+      if (lastLine) {
+        const newPoints = [...lastLine.points, actualPos.x, actualPos.y];
+        setPenPoints(prevPoints => [
+          ...prevPoints.slice(0, -1),
+          { ...lastLine, points: newPoints }
+        ]);
+      }
+    } else if (tool === 'flowLine' && flowLine) {
+      setFlowLine({
+        ...flowLine,
+        points: [flowLine.points[0], flowLine.points[1], actualPos.x, actualPos.y]
+      });
     }
-  } else if (tool === 'flowLine' && flowLine && isDrawing.current) {
-  setFlowLine({
-    ...flowLine,
-    points: [flowLine.points[0], flowLine.points[1], actualPos.x, actualPos.y]
-  });
-
   } else if (tool === 'eraser' && isErasing) {
     handleEraser(e);
   }
@@ -1343,8 +1409,12 @@ const ToolBar = () => {
                         type="text"
                         placeholder="Enter text..."
                         value={text.content}
-                        onChange={(e) => setText({ ...text, content: e.target.value })}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          setText({ ...text, content: e.target.value });
+                        }}
                         onKeyDown={(e) => {
+                          e.stopPropagation();
                           if (e.key === 'Enter' && text.content.trim()) {
                             e.preventDefault();
                             // Auto-place text in center when Enter is pressed
@@ -1370,6 +1440,8 @@ const ToolBar = () => {
                             setText({ ...text, content: '' });
                           }
                         }}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-text"
                         autoFocus={tool === 'text'}
                       />
