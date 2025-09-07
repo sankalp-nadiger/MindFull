@@ -184,7 +184,7 @@ const ContextMenu = ({ elementId, elements, position, onClose, onUpdateElement, 
 // Enhanced FlowLine component with fixed dragging and endpoint positioning
 const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
   const [draggingEndpoint, setDraggingEndpoint] = useState(null);
-  const [isDragStart, setIsDragStart] = useState(false);
+  const [isDraggingLine, setIsDraggingLine] = useState(false);
   const groupRef = useRef();
   const lineRef = useRef();
 
@@ -193,8 +193,18 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
   useEffect(() => {
     if (isSelected && groupRef.current) {
       groupRef.current.moveToTop();
+      
+      // Ensure endpoints are on top of the line
+      const layer = groupRef.current.getLayer();
+      if (layer) {
+        const startCircle = layer.findOne(`#${line.id}-start`);
+        const endCircle = layer.findOne(`#${line.id}-end`);
+        if (startCircle) startCircle.moveToTop();
+        if (endCircle) endCircle.moveToTop();
+        layer.batchDraw();
+      }
     }
-  }, [isSelected]);
+  }, [isSelected, line.id]);
 
   const handleMouseDown = (e) => {
     if (tool === 'select') {
@@ -209,14 +219,21 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
 
   const handleLineDragStart = (e) => {
     if (tool === 'select' && !draggingEndpoint) {
-      setIsDragStart(true);
-      e.cancelBubble = true;
-      if (e.evt) e.evt.stopPropagation();
+      setIsDraggingLine(true);
+      e.target.setAttrs({
+        shadowOffset: {
+          x: 3,
+          y: 3
+        },
+        shadowOpacity: 0.2,
+        shadowBlur: 5
+      });
     }
   };
 
   const handleLineDragEnd = (e) => {
-    if (tool === 'select' && onUpdate && lineRef.current && isDragStart && !draggingEndpoint) {
+    setIsDraggingLine(false);
+    if (tool === 'select' && onUpdate && lineRef.current) {
       const node = lineRef.current;
       const deltaX = node.x();
       const deltaY = node.y();
@@ -230,11 +247,22 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
         
         node.x(0);
         node.y(0);
+        node.shadowOffset({ x: 0, y: 0 });
+        node.shadowOpacity(0);
         
         onUpdate(line.id, { points: newPoints });
       }
     }
-    setIsDragStart(false);
+  };
+
+  const handleEndpointDragStart = (endpointIndex, e) => {
+    e.cancelBubble = true;
+    if (e.evt) e.evt.stopPropagation();
+    setDraggingEndpoint(endpointIndex);
+    e.target.setAttrs({
+      scaleX: 1.2,
+      scaleY: 1.2
+    });
   };
 
   const handleEndpointDragMove = (endpointIndex, e) => {
@@ -245,6 +273,18 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
     newPoints[endpointIndex * 2 + 1] = e.target.y();
     
     onUpdate(line.id, { points: newPoints });
+  };
+
+  const handleEndpointDragEnd = (endpointIndex, e) => {
+    setDraggingEndpoint(null);
+    e.target.to({
+      duration: 0.2,
+      scaleX: 1,
+      scaleY: 1
+    });
+    
+    // Ensure the line stays selected after dragging endpoint
+    onSelect(line.id);
   };
 
   return (
@@ -266,12 +306,12 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
         onDragStart={handleLineDragStart}
         onDragEnd={handleLineDragEnd}
         onMouseEnter={() => {
-          if (tool === 'select' && !draggingEndpoint) {
-            document.body.style.cursor = 'move';
+          if (tool === 'select' && !draggingEndpoint && !isDraggingLine) {
+            document.body.style.cursor = isSelected ? 'move' : 'pointer';
           }
         }}
         onMouseLeave={() => {
-          if (tool === 'select') {
+          if (tool === 'select' && !isDraggingLine) {
             document.body.style.cursor = 'default';
           }
         }}
@@ -286,60 +326,64 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
           <Circle
             x={points[0]}
             y={points[1]}
-            radius={6}
+            radius={8}
             fill="#ffffff"
             stroke="#0066ff"
             strokeWidth={2}
             draggable={true}
             listening={true}
-            onDragStart={(e) => {
-              e.cancelBubble = true;
-              if (e.evt) e.evt.stopPropagation();
-              setDraggingEndpoint(0);
-            }}
+            onDragStart={(e) => handleEndpointDragStart(0, e)}
             onDragMove={(e) => handleEndpointDragMove(0, e)}
-            onDragEnd={() => setDraggingEndpoint(null)}
+            onDragEnd={(e) => handleEndpointDragEnd(0, e)}
             onMouseDown={(e) => {
               e.cancelBubble = true;
               if (e.evt) e.evt.stopPropagation();
             }}
             onMouseEnter={() => {
-              document.body.style.cursor = 'crosshair';
+              if (!isDraggingLine) {
+                document.body.style.cursor = 'crosshair';
+              }
             }}
             onMouseLeave={() => {
-              document.body.style.cursor = 'default';
+              if (!isDraggingLine) {
+                document.body.style.cursor = 'default';
+              }
             }}
             perfectDrawEnabled={false}
+            id={`${line.id}-start`}
+            name={`flowline-endpoint-${line.id}-start`}
           />
           
           {/* End endpoint circle */}
           <Circle
             x={points[2]}
             y={points[3]}
-            radius={6}
+            radius={8}
             fill="#ffffff"
             stroke="#0066ff"
             strokeWidth={2}
             draggable={true}
             listening={true}
-            onDragStart={(e) => {
-              e.cancelBubble = true;
-              if (e.evt) e.evt.stopPropagation();
-              setDraggingEndpoint(1);
-            }}
+            onDragStart={(e) => handleEndpointDragStart(1, e)}
             onDragMove={(e) => handleEndpointDragMove(1, e)}
-            onDragEnd={() => setDraggingEndpoint(null)}
+            onDragEnd={(e) => handleEndpointDragEnd(1, e)}
             onMouseDown={(e) => {
               e.cancelBubble = true;
               if (e.evt) e.evt.stopPropagation();
             }}
             onMouseEnter={() => {
-              document.body.style.cursor = 'crosshair';
+              if (!isDraggingLine) {
+                document.body.style.cursor = 'crosshair';
+              }
             }}
             onMouseLeave={() => {
-              document.body.style.cursor = 'default';
+              if (!isDraggingLine) {
+                document.body.style.cursor = 'default';
+              }
             }}
             perfectDrawEnabled={false}
+            id={`${line.id}-end`}
+            name={`flowline-endpoint-${line.id}-end`}
           />
         </>
       )}
@@ -352,23 +396,22 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
   const textRef = useRef();
   const trRef = useRef();
   const [isTransforming, setIsTransforming] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
+  // Improved transformer attachment
   useEffect(() => {
-    if (isSelected && trRef.current && textRef.current && tool === 'select') {
+    if (isSelected && tool === 'select') {
       const timer = setTimeout(() => {
         if (trRef.current && textRef.current) {
           trRef.current.nodes([textRef.current]);
           trRef.current.getLayer().batchDraw();
-          textRef.current.moveToTop();
-          trRef.current.moveToTop();
         }
-      }, 50);
+      }, 10);
       return () => clearTimeout(timer);
     } else if (trRef.current) {
       trRef.current.nodes([]);
-      trRef.current.getLayer()?.batchDraw();
     }
-  }, [isSelected, tool]);
+  }, [isSelected, tool, text.id]);
 
   const handleSelect = (e) => {
     if (tool === 'select') {
@@ -381,8 +424,33 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
     }
   };
 
+  const handleDragStart = (e) => {
+    if (tool === 'select') {
+      setIsDragging(true);
+      e.target.setAttrs({
+        shadowOffset: {
+          x: 5,
+          y: 5
+        },
+        scaleX: 1.02,
+        scaleY: 1.02,
+        shadowOpacity: 0.2,
+        shadowBlur: 5
+      });
+    }
+  };
+
   const handleDragEnd = (e) => {
+    setIsDragging(false);
     if (tool === 'select' && onChange) {
+      e.target.to({
+        duration: 0.2,
+        shadowOffset: { x: 0, y: 0 },
+        scaleX: 1,
+        scaleY: 1,
+        shadowOpacity: 0
+      });
+      
       onChange(text.id, {
         x: e.target.x(),
         y: e.target.y()
@@ -429,14 +497,16 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
         onClick={handleSelect}
         onTap={handleSelect}
         onMouseDown={handleSelect}
+        onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        onTransformEnd={handleTransformEnd}
         onMouseEnter={() => {
-          if (tool === 'select') {
-            document.body.style.cursor = 'move';
+          if (tool === 'select' && !isDragging) {
+            document.body.style.cursor = isSelected ? 'move' : 'pointer';
           }
         }}
         onMouseLeave={() => {
-          if (tool === 'select') {
+          if (tool === 'select' && !isDragging) {
             document.body.style.cursor = 'default';
           }
         }}
@@ -448,10 +518,9 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
         <Transformer
           ref={trRef}
           enabledAnchors={[
-            'top-left', 'top-right',
-            'bottom-left', 'bottom-right',
+            'top-left', 'top-center', 'top-right',
             'middle-left', 'middle-right',
-            'top-center', 'bottom-center'
+            'bottom-left', 'bottom-center', 'bottom-right'
           ]}
           boundBoxFunc={(oldBox, newBox) => {
             if (newBox.width < 20) newBox.width = 20;
@@ -485,21 +554,20 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
   const imageRef = useRef();
   const trRef = useRef();
   const [isTransforming, setIsTransforming] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
+  // Improved transformer attachment
   useEffect(() => {
-    if (isSelected && imageRef.current && trRef.current && tool === 'select') {
+    if (isSelected && tool === 'select') {
       const timer = setTimeout(() => {
         if (trRef.current && imageRef.current) {
           trRef.current.nodes([imageRef.current]);
           trRef.current.getLayer().batchDraw();
-          imageRef.current.moveToTop();
-          trRef.current.moveToTop();
         }
-      }, 50);
+      }, 10);
       return () => clearTimeout(timer);
     } else if (trRef.current) {
       trRef.current.nodes([]);
-      trRef.current.getLayer()?.batchDraw();
     }
   }, [isSelected, tool, element.id]);
 
@@ -514,8 +582,33 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
     }
   };
 
+  const handleDragStart = (e) => {
+    if (tool === 'select') {
+      setIsDragging(true);
+      e.target.setAttrs({
+        shadowOffset: {
+          x: 5,
+          y: 5
+        },
+        scaleX: 1.02,
+        scaleY: 1.02,
+        shadowOpacity: 0.2,
+        shadowBlur: 5
+      });
+    }
+  };
+
   const handleDragEnd = (e) => {
+    setIsDragging(false);
     if (tool === 'select' && onResize) {
+      e.target.to({
+        duration: 0.2,
+        shadowOffset: { x: 0, y: 0 },
+        scaleX: 1,
+        scaleY: 1,
+        shadowOpacity: 0
+      });
+      
       onResize(element.id, {
         x: e.target.x(),
         y: e.target.y(),
@@ -565,14 +658,16 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
         onClick={handleSelect}
         onTap={handleSelect}
         onMouseDown={handleSelect}
+        onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        onTransformEnd={handleTransformEnd}
         onMouseEnter={() => {
-          if (tool === 'select') {
-            document.body.style.cursor = 'move';
+          if (tool === 'select' && !isDragging) {
+            document.body.style.cursor = isSelected ? 'move' : 'pointer';
           }
         }}
         onMouseLeave={() => {
-          if (tool === 'select') {
+          if (tool === 'select' && !isDragging) {
             document.body.style.cursor = 'default';
           }
         }}
@@ -593,10 +688,9 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
           rotateEnabled={true}
           resizeEnabled={true}
           enabledAnchors={[
-            'top-left', 'top-right',
-            'bottom-left', 'bottom-right',
+            'top-left', 'top-center', 'top-right',
             'middle-left', 'middle-right',
-            'top-center', 'bottom-center'
+            'bottom-left', 'bottom-center', 'bottom-right'
           ]}
           anchorFill="#ffffff"
           anchorStroke="#0066ff"
@@ -955,10 +1049,11 @@ const handleMouseDown = (e) => {
       const elementIdPart = parts.slice(1).join('-'); // Handle composite IDs
       
       const element = elements.find(el => 
-        el.id.includes(elementIdPart) || 
-        (elementType === 'text' && el.type === 'text' && el.id.includes(elementIdPart)) ||
-        (elementType === 'image' && el.type === 'image' && el.id.includes(elementIdPart)) ||
-        (elementType === 'flowline' && el.type === 'flowLine' && el.id.includes(elementIdPart))
+        el.id === elementIdPart || 
+        (elementType === 'text' && el.type === 'text' && el.id === elementIdPart) ||
+        (elementType === 'image' && el.type === 'image' && el.id === elementIdPart) ||
+        (elementType === 'flowline' && el.type === 'flowLine' && el.id === elementIdPart) ||
+        (elementType === 'drawing' && el.type === 'drawing' && el.id === elementIdPart)
       );
       
       if (element) {
@@ -1020,7 +1115,6 @@ const handleMouseDown = (e) => {
           draggable: true
         };
         addElementWithHistory(newText);
-        setText({ ...text, content: '' });
         // Keep text tool active for multiple additions
       }
       break;
@@ -1046,27 +1140,27 @@ const handleElementSelect = (id) => {
   setTool('select'); // Ensure we're in select mode
   setContextMenu({ show: false, position: { x: 0, y: 0 }, elementId: null });
   
-  // Force re-render and transformer attachment with multiple attempts
+  // Force re-render and transformer attachment with a small delay
   setTimeout(() => {
     const stage = stageRef.current;
     if (stage) {
       const selectedNode = stage.findOne(`#${id}`);
       if (selectedNode) {
         selectedNode.moveToTop();
+        
+        // Also move endpoints to top for flowlines
+        if (selectedNode.attrs.name && selectedNode.attrs.name.startsWith('flowline-')) {
+          const startEndpoint = stage.findOne(`#${id}-start`);
+          const endEndpoint = stage.findOne(`#${id}-end`);
+          if (startEndpoint) startEndpoint.moveToTop();
+          if (endEndpoint) endEndpoint.moveToTop();
+        }
+        
         stage.batchDraw();
       }
     }
-  }, 0);
-  
-  setTimeout(() => {
-    setSelectedId(id);
   }, 50);
-  
-  setTimeout(() => {
-    setSelectedId(id);
-  }, 150);
 };
-
 
 const handleMouseUp = () => {
   // In handleMouseUp for pen tool
@@ -1196,6 +1290,15 @@ const ToolBar = () => {
   };
 
   const TextInputWithEnterHandler = ({ text, setText, addElementWithHistory, dimensions, scale, stagePos }) => {
+  const inputRef = useRef(null);
+  
+  // Keep focus on the input after adding text
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [text.content]);
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && text.content.trim()) {
       e.preventDefault();
@@ -1221,8 +1324,8 @@ const ToolBar = () => {
       };
       
       addElementWithHistory(newText);
+      // Keep the text content for continuous typing
       setText({ ...text, content: '' });
-      // Keep text tool active for multiple additions
     }
   };
 
@@ -1231,25 +1334,15 @@ const ToolBar = () => {
     setText({ ...text, content: e.target.value });
   };
 
-  const handleFocus = (e) => {
-    e.stopPropagation();
-  };
-
-  const handleBlur = (e) => {
-    e.stopPropagation();
-  };
-
   return (
     <input
+      ref={inputRef}
       type="text"
       placeholder="Enter text..."
       value={text.content}
       onChange={handleChange}
       onKeyDown={handleKeyDown}
-      onFocus={handleFocus}
-      onBlur={handleBlur}
       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-text"
-      autoFocus={false}
     />
   );
 };
