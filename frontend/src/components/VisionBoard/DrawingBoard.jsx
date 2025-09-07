@@ -12,19 +12,19 @@ import { X } from 'lucide-react';
 // Enhanced FlowLine component with fixed dragging and endpoint positioning
 const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, tool }) => {
   const [draggingEndpoint, setDraggingEndpoint] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
   const groupRef = useRef();
   const lineRef = useRef();
 
   const points = line.points || [50, 50, 200, 50];
 
-  // Ensure we maintain selection when needed
   useEffect(() => {
     if (isSelected && groupRef.current) {
       groupRef.current.moveToTop();
     }
   }, [isSelected]);
-  
-  const handleClick = (e) => {
+
+  const handleMouseDown = (e) => {
     e.cancelBubble = true;
     if (e.evt) {
       e.evt.stopPropagation();
@@ -33,6 +33,14 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
     
     if (tool === 'select') {
       onSelect(line.id);
+    }
+  };
+
+  const handleLineDragStart = (e) => {
+    if (tool === 'select') {
+      setIsDragging(true);
+      e.cancelBubble = true;
+      if (e.evt) e.evt.stopPropagation();
     }
   };
 
@@ -49,13 +57,13 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
         newPoints[2] += deltaX;
         newPoints[3] += deltaY;
         
-        // Reset the line position
         node.x(0);
         node.y(0);
         
         onUpdate(line.id, { points: newPoints });
       }
     }
+    setIsDragging(false);
   };
 
   const handleEndpointDragMove = (endpointIndex, e) => {
@@ -70,7 +78,6 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
     
     if (!pos) return;
 
-    // Calculate actual position considering stage transform
     const stagePos = stage.position();
     const scale = stage.scaleX();
     const actualPos = {
@@ -83,6 +90,30 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
     newPoints[endpointIndex * 2 + 1] = actualPos.y;
     
     onUpdate(line.id, { points: newPoints });
+  };
+
+  const handleLineMouseEnter = () => {
+    if (tool === 'select' && !draggingEndpoint) {
+      document.body.style.cursor = 'move';
+    }
+  };
+
+  const handleLineMouseLeave = () => {
+    if (tool === 'select') {
+      document.body.style.cursor = 'default';
+    }
+  };
+
+  const handleEndpointMouseEnter = () => {
+    if (tool === 'select') {
+      document.body.style.cursor = 'crosshair';
+    }
+  };
+
+  const handleEndpointMouseLeave = () => {
+    if (tool === 'select') {
+      document.body.style.cursor = 'default';
+    }
   };
 
   return (
@@ -98,38 +129,15 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
         hitStrokeWidth={Math.max(20, (line.strokeWidth || 2) * 4)}
         draggable={tool === 'select' && !draggingEndpoint}
         listening={true}
-        onClick={handleClick}
-        onTap={handleClick}
-        onMouseDown={(e) => {
-          if (tool === 'select') {
-            e.cancelBubble = true;
-            if (e.evt) e.evt.stopPropagation();
-            onSelect(line.id);
-          }
-        }}
-        onDragStart={(e) => {
-          if (tool === 'select') {
-            e.cancelBubble = true;
-            if (e.evt) e.evt.stopPropagation();
-            onSelect(line.id);
-          }
-        }}
+        onMouseDown={handleMouseDown}
+        onDragStart={handleLineDragStart}
         onDragEnd={handleLineDragEnd}
-        onMouseEnter={() => {
-          if (tool === 'select' && !draggingEndpoint) {
-            document.body.style.cursor = 'move';
-          }
-        }}
-        onMouseLeave={() => {
-          if (tool === 'select') {
-            document.body.style.cursor = 'default';
-          }
-        }}
+        onMouseEnter={handleLineMouseEnter}
+        onMouseLeave={handleLineMouseLeave}
       />
       
       {isSelected && tool === 'select' && (
         <>
-          {/* Start endpoint */}
           <Circle
             x={points[0]}
             y={points[1]}
@@ -147,22 +155,17 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
             onDragEnd={(e) => {
               setDraggingEndpoint(null);
             }}
-            onClick={(e) => {
+            onMouseDown={(e) => {
               e.cancelBubble = true;
               if (e.evt) {
                 e.evt.stopPropagation();
                 e.evt.preventDefault();
               }
             }}
-            onMouseEnter={() => {
-              document.body.style.cursor = 'crosshair';
-            }}
-            onMouseLeave={() => {
-              document.body.style.cursor = 'default';
-            }}
+            onMouseEnter={handleEndpointMouseEnter}
+            onMouseLeave={handleEndpointMouseLeave}
           />
           
-          {/* End endpoint */}
           <Circle
             x={points[2]}
             y={points[3]}
@@ -180,19 +183,15 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
             onDragEnd={(e) => {
               setDraggingEndpoint(null);
             }}
-            onClick={(e) => {
+            onMouseDown={(e) => {
               e.cancelBubble = true;
               if (e.evt) {
                 e.evt.stopPropagation();
                 e.evt.preventDefault();
               }
             }}
-            onMouseEnter={() => {
-              document.body.style.cursor = 'crosshair';
-            }}
-            onMouseLeave={() => {
-              document.body.style.cursor = 'default';
-            }}
+            onMouseEnter={handleEndpointMouseEnter}
+            onMouseLeave={handleEndpointMouseLeave}
           />
         </>
       )}
@@ -377,6 +376,7 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
   const textRef = useRef();
   const trRef = useRef();
   const [isTransforming, setIsTransforming] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   
   useEffect(() => {
     if (isSelected && trRef.current && textRef.current && tool === 'select') {
@@ -402,7 +402,6 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
 
       // Update the element with new properties for live preview
       onChange(text.id, {
-        ...text,
         x: node.x(),
         y: node.y(),
         rotation: rotation,
@@ -428,7 +427,6 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
 
       // Update the element with final properties
       onChange(text.id, {
-        ...text,
         x: node.x(),
         y: node.y(),
         rotation: rotation,
@@ -438,7 +436,7 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
     setIsTransforming(false);
   };
 
-  const handleClick = (e) => {
+  const handleMouseDown = (e) => {
     e.cancelBubble = true;
     if (e.evt) e.evt.stopPropagation();
     
@@ -447,14 +445,34 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
     }
   };
 
+  const handleDragStart = (e) => {
+    if (tool === 'select') {
+      setIsDragging(true);
+      e.cancelBubble = true;
+      if (e.evt) e.evt.stopPropagation();
+    }
+  };
+
   const handleDragEnd = (e) => {
     if (tool === 'select' && onChange && textRef.current) {
       const node = textRef.current;
       onChange(text.id, {
-        ...text,
         x: node.x(),
         y: node.y()
       });
+    }
+    setIsDragging(false);
+  };
+
+  const handleMouseEnter = () => {
+    if (tool === 'select' && !isTransforming) {
+      document.body.style.cursor = 'move';
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (tool === 'select') {
+      document.body.style.cursor = 'default';
     }
   };
 
@@ -468,16 +486,16 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
         fontSize={text.fontSize || 24}
         fontFamily={text.fontFamily || 'Arial'}
         fill={text.color || text.fill || '#000000'}
-        draggable={tool === 'select' && isSelected && !isTransforming}
+        draggable={tool === 'select' && !isTransforming}
         rotation={text.rotation || 0}
         fontStyle={text.fontStyle || 'normal'}
-        onClick={handleClick}
-        onTap={handleClick}
+        onMouseDown={handleMouseDown}
+        onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         listening={true}
-        onTransformStart={handleTransformStart}
-        onTransform={handleTransform}
-        onTransformEnd={handleTransformEnd}
+        perfectDrawEnabled={false}
       />
       {isSelected && tool === 'select' && (
         <Transformer
@@ -489,7 +507,6 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
             'top-center', 'bottom-center'
           ]}
           boundBoxFunc={(oldBox, newBox) => {
-            // Minimum size constraints
             if (newBox.width < 10) newBox.width = 10;
             if (newBox.height < 5) newBox.height = 5;
             return newBox;
@@ -503,29 +520,25 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
           anchorStroke="#0066ff"
           borderStroke="#0066ff"
           borderStrokeWidth={2}
-          borderDash={[]}
           anchorSize={8}
           anchorStrokeWidth={2}
           anchorCornerRadius={2}
-          centeredScaling={false}
-          ignoreStroke={false}
           padding={2}
           rotateAnchorOffset={20}
-          flipEnabled={false}
-          resizeEnabled={true}
         />
       )}
     </Group>
   );
 };
 
+// Fixed URLImage Component
 const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) => {
   const [img] = useImage(element.src);
   const imageRef = useRef();
   const trRef = useRef();
   const [isTransforming, setIsTransforming] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
-  // Ensure transformer updates and bring selected image to top
   useEffect(() => {
     if (isSelected && imageRef.current && trRef.current) {
       imageRef.current.moveToTop();
@@ -542,7 +555,6 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
     const scaleX = node.scaleX();
     const scaleY = node.scaleY();
 
-    // Reset scale to 1 to work with actual dimensions
     node.scaleX(1);
     node.scaleY(1);
 
@@ -560,24 +572,49 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
     setIsTransforming(false);
   };
 
-  const handleClick = (e) => {
+  const handleMouseDown = (e) => {
     e.cancelBubble = true;
     if (e.evt) {
       e.evt.stopPropagation();
       e.evt.preventDefault();
     }
-    onSelect(element.id);
+    if (tool === 'select') {
+      onSelect(element.id);
+    }
+  };
+
+  const handleDragStart = (e) => {
+    if (tool === 'select') {
+      setIsDragging(true);
+      e.cancelBubble = true;
+      if (e.evt) e.evt.stopPropagation();
+    }
   };
 
   const handleDragEnd = (e) => {
-    const node = e.target;
-    onResize(element.id, {
-      x: node.x(),
-      y: node.y(),
-      width: element.width,
-      height: element.height,
-      rotation: node.rotation()
-    });
+    if (tool === 'select') {
+      const node = e.target;
+      onResize(element.id, {
+        x: node.x(),
+        y: node.y(),
+        width: element.width,
+        height: element.height,
+        rotation: node.rotation()
+      });
+    }
+    setIsDragging(false);
+  };
+
+  const handleMouseEnter = () => {
+    if (tool === 'select' && !isTransforming) {
+      document.body.style.cursor = 'move';
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (tool === 'select') {
+      document.body.style.cursor = 'default';
+    }
   };
 
   return (
@@ -590,27 +627,13 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
         width={element.width || (img ? img.width : 100)}
         height={element.height || (img ? img.height : 100)}
         rotation={element.rotation || 0}
-        draggable={tool === 'select'}
+        draggable={tool === 'select' && !isTransforming}
         listening={true}
-        onClick={handleClick}
-        onTap={handleClick}
-        onMouseDown={handleClick}
-        onDragStart={(e) => {
-          e.cancelBubble = true;
-          if (e.evt) e.evt.stopPropagation();
-          onSelect(element.id);
-        }}
+        onMouseDown={handleMouseDown}
+        onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
-        onMouseEnter={() => {
-          if (tool === 'select') {
-            document.body.style.cursor = isTransforming ? 'pointer' : 'move';
-          }
-        }}
-        onMouseLeave={() => {
-          if (tool === 'select') {
-            document.body.style.cursor = 'default';
-          }
-        }}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         hitStrokeWidth={0}
         perfectDrawEnabled={false}
       />
@@ -618,11 +641,9 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
         <Transformer
           ref={trRef}
           boundBoxFunc={(oldBox, newBox) => {
-            // Limit minimum size
             if (newBox.width < 10 || newBox.height < 10) {
               return oldBox;
             }
-            // Limit maximum size
             if (newBox.width > 2000 || newBox.height > 2000) {
               return oldBox;
             }
@@ -646,7 +667,6 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
           onTransformStart={() => setIsTransforming(true)}
           onTransformEnd={handleTransformEnd}
           onTransform={() => {
-            // Force re-render during transform
             if (trRef.current) {
               trRef.current.getLayer().batchDraw();
             }
@@ -1423,9 +1443,10 @@ const ToolBar = () => {
   type="number"
   value={text.fontSize}
   onChange={(e) => {
-    const newSize = parseInt(e.target.value);
-    if (!isNaN(newSize) && newSize >= 8 && newSize <= 72) {
-      setText(prev => ({ ...prev, fontSize: newSize }));
+    const value = e.target.value;
+    const newSize = parseInt(value);
+    if (value === '' || (!isNaN(newSize) && newSize >= 8 && newSize <= 72)) {
+      setText(prev => ({ ...prev, fontSize: newSize || 24 }));
     }
   }}
   onFocus={(e) => {
@@ -1435,6 +1456,9 @@ const ToolBar = () => {
     e.stopPropagation();
   }}
   onClick={(e) => {
+    e.stopPropagation();
+  }}
+  onKeyDown={(e) => {
     e.stopPropagation();
   }}
   className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-text w-20"
