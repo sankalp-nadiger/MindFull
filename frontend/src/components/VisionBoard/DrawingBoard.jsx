@@ -103,7 +103,7 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
   };
 
   const handleMouseMove = (e) => {
-    if (!mouseStartPos || isTransforming) return;
+    if (!mouseStartPos || isTransforming || !e.evt.buttons) return;
     
     const pos = e.target.getStage().getPointerPosition();
     const distance = Math.sqrt(
@@ -405,10 +405,15 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
         stroke={line.color || "#000000"}
         strokeWidth={line.strokeWidth || 2}
         hitStrokeWidth={Math.max(20, (line.strokeWidth || 2) * 4)}
-        draggable={tool === 'select'}
+        draggable={true}
         onClick={handleClick}
         onTap={handleClick}
         onContextMenu={handleContextMenu}
+        onMouseDown={(e) => {
+          e.cancelBubble = true;
+          if (e.evt) e.evt.stopPropagation();
+          onSelect(line.id);
+        }}
         onDragStart={handleLineDragStart}
         onDragMove={handleLineDragMove}
         onDragEnd={handleLineDragEnd}
@@ -429,15 +434,21 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
             strokeWidth={2}
             draggable={tool === 'select'}
             onDragStart={(e) => {
-              if (e.evt.buttons === 1) {  // Only start drag if mouse button is held
-                handleEndpointDragStart(0);
-              }
               e.cancelBubble = true;
               if (e.evt) e.evt.stopPropagation();
+              onSelect(line.id);
+              setDraggingEndpoint(0);
+              setStartPoints([...points]);
             }}
             onDragMove={(e) => {
-              if (e.evt.buttons) {  // Only drag while button is held
-                handleEndpointDragMove(0, e);
+              if (!e.evt.buttons) return;
+              const stage = e.target.getStage();
+              const pos = stage.getPointerPosition();
+              const newPoints = [...points];
+              newPoints[0] = pos.x;
+              newPoints[1] = pos.y;
+              if (onUpdate) {
+                onUpdate(line.id, { ...line, points: newPoints });
               }
             }}
             onDragEnd={handleEndpointDragEnd}
@@ -461,15 +472,21 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
             strokeWidth={2}
             draggable={tool === 'select'}
             onDragStart={(e) => {
-              if (e.evt.buttons === 1) {  // Only start drag if mouse button is held
-                handleEndpointDragStart(1);
-              }
               e.cancelBubble = true;
               if (e.evt) e.evt.stopPropagation();
+              onSelect(line.id);
+              setDraggingEndpoint(1);
+              setStartPoints([...points]);
             }}
             onDragMove={(e) => {
-              if (e.evt.buttons) {  // Only drag while button is held
-                handleEndpointDragMove(1, e);
+              if (!e.evt.buttons) return;
+              const stage = e.target.getStage();
+              const pos = stage.getPointerPosition();
+              const newPoints = [...points];
+              newPoints[2] = pos.x;
+              newPoints[3] = pos.y;
+              if (onUpdate) {
+                onUpdate(line.id, { ...line, points: newPoints });
               }
             }}
             onDragEnd={handleEndpointDragEnd}
@@ -662,7 +679,7 @@ const ContextMenu = ({ elementId, elements, position, onClose, onUpdateElement, 
   );
 };
 
-// 2. Updated TextNode component with better transform handling
+// Updated TextNode component with better transform handling
 const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
   const textRef = useRef();
   const trRef = useRef();
