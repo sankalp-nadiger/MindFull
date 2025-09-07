@@ -30,6 +30,9 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
       if (e.evt) e.evt.stopPropagation();
       setIsDragStart(false);
       onSelect(line.id);
+      
+      // Prevent deselection when clicking on the line itself
+      e.evt.preventDefault();
     }
   };
 
@@ -96,6 +99,8 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
         hitStrokeWidth={Math.max(20, (line.strokeWidth || 2) * 4)}
         draggable={tool === 'select' && isSelected && !draggingEndpoint}
         listening={true}
+        onClick={handleMouseDown}
+        onTap={handleMouseDown}
         onMouseDown={handleMouseDown}
         onDragStart={handleLineDragStart}
         onDragEnd={handleLineDragEnd}
@@ -114,6 +119,7 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
       
       {isSelected && tool === 'select' && (
         <>
+          {/* First endpoint */}
           <Circle
             x={points[0]}
             y={points[1]}
@@ -147,6 +153,7 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
             perfectDrawEnabled={false}
           />
           
+          {/* Second endpoint */}
           <Circle
             x={points[2]}
             y={points[3]}
@@ -380,6 +387,9 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
       if (e.evt) e.evt.stopPropagation();
       setIsDragStart(false);
       onSelect(text.id);
+      
+      // Prevent deselection when clicking on the text itself
+      e.evt.preventDefault();
     }
   };
 
@@ -437,6 +447,8 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
         rotation={text.rotation || 0}
         fontStyle={text.fontStyle || 'normal'}
         listening={true}
+        onClick={handleMouseDown}
+        onTap={handleMouseDown}
         onMouseDown={handleMouseDown}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
@@ -514,6 +526,9 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
       setIsDragStart(false);
       
       onSelect(element.id);
+      
+      // Prevent deselection when clicking on the image itself
+      e.evt.preventDefault();
     }
   };
 
@@ -574,6 +589,8 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
         rotation={element.rotation || 0}
         draggable={tool === 'select' && isSelected}
         listening={true}
+        onClick={handleMouseDown}
+        onTap={handleMouseDown}
         onMouseDown={handleMouseDown}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
@@ -936,13 +953,17 @@ const handleMouseDown = (e) => {
   };
 
   // Only clear selection if clicked on background AND tool is select
-  if (clickedOnBackground && tool === 'select') {
+  // AND not clicking on a transformer anchor
+  const isTransformerAnchor = clickedElement.getParent && 
+                             clickedElement.getParent().className === 'Transformer';
+  
+  if (clickedOnBackground && tool === 'select' && !isTransformerAnchor) {
     setSelectedId(null);
     return;
   }
 
   // Handle other tool actions only on background clicks
-  if (!clickedOnBackground) return;
+  if (!clickedOnBackground && !isTransformerAnchor) return;
 
   switch (tool) {
     case 'pen':
@@ -1376,21 +1397,30 @@ const ToolBar = () => {
                       <option value="Georgia">Georgia</option>
                       <option value="Verdana">Verdana</option>
                     </select>
-                    <div className="col-span-1">
+                   <div className="col-span-1">
   <label className="text-xs text-gray-600 mb-1 block">Font Size</label>
   <input
     type="number"
     value={text.fontSize}
     onChange={(e) => {
-      const value = parseInt(e.target.value);
-      if (!isNaN(value) && value >= 8 && value <= 200) {
-        setText(prev => ({ ...prev, fontSize: value }));
+      // Allow any input but only update state if it's a valid number
+      const value = e.target.value;
+      if (value === '') {
+        setText(prev => ({ ...prev, fontSize: '' }));
+      } else {
+        const numValue = parseInt(value);
+        if (!isNaN(numValue)) {
+          setText(prev => ({ ...prev, fontSize: numValue }));
+        }
       }
     }}
     onBlur={(e) => {
+      // Validate and clamp value only when user finishes editing
       const value = parseInt(e.target.value);
       if (isNaN(value) || value < 8) {
         setText(prev => ({ ...prev, fontSize: 24 }));
+      } else if (value > 200) {
+        setText(prev => ({ ...prev, fontSize: 200 }));
       }
     }}
     onMouseDown={(e) => {
@@ -1870,29 +1900,31 @@ onContextMenu={(e) => {
         />
       );
     case 'drawing':
-      return (
-       <Line
-        key={element.id}
-        points={element.points}
-        stroke={element.color}
-        strokeWidth={element.strokeWidth}
-        tension={0.5}
-        lineCap="round"
-        lineJoin="round"
-        hitStrokeWidth={Math.max(20, element.strokeWidth * 4)}
-        onClick={(e) => {
-          e.cancelBubble = true;
-          if (e.evt) e.evt.stopPropagation();
-          handleElementSelect(element.id);
-        }}
-        onTap={(e) => {
-          e.cancelBubble = true;
-          if (e.evt) e.evt.stopPropagation();
-          handleElementSelect(element.id);
-        }}
-        listening={true}
-      />
-      );
+  return (
+    <Line
+      key={element.id}
+      points={element.points}
+      stroke={element.color}
+      strokeWidth={element.strokeWidth}
+      tension={0.5}
+      lineCap="round"
+      lineJoin="round"
+      hitStrokeWidth={Math.max(20, element.strokeWidth * 4)}
+      onClick={(e) => {
+        e.cancelBubble = true;
+        if (e.evt) e.evt.stopPropagation();
+        handleElementSelect(element.id);
+        // Prevent deselection
+        e.evt.preventDefault();
+      }}
+      onTap={(e) => {
+        e.cancelBubble = true;
+        if (e.evt) e.evt.stopPropagation();
+        handleElementSelect(element.id);
+      }}
+      listening={true}
+    />
+  );
     default:
       return null;
   }
