@@ -26,7 +26,10 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
   
   const handleClick = (e) => {
     e.cancelBubble = true;
-    if (e.evt) e.evt.stopPropagation();
+    if (e.evt) {
+      e.evt.stopPropagation();
+      e.evt.preventDefault();
+    }
     
     if (tool === 'select') {
       onSelect(line.id);
@@ -36,32 +39,50 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
   const handleLineDragEnd = (e) => {
     if (tool === 'select' && onUpdate && lineRef.current) {
       const node = lineRef.current;
-      const newPoints = [...points];
-      
-      // Apply the drag offset to all points
       const deltaX = node.x();
       const deltaY = node.y();
       
       if (deltaX !== 0 || deltaY !== 0) {
+        const newPoints = [...points];
         newPoints[0] += deltaX;
         newPoints[1] += deltaY;
         newPoints[2] += deltaX;
         newPoints[3] += deltaY;
         
-        // Reset the line position and update with new points
+        // Reset the line position
         node.x(0);
         node.y(0);
         
-        onUpdate(line.id, { ...line, points: newPoints });
+        onUpdate(line.id, { points: newPoints });
       }
     }
   };
 
-   const handleEndpointDrag = (index, pos) => {
+  const handleEndpointDragMove = (endpointIndex, e) => {
+    e.cancelBubble = true;
+    if (e.evt) {
+      e.evt.stopPropagation();
+      e.evt.preventDefault();
+    }
+
+    const stage = e.target.getStage();
+    const pos = stage.getPointerPosition();
+    
+    if (!pos) return;
+
+    // Calculate actual position considering stage transform
+    const stagePos = stage.position();
+    const scale = stage.scaleX();
+    const actualPos = {
+      x: (pos.x - stagePos.x) / scale,
+      y: (pos.y - stagePos.y) / scale
+    };
+
     const newPoints = [...points];
-    newPoints[index * 2] = pos.x;
-    newPoints[index * 2 + 1] = pos.y;
-    onUpdate(line.id, { ...line, points: newPoints });
+    newPoints[endpointIndex * 2] = actualPos.x;
+    newPoints[endpointIndex * 2 + 1] = actualPos.y;
+    
+    onUpdate(line.id, { points: newPoints });
   };
 
   return (
@@ -71,84 +92,106 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
         points={points}
         stroke={line.color || "#000000"}
         strokeWidth={line.strokeWidth || 2}
-        hitStrokeWidth={20}
-        draggable={true}
-        onClick={(e) => {
-          e.cancelBubble = true;
-          if (e.evt) e.evt.stopPropagation();
-          onSelect(line.id);
-        }}
+        tension={line.style === 'curved' ? 0.5 : 0}
+        lineCap="round"
+        lineJoin="round"
+        hitStrokeWidth={Math.max(20, (line.strokeWidth || 2) * 4)}
+        draggable={tool === 'select' && !draggingEndpoint}
+        listening={true}
+        onClick={handleClick}
+        onTap={handleClick}
         onMouseDown={(e) => {
-          e.cancelBubble = true;
-          if (e.evt) e.evt.stopPropagation();
-          onSelect(line.id);
-        }}
-        onMouseOver={(e) => {
-          e.target.getStage().container().style.cursor = 'move';
-        }}
-        onMouseOut={(e) => {
-          e.target.getStage().container().style.cursor = 'default';
+          if (tool === 'select') {
+            e.cancelBubble = true;
+            if (e.evt) e.evt.stopPropagation();
+            onSelect(line.id);
+          }
         }}
         onDragStart={(e) => {
-          e.cancelBubble = true;
-          if (e.evt) e.evt.stopPropagation();
-          onSelect(line.id);
-        }}
-        onDragMove={(e) => {
-          if (!e.evt.buttons) return;
-          const stage = e.target.getStage();
-          const pos = stage.getPointerPosition();
-          const dx = pos.x - e.target.x();
-          const dy = pos.y - e.target.y();
-          const newPoints = [...points];
-          for (let i = 0; i < newPoints.length; i += 2) {
-            newPoints[i] += dx;
-            newPoints[i + 1] += dy;
+          if (tool === 'select') {
+            e.cancelBubble = true;
+            if (e.evt) e.evt.stopPropagation();
+            onSelect(line.id);
           }
-          onUpdate(line.id, { ...line, points: newPoints });
         }}
-        listening={true}
+        onDragEnd={handleLineDragEnd}
+        onMouseEnter={() => {
+          if (tool === 'select' && !draggingEndpoint) {
+            document.body.style.cursor = 'move';
+          }
+        }}
+        onMouseLeave={() => {
+          if (tool === 'select') {
+            document.body.style.cursor = 'default';
+          }
+        }}
       />
-      {isSelected && (
+      
+      {isSelected && tool === 'select' && (
         <>
+          {/* Start endpoint */}
           <Circle
             x={points[0]}
             y={points[1]}
-            radius={8}
+            radius={6}
             fill="#fff"
-            stroke={line.color || "#000000"}
+            stroke={line.color || "#0066ff"}
             strokeWidth={2}
             draggable={true}
-            onDragMove={(e) => {
-              if (!e.evt.buttons) return;
-              const stage = e.target.getStage();
-              const pos = stage.getPointerPosition();
-              handleEndpointDrag(0, pos);
+            onDragStart={(e) => {
+              e.cancelBubble = true;
+              if (e.evt) e.evt.stopPropagation();
+              setDraggingEndpoint(0);
+            }}
+            onDragMove={(e) => handleEndpointDragMove(0, e)}
+            onDragEnd={(e) => {
+              setDraggingEndpoint(null);
             }}
             onClick={(e) => {
               e.cancelBubble = true;
-              e.evt.stopPropagation();
-              onSelect(line.id);
+              if (e.evt) {
+                e.evt.stopPropagation();
+                e.evt.preventDefault();
+              }
+            }}
+            onMouseEnter={() => {
+              document.body.style.cursor = 'crosshair';
+            }}
+            onMouseLeave={() => {
+              document.body.style.cursor = 'default';
             }}
           />
+          
+          {/* End endpoint */}
           <Circle
             x={points[2]}
             y={points[3]}
-            radius={8}
+            radius={6}
             fill="#fff"
-            stroke={line.color || "#000000"}
+            stroke={line.color || "#0066ff"}
             strokeWidth={2}
             draggable={true}
-            onDragMove={(e) => {
-              if (!e.evt.buttons) return;
-              const stage = e.target.getStage();
-              const pos = stage.getPointerPosition();
-              handleEndpointDrag(1, pos);
+            onDragStart={(e) => {
+              e.cancelBubble = true;
+              if (e.evt) e.evt.stopPropagation();
+              setDraggingEndpoint(1);
+            }}
+            onDragMove={(e) => handleEndpointDragMove(1, e)}
+            onDragEnd={(e) => {
+              setDraggingEndpoint(null);
             }}
             onClick={(e) => {
               e.cancelBubble = true;
-              e.evt.stopPropagation();
-              onSelect(line.id);
+              if (e.evt) {
+                e.evt.stopPropagation();
+                e.evt.preventDefault();
+              }
+            }}
+            onMouseEnter={() => {
+              document.body.style.cursor = 'crosshair';
+            }}
+            onMouseLeave={() => {
+              document.body.style.cursor = 'default';
             }}
           />
         </>
@@ -404,19 +447,8 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
     }
   };
 
-  useEffect(() => {
-    if (isSelected && textRef.current) {
-      textRef.current.moveToTop();
-      trRef.current?.moveToTop();
-      if (trRef.current) {
-        trRef.current.nodes([textRef.current]);
-        trRef.current.getLayer().batchDraw();
-      }
-    }
-  }, [isSelected]);
-
   const handleDragEnd = (e) => {
-    if (onChange && textRef.current) {
+    if (tool === 'select' && onChange && textRef.current) {
       const node = textRef.current;
       onChange(text.id, {
         ...text,
@@ -436,30 +468,11 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
         fontSize={text.fontSize || 24}
         fontFamily={text.fontFamily || 'Arial'}
         fill={text.color || text.fill || '#000000'}
-        draggable={true}
+        draggable={tool === 'select' && isSelected && !isTransforming}
         rotation={text.rotation || 0}
         fontStyle={text.fontStyle || 'normal'}
-        onClick={(e) => {
-          e.cancelBubble = true;
-          if (e.evt) e.evt.stopPropagation();
-          onSelect(text.id);
-        }}
-        onMouseDown={(e) => {
-          e.cancelBubble = true;
-          if (e.evt) e.evt.stopPropagation();
-          onSelect(text.id);
-        }}
-        onMouseOver={(e) => {
-          e.target.getStage().container().style.cursor = 'move';
-        }}
-        onMouseOut={(e) => {
-          e.target.getStage().container().style.cursor = 'default';
-        }}
-        onDragStart={(e) => {
-          e.cancelBubble = true;
-          if (e.evt) e.evt.stopPropagation();
-          onSelect(text.id);
-        }}
+        onClick={handleClick}
+        onTap={handleClick}
         onDragEnd={handleDragEnd}
         listening={true}
         onTransformStart={handleTransformStart}
@@ -514,25 +527,13 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
 
   // Ensure transformer updates and bring selected image to top
   useEffect(() => {
-    if (isSelected && imageRef.current) {
+    if (isSelected && imageRef.current && trRef.current) {
       imageRef.current.moveToTop();
       trRef.current.moveToTop();
       trRef.current.nodes([imageRef.current]);
       trRef.current.getLayer().batchDraw();
     }
   }, [isSelected]);
-
-  // Set cursor styles on hover
-  useEffect(() => {
-    if (imageRef.current) {
-      imageRef.current.on('mouseenter', () => {
-        document.body.style.cursor = 'move';
-      });
-      imageRef.current.on('mouseleave', () => {
-        document.body.style.cursor = 'default';
-      });
-    }
-  }, []);
 
   const handleTransformEnd = (e) => {
     if (!imageRef.current) return;
@@ -549,7 +550,6 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
     const newHeight = Math.max(10, node.height() * scaleY);
 
     onResize(element.id, {
-      ...element,
       x: node.x(),
       y: node.y(),
       width: newWidth,
@@ -558,6 +558,26 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
     });
 
     setIsTransforming(false);
+  };
+
+  const handleClick = (e) => {
+    e.cancelBubble = true;
+    if (e.evt) {
+      e.evt.stopPropagation();
+      e.evt.preventDefault();
+    }
+    onSelect(element.id);
+  };
+
+  const handleDragEnd = (e) => {
+    const node = e.target;
+    onResize(element.id, {
+      x: node.x(),
+      y: node.y(),
+      width: element.width,
+      height: element.height,
+      rotation: node.rotation()
+    });
   };
 
   return (
@@ -569,37 +589,32 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
         y={element.y}
         width={element.width || (img ? img.width : 100)}
         height={element.height || (img ? img.height : 100)}
-        draggable={true}
-        onClick={(e) => {
-          e.cancelBubble = true;
-          if (e.evt) e.evt.stopPropagation();
-          onSelect(element.id);
-        }}
-        onMouseDown={(e) => {
-          e.cancelBubble = true;
-          if (e.evt) e.evt.stopPropagation();
-          onSelect(element.id);
-        }}
-        onMouseOver={(e) => {
-          document.body.style.cursor = isTransforming ? 'pointer' : 'move';
-        }}
-        onMouseOut={(e) => {
-          document.body.style.cursor = 'default';
-        }}
+        rotation={element.rotation || 0}
+        draggable={tool === 'select'}
+        listening={true}
+        onClick={handleClick}
+        onTap={handleClick}
+        onMouseDown={handleClick}
         onDragStart={(e) => {
           e.cancelBubble = true;
           if (e.evt) e.evt.stopPropagation();
           onSelect(element.id);
         }}
-        onDragEnd={(e) => {
-          onResize(element.id, {
-            ...element,
-            x: e.target.x(),
-            y: e.target.y()
-          });
+        onDragEnd={handleDragEnd}
+        onMouseEnter={() => {
+          if (tool === 'select') {
+            document.body.style.cursor = isTransforming ? 'pointer' : 'move';
+          }
         }}
+        onMouseLeave={() => {
+          if (tool === 'select') {
+            document.body.style.cursor = 'default';
+          }
+        }}
+        hitStrokeWidth={0}
+        perfectDrawEnabled={false}
       />
-      {isSelected && (
+      {isSelected && tool === 'select' && (
         <Transformer
           ref={trRef}
           boundBoxFunc={(oldBox, newBox) => {
@@ -614,6 +629,7 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
             return newBox;
           }}
           rotateEnabled={true}
+          resizeEnabled={true}
           enabledAnchors={[
             'top-left', 'top-right',
             'bottom-left', 'bottom-right',
@@ -622,13 +638,19 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
           ]}
           anchorFill="#fff"
           anchorStroke="#0066ff"
-          anchorSize={10}
-          anchorCornerRadius={4}
+          anchorSize={8}
+          anchorCornerRadius={2}
           borderStroke="#0066ff"
           borderStrokeWidth={2}
-          padding={5}
+          padding={4}
           onTransformStart={() => setIsTransforming(true)}
           onTransformEnd={handleTransformEnd}
+          onTransform={() => {
+            // Force re-render during transform
+            if (trRef.current) {
+              trRef.current.getLayer().batchDraw();
+            }
+          }}
         />
       )}
     </Group>
@@ -1398,26 +1420,29 @@ const ToolBar = () => {
                       <option value="Verdana">Verdana</option>
                     </select>
                     <input
-                      type="number"
-                      value={text.fontSize}
-                      onChange={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const newSize = parseInt(e.target.value);
-                        if (!isNaN(newSize) && newSize >= 8 && newSize <= 72) {
-                          setText(prev => ({ ...prev, fontSize: newSize }));
-                        }
-                      }}
-                      onFocus={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.target.select();
-                      }}
-                      className="px-3 py-2 border rounded-lg cursor-text w-20"
-                      min="8"
-                      max="72"
-                      placeholder="Font size"
-                    />
+  type="number"
+  value={text.fontSize}
+  onChange={(e) => {
+    const newSize = parseInt(e.target.value);
+    if (!isNaN(newSize) && newSize >= 8 && newSize <= 72) {
+      setText(prev => ({ ...prev, fontSize: newSize }));
+    }
+  }}
+  onFocus={(e) => {
+    e.target.select();
+  }}
+  onMouseDown={(e) => {
+    e.stopPropagation();
+  }}
+  onClick={(e) => {
+    e.stopPropagation();
+  }}
+  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-text w-20"
+  min="8"
+  max="72"
+  placeholder="Size"
+  step="1"
+/>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <ColorPalette
