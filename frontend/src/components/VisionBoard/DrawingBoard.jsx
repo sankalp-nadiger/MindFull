@@ -182,7 +182,7 @@ const ContextMenu = ({ elementId, elements, position, onClose, onUpdateElement, 
 };
 
 // Enhanced FlowLine component with fixed dragging and endpoint positioning
-const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, tool }) => {
+const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
   const [draggingEndpoint, setDraggingEndpoint] = useState(null);
   const [isDragStart, setIsDragStart] = useState(false);
   const groupRef = useRef();
@@ -238,21 +238,11 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
   };
 
   const handleEndpointDragMove = (endpointIndex, e) => {
-    const stage = e.target.getStage();
-    const pos = stage.getPointerPosition();
+    if (!onUpdate) return;
     
-    if (!pos) return;
-
-    const stagePos = stage.position();
-    const scale = stage.scaleX();
-    const actualPos = {
-      x: (pos.x - stagePos.x) / scale,
-      y: (pos.y - stagePos.y) / scale
-    };
-
     const newPoints = [...points];
-    newPoints[endpointIndex * 2] = actualPos.x;
-    newPoints[endpointIndex * 2 + 1] = actualPos.y;
+    newPoints[endpointIndex * 2] = e.target.x();
+    newPoints[endpointIndex * 2 + 1] = e.target.y();
     
     onUpdate(line.id, { points: newPoints });
   };
@@ -275,6 +265,16 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
         onMouseDown={handleMouseDown}
         onDragStart={handleLineDragStart}
         onDragEnd={handleLineDragEnd}
+        onMouseEnter={() => {
+          if (tool === 'select' && !draggingEndpoint) {
+            document.body.style.cursor = 'move';
+          }
+        }}
+        onMouseLeave={() => {
+          if (tool === 'select') {
+            document.body.style.cursor = 'default';
+          }
+        }}
         perfectDrawEnabled={false}
         id={line.id}
         name={`flowline-${line.id}`}
@@ -282,7 +282,7 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
       
       {isSelected && tool === 'select' && (
         <>
-          {/* First endpoint */}
+          {/* Start endpoint circle */}
           <Circle
             x={points[0]}
             y={points[1]}
@@ -303,10 +303,16 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
               e.cancelBubble = true;
               if (e.evt) e.evt.stopPropagation();
             }}
+            onMouseEnter={() => {
+              document.body.style.cursor = 'crosshair';
+            }}
+            onMouseLeave={() => {
+              document.body.style.cursor = 'default';
+            }}
             perfectDrawEnabled={false}
           />
           
-          {/* Second endpoint */}
+          {/* End endpoint circle */}
           <Circle
             x={points[2]}
             y={points[3]}
@@ -327,6 +333,12 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
               e.cancelBubble = true;
               if (e.evt) e.evt.stopPropagation();
             }}
+            onMouseEnter={() => {
+              document.body.style.cursor = 'crosshair';
+            }}
+            onMouseLeave={() => {
+              document.body.style.cursor = 'default';
+            }}
             perfectDrawEnabled={false}
           />
         </>
@@ -340,19 +352,18 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
   const textRef = useRef();
   const trRef = useRef();
   const [isTransforming, setIsTransforming] = useState(false);
-  const [isDragStart, setIsDragStart] = useState(false);
-  
+
   useEffect(() => {
     if (isSelected && trRef.current && textRef.current && tool === 'select') {
-      // Use setTimeout to ensure DOM is ready
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         if (trRef.current && textRef.current) {
           trRef.current.nodes([textRef.current]);
           trRef.current.getLayer().batchDraw();
           textRef.current.moveToTop();
           trRef.current.moveToTop();
         }
-      }, 10);
+      }, 50);
+      return () => clearTimeout(timer);
     } else if (trRef.current) {
       trRef.current.nodes([]);
       trRef.current.getLayer()?.batchDraw();
@@ -370,22 +381,13 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
     }
   };
 
-  const handleDragStart = (e) => {
-    if (tool === 'select') {
-      setIsDragStart(true);
-      e.cancelBubble = true;
-      if (e.evt) e.evt.stopPropagation();
-    }
-  };
-
   const handleDragEnd = (e) => {
-    if (tool === 'select' && isDragStart && onChange) {
+    if (tool === 'select' && onChange) {
       onChange(text.id, {
         x: e.target.x(),
         y: e.target.y()
       });
     }
-    setIsDragStart(false);
   };
 
   const handleTransformEnd = () => {
@@ -427,7 +429,6 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
         onClick={handleSelect}
         onTap={handleSelect}
         onMouseDown={handleSelect}
-        onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
         onMouseEnter={() => {
           if (tool === 'select') {
@@ -440,7 +441,7 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
           }
         }}
         perfectDrawEnabled={false}
-        id={text.id} // Critical: Ensure ID is set
+        id={text.id}
         name={`text-${text.id}`}
       />
       {isSelected && tool === 'select' && (
@@ -464,14 +465,13 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
           anchorStroke="#0066ff"
           borderStroke="#0066ff"
           borderStrokeWidth={2}
-          anchorSize={10}
+          anchorSize={8}
           anchorStrokeWidth={2}
           anchorCornerRadius={2}
           padding={5}
           rotateAnchorOffset={20}
           keepRatio={false}
           centeredScaling={false}
-          listening={false} // Prevent transformer from intercepting events
           ignoreStroke={true}
         />
       )}
@@ -485,19 +485,18 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
   const imageRef = useRef();
   const trRef = useRef();
   const [isTransforming, setIsTransforming] = useState(false);
-  const [isDragStart, setIsDragStart] = useState(false);
 
   useEffect(() => {
     if (isSelected && imageRef.current && trRef.current && tool === 'select') {
-      // Use setTimeout to ensure proper attachment
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         if (trRef.current && imageRef.current) {
           trRef.current.nodes([imageRef.current]);
           trRef.current.getLayer().batchDraw();
           imageRef.current.moveToTop();
           trRef.current.moveToTop();
         }
-      }, 10);
+      }, 50);
+      return () => clearTimeout(timer);
     } else if (trRef.current) {
       trRef.current.nodes([]);
       trRef.current.getLayer()?.batchDraw();
@@ -515,16 +514,8 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
     }
   };
 
-  const handleDragStart = (e) => {
-    if (tool === 'select') {
-      setIsDragStart(true);
-      e.cancelBubble = true;
-      if (e.evt) e.evt.stopPropagation();
-    }
-  };
-
   const handleDragEnd = (e) => {
-    if (tool === 'select' && isDragStart && onResize) {
+    if (tool === 'select' && onResize) {
       onResize(element.id, {
         x: e.target.x(),
         y: e.target.y(),
@@ -533,7 +524,6 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
         rotation: e.target.rotation()
       });
     }
-    setIsDragStart(false);
   };
 
   const handleTransformEnd = (e) => {
@@ -575,8 +565,17 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
         onClick={handleSelect}
         onTap={handleSelect}
         onMouseDown={handleSelect}
-        onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        onMouseEnter={() => {
+          if (tool === 'select') {
+            document.body.style.cursor = 'move';
+          }
+        }}
+        onMouseLeave={() => {
+          if (tool === 'select') {
+            document.body.style.cursor = 'default';
+          }
+        }}
         perfectDrawEnabled={false}
         id={element.id}
         name={`image-${element.id}`}
@@ -601,7 +600,7 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
           ]}
           anchorFill="#ffffff"
           anchorStroke="#0066ff"
-          anchorSize={10}
+          anchorSize={8}
           anchorCornerRadius={2}
           borderStroke="#0066ff"
           borderStrokeWidth={2}
@@ -612,7 +611,6 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
           ignoreStroke={true}
           keepRatio={false}
           centeredScaling={false}
-          listening={false} // Prevent transformer from intercepting events
         />
       )}
     </Group>
@@ -678,28 +676,34 @@ const [isPlacingElement, setIsPlacingElement] = useState(false);
 const [elementToPlace, setElementToPlace] = useState(null);
 const [isErasing, setIsErasing] = useState(false);
 const addElementWithHistory = (element) => {
-  console.log('Adding element with history:', element.id); // Debug log
-  setUndoStack(prev => [...prev, elements]);
+  console.log('Adding element with history:', element.id);
+  setUndoStack(prev => [...prev, { action: 'create', element: null }]);
   setElements(prev => [...prev, element]);
   setRedoStack([]);
   
-  // Ensure element is selected with multiple attempts
+  // Ensure element is selected immediately
+  setSelectedId(element.id);
+  
+  // Force multiple selection attempts with different timings
   setTimeout(() => {
-    console.log('Selecting newly added element:', element.id); // Debug log
     setSelectedId(element.id);
-    setTool('select');
+    const stage = stageRef.current;
+    if (stage) {
+      const node = stage.findOne(`#${element.id}`);
+      if (node) {
+        node.moveToTop();
+        stage.batchDraw();
+      }
+    }
   }, 0);
   
   setTimeout(() => {
     setSelectedId(element.id);
-    setTool('select');
-    
-    // Force stage redraw
-    const stage = stageRef.current;
-    if (stage) {
-      stage.batchDraw();
-    }
-  }, 50);
+  }, 100);
+  
+  setTimeout(() => {
+    setSelectedId(element.id);
+  }, 200);
 };
 
   // Add this function inside DrawingBoard
@@ -922,7 +926,7 @@ const handleElementDelete = (id) => {
 
   // Mouse event handlers
 const handleMouseDown = (e) => {
-  setContextMenu({ ...contextMenu, show: false });
+  setContextMenu({ show: false, position: { x: 0, y: 0 }, elementId: null });
   
   const stage = e.target.getStage();
   if (!stage) return;
@@ -932,27 +936,52 @@ const handleMouseDown = (e) => {
 
   const clickedElement = e.target;
   
-  // More precise background detection
-  const clickedOnBackground = clickedElement === stage || 
-                            (clickedElement.getClassName() === 'Rect' && 
-                             clickedElement.attrs?.id === 'background') ||
-                            clickedElement === stage.children[0]; // Layer
-
-  if (tool === 'select') {
-    // Check if clicked on a selectable element
-    const elementId = clickedElement.attrs?.id;
-    if (elementId && elements.find(el => el.id === elementId)) {
+  // Check if clicked on a selectable element first
+  const elementId = clickedElement.attrs?.id;
+  const elementName = clickedElement.attrs?.name || '';
+  
+  // If we clicked on an element that has an ID or is part of an element group
+  if (elementId && elements.find(el => el.id === elementId)) {
+    if (tool === 'select') {
       handleElementSelect(elementId);
       e.evt?.preventDefault();
       return;
-    } else if (clickedOnBackground) {
-      // Only deselect when definitely clicking on background
-      setSelectedId(null);
     }
+  } else if (elementName.includes('-') && tool === 'select') {
+    // Handle clicks on element parts (like text-123, image-456, flowline-789)
+    const parts = elementName.split('-');
+    if (parts.length >= 2) {
+      const elementType = parts[0];
+      const elementIdPart = parts.slice(1).join('-'); // Handle composite IDs
+      
+      const element = elements.find(el => 
+        el.id.includes(elementIdPart) || 
+        (elementType === 'text' && el.type === 'text' && el.id.includes(elementIdPart)) ||
+        (elementType === 'image' && el.type === 'image' && el.id.includes(elementIdPart)) ||
+        (elementType === 'flowline' && el.type === 'flowLine' && el.id.includes(elementIdPart))
+      );
+      
+      if (element) {
+        handleElementSelect(element.id);
+        e.evt?.preventDefault();
+        return;
+      }
+    }
+  }
+  
+  // Check if clicked on background
+  const clickedOnBackground = clickedElement === stage || 
+                            (clickedElement.getClassName() === 'Rect' && 
+                             clickedElement.attrs?.id === 'background') ||
+                            clickedElement === stage.children[0];
+
+  if (tool === 'select' && clickedOnBackground) {
+    // Only deselect when definitely clicking on background
+    setSelectedId(null);
     return;
   }
 
-  // Rest of your tool handling code remains the same...
+  // Don't proceed with other tools if not clicking on background
   if (!clickedOnBackground) return;
 
   const actualPos = {
@@ -992,8 +1021,7 @@ const handleMouseDown = (e) => {
         };
         addElementWithHistory(newText);
         setText({ ...text, content: '' });
-        setTool('select');
-        setSelectedId(newText.id);
+        // Keep text tool active for multiple additions
       }
       break;
 
@@ -1009,19 +1037,16 @@ const handleMouseDown = (e) => {
       };
       setFlowLine(newLine);
       break;
-      
-    case 'image':
-      // Handle image placement if needed
-      break;
   }
 };
 
 const handleElementSelect = (id) => {
+  console.log('Selecting element:', id);
   setSelectedId(id);
-  setTool('select');
-  setContextMenu({ ...contextMenu, show: false });
+  setTool('select'); // Ensure we're in select mode
+  setContextMenu({ show: false, position: { x: 0, y: 0 }, elementId: null });
   
-  // Force re-render and transformer attachment
+  // Force re-render and transformer attachment with multiple attempts
   setTimeout(() => {
     const stage = stageRef.current;
     if (stage) {
@@ -1032,7 +1057,16 @@ const handleElementSelect = (id) => {
       }
     }
   }, 0);
+  
+  setTimeout(() => {
+    setSelectedId(id);
+  }, 50);
+  
+  setTimeout(() => {
+    setSelectedId(id);
+  }, 150);
 };
+
 
 const handleMouseUp = () => {
   // In handleMouseUp for pen tool
@@ -1160,6 +1194,65 @@ const ToolBar = () => {
     
     setIsDraggingToolbar(true);
   };
+
+  const TextInputWithEnterHandler = ({ text, setText, addElementWithHistory, dimensions, scale, stagePos }) => {
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && text.content.trim()) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Auto-place text in center when Enter is pressed
+      const centerX = (dimensions.width / 2 / scale) - 50 - (stagePos.x / scale);
+      const centerY = (dimensions.height / 2 / scale) - 10 - (stagePos.y / scale);
+      
+      const newText = {
+        id: `text-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type: 'text',
+        x: centerX,
+        y: centerY,
+        text: text.content,
+        content: text.content,
+        fontSize: text.fontSize,
+        fontFamily: text.fontFamily,
+        fill: text.color,
+        color: text.color,
+        fontStyle: `${text.isBold ? 'bold' : ''} ${text.isItalic ? 'italic' : ''}`.trim() || 'normal',
+        draggable: true
+      };
+      
+      addElementWithHistory(newText);
+      setText({ ...text, content: '' });
+      // Keep text tool active for multiple additions
+    }
+  };
+
+  const handleChange = (e) => {
+    e.stopPropagation();
+    setText({ ...text, content: e.target.value });
+  };
+
+  const handleFocus = (e) => {
+    e.stopPropagation();
+  };
+
+  const handleBlur = (e) => {
+    e.stopPropagation();
+  };
+
+  return (
+    <input
+      type="text"
+      placeholder="Enter text..."
+      value={text.content}
+      onChange={handleChange}
+      onKeyDown={handleKeyDown}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-text"
+      autoFocus={false}
+    />
+  );
+};
 
   return (
     <div 
@@ -1367,40 +1460,14 @@ const ToolBar = () => {
                 <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="col-span-2">
-                      <input
-                        type="text"
-                        placeholder="Enter text..."
-                        value={text.content}
-                        onChange={(e) => setText({ ...text, content: e.target.value })}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && text.content.trim()) {
-                            e.preventDefault();
-                            // Auto-place text in center when Enter is pressed
-                            const centerX = (dimensions.width / 2 / scale) - 50;
-                            const centerY = (dimensions.height / 2 / scale) - 10;
-                            
-                            const newText = {
-                              id: Date.now().toString(),
-                              type: 'text',
-                              x: centerX,
-                              y: centerY,
-                              text: text.content,
-                              content: text.content,
-                              fontSize: text.fontSize,
-                              fontFamily: text.fontFamily,
-                              fill: text.color,
-                              color: text.color,
-                              fontStyle: `${text.isBold ? 'bold' : ''} ${text.isItalic ? 'italic' : ''}`.trim() || 'normal',
-                              draggable: true
-                            };
-                            addElementWithHistory(newText);
-                            setSelectedId(newText.id);
-                            setText({ ...text, content: '' });
-                          }
-                        }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-text"
-                        autoFocus={tool === 'text'}
-                      />
+                      <TextInputWithEnterHandler
+  text={text}
+  setText={setText}
+  addElementWithHistory={addElementWithHistory}
+  dimensions={dimensions}
+  scale={scale}
+  stagePos={stagePos}
+/>
                       <p className="text-xs text-gray-500 mt-1">
                         Press Enter to add text to center, or click canvas after typing
                       </p>
