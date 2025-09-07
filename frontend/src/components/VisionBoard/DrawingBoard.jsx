@@ -385,8 +385,9 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
   // Improved transformer attachment
   useEffect(() => {
     if (isSelected && tool === 'select' && textRef.current) {
+      // Force immediate transformer attachment
       if (trRef.current) {
-        trRef.current.nodes([groupRef.current]);
+        trRef.current.nodes([textRef.current]);
         trRef.current.getLayer().batchDraw();
       }
     } else if (trRef.current) {
@@ -462,7 +463,6 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
   
   return (
     <Group
-      ref={groupRef}
       x={text.x}
       y={text.y}
       draggable={tool === 'select' && isSelected}
@@ -858,7 +858,6 @@ useEffect(() => {
     const newScale = direction === 'in' ? scale * 1.2 : scale / 1.2;
     setScale(Math.min(Math.max(0.1, newScale), 3)); // Limit scale between 0.1 and 3
   };
-
 const handleImageUpload = (e) => {
   const file = e.target.files[0];
   if (file) {
