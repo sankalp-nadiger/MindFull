@@ -181,7 +181,303 @@ const ContextMenu = ({ elementId, elements, position, onClose, onUpdateElement, 
   );
 };
 
-// Enhanced FlowLine component with fixed dragging and endpoint positioning
+// Fixed TextNode component with proper transform handling
+const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
+  const textRef = useRef();
+  const trRef = useRef();
+  const groupRef = useRef();
+  const [isTransforming, setIsTransforming] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    if (isSelected && tool === 'select' && textRef.current && trRef.current) {
+      trRef.current.nodes([textRef.current]);
+      trRef.current.getLayer()?.batchDraw();
+    } else if (trRef.current) {
+      trRef.current.nodes([]);
+    }
+  }, [isSelected, tool, text.id]);
+
+  const handleSelect = (e) => {
+    if (tool === 'select') {
+      e.cancelBubble = true;
+      if (e.evt) {
+        e.evt.stopPropagation();
+        e.evt.preventDefault();
+      }
+      onSelect(text.id);
+    }
+  };
+
+  const handleDragStart = (e) => {
+    if (tool === 'select' && isSelected) {
+      setIsDragging(true);
+      e.target.setAttrs({
+        shadowOffset: { x: 5, y: 5 },
+        shadowOpacity: 0.2,
+        shadowBlur: 5
+      });
+    }
+  };
+
+  const handleDragEnd = (e) => {
+    setIsDragging(false);
+    if (tool === 'select' && onChange) {
+      e.target.to({
+        duration: 0.2,
+        shadowOffset: { x: 0, y: 0 },
+        shadowOpacity: 0
+      });
+      
+      onChange(text.id, {
+        x: e.target.x(),
+        y: e.target.y()
+      });
+    }
+  };
+
+  const handleTransformEnd = () => {
+    if (textRef.current && onChange) {
+      const node = textRef.current;
+      const scaleX = node.scaleX();
+      const scaleY = node.scaleY();
+      
+      // Calculate new font size based on average scale
+      const avgScale = (scaleX + scaleY) / 2;
+      const newFontSize = Math.max(8, Math.round((text.fontSize || 24) * avgScale));
+      
+      // Get current position including group position
+      const groupX = groupRef.current?.x() || 0;
+      const groupY = groupRef.current?.y() || 0;
+      
+      // Reset scale and position
+      node.scaleX(1);
+      node.scaleY(1);
+      node.x(0);
+      node.y(0);
+      
+      // Update with new properties, preserving position
+      onChange(text.id, {
+        x: groupX,
+        y: groupY,
+        rotation: groupRef.current?.rotation() || 0,
+        fontSize: newFontSize
+      });
+    }
+    setIsTransforming(false);
+  };
+  
+  return (
+    <Group
+      ref={groupRef}
+      x={text.x}
+      y={text.y}
+      draggable={tool === 'select' && isSelected && !isTransforming}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onClick={handleSelect}
+      onTap={handleSelect}
+      onMouseDown={handleSelect}
+      rotation={text.rotation || 0}
+    >
+      <KonvaText
+        ref={textRef}
+        text={text.text || text.content}
+        x={0}
+        y={0}
+        fontSize={text.fontSize || 24}
+        fontFamily={text.fontFamily || 'Arial'}
+        fill={text.color || text.fill || '#000000'}
+        fontStyle={text.fontStyle || 'normal'}
+        listening={true}
+        perfectDrawEnabled={false}
+        id={text.id}
+        name={`text-${text.id}`}
+      />
+      {isSelected && tool === 'select' && (
+        <Transformer
+          ref={trRef}
+          enabledAnchors={[
+            'top-left', 'top-center', 'top-right',
+            'middle-left', 'middle-right',
+            'bottom-left', 'bottom-center', 'bottom-right'
+          ]}
+          boundBoxFunc={(oldBox, newBox) => {
+            if (newBox.width < 20) newBox.width = 20;
+            if (newBox.height < 10) newBox.height = 10;
+            return newBox;
+          }}
+          onTransformStart={() => setIsTransforming(true)}
+          onTransformEnd={handleTransformEnd}
+          rotateEnabled={true}
+          anchorFill="#ffffff"
+          anchorStroke="#0066ff"
+          borderStroke="#0066ff"
+          borderStrokeWidth={2}
+          anchorSize={8}
+          anchorStrokeWidth={2}
+          anchorCornerRadius={2}
+          padding={5}
+          rotateAnchorOffset={20}
+          keepRatio={false}
+          centeredScaling={false}
+          ignoreStroke={true}
+        />
+      )}
+    </Group>
+  );
+};
+
+// Fixed URLImage Component
+const URLImage = ({ element, onSelect, isSelected, onUpdate, tool }) => {
+  const [img] = useImage(element.src);
+  const imageRef = useRef();
+  const trRef = useRef();
+  const groupRef = useRef();
+  const [isTransforming, setIsTransforming] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    if (isSelected && tool === 'select' && imageRef.current && trRef.current) {
+      trRef.current.nodes([imageRef.current]);
+      trRef.current.getLayer()?.batchDraw();
+    } else if (trRef.current) {
+      trRef.current.nodes([]);
+    }
+  }, [isSelected, tool, element.id]);
+
+  const handleSelect = (e) => {
+    if (tool === 'select') {
+      e.cancelBubble = true;
+      if (e.evt) {
+        e.evt.stopPropagation();
+        e.evt.preventDefault();
+      }
+      onSelect(element.id);
+    }
+  };
+
+  const handleDragStart = (e) => {
+    if (tool === 'select' && isSelected) {
+      setIsDragging(true);
+      e.target.setAttrs({
+        shadowOffset: { x: 5, y: 5 },
+        shadowOpacity: 0.2,
+        shadowBlur: 5
+      });
+    }
+  };
+
+  const handleDragEnd = (e) => {
+    setIsDragging(false);
+    if (tool === 'select' && onUpdate) {
+      e.target.to({
+        duration: 0.2,
+        shadowOffset: { x: 0, y: 0 },
+        shadowOpacity: 0
+      });
+      
+      onUpdate(element.id, {
+        x: e.target.x(),
+        y: e.target.y()
+      });
+    }
+  };
+
+  const handleTransformEnd = () => {
+    if (!imageRef.current || !onUpdate) return;
+
+    const node = imageRef.current;
+    const scaleX = node.scaleX();
+    const scaleY = node.scaleY();
+
+    // Calculate new dimensions
+    const newWidth = Math.max(20, element.width * scaleX);
+    const newHeight = Math.max(20, element.height * scaleY);
+
+    // Get current position
+    const groupX = groupRef.current?.x() || element.x;
+    const groupY = groupRef.current?.y() || element.y;
+
+    // Reset scale and position
+    node.scaleX(1);
+    node.scaleY(1);
+    node.x(0);
+    node.y(0);
+
+    onUpdate(element.id, {
+      x: groupX,
+      y: groupY,
+      width: newWidth,
+      height: newHeight,
+      rotation: groupRef.current?.rotation() || 0
+    });
+
+    setIsTransforming(false);
+  };
+
+  return (
+    <Group
+      ref={groupRef}
+      x={element.x}
+      y={element.y}
+      rotation={element.rotation || 0}
+      draggable={tool === 'select' && isSelected && !isTransforming}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onClick={handleSelect}
+      onTap={handleSelect}
+      onMouseDown={handleSelect}
+    >
+      <Image
+        ref={imageRef}
+        image={img}
+        x={0}
+        y={0}
+        width={element.width}
+        height={element.height}
+        listening={true}
+        perfectDrawEnabled={false}
+        id={element.id}
+        name={`image-${element.id}`}
+      />
+      
+      {isSelected && tool === 'select' && (
+        <Transformer
+          ref={trRef}
+          boundBoxFunc={(oldBox, newBox) => {
+            if (newBox.width < 20 || newBox.height < 20) {
+              return oldBox;
+            }
+            return newBox;
+          }}
+          rotateEnabled={true}
+          resizeEnabled={true}
+          enabledAnchors={[
+            'top-left', 'top-center', 'top-right',
+            'middle-left', 'middle-right',
+            'bottom-left', 'bottom-center', 'bottom-right'
+          ]}
+          anchorFill="#ffffff"
+          anchorStroke="#0066ff"
+          anchorSize={8}
+          anchorCornerRadius={2}
+          borderStroke="#0066ff"
+          borderStrokeWidth={2}
+          padding={5}
+          rotateAnchorOffset={20}
+          onTransformStart={() => setIsTransforming(true)}
+          onTransformEnd={handleTransformEnd}
+          ignoreStroke={true}
+          keepRatio={false}
+          centeredScaling={false}
+        />
+      )}
+    </Group>
+  );
+};
+
+// Fixed FlowLineComponent with proper drag and resize behavior
 const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
   const [draggingEndpoint, setDraggingEndpoint] = useState(null);
   const [isDraggingLine, setIsDraggingLine] = useState(false);
@@ -205,7 +501,7 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
     }
   }, [isSelected, line.id]);
 
-  const handleMouseDown = (e) => {
+  const handleLineSelect = (e) => {
     if (tool === 'select') {
       e.cancelBubble = true;
       if (e.evt) {
@@ -217,7 +513,7 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
   };
 
   const handleLineDragStart = (e) => {
-    if (tool === 'select' && !draggingEndpoint) {
+    if (tool === 'select' && isSelected && !draggingEndpoint) {
       setIsDraggingLine(true);
       e.target.setAttrs({
         shadowOffset: { x: 3, y: 3 },
@@ -236,8 +532,8 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
       
       if (deltaX !== 0 || deltaY !== 0) {
         const newPoints = points.map((point, index) => {
-          if (index % 2 === 0) return point + deltaX; // x coordinates
-          return point + deltaY; // y coordinates
+          if (index % 2 === 0) return point + deltaX;
+          return point + deltaY;
         });
         
         node.x(0);
@@ -277,8 +573,6 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
       scaleX: 1,
       scaleY: 1
     });
-    
-    onSelect(line.id);
   };
 
   return (
@@ -291,12 +585,12 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
         tension={line.style === 'curved' ? 0.5 : 0}
         lineCap="round"
         lineJoin="round"
-        hitStrokeWidth={Math.max(20, (line.strokeWidth || 2) * 4)}
+        hitStrokeWidth={Math.max(8, (line.strokeWidth || 2) * 2)}
         draggable={tool === 'select' && isSelected && !draggingEndpoint}
         listening={true}
-        onClick={handleMouseDown}
-        onTap={handleMouseDown}
-        onMouseDown={handleMouseDown}
+        onClick={handleLineSelect}
+        onTap={handleLineSelect}
+        onMouseDown={handleLineSelect}
         onDragStart={handleLineDragStart}
         onDragEnd={handleLineDragEnd}
         onMouseEnter={() => {
@@ -370,302 +664,6 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
             name={`flowline-endpoint-${line.id}-end`}
           />
         </>
-      )}
-    </Group>
-  );
-};
-// Updated TextNode component with better transform handling
-const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
-  const textRef = useRef();
-  const trRef = useRef();
-  const groupRef = useRef();
-  const [isTransforming, setIsTransforming] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-
-  // Improved transformer attachment
-  useEffect(() => {
-    if (isSelected && tool === 'select' && textRef.current) {
-      // Force immediate transformer attachment
-      if (trRef.current) {
-        trRef.current.nodes([textRef.current]);
-        trRef.current.getLayer().batchDraw();
-      }
-    } else if (trRef.current) {
-      trRef.current.nodes([]);
-    }
-  }, [isSelected, tool, text.id]);
-
-  const handleSelect = (e) => {
-    if (tool === 'select') {
-      e.cancelBubble = true;
-      if (e.evt) {
-        e.evt.stopPropagation();
-        e.evt.preventDefault();
-      }
-      onSelect(text.id);
-    }
-  };
-
-  const handleDragStart = (e) => {
-    if (tool === 'select') {
-      setIsDragging(true);
-      e.target.setAttrs({
-        shadowOffset: { x: 5, y: 5 },
-        shadowOpacity: 0.2,
-        shadowBlur: 5
-      });
-    }
-  };
-
-  const handleDragEnd = (e) => {
-    setIsDragging(false);
-    if (tool === 'select' && onChange) {
-      e.target.to({
-        duration: 0.2,
-        shadowOffset: { x: 0, y: 0 },
-        shadowOpacity: 0
-      });
-      
-      // Update the position
-      onChange(text.id, {
-        x: e.target.x(),
-        y: e.target.y()
-      });
-    }
-  };
-
-  const handleTransformEnd = () => {
-    if (textRef.current && onChange) {
-      const node = textRef.current;
-      const scaleX = node.scaleX();
-      const scaleY = node.scaleY();
-      
-      // Calculate new font size based on scale
-      const avgScale = (scaleX + scaleY) / 2;
-      const newFontSize = Math.max(8, Math.round((text.fontSize || 24) * avgScale));
-      
-      // Reset scale
-      node.scaleX(1);
-      node.scaleY(1);
-      
-      // Update with new properties
-      onChange(text.id, {
-        x: node.x(),
-        y: node.y(),
-        rotation: node.rotation(),
-        fontSize: newFontSize,
-        width: node.width() * scaleX,
-        height: node.height() * scaleY
-      });
-    }
-    setIsTransforming(false);
-  };
-  
-  return (
-    <Group
-      ref={groupRef}
-      x={text.x}
-      y={text.y}
-      draggable={tool === 'select' && isSelected}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      onClick={handleSelect}
-      onTap={handleSelect}
-      onMouseDown={handleSelect}
-      rotation={text.rotation || 0}
-    >
-      <KonvaText
-        ref={textRef}
-        text={text.text || text.content}
-        x={0}
-        y={0}
-        fontSize={text.fontSize || 24}
-        fontFamily={text.fontFamily || 'Arial'}
-        fill={text.color || text.fill || '#000000'}
-        fontStyle={text.fontStyle || 'normal'}
-        listening={true}
-        perfectDrawEnabled={false}
-        id={text.id}
-        name={`text-${text.id}`}
-      />
-      {isSelected && tool === 'select' && (
-        <Transformer
-          ref={trRef}
-          enabledAnchors={[
-            'top-left', 'top-center', 'top-right',
-            'middle-left', 'middle-right',
-            'bottom-left', 'bottom-center', 'bottom-right'
-          ]}
-          boundBoxFunc={(oldBox, newBox) => {
-            if (newBox.width < 20) newBox.width = 20;
-            if (newBox.height < 10) newBox.height = 10;
-            return newBox;
-          }}
-          onTransformStart={() => setIsTransforming(true)}
-          onTransformEnd={handleTransformEnd}
-          rotateEnabled={true}
-          anchorFill="#ffffff"
-          anchorStroke="#0066ff"
-          borderStroke="#0066ff"
-          borderStrokeWidth={2}
-          anchorSize={8}
-          anchorStrokeWidth={2}
-          anchorCornerRadius={2}
-          padding={5}
-          rotateAnchorOffset={20}
-          keepRatio={false}
-          centeredScaling={false}
-          ignoreStroke={true}
-        />
-      )}
-    </Group>
-  );
-};
-
-// Fixed URLImage Component
-const URLImage = ({ element, onSelect, isSelected, onUpdate, tool }) => {
-  const [img] = useImage(element.src);
-  const imageRef = useRef();
-  const trRef = useRef();
-  const groupRef = useRef();
-  const [isTransforming, setIsTransforming] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-
-  // Improved transformer attachment
-  useEffect(() => {
-    if (isSelected && tool === 'select' && imageRef.current) {
-      if (trRef.current) {
-        trRef.current.nodes([groupRef.current]);
-        trRef.current.getLayer().batchDraw();
-      }
-    } else if (trRef.current) {
-      trRef.current.nodes([]);
-    }
-  }, [isSelected, tool, element.id]);
-
-  const handleSelect = (e) => {
-    if (tool === 'select') {
-      e.cancelBubble = true;
-      if (e.evt) {
-        e.evt.stopPropagation();
-        e.evt.preventDefault();
-      }
-      onSelect(element.id);
-    }
-  };
-
-  const handleDragStart = (e) => {
-    if (tool === 'select') {
-      setIsDragging(true);
-      e.target.setAttrs({
-        shadowOffset: { x: 5, y: 5 },
-        shadowOpacity: 0.2,
-        shadowBlur: 5
-      });
-    }
-  };
-
-  const handleDragEnd = (e) => {
-    setIsDragging(false);
-    if (tool === 'select' && onUpdate) {
-      e.target.to({
-        duration: 0.2,
-        shadowOffset: { x: 0, y: 0 },
-        shadowOpacity: 0
-      });
-      
-      onUpdate(element.id, {
-        x: e.target.x(),
-        y: e.target.y()
-      });
-    }
-  };
-
-  const handleTransformEnd = () => {
-    if (!groupRef.current || !onUpdate) return;
-
-    const node = groupRef.current;
-    const scaleX = node.scaleX();
-    const scaleY = node.scaleY();
-
-    // Calculate new dimensions
-    const newWidth = Math.max(20, element.width * scaleX);
-    const newHeight = Math.max(20, element.height * scaleY);
-
-    // Reset scale and update position/size
-    node.scaleX(1);
-    node.scaleY(1);
-
-    onUpdate(element.id, {
-      x: node.x(),
-      y: node.y(),
-      width: newWidth,
-      height: newHeight,
-      rotation: node.rotation()
-    });
-
-    setIsTransforming(false);
-  };
-
-  return (
-    <Group
-      ref={groupRef}
-      x={element.x}
-      y={element.y}
-      width={element.width}
-      height={element.height}
-      rotation={element.rotation || 0}
-      draggable={tool === 'select' && isSelected}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      onTransformEnd={handleTransformEnd}
-      onClick={handleSelect}
-      onTap={handleSelect}
-      onMouseDown={handleSelect}
-    >
-      <Image
-        ref={imageRef}
-        image={img}
-        x={0}
-        y={0}
-        width={element.width}
-        height={element.height}
-        listening={true}
-        perfectDrawEnabled={false}
-        id={element.id}
-        name={`image-${element.id}`}
-      />
-      
-      {isSelected && tool === 'select' && (
-        <Transformer
-          ref={trRef}
-          boundBoxFunc={(oldBox, newBox) => {
-            if (newBox.width < 20 || newBox.height < 20) {
-              return oldBox;
-            }
-            return newBox;
-          }}
-          rotateEnabled={true}
-          resizeEnabled={true}
-          enabledAnchors={[
-            'top-left', 'top-center', 'top-right',
-            'middle-left', 'middle-right',
-            'bottom-left', 'bottom-center', 'bottom-right'
-          ]}
-          anchorFill="#ffffff"
-          anchorStroke="#0066ff"
-          anchorSize={8}
-          anchorCornerRadius={2}
-          borderStroke="#0066ff"
-          borderStrokeWidth={2}
-          padding={5}
-          rotateAnchorOffset={20}
-          onTransformStart={() => setIsTransforming(true)}
-          onTransformEnd={handleTransformEnd}
-          ignoreStroke={true}
-          keepRatio={false}
-          centeredScaling={false}
-        />
       )}
     </Group>
   );
@@ -866,12 +864,8 @@ const handleImageUpload = (e) => {
     reader.onload = (event) => {
       const img = document.createElement('img');
       img.crossOrigin = 'anonymous';
-      img.onerror = (error) => {
-        console.error('Error loading image:', error);
-      };
       
       img.onload = () => {
-        // Scale down large images to a reasonable size
         const maxWidth = 300;
         const maxHeight = 300;
         let { width, height } = img;
@@ -882,7 +876,6 @@ const handleImageUpload = (e) => {
           height = height * ratio;
         }
         
-        // Calculate center position relative to the current viewport
         const centerX = (dimensions.width / 2 / scale) - (width / 2) - (stagePos.x / scale);
         const centerY = (dimensions.height / 2 / scale) - (height / 2) - (stagePos.y / scale);
         
@@ -900,28 +893,18 @@ const handleImageUpload = (e) => {
         };
         
         addElementWithHistory(imageElement);
+        
+        // Force selection and tool change
         setSelectedId(imageElement.id);
-        // Force tool to select for immediate interaction
         setTool('select');
         
-        // Force transformer attachment with a small delay
-        setTimeout(() => {
-          const stage = stageRef.current;
-          if (stage) {
-            const imageNode = stage.findOne(`#${imageElement.id}`);
-            if (imageNode) {
-              imageNode.moveToTop();
-              stage.batchDraw();
-            }
-          }
-        }, 100);
+        // Multiple selection attempts for reliability
+        setTimeout(() => setSelectedId(imageElement.id), 50);
+        setTimeout(() => setSelectedId(imageElement.id), 100);
+        setTimeout(() => setSelectedId(imageElement.id), 200);
       };
       
       img.src = event.target.result;
-    };
-    
-    reader.onerror = (error) => {
-      console.error('Error reading file:', error);
     };
     
     reader.readAsDataURL(file);
@@ -1114,18 +1097,15 @@ const handleMouseDown = (e) => {
 };
 
 const handleElementSelect = (id) => {
-  console.log('Selecting element:', id);
-  
   // If clicking on already selected element, keep it selected
   if (selectedId === id) {
-    // Just ensure it's on top and transformer is attached
     const stage = stageRef.current;
     if (stage) {
       const selectedNode = stage.findOne(`#${id}`);
       if (selectedNode) {
         selectedNode.moveToTop();
         
-        // Also move endpoints to top for flowlines
+        // Move flowline endpoints to top
         if (selectedNode.attrs.name && selectedNode.attrs.name.startsWith('flowline-')) {
           const startEndpoint = stage.findOne(`#${id}-start`);
           const endEndpoint = stage.findOne(`#${id}-end`);
@@ -1136,33 +1116,18 @@ const handleElementSelect = (id) => {
         stage.batchDraw();
       }
     }
-    return; // Don't change selection state
+    return;
   }
   
-  // If clicking on different element, select the new one
+  // Select new element
   setSelectedId(id);
   setTool('select');
   setContextMenu({ show: false, position: { x: 0, y: 0 }, elementId: null });
   
-  // Force re-render and transformer attachment
-  setTimeout(() => {
-    const stage = stageRef.current;
-    if (stage) {
-      const selectedNode = stage.findOne(`#${id}`);
-      if (selectedNode) {
-        selectedNode.moveToTop();
-        
-        if (selectedNode.attrs.name && selectedNode.attrs.name.startsWith('flowline-')) {
-          const startEndpoint = stage.findOne(`#${id}-start`);
-          const endEndpoint = stage.findOne(`#${id}-end`);
-          if (startEndpoint) startEndpoint.moveToTop();
-          if (endEndpoint) endEndpoint.moveToTop();
-        }
-        
-        stage.batchDraw();
-      }
-    }
-  }, 50);
+  // Force selection with multiple attempts
+  setTimeout(() => setSelectedId(id), 50);
+  setTimeout(() => setSelectedId(id), 100);
+  setTimeout(() => setSelectedId(id), 200);
 };
 
 const handleMouseUp = () => {
@@ -1292,10 +1257,9 @@ const ToolBar = () => {
     setIsDraggingToolbar(true);
   };
 
-  const TextInputWithEnterHandler = ({ text, setText, addElementWithHistory, dimensions, scale, stagePos }) => {
+  const TextInputWithEnterHandler = ({ text, setText, addElementWithHistory, dimensions, scale, stagePos, setSelectedId, setTool }) => {
   const inputRef = useRef(null);
   
-  // Keep focus on the input after adding text
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();
@@ -1307,7 +1271,6 @@ const ToolBar = () => {
       e.preventDefault();
       e.stopPropagation();
       
-      // Auto-place text in center when Enter is pressed
       const centerX = (dimensions.width / 2 / scale) - 50 - (stagePos.x / scale);
       const centerY = (dimensions.height / 2 / scale) - 10 - (stagePos.y / scale);
       
@@ -1327,8 +1290,15 @@ const ToolBar = () => {
       };
       
       addElementWithHistory(newText);
-      // Keep the text content for continuous typing
       setText({ ...text, content: '' });
+      
+      // Force selection and tool change with multiple attempts
+      setSelectedId(newText.id);
+      setTool('select');
+      
+      setTimeout(() => setSelectedId(newText.id), 50);
+      setTimeout(() => setSelectedId(newText.id), 100);
+      setTimeout(() => setSelectedId(newText.id), 200);
     }
   };
 
@@ -1563,6 +1533,8 @@ const ToolBar = () => {
   dimensions={dimensions}
   scale={scale}
   stagePos={stagePos}
+  setSelectedId={setSelectedId}
+  setTool={setTool}
 />
                       <p className="text-xs text-gray-500 mt-1">
                         Press Enter to add text to center, or click canvas after typing
