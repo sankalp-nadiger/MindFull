@@ -4,7 +4,7 @@ import VisionItem from "./VisionItem";
 import AIRecommendation from "./AIRecommendation";
 import FileUpload from "./FileUpload";
 import "../../styles/VisionBoard.css";
-//import DrawingBoard from "./DrawingBoard";
+import DrawingBoard from "./DrawingBoard";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { 
   Info, Home, ChevronLeft, ChevronRight, X, Download, Maximize2, RefreshCw,
