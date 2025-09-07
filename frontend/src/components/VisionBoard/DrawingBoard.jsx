@@ -381,17 +381,16 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
     }
   }, [isSelected, tool]);
 
-  const handleMouseDown = (e) => {
+  // Only select on click/tap, not on drag
+  const handleSelect = (e) => {
     if (tool === 'select') {
       e.cancelBubble = true;
       if (e.evt) e.evt.stopPropagation();
       setIsDragStart(false);
       onSelect(text.id);
-      
-      // Prevent deselection when clicking on the text itself
       e.evt.preventDefault();
     }
-  };
+  } 
 
   const handleDragStart = (e) => {
     if (tool === 'select') {
@@ -447,9 +446,9 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
         rotation={text.rotation || 0}
         fontStyle={text.fontStyle || 'normal'}
         listening={true}
-        onClick={handleMouseDown}
-        onTap={handleMouseDown}
-        onMouseDown={handleMouseDown}
+        onClick={handleSelect}
+        onTap={handleSelect}
+        onMouseDown={handleSelect}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
         onMouseEnter={() => {
@@ -516,21 +515,16 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
     }
   }, [isSelected, tool]);
 
-  const handleMouseDown = (e) => {
+  // Only select on click/tap, not on drag
+  const handleSelect = (e) => {
     if (tool === 'select') {
       e.cancelBubble = true;
       if (e.evt) e.evt.stopPropagation();
-      
-      const pos = e.target.getStage().getPointerPosition();
-      dragStartPos.current = pos;
       setIsDragStart(false);
-      
       onSelect(element.id);
-      
-      // Prevent deselection when clicking on the image itself
       e.evt.preventDefault();
     }
-  };
+  } 
 
   const handleDragStart = (e) => {
     if (tool === 'select') {
@@ -589,9 +583,9 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
         rotation={element.rotation || 0}
         draggable={tool === 'select' && isSelected}
         listening={true}
-        onClick={handleMouseDown}
-        onTap={handleMouseDown}
-        onMouseDown={handleMouseDown}
+        onClick={handleSelect}
+        onTap={handleSelect}
+        onMouseDown={handleSelect}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
         onMouseEnter={() => {
@@ -911,13 +905,10 @@ const handleElementUpdate = (id, newProps) => {
   }
 };
 
- const handleElementSelect = (id) => {
-  // Set tool to select when selecting an element, but preserve previous tool
-  if (tool !== 'select') {
-    setPreviousTool(tool);
-    setTool('select');
-  }
+const handleElementSelect = (id) => {
+  // Always allow selection, even after deselect
   setSelectedId(id);
+  setTool('select');
   setContextMenu({ ...contextMenu, show: false });
 };
 // Update handleElementDelete
@@ -1403,34 +1394,32 @@ const ToolBar = () => {
     type="number"
     value={text.fontSize}
     onChange={(e) => {
-      // Allow any input but only update state if it's a valid number
+      e.stopPropagation();
       const value = e.target.value;
       if (value === '') {
         setText(prev => ({ ...prev, fontSize: '' }));
       } else {
         const numValue = parseInt(value);
         if (!isNaN(numValue)) {
-          setText(prev => ({ ...prev, fontSize: numValue }));
+          setText(prev => ({ ...prev, fontSize: Math.min(200, Math.max(8, numValue)) }));
         }
       }
     }}
     onBlur={(e) => {
-      // Validate and clamp value only when user finishes editing
+      e.stopPropagation();
       const value = parseInt(e.target.value);
       if (isNaN(value) || value < 8) {
         setText(prev => ({ ...prev, fontSize: 24 }));
-      } else if (value > 200) {
-        setText(prev => ({ ...prev, fontSize: 200 }));
       }
     }}
-    onMouseDown={(e) => {
-      e.stopPropagation();
-    }}
-    onClick={(e) => {
-      e.stopPropagation();
-    }}
+    onMouseDown={(e) => e.stopPropagation()}
+    onClick={(e) => e.stopPropagation()}
     onKeyDown={(e) => {
       e.stopPropagation();
+      // Prevent propagation of Enter key
+      if (e.key === 'Enter') {
+        e.preventDefault();
+      }
     }}
     onFocus={(e) => {
       e.stopPropagation();
