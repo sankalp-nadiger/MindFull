@@ -523,12 +523,10 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
     }
   };
 
-  const handleLineDragEnd = (e) => {
-    setIsDraggingLine(false);
-    if (tool === 'select' && onUpdate && lineRef.current) {
-      const node = lineRef.current;
-      const deltaX = node.x();
-      const deltaY = node.y();
+  const handleLineDragMove = (e) => {
+    if (tool === 'select' && isSelected && isDraggingLine && onUpdate) {
+      const deltaX = e.target.x();
+      const deltaY = e.target.y();
       
       if (deltaX !== 0 || deltaY !== 0) {
         const newPoints = points.map((point, index) => {
@@ -536,13 +534,20 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
           return point + deltaY;
         });
         
-        node.x(0);
-        node.y(0);
-        node.shadowOffset({ x: 0, y: 0 });
-        node.shadowOpacity(0);
+        e.target.x(0);
+        e.target.y(0);
         
         onUpdate(line.id, { points: newPoints });
       }
+    }
+  };
+
+  const handleLineDragEnd = (e) => {
+    setIsDraggingLine(false);
+    if (tool === 'select' && onUpdate && lineRef.current) {
+      const node = lineRef.current;
+      node.shadowOffset({ x: 0, y: 0 });
+      node.shadowOpacity(0);
     }
   };
 
@@ -592,6 +597,7 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
         onTap={handleLineSelect}
         onMouseDown={handleLineSelect}
         onDragStart={handleLineDragStart}
+        onDragMove={handleLineDragMove}
         onDragEnd={handleLineDragEnd}
         onMouseEnter={() => {
           if (tool === 'select' && !draggingEndpoint && !isDraggingLine) {
@@ -984,55 +990,74 @@ const handleMouseDown = (e) => {
 
   const clickedElement = e.target;
   
-  // Check if we clicked on any element
+  // Enhanced element detection
   let clickedElementId = null;
   
-  // Method 1: Check if element has direct ID that matches our elements
+  // Method 1: Direct ID check
   const directId = clickedElement.attrs?.id;
   if (directId && elements.find(el => el.id === directId)) {
     clickedElementId = directId;
   }
   
-  // Method 2: Check if element name contains an element ID
+  // Method 2: Name-based ID extraction
   if (!clickedElementId) {
     const elementName = clickedElement.attrs?.name || '';
-    if (elementName.includes('-')) {
-      // Try to extract ID from name pattern (text-123, image-456, etc.)
-      const possibleId = elementName.substring(elementName.indexOf('-') + 1);
-      if (elements.find(el => el.id === possibleId)) {
-        clickedElementId = possibleId;
+    const patterns = [
+      /^text-(.+)$/,
+      /^image-(.+)$/,
+      /^flowline-(.+)$/,
+      /^drawing-(.+)$/,
+      /^flowline-endpoint-(.+)-(?:start|end)$/
+    ];
+    
+    for (const pattern of patterns) {
+      const match = elementName.match(pattern);
+      if (match && elements.find(el => el.id === match[1])) {
+        clickedElementId = match[1];
+        break;
       }
     }
   }
   
-  // Method 3: Check parent elements for IDs (for nested elements like transformer anchors)
+  // Method 3: Parent traversal
   if (!clickedElementId) {
     let parent = clickedElement.parent;
     while (parent && parent !== stage) {
       const parentId = parent.attrs?.id;
+      const parentName = parent.attrs?.name;
+      
       if (parentId && elements.find(el => el.id === parentId)) {
         clickedElementId = parentId;
         break;
       }
+      
+      if (parentName) {
+        for (const pattern of [/^text-(.+)$/, /^image-(.+)$/, /^flowline-(.+)$/, /^drawing-(.+)$/]) {
+          const match = parentName.match(pattern);
+          if (match && elements.find(el => el.id === match[1])) {
+            clickedElementId = match[1];
+            break;
+          }
+        }
+        if (clickedElementId) break;
+      }
+      
       parent = parent.parent;
     }
   }
 
-  // If we found an element, handle selection
+  // Handle element selection
   if (clickedElementId && tool === 'select') {
     handleElementSelect(clickedElementId);
     e.evt?.preventDefault();
     return;
   }
   
-  // Check if clicked on background (ONLY if we didn't find any element)
+  // Background click detection
   const clickedOnBackground = 
     clickedElement === stage || 
-    (clickedElement.getClassName() === 'Rect' && clickedElement.attrs?.id === 'background') ||
-    // Also check if it's the first layer (background layer)
-    (stage.children.length > 0 && clickedElement === stage.children[0]);
+    (clickedElement.getClassName() === 'Rect' && clickedElement.attrs?.id === 'background');
 
-  // But ONLY if we haven't already identified an element
   if (tool === 'select' && clickedOnBackground && !clickedElementId) {
     setSelectedId(null);
     return;
@@ -1077,7 +1102,6 @@ const handleMouseDown = (e) => {
           draggable: true
         };
         addElementWithHistory(newText);
-        // Keep text tool active for multiple additions
       }
       break;
 
@@ -1096,7 +1120,10 @@ const handleMouseDown = (e) => {
   }
 };
 
+// Enhanced element selection with better reliability
 const handleElementSelect = (id) => {
+  console.log('Selecting element:', id);
+  
   // If clicking on already selected element, keep it selected
   if (selectedId === id) {
     const stage = stageRef.current;
@@ -1124,10 +1151,21 @@ const handleElementSelect = (id) => {
   setTool('select');
   setContextMenu({ show: false, position: { x: 0, y: 0 }, elementId: null });
   
-  // Force selection with multiple attempts
-  setTimeout(() => setSelectedId(id), 50);
-  setTimeout(() => setSelectedId(id), 100);
-  setTimeout(() => setSelectedId(id), 200);
+  // Force redraw to ensure selection visibility
+  const stage = stageRef.current;
+  if (stage) {
+    setTimeout(() => {
+      const node = stage.findOne(`#${id}`);
+      if (node) {
+        node.moveToTop();
+        stage.batchDraw();
+      }
+      setSelectedId(id);
+    }, 0);
+    
+    setTimeout(() => setSelectedId(id), 50);
+    setTimeout(() => setSelectedId(id), 100);
+  }
 };
 
 const handleMouseUp = () => {
@@ -1259,6 +1297,7 @@ const ToolBar = () => {
 
   const TextInputWithEnterHandler = ({ text, setText, addElementWithHistory, dimensions, scale, stagePos, setSelectedId, setTool }) => {
   const inputRef = useRef(null);
+  const fontSizeRef = useRef(null);
   
   useEffect(() => {
     if (inputRef.current) {
@@ -1307,18 +1346,93 @@ const ToolBar = () => {
     setText({ ...text, content: e.target.value });
   };
 
+  const handleFontSizeChange = (e) => {
+    e.stopPropagation();
+    const value = e.target.value;
+    
+    // Allow empty string temporarily while typing
+    if (value === '') {
+      setText(prev => ({ ...prev, fontSize: '' }));
+      return;
+    }
+    
+    const numValue = parseInt(value);
+    if (!isNaN(numValue) && numValue >= 8 && numValue <= 200) {
+      setText(prev => ({ ...prev, fontSize: numValue }));
+    }
+  };
+
+  const handleFontSizeBlur = (e) => {
+    e.stopPropagation();
+    const value = parseInt(e.target.value);
+    if (isNaN(value) || value < 8 || value > 200) {
+      setText(prev => ({ ...prev, fontSize: 24 }));
+    }
+  };
+
   return (
-    <input
-      ref={inputRef}
-      type="text"
-      placeholder="Enter text..."
-      value={text.content}
-      onChange={handleChange}
-      onKeyDown={handleKeyDown}
-      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-text"
-    />
+    <div className="space-y-3">
+      <input
+        ref={inputRef}
+        type="text"
+        placeholder="Enter text..."
+        value={text.content}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-text"
+      />
+      
+      <div className="grid grid-cols-2 gap-3">
+        <select
+          value={text.fontFamily}
+          onChange={(e) => {
+            e.stopPropagation();
+            setText({ ...text, fontFamily: e.target.value });
+          }}
+          className="px-3 py-2 border rounded-lg cursor-pointer"
+        >
+          <option value="Arial">Arial</option>
+          <option value="Times New Roman">Times New Roman</option>
+          <option value="Courier New">Courier New</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Verdana">Verdana</option>
+        </select>
+        
+        <div>
+          <label className="text-xs text-gray-600 mb-1 block">Font Size</label>
+          <input
+            ref={fontSizeRef}
+            type="number"
+            value={text.fontSize}
+            onChange={handleFontSizeChange}
+            onBlur={handleFontSizeBlur}
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.target.select();
+            }}
+            onKeyDown={(e) => {
+              e.stopPropagation();
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                e.target.blur();
+              }
+            }}
+            onFocus={(e) => {
+              e.stopPropagation();
+              e.target.select();
+            }}
+            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+            min="8"
+            max="200"
+            step="1"
+          />
+        </div>
+      </div>
+    </div>
   );
 };
+
 
   return (
     <div 
