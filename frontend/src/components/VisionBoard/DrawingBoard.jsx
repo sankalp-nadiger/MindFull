@@ -197,16 +197,16 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
   }, [isSelected]);
 
   const handleMouseDown = (e) => {
-    if (tool === 'select') {
-      e.cancelBubble = true;
-      if (e.evt) e.evt.stopPropagation();
-      setIsDragStart(false);
-      onSelect(line.id);
-      
-      // Prevent deselection when clicking on the line itself
-      e.evt.preventDefault();
-    }
-  };
+  if (tool === 'select') {
+    e.cancelBubble = true;
+    if (e.evt) e.evt.stopPropagation();
+    
+    // ALWAYS call onSelect, maintains selection
+    onSelect(line.id);
+    
+    e.evt.preventDefault();
+  }
+};
 
   const handleLineDragStart = (e) => {
     if (tool === 'select') {
@@ -298,7 +298,7 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
             radius={8}
             fill="#ffffff"
             stroke="#0066ff"
-            strokeWidth={2}
+            strokeWidth={3}
             draggable={true}
             listening={true}
             onDragStart={(e) => {
@@ -332,7 +332,7 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
             radius={8}
             fill="#ffffff"
             stroke="#0066ff"
-            strokeWidth={2}
+            strokeWidth={3}
             draggable={true}
             listening={true}
             onDragStart={(e) => {
@@ -384,15 +384,15 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
   }, [isSelected, tool]);
 
   // Only select on click/tap, not on drag
-  const handleSelect = (e) => {
-    if (tool === 'select') {
-      e.cancelBubble = true;
-      if (e.evt) e.evt.stopPropagation();
-      setIsDragStart(false);
-      dragStartPos.current = { x: e.evt.clientX, y: e.evt.clientY };
-      onSelect(text.id);
-    }
-  };
+ const handleSelect = (e) => {
+  if (tool === 'select') {
+    e.cancelBubble = true;
+    if (e.evt) e.evt.stopPropagation();
+    
+    // ALWAYS call onSelect, maintains selection when clicking selected element
+    onSelect(text.id);
+  }
+};
 
   const handleDragStart = (e) => {
     if (tool === 'select') {
@@ -441,7 +441,7 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
     }
     setIsTransforming(false);
   };
-
+  
   return (
     <Group>
       <KonvaText
@@ -513,105 +513,114 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
   const imageRef = useRef();
   const trRef = useRef();
   const [isTransforming, setIsTransforming] = useState(false);
-  const [isDragStart, setIsDragStart] = useState(false);
-  const dragStartPos = useRef({ x: 0, y: 0 });
+const [isDragStart, setIsDragStart] = useState(false);
+const dragStartPos = useRef({ x: 0, y: 0 });
 
+  // Force transformer re-attachment when selection changes
   useEffect(() => {
     if (isSelected && imageRef.current && trRef.current && tool === 'select') {
-      imageRef.current.moveToTop();
-      trRef.current.moveToTop();
-      trRef.current.nodes([imageRef.current]);
-      trRef.current.getLayer().batchDraw();
+      const attachTransformer = () => {
+        trRef.current.nodes([imageRef.current]);
+        trRef.current.getLayer().batchDraw();
+      };
+      
+      attachTransformer();
+      
+      // Re-attach on any potential DOM updates
+      const timeout = setTimeout(attachTransformer, 100);
+      return () => clearTimeout(timeout);
     } else if (trRef.current) {
       trRef.current.nodes([]);
     }
-  }, [isSelected, tool]);
+  }, [isSelected, tool, element.id, element.width, element.height]);
 
-  // Only select on click/tap, not on drag
   const handleSelect = (e) => {
-    if (tool === 'select') {
-      e.cancelBubble = true;
-      if (e.evt) e.evt.stopPropagation();
-      setIsDragStart(false);
-      dragStartPos.current = { x: e.evt.clientX, y: e.evt.clientY };
-      onSelect(element.id);
-    }
-  };
+  if (tool === 'select') {
+    e.cancelBubble = true;
+    if (e.evt) e.evt.stopPropagation();
+    
+    // ALWAYS call onSelect, even if already selected
+    // This ensures the element stays selected when clicked again
+    onSelect(element.id);
+    
+    e.evt.preventDefault();
+  }
+};
 
-  const handleDragStart = (e) => {
-    if (tool === 'select') {
+const handleDragStart = (e) => {
+  if (tool === 'select') {
+    const distance = Math.sqrt(
+      Math.pow(e.evt.clientX - dragStartPos.current.x, 2) +
+      Math.pow(e.evt.clientY - dragStartPos.current.y, 2)
+    );
+    
+    if (distance > 5) {
       setIsDragStart(true);
       e.cancelBubble = true;
       if (e.evt) e.evt.stopPropagation();
     }
-  };
+  }
+};
 
-  const handleDragEnd = (e) => {
-    if (tool === 'select' && isDragStart) {
-      onResize(element.id, {
-        x: e.target.x(),
-        y: e.target.y(),
-        width: element.width,
-        height: element.height,
-        rotation: e.target.rotation()
-      });
-    }
-    setIsDragStart(false);
-  };
-
-  const handleTransformEnd = (e) => {
-    if (!imageRef.current) return;
-
-    const node = imageRef.current;
-    const scaleX = node.scaleX();
-    const scaleY = node.scaleY();
-
-    node.scaleX(1);
-    node.scaleY(1);
-
-    const newWidth = Math.max(20, node.width() * scaleX);
-    const newHeight = Math.max(20, node.height() * scaleY);
-
+const handleDragEnd = (e) => {
+  if (tool === 'select' && isDragStart && onResize) {
     onResize(element.id, {
-      x: node.x(),
-      y: node.y(),
-      width: newWidth,
-      height: newHeight,
-      rotation: node.rotation()
+      x: e.target.x(),
+      y: e.target.y(),
+      width: element.width,
+      height: element.height,
+      rotation: e.target.rotation()
     });
+  }
+  setIsDragStart(false);
+};
 
-    setIsTransforming(false);
-  };
+const handleTransformEnd = (e) => {
+  if (!imageRef.current) return;
 
-  return (
+  const node = imageRef.current;
+  const scaleX = node.scaleX();
+  const scaleY = node.scaleY();
+
+  node.scaleX(1);
+  node.scaleY(1);
+
+  const newWidth = Math.max(20, node.width() * scaleX);
+  const newHeight = Math.max(20, node.height() * scaleY);
+
+  onResize(element.id, {
+    x: node.x(),
+    y: node.y(),
+    width: newWidth,
+    height: newHeight,
+    rotation: node.rotation()
+  });
+
+  setIsTransforming(false);
+};
+
+   return (
     <Group>
       <Image
         ref={imageRef}
         image={img}
         x={element.x}
         y={element.y}
-        width={element.width || (img ? img.width : 100)}
-        height={element.height || (img ? img.height : 100)}
+        width={element.width}
+        height={element.height}
         rotation={element.rotation || 0}
         draggable={tool === 'select' && isSelected}
         listening={true}
         onClick={handleSelect}
         onTap={handleSelect}
         onMouseDown={handleSelect}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        onMouseEnter={() => {
-          if (tool === 'select' && isSelected && !isTransforming) {
-            document.body.style.cursor = 'move';
-          }
-        }}
-        onMouseLeave={() => {
-          if (tool === 'select') {
-            document.body.style.cursor = 'default';
-          }
-        }}
+          onDragStart={handleDragStart} 
+  onDragEnd={handleDragEnd} 
         perfectDrawEnabled={false}
+        id={element.id} // CRITICAL: Ensure ID is set on the actual Konva node
+        name={`image-${element.id}`} // Additional identifier
       />
+      
       {isSelected && tool === 'select' && (
         <Transformer
           ref={trRef}
@@ -839,10 +848,10 @@ const handleImageUpload = (e) => {
         const centerX = (dimensions.width / 2 / scale) - (width / 2) - (stagePos.x / scale);
         const centerY = (dimensions.height / 2 / scale) - (height / 2) - (stagePos.y / scale);
         
-        const imageElement = {
-          id: Date.now().toString(),
-          type: 'image',
-          src: event.target.result,
+const imageElement = {
+  id: `image-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // More unique ID
+  type: 'image',
+  src: event.target.result,
           x: centerX,
           y: centerY,
           width: width,
@@ -944,39 +953,43 @@ const handleMouseDown = (e) => {
   const clickedOnBackground = clickedElement === stage || 
                             (clickedElement.getClassName() === 'Rect' && clickedElement.attrs?.id === 'background');
   
-  const actualPos = {
-    x: (pos.x - stagePos.x) / scale,
-    y: (pos.y - stagePos.y) / scale
-  };
-
   // Handle selection/deselection logic
   if (tool === 'select') {
-    // Check if we clicked on an element
+    // Check if we clicked on an actual element (not transformer or its anchors)
+    const isTransformerPart = clickedElement.getParent?.()?.className?.includes('Transformer') ||
+                             clickedElement.className?.includes('Transformer');
+    
     const isElementClick = !clickedOnBackground && 
-                          !clickedElement.getParent?.()?.className?.includes('Transformer');
+                          clickedElement.attrs?.id && 
+                          !isTransformerPart;
     
     if (isElementClick) {
-      // Find which element was clicked
-      let targetElement = null;
-      elements.forEach(element => {
-        if (element.id === clickedElement.attrs?.id) {
-          targetElement = element;
-        }
-      });
+      const targetId = clickedElement.attrs.id;
+      const targetElement = elements.find(el => el.id === targetId);
       
       if (targetElement) {
-        handleElementSelect(targetElement.id);
+        // ALWAYS select the clicked element, even if it's already selected
+        // This maintains selection rather than toggling it off
+        handleElementSelect(targetId);
         e.evt.preventDefault();
         return;
       }
-    } else if (clickedOnBackground) {
-      // Clicked on empty space - deselect
+    } else if (clickedOnBackground && !isTransformerPart) {
+      // Only deselect when clicking on actual background (not transformer parts)
       setSelectedId(null);
     }
+    
+    // If clicking on transformer parts of currently selected element, do nothing
+    // This maintains the current selection
   }
 
   // Handle tool actions only on background clicks
   if (!clickedOnBackground) return;
+
+  const actualPos = {
+  x: (pos.x - stagePos.x) / scale,
+  y: (pos.y - stagePos.y) / scale
+};
 
   switch (tool) {
     case 'pen':
@@ -995,8 +1008,8 @@ const handleMouseDown = (e) => {
     case 'text':
       if (text.content.trim()) {
         const newText = {
-          id: Date.now().toString(),
-          type: 'text',
+  id: `text-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Use consistent ID format
+  type: 'text',
           x: actualPos.x,
           y: actualPos.y,
           text: text.content,
@@ -1018,8 +1031,8 @@ const handleMouseDown = (e) => {
     case 'flowLine':
       isDrawing.current = true;
       const newLine = {
-        id: Date.now().toString(),
-        type: 'flowLine',
+  id: `flowline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Use consistent ID format
+  type: 'flowLine',
         points: [actualPos.x, actualPos.y, actualPos.x + 100, actualPos.y],
         color: penColor,
         strokeWidth: penWidth,
@@ -1036,9 +1049,29 @@ const handleMouseDown = (e) => {
 
 // Update the handleElementSelect function
 const handleElementSelect = (id) => {
+  // Always set the selection, even if it's the same element
+  // This ensures the element stays selected when clicked again
   setSelectedId(id);
   setTool('select');
   setContextMenu({ ...contextMenu, show: false });
+  
+  // Force transformer re-attachment to ensure it stays visible
+  setTimeout(() => {
+    const stage = stageRef.current;
+    if (stage) {
+      const selectedNode = stage.findOne(`#${id}`);
+      if (selectedNode) {
+        selectedNode.moveToTop();
+        const transformers = stage.find('Transformer');
+        transformers.forEach(tr => {
+          if (tr.nodes().includes(selectedNode)) {
+            tr.moveToTop();
+            tr.getLayer().batchDraw();
+          }
+        });
+      }
+    }
+  }, 0);
 };
 const handleMouseUp = () => {
   // In handleMouseUp for pen tool
@@ -1046,8 +1079,8 @@ if (tool === 'pen' && isDrawing.current && penPoints.length > 0) {
   const lastLine = penPoints[penPoints.length - 1];
   if (lastLine && lastLine.points.length >= 4) {
     const newElement = {
-      id: Date.now().toString(),
-      type: 'drawing',  // Make sure this matches the type we check for eraser
+  id: `drawing-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Use consistent ID format
+  type: 'drawing',
       points: lastLine.points,
       color: lastLine.color,
       strokeWidth: lastLine.width
@@ -1422,8 +1455,7 @@ const ToolBar = () => {
                       <option value="Georgia">Georgia</option>
                       <option value="Verdana">Verdana</option>
                     </select>
-
-<div className="col-span-1">
+                   <div className="col-span-1">
   <label className="text-xs text-gray-600 mb-1 block">Font Size</label>
   <input
     type="number"
@@ -1449,17 +1481,22 @@ const ToolBar = () => {
     }}
     onMouseDown={(e) => {
       e.stopPropagation();
-      // Don't prevent default - allow focus
+      e.preventDefault();
     }}
     onClick={(e) => {
       e.stopPropagation();
       e.target.select();
     }}
     onKeyDown={(e) => {
-      // Allow normal keyboard behavior
+      e.stopPropagation();
       if (e.key === 'Enter') {
         e.preventDefault();
+        e.target.blur();
       }
+    }}
+    onFocus={(e) => {
+      e.stopPropagation();
+      e.target.select();
     }}
     className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
     min="8"
@@ -1938,16 +1975,18 @@ onContextMenu={(e) => {
       onClick={(e) => {
         e.cancelBubble = true;
         if (e.evt) e.evt.stopPropagation();
+        // ALWAYS select, maintains selection when clicking selected element
         handleElementSelect(element.id);
-        // Prevent deselection
         e.evt.preventDefault();
       }}
       onTap={(e) => {
         e.cancelBubble = true;
         if (e.evt) e.evt.stopPropagation();
+        // ALWAYS select, maintains selection
         handleElementSelect(element.id);
       }}
       listening={true}
+      id={element.id}
     />
   );
     default:
