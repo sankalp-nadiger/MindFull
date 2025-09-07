@@ -420,7 +420,28 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
     setIsDragStart(false);
   };
 
-  // Rest of the component remains the same...
+   const handleTransformEnd = () => {
+    if (textRef.current && onChange) {
+      const node = textRef.current;
+      const scaleX = node.scaleX();
+      const scaleY = node.scaleY();
+      
+      const avgScale = (scaleX + scaleY) / 2;
+      const newFontSize = Math.max(8, Math.round((text.fontSize || 24) * avgScale));
+      
+      node.scaleX(1);
+      node.scaleY(1);
+      
+      onChange(text.id, {
+        x: node.x(),
+        y: node.y(),
+        rotation: node.rotation(),
+        fontSize: newFontSize
+      });
+    }
+    setIsTransforming(false);
+  };
+  
   return (
     <Group>
       <KonvaText
