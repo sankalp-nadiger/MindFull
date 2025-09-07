@@ -1601,42 +1601,31 @@ const ToolBar = () => {
     type="number"
     value={text.fontSize}
     onChange={(e) => {
-      e.stopPropagation();
       const value = e.target.value;
+      // Allow empty input while typing
       if (value === '') {
         setText(prev => ({ ...prev, fontSize: '' }));
       } else {
         const numValue = parseInt(value);
-        if (!isNaN(numValue)) {
+        if (!isNaN(numValue) && numValue >= 8 && numValue <= 200) {
+          setText(prev => ({ ...prev, fontSize: numValue }));
+        } else if (!isNaN(numValue)) {
+          // Clamp the value if it's outside bounds
           setText(prev => ({ ...prev, fontSize: Math.min(200, Math.max(8, numValue)) }));
         }
       }
     }}
     onBlur={(e) => {
-      e.stopPropagation();
       const value = parseInt(e.target.value);
       if (isNaN(value) || value < 8) {
         setText(prev => ({ ...prev, fontSize: 24 }));
       }
     }}
-    onMouseDown={(e) => {
-      e.stopPropagation();
-      e.preventDefault();
-    }}
-    onClick={(e) => {
-      e.stopPropagation();
-      e.target.select();
-    }}
     onKeyDown={(e) => {
-      e.stopPropagation();
+      // Allow number input, backspace, delete, arrow keys, etc.
       if (e.key === 'Enter') {
-        e.preventDefault();
         e.target.blur();
       }
-    }}
-    onFocus={(e) => {
-      e.stopPropagation();
-      e.target.select();
     }}
     className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
     min="8"
