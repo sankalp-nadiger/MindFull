@@ -115,22 +115,12 @@ const ContextMenu = ({ elementId, elements, position, onClose, onUpdateElement, 
 <input
   type="number"
   value={element.fontSize || 24}
-  onChange={(e) => {
-    const value = parseInt(e.target.value, 10);
-    if (!isNaN(value) && value >= 8 && value <= 72) {
-      onUpdateElement(element.id, { fontSize: value });
-    }
-  }}
-  onKeyDown={(e) => {
-    if (e.key === 'Enter') {
-      e.target.blur(); // Remove focus to apply changes
-    }
-  }}
-  onClick={(e) => e.stopPropagation()} // Prevent click from bubbling to parent
+  onChange={(e) => onUpdateElement(element.id, { 
+    fontSize: parseInt(e.target.value) 
+  })}
   className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 outline-none transition-all"
   min="8"
   max="72"
-  style={{ cursor: 'text' }} // Show text cursor on hover
 />
                 </div>
                 
@@ -533,30 +523,17 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
       const stage = e.target.getStage();
       const pointerPos = stage.getPointerPosition();
       
-      // Get current transform of the group
-      const transform = groupRef.current.getAbsoluteTransform();
-      const transformedPoint = transform.point({ x: points[0], y: points[1] });
-      
-      // Calculate offset from click point to line start in global coordinates
+      // Calculate offset from click point to line start
       setDragOffset({
-        x: pointerPos.x - transformedPoint.x,
-        y: pointerPos.y - transformedPoint.y
+        x: pointerPos.x - points[0],
+        y: pointerPos.y - points[1]
       });
       
-      // Highlight the line being dragged
       e.target.setAttrs({
         shadowOffset: { x: 3, y: 3 },
         shadowOpacity: 0.2,
-        shadowBlur: 5,
-        strokeWidth: (line.strokeWidth || 2) * 1.5 // Thicken the line while dragging
+        shadowBlur: 5
       });
-      
-      // Ensure line and endpoints stay on top
-      groupRef.current.moveToTop();
-      const layer = groupRef.current.getLayer();
-      if (layer) {
-        layer.batchDraw();
-      }
     }
   };
 
@@ -600,32 +577,12 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
 
   const handleEndpointDragStart = (endpointIndex, e) => {
     e.cancelBubble = true;
-    if (e.evt) {
-      e.evt.stopPropagation();
-      e.evt.preventDefault();
-    }
+    if (e.evt) e.evt.stopPropagation();
     setDraggingEndpoint(endpointIndex);
-    
-    // Highlight the endpoint being dragged
     e.target.setAttrs({
       scaleX: 1.2,
-      scaleY: 1.2,
-      fill: '#e6f3ff', // Light blue fill
-      shadowColor: '#0066ff',
-      shadowBlur: 6,
-      shadowOpacity: 0.3,
-      shadowOffset: { x: 1, y: 1 }
+      scaleY: 1.2
     });
-    
-    // Also highlight the line
-    if (lineRef.current) {
-      lineRef.current.setAttrs({
-        strokeWidth: (line.strokeWidth || 2) * 1.5,
-        shadowColor: '#0066ff',
-        shadowBlur: 4,
-        shadowOpacity: 0.2
-      });
-    }
   };
 
   const handleEndpointDragMove = (endpointIndex, e) => {
@@ -813,23 +770,29 @@ const addElementWithHistory = (element) => {
   setElements(prev => [...prev, element]);
   setRedoStack([]);
   
-  // Ensure element is selected immediately and stays selected
+  // Ensure element is selected immediately
   setSelectedId(element.id);
-  setTool('select'); // Switch to select tool to enable immediate interaction
   
-  // Use a single RAF for better performance
-  requestAnimationFrame(() => {
+  // Force multiple selection attempts with different timings
+  setTimeout(() => {
+    setSelectedId(element.id);
     const stage = stageRef.current;
     if (stage) {
       const node = stage.findOne(`#${element.id}`);
       if (node) {
         node.moveToTop();
-        // Add active class to make sure the element stays interactive
-        node.setAttr('class', 'active-element');
         stage.batchDraw();
       }
     }
-  });
+  }, 0);
+  
+  setTimeout(() => {
+    setSelectedId(element.id);
+  }, 100);
+  
+  setTimeout(() => {
+    setSelectedId(element.id);
+  }, 200);
 };
 
   // Add this function inside DrawingBoard
