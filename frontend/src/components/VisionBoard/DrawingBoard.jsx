@@ -60,12 +60,16 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
       const scaleX = node.scaleX();
       const scaleY = node.scaleY();
       
-      // Calculate actual dimensions after scaling
-      const originalWidth = element.originalWidth || element.width || (img ? img.width : 100);
-      const originalHeight = element.originalHeight || element.height || (img ? img.height : 100);
+      // Calculate actual dimensions after scaling, using current dimensions as base
+      const currentWidth = element.width || (img ? img.width : 100);
+      const currentHeight = element.height || (img ? img.height : 100);
       
-      const newWidth = Math.max(10, originalWidth * scaleX);
-      const newHeight = Math.max(10, originalHeight * scaleY);
+      // Limit maximum size to prevent extravagant growth
+      const maxWidth = 2000;  // Maximum width in pixels
+      const maxHeight = 2000; // Maximum height in pixels
+      
+      const newWidth = Math.min(maxWidth, Math.max(10, currentWidth * scaleX));
+      const newHeight = Math.min(maxHeight, Math.max(10, currentHeight * scaleY));
       
       // Reset scale to 1 and update actual dimensions
       node.scaleX(1);
@@ -77,8 +81,6 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
         y: node.y(),
         width: newWidth,
         height: newHeight,
-        originalWidth: originalWidth,
-        originalHeight: originalHeight,
         rotation: node.rotation(),
         scaleX: 1,
         scaleY: 1
@@ -292,14 +294,17 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
   const points = line.points || [50, 50, 200, 50];
   
   // Handle endpoint dragging
-  const handleEndpointDragStart = (index) => {
+  const handleEndpointDragStart = (e, index) => {
+    e.cancelBubble = true;
+    if (e.evt) e.evt.stopPropagation();
+    
     setDraggingEndpoint(index);
     setStartPoints([...points]);
     onSelect(line.id);
   };
 
   const handleEndpointDragMove = (index, e) => {
-    if (tool !== 'select' || draggingEndpoint === null || !e.evt.buttons) return;
+    if (draggingEndpoint === null || !e.evt.buttons) return;
     
     const stage = e.target.getStage();
     const pos = stage.getPointerPosition();
@@ -732,17 +737,16 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
   };
 
   const handleMouseDown = (e) => {
-    if (tool !== 'select') return;
-    
     e.cancelBubble = true;
     if (e.evt) e.evt.stopPropagation();
  
     onSelect(text.id);
 
-    if (tool === 'select') {
+    if (e.evt.buttons === 1) { // Only start drag if mouse button is held
       const pos = e.target.getStage().getPointerPosition();
       setMouseStartPos(pos);
       setDragStartPos({ x: text.x, y: text.y });
+      setIsDragging(false);
     }
   };
 
@@ -918,7 +922,18 @@ const DrawingBoard = ({ onSave }) => {
   const [selectedId, setSelectedId] = useState(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [tool, setTool] = useState("select");
+  const [previousTool, setPreviousTool] = useState("select");
   const [penColor, setPenColor] = useState("#000000");
+  
+  // Enhanced tool setter that preserves selection
+  const handleToolChange = (newTool) => {
+    setPreviousTool(tool);
+    setTool(newTool);
+    // Don't clear selection when switching to select tool
+    if (newTool !== 'select') {
+      setSelectedId(null);
+    }
+  };
   const initialToolbarPosRef = useRef({ x: 40, y: 40 });
 const initialMousePosRef = useRef({ x: 0, y: 0 });
   const [penWidth, setPenWidth] = useState(2);
@@ -1172,6 +1187,8 @@ const handleElementUpdate = (id, newProps) => {
 };
 
  const handleElementSelect = (id) => {
+  // Always set tool to select when selecting an element
+  setTool('select');
   setSelectedId(id);
   setContextMenu({ ...contextMenu, show: false });
 };
@@ -1190,8 +1207,15 @@ const handleElementDelete = (id) => {
 
   // Mouse event handlers
 const handleMouseDown = (e) => {
+  // Only clear selection if clicking on the stage background
+  const clickedOnEmpty = e.target === e.target.getStage();
+  
   // Hide context menu on any click
   setContextMenu({ ...contextMenu, show: false });
+  
+  if (clickedOnEmpty) {
+    setSelectedId(null);
+  }
   
   const stage = e.target.getStage();
   if (!stage) return;
@@ -1550,7 +1574,7 @@ const ToolBar = () => {
                       ? 'bg-indigo-500 text-white shadow-md' 
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
-                  onClick={() => setTool('select')}
+                  onClick={() => handleToolChange('select')}
                 >
                   <MousePointer className="w-4 h-4" />
                   <span>Select</span>
@@ -1561,7 +1585,7 @@ const ToolBar = () => {
                       ? 'bg-indigo-500 text-white shadow-md' 
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
-                  onClick={() => setTool('pen')}
+                  onClick={() => handleToolChange('pen')}
                 >
                   <Pen className="w-4 h-4" />
                   <span>Pen</span>
@@ -1572,7 +1596,7 @@ const ToolBar = () => {
                       ? 'bg-indigo-500 text-white shadow-md' 
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
-                  onClick={() => setTool('text')}
+                  onClick={() => handleToolChange('text')}
                 >
                   <Type className="w-4 h-4" />
                   <span>Text</span>
@@ -1583,7 +1607,7 @@ const ToolBar = () => {
                       ? 'bg-indigo-500 text-white shadow-md' 
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
-                  onClick={() => setTool('eraser')}
+                  onClick={() => handleToolChange('eraser')}
                 >
                   <Trash2 className="w-4 h-4" />
                   <span>Eraser</span>
@@ -1594,7 +1618,7 @@ const ToolBar = () => {
                       ? 'bg-indigo-500 text-white shadow-md' 
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
-                  onClick={() => setTool('flowLine')}
+                  onClick={() => handleToolChange('flowLine')}
                 >
                   <CornerRightDown className="w-4 h-4" />
                   <span>Flow Line</span>
@@ -1605,7 +1629,7 @@ const ToolBar = () => {
                       ? 'bg-indigo-500 text-white shadow-md' 
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
-                  onClick={() => setTool('image')}
+                  onClick={() => handleToolChange('image')}
                 >
                   <ImageIcon className="w-4 h-4" />
                   <span>Image</span>
