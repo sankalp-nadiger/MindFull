@@ -378,15 +378,15 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
 const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
   const textRef = useRef();
   const trRef = useRef();
+  const groupRef = useRef();
   const [isTransforming, setIsTransforming] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
   // Improved transformer attachment
   useEffect(() => {
     if (isSelected && tool === 'select' && textRef.current) {
-      // Force immediate transformer attachment
       if (trRef.current) {
-        trRef.current.nodes([textRef.current]);
+        trRef.current.nodes([groupRef.current]);
         trRef.current.getLayer().batchDraw();
       }
     } else if (trRef.current) {
@@ -462,11 +462,16 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
   
   return (
     <Group
+      ref={groupRef}
       x={text.x}
       y={text.y}
       draggable={tool === 'select' && isSelected}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      onClick={handleSelect}
+      onTap={handleSelect}
+      onMouseDown={handleSelect}
+      rotation={text.rotation || 0}
     >
       <KonvaText
         ref={textRef}
@@ -476,23 +481,8 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
         fontSize={text.fontSize || 24}
         fontFamily={text.fontFamily || 'Arial'}
         fill={text.color || text.fill || '#000000'}
-        rotation={text.rotation || 0}
         fontStyle={text.fontStyle || 'normal'}
         listening={true}
-        onClick={handleSelect}
-        onTap={handleSelect}
-        onMouseDown={handleSelect}
-        onTransformEnd={handleTransformEnd}
-        onMouseEnter={() => {
-          if (tool === 'select' && !isDragging) {
-            document.body.style.cursor = isSelected ? 'move' : 'pointer';
-          }
-        }}
-        onMouseLeave={() => {
-          if (tool === 'select' && !isDragging) {
-            document.body.style.cursor = 'default';
-          }
-        }}
         perfectDrawEnabled={false}
         id={text.id}
         name={`text-${text.id}`}
@@ -628,6 +618,9 @@ const URLImage = ({ element, onSelect, isSelected, onUpdate, tool }) => {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onTransformEnd={handleTransformEnd}
+      onClick={handleSelect}
+      onTap={handleSelect}
+      onMouseDown={handleSelect}
     >
       <Image
         ref={imageRef}
@@ -637,19 +630,6 @@ const URLImage = ({ element, onSelect, isSelected, onUpdate, tool }) => {
         width={element.width}
         height={element.height}
         listening={true}
-        onClick={handleSelect}
-        onTap={handleSelect}
-        onMouseDown={handleSelect}
-        onMouseEnter={() => {
-          if (tool === 'select' && !isDragging) {
-            document.body.style.cursor = isSelected ? 'move' : 'pointer';
-          }
-        }}
-        onMouseLeave={() => {
-          if (tool === 'select' && !isDragging) {
-            document.body.style.cursor = 'default';
-          }
-        }}
         perfectDrawEnabled={false}
         id={element.id}
         name={`image-${element.id}`}
@@ -906,10 +886,10 @@ const handleImageUpload = (e) => {
         const centerX = (dimensions.width / 2 / scale) - (width / 2) - (stagePos.x / scale);
         const centerY = (dimensions.height / 2 / scale) - (height / 2) - (stagePos.y / scale);
         
-const imageElement = {
-  id: `image-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // More unique ID
-  type: 'image',
-  src: event.target.result,
+        const imageElement = {
+          id: `image-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          type: 'image',
+          src: event.target.result,
           x: centerX,
           y: centerY,
           width: width,
@@ -923,6 +903,18 @@ const imageElement = {
         setSelectedId(imageElement.id);
         // Force tool to select for immediate interaction
         setTool('select');
+        
+        // Force transformer attachment with a small delay
+        setTimeout(() => {
+          const stage = stageRef.current;
+          if (stage) {
+            const imageNode = stage.findOne(`#${imageElement.id}`);
+            if (imageNode) {
+              imageNode.moveToTop();
+              stage.batchDraw();
+            }
+          }
+        }, 100);
       };
       
       img.src = event.target.result;
@@ -1009,7 +1001,7 @@ const handleMouseDown = (e) => {
 
   const clickedElement = e.target;
   
-  // FIRST: Check if we clicked on any element (this is the critical fix)
+  // Check if we clicked on any element
   let clickedElementId = null;
   
   // Method 1: Check if element has direct ID that matches our elements
@@ -1051,17 +1043,18 @@ const handleMouseDown = (e) => {
   }
   
   // Check if clicked on background (ONLY if we didn't find any element)
-const clickedOnBackground = 
-  clickedElement === stage || 
-  (clickedElement.getClassName() === 'Rect' && clickedElement.attrs?.id === 'background') ||
-  // Also check if it's the first layer (background layer)
-  (stage.children.length > 0 && clickedElement === stage.children[0]);
+  const clickedOnBackground = 
+    clickedElement === stage || 
+    (clickedElement.getClassName() === 'Rect' && clickedElement.attrs?.id === 'background') ||
+    // Also check if it's the first layer (background layer)
+    (stage.children.length > 0 && clickedElement === stage.children[0]);
 
-// But ONLY if we haven't already identified an element
-if (tool === 'select' && clickedOnBackground && !clickedElementId) {
-  setSelectedId(null);
-  return;
-}
+  // But ONLY if we haven't already identified an element
+  if (tool === 'select' && clickedOnBackground && !clickedElementId) {
+    setSelectedId(null);
+    return;
+  }
+  
   // Don't proceed with other tools if not clicking on background
   if (!clickedOnBackground) return;
 
