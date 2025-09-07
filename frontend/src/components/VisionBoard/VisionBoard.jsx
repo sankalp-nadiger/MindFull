@@ -4,7 +4,7 @@ import VisionItem from "./VisionItem";
 import AIRecommendation from "./AIRecommendation";
 import FileUpload from "./FileUpload";
 import "../../styles/VisionBoard.css";
-import DrawingBoard from "./DrawingBoard";
+//import DrawingBoard from "./DrawingBoard";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { 
   Info, Home, ChevronLeft, ChevronRight, X, Download, Maximize2, RefreshCw,
@@ -24,24 +24,45 @@ const VisionBoard = () => {
   const [fullScreenView, setFullScreenView] = useState(null);
   const [showThemeModal, setShowThemeModal] = useState(false);
   const [darkMode, setDarkMode] = useState(true); // Default to dark mode
+  const [isMobile, setIsMobile] = useState(false);
   
   const userId = JSON.parse(sessionStorage.getItem("user"))?._id;
   // Add this inside your VisionBoard component
 useEffect(() => {
-  const observer = new IntersectionObserver(
-    ([entry]) => {
-      setIsDrawingBoardVisible(entry.isIntersecting);
-    },
-    { threshold: 0.5 }
-  );
-
-  const drawingBoard = document.getElementById('drawing-board-section');
-  if (drawingBoard) observer.observe(drawingBoard);
-
-  return () => {
-    if (drawingBoard) observer.unobserve(drawingBoard);
+  // Check if device is mobile
+  const checkIfMobile = () => {
+    setIsMobile(window.innerWidth <= 768); // Consider devices <= 768px as mobile
   };
-}, []);
+
+  // Initial check
+  checkIfMobile();
+
+  // Add event listener for window resize
+  window.addEventListener('resize', checkIfMobile);
+
+  // Set up drawing board observer only if not mobile
+  if (!isMobile) {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsDrawingBoardVisible(entry.isIntersecting);
+      },
+      { threshold: 0.5 }
+    );
+
+    const drawingBoard = document.getElementById('drawing-board-section');
+    if (drawingBoard) observer.observe(drawingBoard);
+
+    return () => {
+      if (drawingBoard) observer.unobserve(drawingBoard);
+      window.removeEventListener('resize', checkIfMobile);
+    };
+  }
+
+  // Cleanup
+  return () => {
+    window.removeEventListener('resize', checkIfMobile);
+  };
+}, [isMobile]);
   useEffect(() => {
     // Check for saved theme preference
     const savedTheme = localStorage.getItem('visionBoardDarkMode');
@@ -251,59 +272,59 @@ useEffect(() => {
   };
   
   return (
-    
     <DragDropContext onDragEnd={handleDragEnd}>
     <div className={`min-h-screen ${themeClasses.bg} transition-all duration-300`}>
-      
       <div className="p-5 flex flex-col items-center relative pb-20">
-  
-  {/* Header row with Back button, Brand name, and Theme toggle */}
-  <div className="w-full flex items-center mb-6 relative">
-    {/* Back button - Left */}
-    <Link 
-  to="/MainPage"
-  className={`flex items-center justify-center gap-1 sm:gap-2 ${themeClasses.text} hover:${themeClasses.textSecondary} transition-colors`}
->
-  <ArrowLeft className="w-5 h-5" />
-  <span className="hidden sm:block text-sm font-medium sm:text-base">Back to Dashboard</span>
-</Link>
-    
-    {/* Brand name - Absolute Center */}
-    <div className={`absolute left-1/2 transform -translate-x-1/2 text-4xl ${themeClasses.brandText} font-medium`}>
-      VisionFull
-    </div>
-    
-    {/* Theme toggle button - Right */}
-    <button
-      onClick={() => setDarkMode(!darkMode)}
-      className={`ml-auto ${themeClasses.buttonSecondary} ${darkMode ? 'text-slate-300' : 'text-gray-700'} p-2 rounded-lg shadow-md transition-all flex items-center gap-2`}
-    >
-      {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-      <span className="text-sm">{darkMode ? 'Light' : 'Dark'}</span>
-    </button>
-  </div>
-
-  {/* Inspirational tagline */}
-  <p className={`${themeClasses.textSecondary} italic mb-6`}>Visualize • Believe • Achieve</p>
         
-  {/* Decorative elements - positive words */}
-<div className="absolute top-32 left-16 rotate-[-15deg] text-purple-300 font-bold opacity-30 text-2xl">Success</div>
-<div className="absolute top-28 right-24 rotate-[10deg] text-blue-300 font-bold opacity-30 text-2xl">Growth</div>
-<div className="absolute top-64 left-8 rotate-[5deg] text-green-300 font-bold opacity-30 text-xl">Harmony</div>
-<div className="absolute top-72 right-12 rotate-[-5deg] text-pink-300 font-bold opacity-30 text-xl">Fulfillment</div>
-<div className="absolute top-96 left-32 rotate-[12deg] text-yellow-300 font-bold opacity-30 text-xl">Joy</div>
-<div className="absolute top-80 right-40 rotate-[-8deg] text-indigo-300 font-bold opacity-30 text-xl">Dreams</div>
-<div className="absolute top-48 left-64 rotate-[15deg] text-emerald-300 font-bold opacity-30 text-xl">Peace</div>
-<div className="absolute top-56 right-64 rotate-[-10deg] text-orange-300 font-bold opacity-30 text-xl">Hope</div>
+        {/* Header row with Back button, Brand name, and Theme toggle */}
+        <div className="w-full flex items-center mb-6 relative">
+          {/* Back button - Left */}
+          <Link 
+            to="/MainPage"
+            className={`flex items-center justify-center gap-1 sm:gap-2 ${themeClasses.text} hover:${themeClasses.textSecondary} transition-colors`}
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="hidden sm:block text-sm font-medium sm:text-base">Back to Dashboard</span>
+          </Link>
+          
+          {/* Brand name - Absolute Center */}
+          <div className={`absolute left-1/2 transform -translate-x-1/2 text-4xl ${themeClasses.brandText} font-medium`}>
+            VisionFull
+          </div>
+          
+          {/* Theme toggle button - Right */}
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className={`ml-auto ${themeClasses.buttonSecondary} ${darkMode ? 'text-slate-300' : 'text-gray-700'} p-2 rounded-lg shadow-md transition-all flex items-center gap-2`}
+          >
+            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+            <span className="text-sm">{darkMode ? 'Light' : 'Dark'}</span>
+          </button>
+        </div>
 
-{/* Decorative icons */}
-<div className="absolute top-40 left-48 text-blue-200 opacity-40 text-2xl">✨</div>
-<div className="absolute top-88 right-28 text-yellow-200 opacity-40 text-2xl">⭐</div>
-<div className="absolute top-52 left-80 text-purple-200 opacity-40 text-3xl">🌟</div>
-<div className="absolute top-36 right-80 text-green-200 opacity-40 text-2xl">💫</div>
-<div className="absolute top-68 right-56 text-cyan-200 opacity-40 text-2xl">🦋</div>
-<div className="absolute top-92 left-56 text-violet-200 opacity-40 text-2xl">🌺</div>
-<div className="absolute top-84 right-72 text-rose-200 opacity-40 text-2xl">🌈</div>        {/* Small wellness quote */}
+        {/* Inspirational tagline */}
+        <p className={`${themeClasses.textSecondary} italic mb-6`}>Visualize • Believe • Achieve</p>
+              
+        {/* Decorative elements - positive words */}
+        <div className="absolute top-32 left-16 rotate-[-15deg] text-purple-300 font-bold opacity-30 text-2xl">Success</div>
+        <div className="absolute top-28 right-24 rotate-[10deg] text-blue-300 font-bold opacity-30 text-2xl">Growth</div>
+        <div className="absolute top-64 left-8 rotate-[5deg] text-green-300 font-bold opacity-30 text-xl">Harmony</div>
+        <div className="absolute top-72 right-12 rotate-[-5deg] text-pink-300 font-bold opacity-30 text-xl">Fulfillment</div>
+        <div className="absolute top-96 left-32 rotate-[12deg] text-yellow-300 font-bold opacity-30 text-xl">Joy</div>
+        <div className="absolute top-80 right-40 rotate-[-8deg] text-indigo-300 font-bold opacity-30 text-xl">Dreams</div>
+        <div className="absolute top-48 left-64 rotate-[15deg] text-emerald-300 font-bold opacity-30 text-xl">Peace</div>
+        <div className="absolute top-56 right-64 rotate-[-10deg] text-orange-300 font-bold opacity-30 text-xl">Hope</div>
+
+        {/* Decorative icons */}
+        <div className="absolute top-40 left-48 text-blue-200 opacity-40 text-2xl">✨</div>
+        <div className="absolute top-88 right-28 text-yellow-200 opacity-40 text-2xl">⭐</div>
+        <div className="absolute top-52 left-80 text-purple-200 opacity-40 text-3xl">🌟</div>
+        <div className="absolute top-36 right-80 text-green-200 opacity-40 text-2xl">💫</div>
+        <div className="absolute top-68 right-56 text-cyan-200 opacity-40 text-2xl">🦋</div>
+        <div className="absolute top-92 left-56 text-violet-200 opacity-40 text-2xl">🌺</div>
+        <div className="absolute top-84 right-72 text-rose-200 opacity-40 text-2xl">🌈</div>
+              
+        {/* Small wellness quote */}
         <div className={`${themeClasses.quote} p-4 rounded-lg shadow-sm mb-8 max-w-3xl relative z-10`}>
           <p className={`text-center ${themeClasses.text}`}>
             {t('visionBoard.welcomeQuote')}
@@ -414,80 +435,102 @@ useEffect(() => {
             </Droppable>
           </div>
         </div>
-        <div className="w-full flex justify-center my-8">
-  <button
-    onClick={() => {
-      document.getElementById('drawing-board-section')?.scrollIntoView({
-        behavior: 'smooth'
-      });
-    }}
-    className={`
-      relative overflow-hidden
-      ${darkMode ? 
-        'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500' : 
-        'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500'
-      }
-      text-white px-8 py-4 rounded-full 
-      flex items-center gap-3
-      shadow-lg hover:shadow-xl
-      transition-all duration-300
-      transform hover:scale-105
-      animate-[pulse_2.5s_ease-in-out_infinite]
-    `}
-  >
-    {/* Glow effect */}
-    <div className="absolute -inset-1 bg-white/10 rounded-full filter blur-md opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-    
-    <ChevronDown size={20} className="relative z-10" />
-    <span className="relative z-10 font-medium text-lg">Draw a Vision Board</span>
-    <ChevronDown size={20} className="relative z-10" />
-    
-    {/* Animated ring */}
-    <div className={`
-      absolute -inset-2 border-2 rounded-full
-      ${darkMode ? 'border-indigo-400/30' : 'border-blue-400/30'}
-      animate-[ping_3s_ease-out_infinite]
-      pointer-events-none
-    `}></div>
-  </button>
-</div>
 
-  {/* FileUpload and AIRecommendation components */}
-<div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-  <FileUpload 
-    userId={userId} 
-    fetchVisionBoards={fetchVisionBoards} 
-    darkMode={darkMode}  // Changed to pass only darkMode
-  />
-  <AIRecommendation 
-    userId={userId} 
-    fetchVisionBoards={fetchVisionBoards}
-    darkMode={darkMode}  // Changed to pass only darkMode
-  />
-</div>
+        {/* Button to scroll to drawing board - Only show on desktop */}
+        {!isMobile && (
+          <div className="w-full flex justify-center my-8">
+            <button
+              onClick={() => {
+                document.getElementById('drawing-board-section')?.scrollIntoView({
+                  behavior: 'smooth'
+                });
+              }}
+              className={`
+                relative overflow-hidden
+                ${darkMode ? 
+                  'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500' : 
+                  'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500'
+                }
+                text-white px-8 py-4 rounded-full 
+                flex items-center gap-3
+                shadow-lg hover:shadow-xl
+                transition-all duration-300
+                transform hover:scale-105
+                animate-[pulse_2.5s_ease-in-out_infinite]
+              `}
+            >
+              {/* Glow effect */}
+              <div className="absolute -inset-1 bg-white/10 rounded-full filter blur-md opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+              
+              <ChevronDown size={20} className="relative z-10" />
+              <span className="relative z-10 font-medium text-lg">Draw a Vision Board</span>
+              <ChevronDown size={20} className="relative z-10" />
+              
+              {/* Animated ring */}
+              <div className={`
+                absolute -inset-2 border-2 rounded-full
+                ${darkMode ? 'border-indigo-400/30' : 'border-blue-400/30'}
+                animate-[ping_3s_ease-out_infinite]
+                pointer-events-none
+              `}></div>
+            </button>
+          </div>
+        )}
 
-        {/* Drawing Board Section */}
- <div id="drawing-board-section" className="relative py-12">
-  <div className="relative z-10 text-center">
-    <h2 className={`text-2xl font-bold ${themeClasses.text} mb-6`}>
-      Create your Vision Board
-    </h2>
-    
-    <div className="max-w-6xl mx-auto">
-      <div className={`
-        rounded-xl 
-        overflow-hidden
-        transition-all duration-500
-        ${darkMode 
-          ? 'shadow-[0_0_40px_rgba(99,102,241,0.3),0_0_20px_rgba(99,102,241,0.2)] hover:shadow-[0_0_50px_rgba(99,102,241,0.4),0_0_25px_rgba(99,102,241,0.25)]' 
-          : 'shadow-[0_0_40px_rgba(59,130,246,0.25),0_0_20px_rgba(59,130,246,0.15)] hover:shadow-[0_0_50px_rgba(59,130,246,0.35),0_0_25px_rgba(59,130,246,0.2)]'
-        }
-      `}>
-        <DrawingBoard />
-      </div>
-    </div>
-  </div>
-</div>
+        {/* FileUpload and AIRecommendation components */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <FileUpload 
+            userId={userId} 
+            fetchVisionBoards={fetchVisionBoards} 
+            darkMode={darkMode}
+          />
+          <AIRecommendation 
+            userId={userId} 
+            fetchVisionBoards={fetchVisionBoards}
+            darkMode={darkMode}
+          />
+        </div>
+
+        {/* Drawing Board Section - Mobile Check Only Here */}
+        <div id="drawing-board-section" className="relative py-12">
+          <div className="relative z-10 text-center">
+            <h2 className={`text-2xl font-bold ${themeClasses.text} mb-6`}>
+              Create your Vision Board
+            </h2>
+            
+            {isMobile ? (
+              // Mobile message only for drawing board
+              <div className={`${themeClasses.card} rounded-xl p-8 shadow-lg max-w-md mx-auto text-center space-y-4`}>
+                <div className={`w-20 h-20 mx-auto ${darkMode ? 'bg-indigo-900/50' : 'bg-indigo-100'} rounded-full flex items-center justify-center`}>
+                  <Maximize2 className={`w-10 h-10 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`} />
+                </div>
+                <h3 className={`text-xl font-semibold ${themeClasses.text}`}>Drawing Feature Unavailable on Mobile</h3>
+                <p className={themeClasses.textSecondary}>
+                  The Vision Board drawing feature requires a larger screen for the best experience. 
+                  Please access this feature on a tablet or desktop device.
+                </p>
+                <p className={`text-sm ${themeClasses.textSecondary}`}>
+                  You can still view your existing boards and use the upload/AI features above!
+                </p>
+              </div>
+            ) : (
+              // Full drawing board for desktop/tablet
+              <div className="max-w-6xl mx-auto">
+                <div className={`
+                  rounded-xl 
+                  overflow-hidden
+                  transition-all duration-500
+                  ${darkMode 
+                    ? 'shadow-[0_0_40px_rgba(99,102,241,0.3),0_0_20px_rgba(99,102,241,0.2)] hover:shadow-[0_0_50px_rgba(99,102,241,0.4),0_0_25px_rgba(99,102,241,0.25)]' 
+                    : 'shadow-[0_0_40px_rgba(59,130,246,0.25),0_0_20px_rgba(59,130,246,0.15)] hover:shadow-[0_0_50px_rgba(59,130,246,0.35),0_0_25px_rgba(59,130,246,0.2)]'
+                  }
+                `}>
+                  <DrawingBoard />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
           {/* Info Button */}
           <button
@@ -755,10 +798,11 @@ useEffect(() => {
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
                 <span className={themeClasses.text}>Saving your vision board...</span>
               </div>
-            </div>          )}
+            </div>
+          )}
         </div>
-      </div>
       
+    </div>
     </DragDropContext>
   );
 };
