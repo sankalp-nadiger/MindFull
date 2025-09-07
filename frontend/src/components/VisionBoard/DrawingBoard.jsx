@@ -677,7 +677,7 @@ const [lineStyle, setLineStyle] = useState('straight');
 const [isPlacingElement, setIsPlacingElement] = useState(false);
 const [elementToPlace, setElementToPlace] = useState(null);
 const [isErasing, setIsErasing] = useState(false);
- const addElementWithHistory = (element) => {
+const addElementWithHistory = (element) => {
   console.log('Adding element with history:', element.id); // Debug log
   setUndoStack(prev => [...prev, elements]);
   setElements(prev => [...prev, element]);
@@ -701,90 +701,6 @@ const [isErasing, setIsErasing] = useState(false);
     }
   }, 50);
 };
-{elements.map((element) => {
-  switch (element.type) {
-    case 'text':
-      return (
-        <TextNode
-          key={element.id}
-          text={element}
-          isSelected={selectedId === element.id}
-          onSelect={handleElementSelect}
-          onChange={handleElementUpdate}
-          tool={tool}
-        />
-      );
-    case 'image':
-      return (
-        <URLImage
-          key={element.id}
-          element={element}
-          isSelected={selectedId === element.id}
-          onSelect={handleElementSelect}
-          onDragEnd={handleElementUpdate}
-          onResize={handleElementUpdate}
-          tool={tool}
-        />
-      );
-    case 'flowLine':
-      return (
-        <FlowLineComponent
-          key={element.id}
-          line={element}
-          isSelected={selectedId === element.id}
-          onSelect={handleElementSelect}
-          onDragEnd={handleElementUpdate}
-          onUpdate={handleElementUpdate}
-          tool={tool}
-        />
-      );
-    case 'drawing':
-      return (
-        <Line
-          key={element.id}
-          points={element.points}
-          stroke={element.color}
-          strokeWidth={element.strokeWidth}
-          tension={0.5}
-          lineCap="round"
-          lineJoin="round"
-          hitStrokeWidth={Math.max(20, element.strokeWidth * 4)}
-          onClick={(e) => {
-            if (tool === 'select') {
-              e.cancelBubble = true;
-              if (e.evt) {
-                e.evt.stopPropagation();
-                e.evt.preventDefault();
-              }
-              handleElementSelect(element.id);
-            }
-          }}
-          onTap={(e) => {
-            if (tool === 'select') {
-              e.cancelBubble = true;
-              if (e.evt) e.evt.stopPropagation();
-              handleElementSelect(element.id);
-            }
-          }}
-          onMouseDown={(e) => {
-            if (tool === 'select') {
-              e.cancelBubble = true;
-              if (e.evt) {
-                e.evt.stopPropagation();
-                e.evt.preventDefault();
-              }
-              handleElementSelect(element.id);
-            }
-          }}
-          listening={true}
-          id={element.id}
-          name={`drawing-${element.id}`}
-        />
-      );
-    default:
-      return null;
-  }
-})}
 
   // Add this function inside DrawingBoard
 const updateElementWithHistory = (action, element, newProps = null) => {
@@ -1968,8 +1884,7 @@ onContextMenu={(e) => {
               <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e5e5e5" strokeWidth="0.5" />
             </pattern>
           </defs>
-
-  {elements.map((element) => {
+{elements.map((element) => {
   switch (element.type) {
     case 'text':
       return (
@@ -2053,8 +1968,6 @@ onContextMenu={(e) => {
       return null;
   }
 })}
-
-
           {/* Draw pen lines */}
           {penPoints.map((line, index) => (
   <Line
