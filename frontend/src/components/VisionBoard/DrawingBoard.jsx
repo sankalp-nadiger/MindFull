@@ -221,10 +221,7 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
     if (tool === 'select' && !draggingEndpoint) {
       setIsDraggingLine(true);
       e.target.setAttrs({
-        shadowOffset: {
-          x: 3,
-          y: 3
-        },
+        shadowOffset: { x: 3, y: 3 },
         shadowOpacity: 0.2,
         shadowBlur: 5
       });
@@ -390,7 +387,6 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
     </Group>
   );
 };
-
 // Updated TextNode component with better transform handling
 const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
   const textRef = useRef();
@@ -400,14 +396,12 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
 
   // Improved transformer attachment
   useEffect(() => {
-    if (isSelected && tool === 'select') {
-      const timer = setTimeout(() => {
-        if (trRef.current && textRef.current) {
-          trRef.current.nodes([textRef.current]);
-          trRef.current.getLayer().batchDraw();
-        }
-      }, 10);
-      return () => clearTimeout(timer);
+    if (isSelected && tool === 'select' && textRef.current) {
+      // Force immediate transformer attachment
+      if (trRef.current) {
+        trRef.current.nodes([textRef.current]);
+        trRef.current.getLayer().batchDraw();
+      }
     } else if (trRef.current) {
       trRef.current.nodes([]);
     }
@@ -428,12 +422,7 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
     if (tool === 'select') {
       setIsDragging(true);
       e.target.setAttrs({
-        shadowOffset: {
-          x: 5,
-          y: 5
-        },
-        scaleX: 1.02,
-        scaleY: 1.02,
+        shadowOffset: { x: 5, y: 5 },
         shadowOpacity: 0.2,
         shadowBlur: 5
       });
@@ -446,8 +435,6 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
       e.target.to({
         duration: 0.2,
         shadowOffset: { x: 0, y: 0 },
-        scaleX: 1,
-        scaleY: 1,
         shadowOpacity: 0
       });
       
@@ -558,14 +545,12 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
 
   // Improved transformer attachment
   useEffect(() => {
-    if (isSelected && tool === 'select') {
-      const timer = setTimeout(() => {
-        if (trRef.current && imageRef.current) {
-          trRef.current.nodes([imageRef.current]);
-          trRef.current.getLayer().batchDraw();
-        }
-      }, 10);
-      return () => clearTimeout(timer);
+    if (isSelected && tool === 'select' && imageRef.current) {
+      // Force immediate transformer attachment
+      if (trRef.current) {
+        trRef.current.nodes([imageRef.current]);
+        trRef.current.getLayer().batchDraw();
+      }
     } else if (trRef.current) {
       trRef.current.nodes([]);
     }
@@ -586,12 +571,7 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
     if (tool === 'select') {
       setIsDragging(true);
       e.target.setAttrs({
-        shadowOffset: {
-          x: 5,
-          y: 5
-        },
-        scaleX: 1.02,
-        scaleY: 1.02,
+        shadowOffset: { x: 5, y: 5 },
         shadowOpacity: 0.2,
         shadowBlur: 5
       });
@@ -604,16 +584,12 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
       e.target.to({
         duration: 0.2,
         shadowOffset: { x: 0, y: 0 },
-        scaleX: 1,
-        scaleY: 1,
         shadowOpacity: 0
       });
       
       onResize(element.id, {
         x: e.target.x(),
         y: e.target.y(),
-        width: element.width,
-        height: element.height,
         rotation: e.target.rotation()
       });
     }
@@ -1030,52 +1006,59 @@ const handleMouseDown = (e) => {
 
   const clickedElement = e.target;
   
-  // Check if clicked on a selectable element first
-  const elementId = clickedElement.attrs?.id;
-  const elementName = clickedElement.attrs?.name || '';
+  // FIRST: Check if we clicked on any element (this is the critical fix)
+  let clickedElementId = null;
   
-  // If we clicked on an element that has an ID or is part of an element group
-  if (elementId && elements.find(el => el.id === elementId)) {
-    if (tool === 'select') {
-      handleElementSelect(elementId);
-      e.evt?.preventDefault();
-      return;
-    }
-  } else if (elementName.includes('-') && tool === 'select') {
-    // Handle clicks on element parts (like text-123, image-456, flowline-789)
-    const parts = elementName.split('-');
-    if (parts.length >= 2) {
-      const elementType = parts[0];
-      const elementIdPart = parts.slice(1).join('-'); // Handle composite IDs
-      
-      const element = elements.find(el => 
-        el.id === elementIdPart || 
-        (elementType === 'text' && el.type === 'text' && el.id === elementIdPart) ||
-        (elementType === 'image' && el.type === 'image' && el.id === elementIdPart) ||
-        (elementType === 'flowline' && el.type === 'flowLine' && el.id === elementIdPart) ||
-        (elementType === 'drawing' && el.type === 'drawing' && el.id === elementIdPart)
-      );
-      
-      if (element) {
-        handleElementSelect(element.id);
-        e.evt?.preventDefault();
-        return;
+  // Method 1: Check if element has direct ID that matches our elements
+  const directId = clickedElement.attrs?.id;
+  if (directId && elements.find(el => el.id === directId)) {
+    clickedElementId = directId;
+  }
+  
+  // Method 2: Check if element name contains an element ID
+  if (!clickedElementId) {
+    const elementName = clickedElement.attrs?.name || '';
+    if (elementName.includes('-')) {
+      // Try to extract ID from name pattern (text-123, image-456, etc.)
+      const possibleId = elementName.substring(elementName.indexOf('-') + 1);
+      if (elements.find(el => el.id === possibleId)) {
+        clickedElementId = possibleId;
       }
     }
   }
   
-  // Check if clicked on background
-  const clickedOnBackground = clickedElement === stage || 
-                            (clickedElement.getClassName() === 'Rect' && 
-                             clickedElement.attrs?.id === 'background') ||
-                            clickedElement === stage.children[0];
-
-  if (tool === 'select' && clickedOnBackground) {
-    // Only deselect when definitely clicking on background
-    setSelectedId(null);
-    return;
+  // Method 3: Check parent elements for IDs (for nested elements like transformer anchors)
+  if (!clickedElementId) {
+    let parent = clickedElement.parent;
+    while (parent && parent !== stage) {
+      const parentId = parent.attrs?.id;
+      if (parentId && elements.find(el => el.id === parentId)) {
+        clickedElementId = parentId;
+        break;
+      }
+      parent = parent.parent;
+    }
   }
 
+  // If we found an element, handle selection
+  if (clickedElementId && tool === 'select') {
+    handleElementSelect(clickedElementId);
+    e.evt?.preventDefault();
+    return;
+  }
+  
+  // Check if clicked on background (ONLY if we didn't find any element)
+const clickedOnBackground = 
+  clickedElement === stage || 
+  (clickedElement.getClassName() === 'Rect' && clickedElement.attrs?.id === 'background') ||
+  // Also check if it's the first layer (background layer)
+  (stage.children.length > 0 && clickedElement === stage.children[0]);
+
+// But ONLY if we haven't already identified an element
+if (tool === 'select' && clickedOnBackground && !clickedElementId) {
+  setSelectedId(null);
+  return;
+}
   // Don't proceed with other tools if not clicking on background
   if (!clickedOnBackground) return;
 
@@ -1136,11 +1119,27 @@ const handleMouseDown = (e) => {
 
 const handleElementSelect = (id) => {
   console.log('Selecting element:', id);
+  
+  // If clicking on already selected element, KEEP it selected
+  if (selectedId === id) {
+    // Just ensure it's on top and transformer is attached
+    const stage = stageRef.current;
+    if (stage) {
+      const selectedNode = stage.findOne(`#${id}`);
+      if (selectedNode) {
+        selectedNode.moveToTop();
+        stage.batchDraw();
+      }
+    }
+    return; // Don't change selection state
+  }
+  
+  // If clicking on different element, select the new one
   setSelectedId(id);
-  setTool('select'); // Ensure we're in select mode
+  setTool('select');
   setContextMenu({ show: false, position: { x: 0, y: 0 }, elementId: null });
   
-  // Force re-render and transformer attachment with a small delay
+  // Force re-render and transformer attachment
   setTimeout(() => {
     const stage = stageRef.current;
     if (stage) {
