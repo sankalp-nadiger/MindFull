@@ -463,6 +463,7 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
   
   return (
     <Group
+      ref={groupRef}
       x={text.x}
       y={text.y}
       draggable={tool === 'select' && isSelected}
