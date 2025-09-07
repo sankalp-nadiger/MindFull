@@ -88,8 +88,6 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
   };
 
   const handleMouseDown = (e) => {
-    if (tool !== 'select') return;
-    
     e.cancelBubble = true;
     if (e.evt) e.evt.stopPropagation();
     
@@ -103,7 +101,7 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
   };
 
   const handleMouseMove = (e) => {
-    if (tool !== 'select' || !mouseStartPos || isTransforming) return;
+    if (!mouseStartPos || isTransforming) return;
     
     const pos = e.target.getStage().getPointerPosition();
     const distance = Math.sqrt(
@@ -215,7 +213,7 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
         scaleX={element.scaleX || 1}
         scaleY={element.scaleY || 1}
         rotation={element.rotation || 0}
-        draggable={tool === 'select'} // Enable Konva dragging
+        draggable={true} // Always enable dragging
         onClick={handleClick}
         onTap={handleClick}
         onContextMenu={handleContextMenu}
@@ -268,15 +266,15 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
           borderStrokeWidth={2}
           anchorFill="#fff"
           anchorStroke="#0066ff"
-          anchorSize={10}
+          anchorSize={12}
           anchorStrokeWidth={2}
-          anchorCornerRadius={2}
-          keepRatio={false} // Set to true if you want to maintain aspect ratio
-          centeredScaling={false}
+          anchorCornerRadius={4}
+          keepRatio={false}
+          centeredScaling={true}
           ignoreStroke={true}
-          padding={5}
+          padding={8}
           rotateAnchorOffset={30}
-          flipEnabled={false}
+          flipEnabled={true}
           resizeEnabled={true}
         />
       )}
