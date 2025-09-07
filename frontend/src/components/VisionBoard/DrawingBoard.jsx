@@ -678,11 +678,114 @@ const [isPlacingElement, setIsPlacingElement] = useState(false);
 const [elementToPlace, setElementToPlace] = useState(null);
 const [isErasing, setIsErasing] = useState(false);
  const addElementWithHistory = (element) => {
-    setUndoStack(prev => [...prev, elements]);
-    setElements(prev => [...prev, element]);
-    setRedoStack([]);
+  console.log('Adding element with history:', element.id); // Debug log
+  setUndoStack(prev => [...prev, elements]);
+  setElements(prev => [...prev, element]);
+  setRedoStack([]);
+  
+  // Ensure element is selected with multiple attempts
+  setTimeout(() => {
+    console.log('Selecting newly added element:', element.id); // Debug log
     setSelectedId(element.id);
-  };
+    setTool('select');
+  }, 0);
+  
+  setTimeout(() => {
+    setSelectedId(element.id);
+    setTool('select');
+    
+    // Force stage redraw
+    const stage = stageRef.current;
+    if (stage) {
+      stage.batchDraw();
+    }
+  }, 50);
+};
+{elements.map((element) => {
+  switch (element.type) {
+    case 'text':
+      return (
+        <TextNode
+          key={element.id}
+          text={element}
+          isSelected={selectedId === element.id}
+          onSelect={handleElementSelect}
+          onChange={handleElementUpdate}
+          tool={tool}
+        />
+      );
+    case 'image':
+      return (
+        <URLImage
+          key={element.id}
+          element={element}
+          isSelected={selectedId === element.id}
+          onSelect={handleElementSelect}
+          onDragEnd={handleElementUpdate}
+          onResize={handleElementUpdate}
+          tool={tool}
+        />
+      );
+    case 'flowLine':
+      return (
+        <FlowLineComponent
+          key={element.id}
+          line={element}
+          isSelected={selectedId === element.id}
+          onSelect={handleElementSelect}
+          onDragEnd={handleElementUpdate}
+          onUpdate={handleElementUpdate}
+          tool={tool}
+        />
+      );
+    case 'drawing':
+      return (
+        <Line
+          key={element.id}
+          points={element.points}
+          stroke={element.color}
+          strokeWidth={element.strokeWidth}
+          tension={0.5}
+          lineCap="round"
+          lineJoin="round"
+          hitStrokeWidth={Math.max(20, element.strokeWidth * 4)}
+          onClick={(e) => {
+            if (tool === 'select') {
+              e.cancelBubble = true;
+              if (e.evt) {
+                e.evt.stopPropagation();
+                e.evt.preventDefault();
+              }
+              handleElementSelect(element.id);
+            }
+          }}
+          onTap={(e) => {
+            if (tool === 'select') {
+              e.cancelBubble = true;
+              if (e.evt) e.evt.stopPropagation();
+              handleElementSelect(element.id);
+            }
+          }}
+          onMouseDown={(e) => {
+            if (tool === 'select') {
+              e.cancelBubble = true;
+              if (e.evt) {
+                e.evt.stopPropagation();
+                e.evt.preventDefault();
+              }
+              handleElementSelect(element.id);
+            }
+          }}
+          listening={true}
+          id={element.id}
+          name={`drawing-${element.id}`}
+        />
+      );
+    default:
+      return null;
+  }
+})}
+
   // Add this function inside DrawingBoard
 const updateElementWithHistory = (action, element, newProps = null) => {
   setUndoStack(prev => [...prev, { action, element }]);
