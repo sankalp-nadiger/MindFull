@@ -199,17 +199,16 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
   const handleMouseDown = (e) => {
     if (tool === 'select') {
       e.cancelBubble = true;
-      if (e.evt) e.evt.stopPropagation();
-      
-      // ALWAYS call onSelect, maintains selection
+      if (e.evt) {
+        e.evt.stopPropagation();
+        e.evt.preventDefault();
+      }
       onSelect(line.id);
-      
-      e.evt.preventDefault();
     }
   };
 
   const handleLineDragStart = (e) => {
-    if (tool === 'select') {
+    if (tool === 'select' && !draggingEndpoint) {
       setIsDragStart(true);
       e.cancelBubble = true;
       if (e.evt) e.evt.stopPropagation();
@@ -217,7 +216,7 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
   };
 
   const handleLineDragEnd = (e) => {
-    if (tool === 'select' && onUpdate && lineRef.current && isDragStart) {
+    if (tool === 'select' && onUpdate && lineRef.current && isDragStart && !draggingEndpoint) {
       const node = lineRef.current;
       const deltaX = node.x();
       const deltaY = node.y();
@@ -276,18 +275,9 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
         onMouseDown={handleMouseDown}
         onDragStart={handleLineDragStart}
         onDragEnd={handleLineDragEnd}
-        onMouseEnter={() => {
-          if (tool === 'select' && isSelected && !draggingEndpoint) {
-            document.body.style.cursor = 'move';
-          }
-        }}
-        onMouseLeave={() => {
-          if (tool === 'select') {
-            document.body.style.cursor = 'default';
-          }
-        }}
         perfectDrawEnabled={false}
-        id={line.id} // CRITICAL: Add ID to Konva node
+        id={line.id}
+        name={`flowline-${line.id}`}
       />
       
       {isSelected && tool === 'select' && (
@@ -296,10 +286,10 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
           <Circle
             x={points[0]}
             y={points[1]}
-            radius={8}
+            radius={6}
             fill="#ffffff"
             stroke="#0066ff"
-            strokeWidth={3}
+            strokeWidth={2}
             draggable={true}
             listening={true}
             onDragStart={(e) => {
@@ -313,28 +303,17 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
               e.cancelBubble = true;
               if (e.evt) e.evt.stopPropagation();
             }}
-            onMouseEnter={() => {
-              if (tool === 'select') {
-                document.body.style.cursor = 'crosshair';
-              }
-            }}
-            onMouseLeave={() => {
-              if (tool === 'select' && draggingEndpoint === null) {
-                document.body.style.cursor = 'default';
-              }
-            }}
             perfectDrawEnabled={false}
-            id={`${line.id}-endpoint-0`} // Add unique ID
           />
           
           {/* Second endpoint */}
           <Circle
             x={points[2]}
             y={points[3]}
-            radius={8}
+            radius={6}
             fill="#ffffff"
             stroke="#0066ff"
-            strokeWidth={3}
+            strokeWidth={2}
             draggable={true}
             listening={true}
             onDragStart={(e) => {
@@ -348,18 +327,7 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
               e.cancelBubble = true;
               if (e.evt) e.evt.stopPropagation();
             }}
-            onMouseEnter={() => {
-              if (tool === 'select') {
-                document.body.style.cursor = 'crosshair';
-              }
-            }}
-            onMouseLeave={() => {
-              if (tool === 'select' && draggingEndpoint === null) {
-                document.body.style.cursor = 'default';
-              }
-            }}
             perfectDrawEnabled={false}
-            id={`${line.id}-endpoint-1`} // Add unique ID
           />
         </>
       )}
@@ -373,33 +341,37 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
   const trRef = useRef();
   const [isTransforming, setIsTransforming] = useState(false);
   const [isDragStart, setIsDragStart] = useState(false);
-  const dragStartPos = useRef({ x: 0, y: 0 });
   
   useEffect(() => {
     if (isSelected && trRef.current && textRef.current && tool === 'select') {
-      textRef.current.moveToTop();
-      trRef.current.moveToTop();
-      trRef.current.nodes([textRef.current]);
-      trRef.current.getLayer().batchDraw();
+      // Use setTimeout to ensure DOM is ready
+      setTimeout(() => {
+        if (trRef.current && textRef.current) {
+          trRef.current.nodes([textRef.current]);
+          trRef.current.getLayer().batchDraw();
+          textRef.current.moveToTop();
+          trRef.current.moveToTop();
+        }
+      }, 10);
     } else if (trRef.current) {
       trRef.current.nodes([]);
+      trRef.current.getLayer()?.batchDraw();
     }
   }, [isSelected, tool]);
 
-  // Only select on click/tap, not on drag
   const handleSelect = (e) => {
     if (tool === 'select') {
       e.cancelBubble = true;
-      if (e.evt) e.evt.stopPropagation();
-      
-      // ALWAYS call onSelect, maintains selection when clicking selected element
+      if (e.evt) {
+        e.evt.stopPropagation();
+        e.evt.preventDefault();
+      }
       onSelect(text.id);
     }
   };
 
   const handleDragStart = (e) => {
     if (tool === 'select') {
-      dragStartPos.current = { x: e.evt.clientX, y: e.evt.clientY };
       setIsDragStart(true);
       e.cancelBubble = true;
       if (e.evt) e.evt.stopPropagation();
@@ -458,7 +430,7 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
         onMouseEnter={() => {
-          if (tool === 'select' && !isTransforming) {
+          if (tool === 'select') {
             document.body.style.cursor = 'move';
           }
         }}
@@ -468,7 +440,8 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
           }
         }}
         perfectDrawEnabled={false}
-        id={text.id} // CRITICAL: Add ID to Konva node
+        id={text.id} // Critical: Ensure ID is set
+        name={`text-${text.id}`}
       />
       {isSelected && tool === 'select' && (
         <Transformer
@@ -491,13 +464,15 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
           anchorStroke="#0066ff"
           borderStroke="#0066ff"
           borderStrokeWidth={2}
-          anchorSize={12}
+          anchorSize={10}
           anchorStrokeWidth={2}
-          anchorCornerRadius={3}
-          padding={10}
-          rotateAnchorOffset={30}
+          anchorCornerRadius={2}
+          padding={5}
+          rotateAnchorOffset={20}
           keepRatio={false}
           centeredScaling={false}
+          listening={false} // Prevent transformer from intercepting events
+          ignoreStroke={true}
         />
       )}
     </Group>
@@ -511,41 +486,37 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
   const trRef = useRef();
   const [isTransforming, setIsTransforming] = useState(false);
   const [isDragStart, setIsDragStart] = useState(false);
-  const dragStartPos = useRef({ x: 0, y: 0 });
 
-  // Force transformer re-attachment when selection changes
   useEffect(() => {
     if (isSelected && imageRef.current && trRef.current && tool === 'select') {
-      const attachTransformer = () => {
-        trRef.current.nodes([imageRef.current]);
-        trRef.current.getLayer().batchDraw();
-      };
-      
-      attachTransformer();
-      
-      // Re-attach on any potential DOM updates
-      const timeout = setTimeout(attachTransformer, 100);
-      return () => clearTimeout(timeout);
+      // Use setTimeout to ensure proper attachment
+      setTimeout(() => {
+        if (trRef.current && imageRef.current) {
+          trRef.current.nodes([imageRef.current]);
+          trRef.current.getLayer().batchDraw();
+          imageRef.current.moveToTop();
+          trRef.current.moveToTop();
+        }
+      }, 10);
     } else if (trRef.current) {
       trRef.current.nodes([]);
+      trRef.current.getLayer()?.batchDraw();
     }
-  }, [isSelected, tool, element.id, element.width, element.height]);
+  }, [isSelected, tool, element.id]);
 
   const handleSelect = (e) => {
     if (tool === 'select') {
       e.cancelBubble = true;
-      if (e.evt) e.evt.stopPropagation();
-      
-      // ALWAYS call onSelect, even if already selected
+      if (e.evt) {
+        e.evt.stopPropagation();
+        e.evt.preventDefault();
+      }
       onSelect(element.id);
-      
-      e.evt.preventDefault();
     }
   };
 
   const handleDragStart = (e) => {
     if (tool === 'select') {
-      dragStartPos.current = { x: e.evt.clientX, y: e.evt.clientY };
       setIsDragStart(true);
       e.cancelBubble = true;
       if (e.evt) e.evt.stopPropagation();
@@ -566,7 +537,7 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
   };
 
   const handleTransformEnd = (e) => {
-    if (!imageRef.current) return;
+    if (!imageRef.current || !onResize) return;
 
     const node = imageRef.current;
     const scaleX = node.scaleX();
@@ -604,11 +575,11 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
         onClick={handleSelect}
         onTap={handleSelect}
         onMouseDown={handleSelect}
-        onDragStart={handleDragStart} 
-        onDragEnd={handleDragEnd} 
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
         perfectDrawEnabled={false}
-        id={element.id} // CRITICAL: Ensure ID is set on the actual Konva node
-        name={`image-${element.id}`} // Additional identifier
+        id={element.id}
+        name={`image-${element.id}`}
       />
       
       {isSelected && tool === 'select' && (
@@ -630,17 +601,18 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
           ]}
           anchorFill="#ffffff"
           anchorStroke="#0066ff"
-          anchorSize={12}
-          anchorCornerRadius={3}
+          anchorSize={10}
+          anchorCornerRadius={2}
           borderStroke="#0066ff"
           borderStrokeWidth={2}
-          padding={10}
-          rotateAnchorOffset={30}
+          padding={5}
+          rotateAnchorOffset={20}
           onTransformStart={() => setIsTransforming(true)}
           onTransformEnd={handleTransformEnd}
-          ignoreStroke={false}
+          ignoreStroke={true}
           keepRatio={false}
           centeredScaling={false}
+          listening={false} // Prevent transformer from intercepting events
         />
       )}
     </Group>
@@ -940,39 +912,28 @@ const handleMouseDown = (e) => {
   if (!pos) return;
 
   const clickedElement = e.target;
-  const clickedOnBackground = clickedElement === stage || 
-                            (clickedElement.getClassName() === 'Rect' && clickedElement.attrs?.id === 'background');
   
-  // Handle selection/deselection logic
+  // More precise background detection
+  const clickedOnBackground = clickedElement === stage || 
+                            (clickedElement.getClassName() === 'Rect' && 
+                             clickedElement.attrs?.id === 'background') ||
+                            clickedElement === stage.children[0]; // Layer
+
   if (tool === 'select') {
-    // Check if we clicked on an actual element (not transformer or its anchors)
-    const isTransformerPart = clickedElement.getParent?.()?.className?.includes('Transformer') ||
-                             clickedElement.className?.includes('Transformer');
-    
-    const isElementClick = !clickedOnBackground && 
-                          clickedElement.attrs?.id && 
-                          !isTransformerPart;
-    
-    if (isElementClick) {
-      const targetId = clickedElement.attrs.id;
-      const targetElement = elements.find(el => el.id === targetId);
-      
-      if (targetElement) {
-        // ALWAYS select the clicked element, even if it's already selected
-        handleElementSelect(targetId);
-        e.evt.preventDefault();
-        return;
-      }
-    } else if (clickedOnBackground && !isTransformerPart) {
-      // Only deselect when clicking on actual background (not transformer parts)
+    // Check if clicked on a selectable element
+    const elementId = clickedElement.attrs?.id;
+    if (elementId && elements.find(el => el.id === elementId)) {
+      handleElementSelect(elementId);
+      e.evt?.preventDefault();
+      return;
+    } else if (clickedOnBackground) {
+      // Only deselect when definitely clicking on background
       setSelectedId(null);
     }
-    
-    // If clicking on transformer parts of currently selected element, do nothing
-    // This maintains the current selection
+    return;
   }
 
-  // Handle tool actions only on background clicks
+  // Rest of your tool handling code remains the same...
   if (!clickedOnBackground) return;
 
   const actualPos = {
@@ -1036,27 +997,19 @@ const handleMouseDown = (e) => {
   }
 };
 
-// Update the handleElementSelect function
 const handleElementSelect = (id) => {
-  // Always set the selection, even if it's the same element
   setSelectedId(id);
   setTool('select');
   setContextMenu({ ...contextMenu, show: false });
   
-  // Force transformer re-attachment to ensure it stays visible
+  // Force re-render and transformer attachment
   setTimeout(() => {
     const stage = stageRef.current;
     if (stage) {
       const selectedNode = stage.findOne(`#${id}`);
       if (selectedNode) {
         selectedNode.moveToTop();
-        const transformers = stage.find('Transformer');
-        transformers.forEach(tr => {
-          if (tr.nodes().includes(selectedNode)) {
-            tr.moveToTop();
-            tr.getLayer().batchDraw();
-          }
-        });
+        stage.batchDraw();
       }
     }
   }, 0);
@@ -1913,7 +1866,7 @@ onContextMenu={(e) => {
             </pattern>
           </defs>
 
-    {elements.map((element) => {
+  {elements.map((element) => {
   switch (element.type) {
     case 'text':
       return (
@@ -1951,33 +1904,48 @@ onContextMenu={(e) => {
         />
       );
     case 'drawing':
-  return (
-    <Line
-      key={element.id}
-      points={element.points}
-      stroke={element.color}
-      strokeWidth={element.strokeWidth}
-      tension={0.5}
-      lineCap="round"
-      lineJoin="round"
-      hitStrokeWidth={Math.max(20, element.strokeWidth * 4)}
-      onClick={(e) => {
-        e.cancelBubble = true;
-        if (e.evt) e.evt.stopPropagation();
-        // ALWAYS select, maintains selection when clicking selected element
-        handleElementSelect(element.id);
-        e.evt.preventDefault();
-      }}
-      onTap={(e) => {
-        e.cancelBubble = true;
-        if (e.evt) e.evt.stopPropagation();
-        // ALWAYS select, maintains selection
-        handleElementSelect(element.id);
-      }}
-      listening={true}
-      id={element.id}
-    />
-  );
+      return (
+        <Line
+          key={element.id}
+          points={element.points}
+          stroke={element.color}
+          strokeWidth={element.strokeWidth}
+          tension={0.5}
+          lineCap="round"
+          lineJoin="round"
+          hitStrokeWidth={Math.max(20, element.strokeWidth * 4)}
+          onClick={(e) => {
+            if (tool === 'select') {
+              e.cancelBubble = true;
+              if (e.evt) {
+                e.evt.stopPropagation();
+                e.evt.preventDefault();
+              }
+              handleElementSelect(element.id);
+            }
+          }}
+          onTap={(e) => {
+            if (tool === 'select') {
+              e.cancelBubble = true;
+              if (e.evt) e.evt.stopPropagation();
+              handleElementSelect(element.id);
+            }
+          }}
+          onMouseDown={(e) => {
+            if (tool === 'select') {
+              e.cancelBubble = true;
+              if (e.evt) {
+                e.evt.stopPropagation();
+                e.evt.preventDefault();
+              }
+              handleElementSelect(element.id);
+            }
+          }}
+          listening={true}
+          id={element.id}
+          name={`drawing-${element.id}`}
+        />
+      );
     default:
       return null;
   }
