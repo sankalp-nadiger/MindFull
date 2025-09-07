@@ -1566,28 +1566,42 @@ const ToolBar = () => {
     type="number"
     value={text.fontSize}
     onChange={(e) => {
-      // Store the raw value without parsing/clamping while typing
-      setText(prev => ({ ...prev, fontSize: e.target.value }));
+      const value = e.target.value;
+      // Allow empty string or valid numbers while typing
+      if (value === '' || (!isNaN(value) && value >= 0)) {
+        setText(prev => ({ ...prev, fontSize: value === '' ? '' : parseInt(value) || 8 }));
+      }
     }}
     onBlur={(e) => {
+      // Only validate on blur, not during typing
       const value = parseInt(e.target.value);
       if (isNaN(value) || value < 8) {
-        setText(prev => ({ ...prev, fontSize: 24 }));
+        setText(prev => ({ ...prev, fontSize: 8 }));
       } else if (value > 200) {
         setText(prev => ({ ...prev, fontSize: 200 }));
-      } else {
-        setText(prev => ({ ...prev, fontSize: value }));
       }
     }}
     onKeyDown={(e) => {
+      // Allow normal typing and only blur on Enter
       if (e.key === 'Enter') {
         e.target.blur();
       }
+      // Prevent any focus shifting during normal typing
+      e.stopPropagation();
+    }}
+    onClick={(e) => {
+      // Prevent any unwanted focus changes when clicking
+      e.stopPropagation();
+    }}
+    onFocus={(e) => {
+      // Select all text when focused for easier editing
+      e.target.select();
     }}
     className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
     min="8"
     max="200"
     step="1"
+    placeholder="24"
   />
 </div>
                   </div>
