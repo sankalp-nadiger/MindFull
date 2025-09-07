@@ -297,7 +297,6 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
       {isSelected && tool === 'select' && (
         <Transformer
           ref={trRef}
-          // Fixed: All 8 anchors for complete resize control
           enabledAnchors={[
             'top-left', 'top-center', 'top-right',
             'middle-left', 'middle-right',
@@ -454,7 +453,6 @@ const URLImage = ({ element, onSelect, isSelected, onUpdate, tool }) => {
           }}
           rotateEnabled={true}
           resizeEnabled={true}
-          // Fixed: All 8 anchors for complete resize control
           enabledAnchors={[
             'top-left', 'top-center', 'top-right',
             'middle-left', 'middle-right',
@@ -480,11 +478,9 @@ const URLImage = ({ element, onSelect, isSelected, onUpdate, tool }) => {
 };
 
 // Fixed FlowLineComponent with proper drag and resize behavior
-// Fixed FlowLineComponent with proper drag and resize behavior
 const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
   const [draggingEndpoint, setDraggingEndpoint] = useState(null);
   const [isDraggingLine, setIsDraggingLine] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const groupRef = useRef();
   const lineRef = useRef();
 
@@ -516,65 +512,37 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
     }
   };
 
-  // Fixed: Enhanced line dragging
   const handleLineDragStart = (e) => {
     if (tool === 'select' && isSelected && !draggingEndpoint) {
       setIsDraggingLine(true);
-      
-      const stage = e.target.getStage();
-      const pointerPos = stage.getPointerPosition();
-      
-      // Calculate offset from click point to line start
-      setDragOffset({
-        x: pointerPos.x - points[0],
-        y: pointerPos.y - points[1]
+      e.target.setAttrs({
+        shadowOffset: { x: 3, y: 3 },
+        shadowOpacity: 0.2,
+        shadowBlur: 5
       });
-      
-      if (lineRef.current) {
-        lineRef.current.setAttrs({
-          shadowOffset: { x: 3, y: 3 },
-          shadowOpacity: 0.2,
-          shadowBlur: 5
-        });
-      }
-    }
-  };
-
-  const handleLineDragMove = (e) => {
-    if (tool === 'select' && isDraggingLine && onUpdate) {
-      const stage = e.target.getStage();
-      const pointerPos = stage.getPointerPosition();
-      
-      // Calculate new position accounting for drag offset
-      const newX = pointerPos.x - dragOffset.x;
-      const newY = pointerPos.y - dragOffset.y;
-      
-      // Calculate the difference from original position
-      const deltaX = newX - points[0];
-      const deltaY = newY - points[1];
-      
-      // Apply delta to all points
-      const newPoints = [
-        points[0] + deltaX,
-        points[1] + deltaY,
-        points[2] + deltaX,
-        points[3] + deltaY
-      ];
-      
-      onUpdate(line.id, { points: newPoints });
     }
   };
 
   const handleLineDragEnd = (e) => {
     setIsDraggingLine(false);
-    setDragOffset({ x: 0, y: 0 });
-    
-    if (lineRef.current) {
-      lineRef.current.to({
-        duration: 0.2,
-        shadowOffset: { x: 0, y: 0 },
-        shadowOpacity: 0
-      });
+    if (tool === 'select' && onUpdate && lineRef.current) {
+      const node = lineRef.current;
+      const deltaX = node.x();
+      const deltaY = node.y();
+      
+      if (deltaX !== 0 || deltaY !== 0) {
+        const newPoints = points.map((point, index) => {
+          if (index % 2 === 0) return point + deltaX;
+          return point + deltaY;
+        });
+        
+        node.x(0);
+        node.y(0);
+        node.shadowOffset({ x: 0, y: 0 });
+        node.shadowOpacity(0);
+        
+        onUpdate(line.id, { points: newPoints });
+      }
     }
   };
 
@@ -607,23 +575,6 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
     });
   };
 
-  // Enhanced mouse event handlers
-  const handleMouseDown = (e) => {
-    handleLineSelect(e);
-    if (tool === 'select' && isSelected) {
-      handleLineDragStart(e);
-    }
-  };
-
-  const handleDoubleClick = (e) => {
-    if (tool === 'select' && isSelected) {
-      e.cancelBubble = true;
-      if (e.evt) e.evt.stopPropagation();
-      // Start dragging on double click
-      handleLineDragStart(e);
-    }
-  };
-
   return (
     <Group ref={groupRef}>
       <Line
@@ -634,15 +585,13 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
         tension={line.style === 'curved' ? 0.5 : 0}
         lineCap="round"
         lineJoin="round"
-        hitStrokeWidth={Math.max(12, (line.strokeWidth || 2) * 3)}
-        draggable={false}
+        hitStrokeWidth={Math.max(8, (line.strokeWidth || 2) * 2)}
+        draggable={tool === 'select' && isSelected && !draggingEndpoint}
         listening={true}
         onClick={handleLineSelect}
         onTap={handleLineSelect}
-        onMouseDown={handleMouseDown}
-        onDblClick={handleDoubleClick}
-        onDblTap={handleDoubleClick}
-        onDragMove={handleLineDragMove}
+        onMouseDown={handleLineSelect}
+        onDragStart={handleLineDragStart}
         onDragEnd={handleLineDragEnd}
         onMouseEnter={() => {
           if (tool === 'select' && !draggingEndpoint && !isDraggingLine) {
@@ -661,7 +610,6 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
       
       {isSelected && tool === 'select' && (
         <>
-          {/* Start endpoint - always visible when selected */}
           <Circle
             x={points[0]}
             y={points[1]}
@@ -679,17 +627,16 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
               if (e.evt) e.evt.stopPropagation();
             }}
             onMouseEnter={() => {
-              document.body.style.cursor = 'nw-resize';
+              document.body.style.cursor = 'crosshair';
             }}
             onMouseLeave={() => {
-              document.body.style.cursor = isSelected ? 'move' : 'default';
+              document.body.style.cursor = 'default';
             }}
             perfectDrawEnabled={false}
             id={`${line.id}-start`}
             name={`flowline-endpoint-${line.id}-start`}
           />
           
-          {/* End endpoint - always visible when selected */}
           <Circle
             x={points[2]}
             y={points[3]}
@@ -707,10 +654,10 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
               if (e.evt) e.evt.stopPropagation();
             }}
             onMouseEnter={() => {
-              document.body.style.cursor = 'se-resize';
+              document.body.style.cursor = 'crosshair';
             }}
             onMouseLeave={() => {
-              document.body.style.cursor = isSelected ? 'move' : 'default';
+              document.body.style.cursor = 'default';
             }}
             perfectDrawEnabled={false}
             id={`${line.id}-end`}
@@ -786,31 +733,29 @@ const addElementWithHistory = (element) => {
   setElements(prev => [...prev, element]);
   setRedoStack([]);
   
-  // Ensure element is selected immediately and force tool to select
+  // Ensure element is selected immediately
   setSelectedId(element.id);
-  setTool('select');
   
-  // Enhanced selection persistence function
-  const attemptSelection = () => {
+  // Force multiple selection attempts with different timings
+  setTimeout(() => {
     setSelectedId(element.id);
-    setTool('select');
     const stage = stageRef.current;
     if (stage) {
-      // Try multiple methods to find the node
-      const node = stage.findOne(`#${element.id}`) || stage.findOne(`[name*="${element.id}"]`);
+      const node = stage.findOne(`#${element.id}`);
       if (node) {
         node.moveToTop();
-        // Force redraw
         stage.batchDraw();
-        node.getLayer()?.batchDraw();
       }
     }
-  };
+  }, 0);
   
-  // Multiple attempts with increasing delays to ensure selection sticks
-  [0, 25, 50, 100, 200, 400].forEach((delay) => {
-    setTimeout(attemptSelection, delay);
-  });
+  setTimeout(() => {
+    setSelectedId(element.id);
+  }, 100);
+  
+  setTimeout(() => {
+    setSelectedId(element.id);
+  }, 200);
 };
 
   // Add this function inside DrawingBoard
@@ -1039,93 +984,62 @@ const handleMouseDown = (e) => {
 
   const clickedElement = e.target;
   
-  // Enhanced element detection - Check multiple methods
+  // Check if we clicked on any element
   let clickedElementId = null;
   
-  // Method 1: Direct ID check
+  // Method 1: Check if element has direct ID that matches our elements
   const directId = clickedElement.attrs?.id;
   if (directId && elements.find(el => el.id === directId)) {
     clickedElementId = directId;
   }
   
-  // Method 2: Name-based ID extraction with regex patterns
+  // Method 2: Check if element name contains an element ID
   if (!clickedElementId) {
     const elementName = clickedElement.attrs?.name || '';
-    const patterns = [
-      /^text-(.+)$/,
-      /^image-(.+)$/,  
-      /^drawing-(.+)$/,
-      /^flowline-(.+)$/,
-      /^flowline-endpoint-(.+?)-(?:start|end)$/
-    ];
-    
-    for (const pattern of patterns) {
-      const match = elementName.match(pattern);
-      if (match && elements.find(el => el.id === match[1])) {
-        clickedElementId = match[1];
-        break;
+    if (elementName.includes('-')) {
+      // Try to extract ID from name pattern (text-123, image-456, etc.)
+      const possibleId = elementName.substring(elementName.indexOf('-') + 1);
+      if (elements.find(el => el.id === possibleId)) {
+        clickedElementId = possibleId;
       }
     }
   }
   
-  // Method 3: Parent traversal for nested elements
+  // Method 3: Check parent elements for IDs (for nested elements like transformer anchors)
   if (!clickedElementId) {
     let parent = clickedElement.parent;
     while (parent && parent !== stage) {
       const parentId = parent.attrs?.id;
-      const parentName = parent.attrs?.name || '';
-      
-      // Check parent ID directly
       if (parentId && elements.find(el => el.id === parentId)) {
         clickedElementId = parentId;
         break;
       }
-      
-      // Check parent name patterns
-      const patterns = [
-        /^text-(.+)$/,
-        /^image-(.+)$/,
-        /^drawing-(.+)$/,
-        /^flowline-(.+)$/
-      ];
-      
-      for (const pattern of patterns) {
-        const match = parentName.match(pattern);
-        if (match && elements.find(el => el.id === match[1])) {
-          clickedElementId = match[1];
-          break;
-        }
-      }
-      
-      if (clickedElementId) break;
       parent = parent.parent;
     }
   }
 
-  // If element found and in select mode, handle selection
+  // If we found an element, handle selection
   if (clickedElementId && tool === 'select') {
     handleElementSelect(clickedElementId);
     e.evt?.preventDefault();
-    e.evt?.stopPropagation();
     return;
   }
   
-  // Check for background click - only if no element was found
+  // Check if clicked on background (ONLY if we didn't find any element)
   const clickedOnBackground = 
-    !clickedElementId && (
-      clickedElement === stage || 
-      (clickedElement.getClassName() === 'Rect' && clickedElement.attrs?.id === 'background') ||
-      (stage.children.length > 0 && clickedElement === stage.children[0])
-    );
+    clickedElement === stage || 
+    (clickedElement.getClassName() === 'Rect' && clickedElement.attrs?.id === 'background') ||
+    // Also check if it's the first layer (background layer)
+    (stage.children.length > 0 && clickedElement === stage.children[0]);
 
-  // Clear selection only on background click
-  if (tool === 'select' && clickedOnBackground) {
+  // But ONLY if we haven't already identified an element
+  if (tool === 'select' && clickedOnBackground && !clickedElementId) {
     setSelectedId(null);
     return;
   }
   
-  // Don't proceed with drawing tools if not clicking on background
-  if (!clickedOnBackground && tool !== 'select') return;
+  // Don't proceed with other tools if not clicking on background
+  if (!clickedOnBackground) return;
 
   const actualPos = {
     x: (pos.x - stagePos.x) / scale,
@@ -1163,7 +1077,7 @@ const handleMouseDown = (e) => {
           draggable: true
         };
         addElementWithHistory(newText);
-        setText({ ...text, content: '' }); // Clear text input after placement
+        // Keep text tool active for multiple additions
       }
       break;
 
@@ -1187,7 +1101,7 @@ const handleElementSelect = (id) => {
   if (selectedId === id) {
     const stage = stageRef.current;
     if (stage) {
-      const selectedNode = stage.findOne(`#${id}`) || stage.findOne(`[name*="${id}"]`);
+      const selectedNode = stage.findOne(`#${id}`);
       if (selectedNode) {
         selectedNode.moveToTop();
         
@@ -1205,40 +1119,15 @@ const handleElementSelect = (id) => {
     return;
   }
   
-  // Select new element and force tool to select mode
+  // Select new element
   setSelectedId(id);
   setTool('select');
   setContextMenu({ show: false, position: { x: 0, y: 0 }, elementId: null });
   
-  // Enhanced selection persistence with multiple attempts
-  const attemptSelection = () => {
-    setSelectedId(id);
-    setTool('select');
-    
-    const stage = stageRef.current;
-    if (stage) {
-      const node = stage.findOne(`#${id}`) || stage.findOne(`[name*="${id}"]`);
-      if (node) {
-        node.moveToTop();
-        
-        // Special handling for flowlines
-        if (node.attrs.name && node.attrs.name.startsWith('flowline-')) {
-          const startEndpoint = stage.findOne(`#${id}-start`);
-          const endEndpoint = stage.findOne(`#${id}-end`);
-          if (startEndpoint) startEndpoint.moveToTop();
-          if (endEndpoint) endEndpoint.moveToTop();
-        }
-        
-        stage.batchDraw();
-        node.getLayer()?.batchDraw();
-      }
-    }
-  };
-  
-  // Multiple attempts with increasing delays to ensure selection sticks
-  [0, 25, 50, 100, 200, 400].forEach((delay, index) => {
-    setTimeout(attemptSelection, delay);
-  });
+  // Force selection with multiple attempts
+  setTimeout(() => setSelectedId(id), 50);
+  setTimeout(() => setSelectedId(id), 100);
+  setTimeout(() => setSelectedId(id), 200);
 };
 
 const handleMouseUp = () => {
@@ -1273,7 +1162,9 @@ if (tool === 'flowLine' && flowLine && isDrawing.current) {
   setIsErasing(false);
 };
 
-const handleMouseMove = (e) => {
+
+
+ const handleMouseMove = (e) => {
   const stage = e.target.getStage();
   if (!stage) return;
 
@@ -1295,26 +1186,17 @@ const handleMouseMove = (e) => {
       ]);
     }
   } else if (tool === 'flowLine' && flowLine && isDrawing.current) {
-    // Enhanced flow line preview with smooth updates
-    setFlowLine({
-      ...flowLine,
-      points: [flowLine.points[0], flowLine.points[1], actualPos.x, actualPos.y]
-    });
+  setFlowLine({
+    ...flowLine,
+    points: [flowLine.points[0], flowLine.points[1], actualPos.x, actualPos.y]
+  });
+
   } else if (tool === 'eraser' && isErasing) {
     handleEraser(e);
   }
-  
-  // Handle flow line dragging during mouse move
-  const flowLineElements = elements.filter(el => el.type === 'flowLine');
-  flowLineElements.forEach(flowLineEl => {
-    if (selectedId === flowLineEl.id) {
-      const flowLineComponent = stage.findOne(`#${flowLineEl.id}`);
-      if (flowLineComponent && flowLineComponent.isDraggingLine) {
-        // This will be handled by the FlowLineComponent's drag handlers
-      }
-    }
-  });
 };
+
+
   const handleLineStyleChange = (style) => {
     setLineStyle(style);
   };
@@ -2138,36 +2020,38 @@ onContextMenu={(e) => {
             </pattern>
           </defs>
 {elements.map((element) => {
-  const commonProps = {
-    key: element.id,
-    isSelected: selectedId === element.id,
-    onSelect: handleElementSelect,
-    tool: tool
-  };
-
   switch (element.type) {
     case 'text':
       return (
         <TextNode
-          {...commonProps}
+          key={element.id}
           text={element}
+          isSelected={selectedId === element.id}
+          onSelect={handleElementSelect}
           onChange={handleElementUpdate}
+          tool={tool}
         />
       );
     case 'image':
       return (
         <URLImage
-          {...commonProps}
+          key={element.id}
           element={element}
-          onUpdate={handleElementUpdate}
+          isSelected={selectedId === element.id}
+          onSelect={handleElementSelect}
+          onUpdate={handleElementUpdate}  // ← CHANGED from onDragEnd and onResize
+          tool={tool}
         />
       );
     case 'flowLine':
       return (
         <FlowLineComponent
-          {...commonProps}
+          key={element.id}
           line={element}
-          onUpdate={handleElementUpdate}
+          isSelected={selectedId === element.id}
+          onSelect={handleElementSelect}
+          onUpdate={handleElementUpdate}  // ← CHANGED from onDragEnd
+          tool={tool}
         />
       );
     case 'drawing':
@@ -2208,14 +2092,9 @@ onContextMenu={(e) => {
               handleElementSelect(element.id);
             }
           }}
-          // Add visual feedback for selected state
-          shadowBlur={selectedId === element.id ? 10 : 0}
-          shadowColor={selectedId === element.id ? '#0066ff' : ''}
-          shadowOpacity={selectedId === element.id ? 0.5 : 0}
           listening={true}
           id={element.id}
           name={`drawing-${element.id}`}
-          perfectDrawEnabled={false}
         />
       );
     default:
