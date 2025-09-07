@@ -295,10 +295,10 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
           <Circle
             x={points[0]}
             y={points[1]}
-            radius={10}
+            radius={8}
             fill="#ffffff"
             stroke="#0066ff"
-            strokeWidth={3}
+            strokeWidth={2}
             draggable={true}
             listening={true}
             onDragStart={(e) => {
@@ -329,10 +329,10 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onDragEnd, onUpdate, to
           <Circle
             x={points[2]}
             y={points[3]}
-            radius={10}
+            radius={8}
             fill="#ffffff"
             stroke="#0066ff"
-            strokeWidth={3}
+            strokeWidth={2}
             draggable={true}
             listening={true}
             onDragStart={(e) => {
@@ -441,7 +441,7 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
     }
     setIsTransforming(false);
   };
-  
+
   return (
     <Group>
       <KonvaText
@@ -540,17 +540,9 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
 
   const handleDragStart = (e) => {
     if (tool === 'select') {
-      // Check if this is a genuine drag (not just a click)
-      const distance = Math.sqrt(
-        Math.pow(e.evt.clientX - dragStartPos.current.x, 2) +
-        Math.pow(e.evt.clientY - dragStartPos.current.y, 2)
-      );
-      
-      if (distance > 5) { // Only consider it a drag if movement > 5px
-        setIsDragStart(true);
-        e.cancelBubble = true;
-        if (e.evt) e.evt.stopPropagation();
-      }
+      setIsDragStart(true);
+      e.cancelBubble = true;
+      if (e.evt) e.evt.stopPropagation();
     }
   };
 
@@ -591,7 +583,7 @@ const URLImage = ({ element, onDragEnd, onSelect, isSelected, onResize, tool }) 
     setIsTransforming(false);
   };
 
-return (
+  return (
     <Group>
       <Image
         ref={imageRef}
@@ -939,7 +931,6 @@ const handleElementDelete = (id) => {
 };
 
   // Mouse event handlers
-// Replace the existing handleMouseDown function
 const handleMouseDown = (e) => {
   setContextMenu({ ...contextMenu, show: false });
   
@@ -1431,7 +1422,8 @@ const ToolBar = () => {
                       <option value="Georgia">Georgia</option>
                       <option value="Verdana">Verdana</option>
                     </select>
-                   <div className="col-span-1">
+
+<div className="col-span-1">
   <label className="text-xs text-gray-600 mb-1 block">Font Size</label>
   <input
     type="number"
@@ -1457,23 +1449,17 @@ const ToolBar = () => {
     }}
     onMouseDown={(e) => {
       e.stopPropagation();
-      e.preventDefault(); // Prevent focus loss
+      // Don't prevent default - allow focus
     }}
     onClick={(e) => {
       e.stopPropagation();
-      e.target.select(); // Select all text when clicked
+      e.target.select();
     }}
     onKeyDown={(e) => {
-      e.stopPropagation();
-      // Allow continuous typing without losing focus
+      // Allow normal keyboard behavior
       if (e.key === 'Enter') {
         e.preventDefault();
-        e.target.blur(); // Only blur on Enter if needed
       }
-    }}
-    onFocus={(e) => {
-      e.stopPropagation();
-      e.target.select();
     }}
     className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
     min="8"
