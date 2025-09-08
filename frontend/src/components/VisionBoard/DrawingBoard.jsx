@@ -1243,6 +1243,9 @@ const ActionButtons = () => (
 );
 
 const ToolBar = () => {
+  // Add ref for the scrollable container
+  const scrollContainerRef = useRef(null);
+  
   const handleToolbarMouseDown = (e) => {
     // Skip if clicking on interactive elements
     const interactiveElements = ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'];
@@ -1266,68 +1269,98 @@ const ToolBar = () => {
     setIsDraggingToolbar(true);
   };
 
+  // Custom hook to preserve scroll position
+  const usePreserveScroll = () => {
+    const scrollPosition = useRef(0);
+    
+    useEffect(() => {
+      const container = scrollContainerRef.current;
+      if (container) {
+        // Restore scroll position after render
+        container.scrollTop = scrollPosition.current;
+      }
+    });
+    
+    const preserveScroll = () => {
+      const container = scrollContainerRef.current;
+      if (container) {
+        scrollPosition.current = container.scrollTop;
+      }
+    };
+    
+    return preserveScroll;
+  };
+
+  const preserveScroll = usePreserveScroll();
+
+  // Enhanced pen width handler that preserves scroll
+  const handlePenWidthChange = (e) => {
+    preserveScroll(); // Save current scroll position
+    setPenWidth(parseInt(e.target.value));
+  };
+
   const TextInputWithEnterHandler = ({ text, setText, addElementWithHistory, dimensions, scale, stagePos, setSelectedId, setTool }) => {
-  const inputRef = useRef(null);
-  
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [text.content]);
+    const inputRef = useRef(null);
+    
+    useEffect(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, [text.content]);
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && text.content.trim()) {
-      e.preventDefault();
+    const handleKeyDown = (e) => {
+      if (e.key === 'Enter' && text.content.trim()) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const centerX = (dimensions.width / 2 / scale) - 50 - (stagePos.x / scale);
+        const centerY = (dimensions.height / 2 / scale) - 10 - (stagePos.y / scale);
+        
+        const newText = {
+          id: `text-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          type: 'text',
+          x: centerX,
+          y: centerY,
+          text: text.content,
+          content: text.content,
+          fontSize: text.fontSize,
+          fontFamily: text.fontFamily,
+          fill: text.color,
+          color: text.color,
+          fontStyle: `${text.isBold ? 'bold' : ''} ${text.isItalic ? 'italic' : ''}`.trim() || 'normal',
+          draggable: true
+        };
+        
+        addElementWithHistory(newText);
+        setText({ ...text, content: '' });
+        
+        // Force selection and tool change with multiple attempts
+        setSelectedId(newText.id);
+        setTool('select');
+        
+        setTimeout(() => setSelectedId(newText.id), 50);
+        setTimeout(() => setSelectedId(newText.id), 100);
+        setTimeout(() => setSelectedId(newText.id), 200);
+      }
+    };
+
+    const handleChange = (e) => {
       e.stopPropagation();
-      
-      const centerX = (dimensions.width / 2 / scale) - 50 - (stagePos.x / scale);
-      const centerY = (dimensions.height / 2 / scale) - 10 - (stagePos.y / scale);
-      
-      const newText = {
-        id: `text-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        type: 'text',
-        x: centerX,
-        y: centerY,
-        text: text.content,
-        content: text.content,
-        fontSize: text.fontSize,
-        fontFamily: text.fontFamily,
-        fill: text.color,
-        color: text.color,
-        fontStyle: `${text.isBold ? 'bold' : ''} ${text.isItalic ? 'italic' : ''}`.trim() || 'normal',
-        draggable: true
-      };
-      
-      addElementWithHistory(newText);
-      setText({ ...text, content: '' });
-      
-      // Force selection and tool change with multiple attempts
-      setSelectedId(newText.id);
-      setTool('select');
-      
-      setTimeout(() => setSelectedId(newText.id), 50);
-      setTimeout(() => setSelectedId(newText.id), 100);
-      setTimeout(() => setSelectedId(newText.id), 200);
-    }
-  };
+      setText({ ...text, content: e.target.value });
+    };
 
-  const handleChange = (e) => {
-    e.stopPropagation();
-    setText({ ...text, content: e.target.value });
+    return (
+      <input
+        ref={inputRef}
+        type="text"
+        placeholder="Enter text..."
+        value={text.content}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-text"
+      />
+    );
   };
-
-  return (
-    <input
-      ref={inputRef}
-      type="text"
-      placeholder="Enter text..."
-      value={text.content}
-      onChange={handleChange}
-      onKeyDown={handleKeyDown}
-      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-text"
-    />
-  );
-};
 
   return (
     <div 
@@ -1362,60 +1395,63 @@ const ToolBar = () => {
           </button>
         </div>
 
-        {/* Rest of toolbar content */}
+        {/* Rest of toolbar content with ref for scroll preservation */}
         {!isToolboxMinimized && (
-          <div className={`${
-  tool === 'text' 
-    ? 'overflow-visible' 
-    : 'overflow-y-auto custom-scrollbar max-h-[calc(100vh-8rem)]'
-}`}>
+          <div 
+            ref={scrollContainerRef}
+            className={`${
+              tool === 'text' 
+                ? 'overflow-visible' 
+                : 'overflow-y-auto custom-scrollbar max-h-[calc(100vh-8rem)]'
+            }`}
+          >
             <div className="p-4 space-y-4">
               {/* Canvas Controls */}
               <div className="flex gap-2 justify-end">
                 <button
-  onClick={handleUndo}
-  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 cursor-pointer"
-  disabled={elements.length === 0}
-  title="Undo (Ctrl+Z)"
->
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    width="16" 
-    height="16" 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round"
-    className="text-black" 
-  >
-    <path d="M9 14L4 9l5-5"/>
-    <path d="M4 9h11c4 0 7 3 7 7v0c0 4-3 7-7 7H8"/>
-  </svg>
-</button>
+                  onClick={handleUndo}
+                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 cursor-pointer"
+                  disabled={elements.length === 0}
+                  title="Undo (Ctrl+Z)"
+                >
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="16" 
+                    height="16" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                    className="text-black" 
+                  >
+                    <path d="M9 14L4 9l5-5"/>
+                    <path d="M4 9h11c4 0 7 3 7 7v0c0 4-3 7-7 7H8"/>
+                  </svg>
+                </button>
                 <button
-  onClick={handleRedo}
-  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 cursor-pointer"
-  disabled={redoStack.length === 0}
-  title="Redo (Ctrl+Y)"
->
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    width="16" 
-    height="16" 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor"
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round"
-    className="text-black" 
-  >
-    <path d="M15 14l5-5-5-5"/>
-    <path d="M20 9H9C5 9 2 12 2 16v0c0 4 3 7 7 7h8"/>
-  </svg>
-</button>
+                  onClick={handleRedo}
+                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 cursor-pointer"
+                  disabled={redoStack.length === 0}
+                  title="Redo (Ctrl+Y)"
+                >
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="16" 
+                    height="16" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor"
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                    className="text-black" 
+                  >
+                    <path d="M15 14l5-5-5-5"/>
+                    <path d="M20 9H9C5 9 2 12 2 16v0c0 4 3 7 7 7h8"/>
+                  </svg>
+                </button>
 
                 <button
                   onClick={() => handleZoom('out')}
@@ -1536,15 +1572,15 @@ const ToolBar = () => {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="col-span-2">
                       <TextInputWithEnterHandler
-  text={text}
-  setText={setText}
-  addElementWithHistory={addElementWithHistory}
-  dimensions={dimensions}
-  scale={scale}
-  stagePos={stagePos}
-  setSelectedId={setSelectedId}
-  setTool={setTool}
-/>
+                        text={text}
+                        setText={setText}
+                        addElementWithHistory={addElementWithHistory}
+                        dimensions={dimensions}
+                        scale={scale}
+                        stagePos={stagePos}
+                        setSelectedId={setSelectedId}
+                        setTool={setTool}
+                      />
                       <p className="text-xs text-gray-500 mt-1">
                         Press Enter to add text to center, or click canvas after typing
                       </p>
@@ -1560,50 +1596,44 @@ const ToolBar = () => {
                       <option value="Georgia">Georgia</option>
                       <option value="Verdana">Verdana</option>
                     </select>
-                   <div className="col-span-1">
-  <label className="text-xs text-gray-600 mb-1 block">Font Size</label>
-  <input
-    type="number"
-    value={text.fontSize}
-    onChange={(e) => {
-      const value = e.target.value;
-      // Allow empty string or valid numbers while typing
-      if (value === '' || (!isNaN(value) && value >= 0)) {
-        setText(prev => ({ ...prev, fontSize: value === '' ? '' : parseInt(value) || 8 }));
-      }
-    }}
-    onBlur={(e) => {
-      // Only validate on blur, not during typing
-      const value = parseInt(e.target.value);
-      if (isNaN(value) || value < 8) {
-        setText(prev => ({ ...prev, fontSize: 8 }));
-      } else if (value > 200) {
-        setText(prev => ({ ...prev, fontSize: 200 }));
-      }
-    }}
-    onKeyDown={(e) => {
-      // Allow normal typing and only blur on Enter
-      if (e.key === 'Enter') {
-        e.target.blur();
-      }
-      // Prevent any focus shifting during normal typing
-      e.stopPropagation();
-    }}
-    onClick={(e) => {
-      // Prevent any unwanted focus changes when clicking
-      e.stopPropagation();
-    }}
-    onFocus={(e) => {
-      // Select all text when focused for easier editing
-      e.target.select();
-    }}
-    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-    min="8"
-    max="200"
-    step="1"
-    placeholder="24"
-  />
-</div>
+                    <div className="col-span-1">
+                      <label className="text-xs text-gray-600 mb-1 block">Font Size</label>
+                      <input
+                        type="number"
+                        value={text.fontSize}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === '' || (!isNaN(value) && value >= 0)) {
+                            setText(prev => ({ ...prev, fontSize: value === '' ? '' : parseInt(value) || 8 }));
+                          }
+                        }}
+                        onBlur={(e) => {
+                          const value = parseInt(e.target.value);
+                          if (isNaN(value) || value < 8) {
+                            setText(prev => ({ ...prev, fontSize: 8 }));
+                          } else if (value > 200) {
+                            setText(prev => ({ ...prev, fontSize: 200 }));
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.target.blur();
+                          }
+                          e.stopPropagation();
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                        onFocus={(e) => {
+                          e.target.select();
+                        }}
+                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                        min="8"
+                        max="200"
+                        step="1"
+                        placeholder="24"
+                      />
+                    </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <ColorPalette
@@ -1655,7 +1685,10 @@ const ToolBar = () => {
                     <label className="text-sm font-medium text-gray-700">Line Color</label>
                     <ColorPalette
                       currentColor={penColor}
-                      onColorSelect={setPenColor}
+                      onColorSelect={(color) => {
+                        preserveScroll();
+                        setPenColor(color);
+                      }}
                     />
                   </div>
                   <div className="space-y-2">
@@ -1665,24 +1698,14 @@ const ToolBar = () => {
                       min="1"
                       max="10"
                       value={penWidth}
-                      onChange={(e) => setPenWidth(parseInt(e.target.value))}
+                      onChange={handlePenWidthChange}
                       className="w-full cursor-pointer"
                     />
                   </div>
                   <div className="flex gap-2">
-                    {['straight', 'curved'].map((style) => (
-                      <button
-                        key={style}
-                        className={`px-3 py-2 rounded-lg text-sm cursor-pointer ${
-                          lineStyle === style 
-                            ? 'bg-indigo-500 text-white' 
-                            : 'bg-gray-200 text-gray-700'
-                        }`}
-                        onClick={() => handleLineStyleChange(style)}
-                      >
-                        {style.charAt(0).toUpperCase() + style.slice(1)}
-                      </button>
-                    ))}
+                    <div className="px-3 py-2 rounded-lg text-sm bg-indigo-500 text-white">
+                      Straight
+                    </div>
                   </div>
                 </div>
               )}
@@ -1697,7 +1720,7 @@ const ToolBar = () => {
                       min="1"
                       max="10"
                       value={penWidth}
-                      onChange={(e) => setPenWidth(parseInt(e.target.value))}
+                      onChange={handlePenWidthChange}
                       className="w-full cursor-pointer"
                     />
                   </div>
@@ -1710,7 +1733,10 @@ const ToolBar = () => {
                     <label className="text-sm font-medium text-gray-700">Pen Color</label>
                     <ColorPalette
                       currentColor={penColor}
-                      onColorSelect={setPenColor}
+                      onColorSelect={(color) => {
+                        preserveScroll();
+                        setPenColor(color);
+                      }}
                     />
                   </div>
                   <div className="space-y-2">
@@ -1720,7 +1746,7 @@ const ToolBar = () => {
                       min="1"
                       max="20"
                       value={penWidth}
-                      onChange={(e) => setPenWidth(parseInt(e.target.value))}
+                      onChange={handlePenWidthChange}
                       className="w-full cursor-pointer"
                     />
                   </div>
@@ -1733,6 +1759,7 @@ const ToolBar = () => {
     </div>
   );
 };
+
   // Enhanced eraser functionality
 const handleEraser = (e) => {
   if (tool !== 'eraser') return;
