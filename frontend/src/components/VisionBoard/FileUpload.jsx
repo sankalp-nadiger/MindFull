@@ -133,10 +133,10 @@ const FileUpload = ({ userId, fetchVisionBoards, darkMode }) => {
 
 return (
     <>
-      <div className={`file-upload rounded-xl shadow-lg mb-8 w-full max-w-4xl mx-auto overflow-hidden ${themeClasses.card}`}>
+      <div className={`file-upload rounded-xl shadow-lg mb-8 w-full max-w-4xl mx-auto overflow-hidden ${darkMode ? 'bg-indigo-400/50' : 'bg-white'} `}>
         {/* Header */}
-        <div className={`px-6 py-4 ${darkMode ? 'bg-indigo-600' : 'bg-blue-600'}`}>
-          <h3 className="text-xl font-semibold flex items-center text-white">
+        <div className={`px-6 py-2 rounded-xl ${darkMode ? 'bg-indigo-600' : 'bg-blue-600'}`}>
+          <h3 className="text-xl font-semibold flex items-center ">
             <Sparkles className="mr-2 w-5 h-5" />
             Upload Your Vision Board Image
           </h3>

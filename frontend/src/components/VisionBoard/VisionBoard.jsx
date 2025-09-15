@@ -4,7 +4,7 @@ import VisionItem from "./VisionItem";
 import AIRecommendation from "./AIRecommendation";
 import FileUpload from "./FileUpload";
 import "../../styles/VisionBoard.css";
-import DrawingBoard from "./DrawingBoard";
+// import DrawingBoard from "./DrawingBoard";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { 
   Info, Home, ChevronLeft, ChevronRight, X, Download, Maximize2, RefreshCw,
@@ -385,7 +385,7 @@ useEffect(() => {
                             ref={provided.innerRef}
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
-                            className={`vision-board p-3 border rounded-lg shadow-sm ${themeClasses.card} flex-shrink-0 w-64 transition-all hover:shadow-md ${themeClasses.cardHover}`}
+                            className={`vision-board p-3 border rounded shadow-sm flex-shrink-0 w-64 transition-all hover:shadow-md ${darkMode ? 'bg-indigo-400/50' : 'bg-white'}  `}
                           >
                             <div className="flex justify-between items-center mb-2">
                               <h3 className={`text-xl font-semibold truncate ${themeClasses.text}`}>{board.title}</h3>
@@ -478,7 +478,7 @@ useEffect(() => {
         )}
 
         {/* FileUpload and AIRecommendation components */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 ">
           <FileUpload 
             userId={userId} 
             fetchVisionBoards={fetchVisionBoards} 
@@ -525,7 +525,7 @@ useEffect(() => {
                     : 'shadow-[0_0_40px_rgba(59,130,246,0.25),0_0_20px_rgba(59,130,246,0.15)] hover:shadow-[0_0_50px_rgba(59,130,246,0.35),0_0_25px_rgba(59,130,246,0.2)]'
                   }
                 `}>
-                  <DrawingBoard />
+                  {/* <DrawingBoard /> */}
                 </div>
               </div>
             )}
