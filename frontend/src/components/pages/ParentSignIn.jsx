@@ -105,27 +105,22 @@ const ParentSignIn = () => {
     <>
      <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: "", type: "info" })} />
       
-    <div className="min-h-screen font-poppins bg-gradient-to-b from-primarygreen via-[#1fa313] to-primaryblue flex items-center justify-center p-4 ">
+    <div className="min-h-screen font-poppins bg-gradient-to-b from-green-400 via-green-200 to-blue-300  flex items-center justify-center p-4 ">
       {/* Animated background elements */}
      
-        <div className="absolute -top-40 -right-40 w-80 h-80  rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-50 animate-pulse delay-500"></div>
-      
 
-      {/* Main container */}
+      
       <div className="relative w-full max-w-6xl bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 overflow-hidden ">
         <div className="flex flex-col-reverse lg:flex-row min-h-[600px] ">
           
-          {/* Left Panel - Welcome Section */}
           <div className="lg:w-1/2 bg-white p-8 lg:p-12 flex flex-col justify-between relative overflow-hidden">
             
-            {/* Decorative floating elements */}
+           
             <div className="absolute top-10 right-10 w-20 h-20 bg-green-600/50 rounded-full animate-bounce delay-300"></div>
             
             
             
-            {/* Logo and branding */}
+            
             <div className="relative z-10">
               <div className="flex items-center mb-8">
                 <div className="w-16 h-12 bg-green/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30">
@@ -154,7 +149,7 @@ const ParentSignIn = () => {
       <img
         src="/hea9.png" // replace with your image path
         alt="Descriptive Alt Text"
-        className="w-full max-w-4xl h-auto object-contain "
+        className="w-[300px] max-w-4xl h-auto object-contain "
       />
     </div>
             </div>
