@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDarkMode } from '../../contexts/DarkModeContext';
+import ScrollVideoAnimation from "./ScrollVideoLandingPage";
 import {
   Bot,
   HeartHandshake,
@@ -24,7 +25,7 @@ import {
 function FeatureCard({ icon, title, description }) {
   
   return (
-    <div className="bg-green-200  dark:bg-gray-700 p-8 rounded-2xl shadow hover:shadow-lg transition duration-300 text-center">
+    <div className="bg-green-200  dark:bg-gray-700 p-8 rounded-2xl shadow hover:shadow-lg hover:scale-105 transition duration-300 text-center">
       <div className="mb-4">{icon}</div>
       <h3 className="text-xl font-semibold text-primaryblue dark:text-blue-400  mb-2">
         {title}
@@ -102,7 +103,7 @@ export default function HeroSection() {
 
   return (
     <>
-      <div className="min-h-screen font-poppins  bg-white relative overflow-hidden">
+      <div className=" font-poppins  bg-white relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden">
           <div
             className="absolute w-32 h-32 bg-green-300 rounded-full opacity-7 top-1/3 left-1/4 animate-ping"
@@ -244,113 +245,125 @@ export default function HeroSection() {
           </header>
 
           {/* Hero Section */}
-          <div className="flex flex-col lg:flex-row items-center justify-center dark:bg-gray-900  ">
-            <div className="flex-1 lg:pr-12 mb-8 lg:ml-24   lg:mb-16">
-              <h1 className="text-5xl lg:text-7xl font-bold text-gray-900 dark:text-gray-50 leading-tight mb-6">
-                Your one stop
-                <br />
-                Solution for
-                <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-blue-600">
-                  Mental Fitness
-                </span>
-              </h1>
+<div className="flex flex-col lg:flex-row items-center justify-center dark:bg-gray-900 min-h-screen px-4 sm:px-6 lg:px-8 py-8 lg:py-0">
+  <div className="flex-1 lg:pr-12 mb-8 lg:ml-24 lg:mb-16 text-center lg:text-left">
+    <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-gray-900 dark:text-gray-50 leading-tight mb-6 px-2 sm:px-0">
+      Your one stop
+      <br />
+      Solution for
+      <br />
+      <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-blue-600">
+        Mental Fitness
+      </span>
+    </h1>
 
-              <p className="text-gray-600 text-lg mb-8 max-w-lg leading-relaxed">
-                Make sure your daily nutrition is sufficient. Consult your
-                problem about nutrition with us and live a healthier lifestyle.
-              </p>
-            
-              
-             
-              <div className="flex flex-wrap sm:justify-center gap-2 sm:gap-3 px-2 sm:px-0">
-                <span className="px-4 py-2 sm:px-6 sm:py-3 bg-white/80 dark:bg-gray-700 dark:border-gray-800 dark:text-white backdrop-blur-sm text-gray-700 rounded-full text-xs sm:text-sm font-medium border border-gray-200 hover:border-green-300 transition-colors shadow-sm">
-                  Mental Wellness
-                </span>
-                <span className="px-4 py-2 sm:px-6 sm:py-3 bg-white/80 dark:bg-gray-700 dark:border-gray-800 dark:text-white backdrop-blur-sm text-gray-700 rounded-full text-xs sm:text-sm font-medium border border-gray-200 hover:border-blue-300 transition-colors shadow-sm">
-                  Personalised Content
-                </span>
-                <span className="px-4 py-2 sm:px-6 sm:py-3 bg-white/80 dark:bg-gray-700 dark:border-gray-800 dark:text-white backdrop-blur-sm text-gray-700 rounded-full text-xs sm:text-sm font-medium border border-gray-200 hover:border-green-300 transition-colors shadow-sm">
-                  Consultation
-                </span>
-                <span className="px-4 py-2 sm:px-6 sm:py-3 bg-white/80 dark:bg-gray-700 dark:border-gray-800 dark:text-white backdrop-blur-sm text-gray-700 rounded-full text-xs sm:text-sm font-medium border border-gray-200 hover:border-blue-300 transition-colors shadow-sm">
-                  Fun games and Activities
-                </span>
-                <span className="px-4 py-2 sm:px-6 sm:py-3 bg-white/80 dark:bg-gray-700 dark:border-gray-800 dark:text-white backdrop-blur-sm text-gray-700 rounded-full text-xs sm:text-sm font-medium border border-gray-200 hover:border-green-300 transition-colors shadow-sm">
-                  Peer Network
-                </span>
-              </div>
-            </div>
-            <div className="flex-1 px-4 sm:px-8 lg:pl-2 mt-10 hidden lg:block lg:mt-0 md:mb-44">
-              <div className="w-full h-auto flex items-center justify-center relative">
-                <img
-                  src={darkMode ? "/hea3.png" : "/hea.png"}
-                  alt="Health Illustration"
-                  className="w-3/4 sm:w-2/3 md:w-[300px] lg:w-[400px] xl:w-[500px] h-auto object-contain"
-                />
-              </div>
-            </div>
-          </div>
+    <p className="text-gray-600 dark:text-gray-300 text-base sm:text-lg mb-8 max-w-lg mx-auto lg:mx-0 leading-relaxed px-2 sm:px-0">
+      Make sure your daily nutrition is sufficient. Consult your
+      problem about nutrition with us and live a healthier lifestyle.
+    </p>
+    
+    <div className="flex flex-wrap justify-center lg:justify-start gap-2 sm:gap-3 px-2 sm:px-0">
+      <span className="px-3 py-2 sm:px-4 sm:py-2 md:px-6 md:py-3 bg-white/80 dark:bg-gray-700 dark:border-gray-800 dark:text-white backdrop-blur-sm text-gray-700 rounded-full text-xs sm:text-sm font-medium border border-gray-200 hover:border-green-300 transition-colors shadow-sm">
+        Mental Wellness
+      </span>
+      <span className="px-3 py-2 sm:px-4 sm:py-2 md:px-6 md:py-3 bg-white/80 dark:bg-gray-700 dark:border-gray-800 dark:text-white backdrop-blur-sm text-gray-700 rounded-full text-xs sm:text-sm font-medium border border-gray-200 hover:border-blue-300 transition-colors shadow-sm">
+        Personalised Content
+      </span>
+      <span className="px-3 py-2 sm:px-4 sm:py-2 md:px-6 md:py-3 bg-white/80 dark:bg-gray-700 dark:border-gray-800 dark:text-white backdrop-blur-sm text-gray-700 rounded-full text-xs sm:text-sm font-medium border border-gray-200 hover:border-green-300 transition-colors shadow-sm">
+        Consultation
+      </span>
+      <span className="px-3 py-2 sm:px-4 sm:py-2 md:px-6 md:py-3 bg-white/80 dark:bg-gray-700 dark:border-gray-800 dark:text-white backdrop-blur-sm text-gray-700 rounded-full text-xs sm:text-sm font-medium border border-gray-200 hover:border-blue-300 transition-colors shadow-sm">
+        Fun games and Activities
+      </span>
+      <span className="px-3 py-2 sm:px-4 sm:py-2 md:px-6 md:py-3 bg-white/80 dark:bg-gray-700 dark:border-gray-800 dark:text-white backdrop-blur-sm text-gray-700 rounded-full text-xs sm:text-sm font-medium border border-gray-200 hover:border-green-300 transition-colors shadow-sm">
+        Peer Network
+      </span>
+    </div>
+  </div>
+  
+  <div className="flex-1 px-4 sm:px-8 lg:pl-2 mt-6 lg:mt-0 block lg:block md:mb-8 lg:mb-44">
+    <div className="w-full h-auto flex items-center justify-center relative">
+      <img
+        src={darkMode ? "/hea3.png" : "/hea.png"}
+        alt="Health Illustration"
+        className="w-full max-w-[280px] sm:max-w-[320px] md:max-w-[380px] lg:w-3/4 lg:max-w-[400px] xl:max-w-[500px] h-auto object-contain"
+      />
+    </div>
+  </div>
+</div>
         </div>
       </div>
-      <section id="about" className="scroll-smooth relative bg-white dark:bg-gray-900 px-6 lg:px-24 font-poppins">
-        <div
-          className="absolute w-40 h-40 bg-green-300 rounded-full opacity-7 right-1 animate-pulse"
-          style={{ animationDuration: "2s" }}
-        ></div>
-        <div
-          className="absolute w-32 h-32 bg-green-300 rounded-full opacity-7 -bottom-4 right-48 animate-ping"
-          style={{ animationDuration: "2s" }}
-        ></div>
 
-        <div  className="max-w-6xl mx-auto flex flex-col lg:flex-row  gap-10 ">
-          <div className="w-1/2 lg:w-1/2 ">
-            <img
-              src={darkMode ? "/hea5.png" : "/hea4.png"}
-              alt="Mindful support illustration"
-              className="w-full h-auto items-center  object-cover"
-            />
-          </div>
+<ScrollVideoAnimation/>
 
-          {/* Text Section */}
-          <div className="w-full lg:w-1/2 lg:mt-14 lg:pr-9">
-            <h2 className="text-3xl lg:text-4xl font-bold text-primarygreen mb-4">
-              For You,<span className="text-primaryblue"> With You</span>
-            </h2>
-            <p className="text-gray-600 dark:text-gray-50 text-xl leading-relaxed mb-6">
-              At <span className="font-semibold text-primary">Mindfull</span>,
-              we believe mental well-being is a journey, and no one should walk
-              it alone. Whether you're navigating stress, seeking peace, or
-              simply want to feel heard — we're here with support that listens,
-              tools that guide, and a community that understands.
-            </p>
-            <p className="text-gray-600 dark:text-gray-50 text-xl leading-relaxed">
-              From quiet reflections to daily wins, every moment matters. And
-              through it all, we're with you — supportive, present, and just a
-              click away.
-            </p>
-          </div>
-        </div>
-      </section>
+
+      <section id="about" className="scroll-smooth relative bg-white dark:bg-gray-900 px-4 sm:px-6 lg:px-24 py-12 lg:py-10 font-poppins">
+
+  <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-8 lg:gap-10">
+    <div className="w-full lg:w-1/2 flex justify-center lg:justify-start">
+      <img
+        src={darkMode ? "/hea5.png" : "/hea4.png"}
+        alt="Mindful support illustration"
+        className="w-full max-w-[300px] sm:max-w-[400px] lg:max-w-none h-auto object-cover"
+      />
+    </div>
+
+    {/* Text Section */}
+    <div className="w-full lg:w-1/2 lg:mt-14 lg:pr-9 text-center lg:text-left">
+    <div className="absolute top-10 left-4 w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-green-400 to-blue-400 rounded-full opacity-20 animate-bounce" style={{ animationDelay: "0s", animationDuration: "3s" }}></div>
+  <div className="absolute top-20 right-8 w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full opacity-20 animate-bounce" style={{ animationDelay: "1s", animationDuration: "3s" }}></div>
+  
+      <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primarygreen mb-4">
+        For You,<span className="text-primaryblue"> With You</span>
+      </h2>
+      <p className="text-gray-600 dark:text-gray-50 text-base sm:text-lg lg:text-xl leading-relaxed mb-6">
+        At <span className="font-semibold text-primary">Mindfull</span>,
+        we believe mental well-being is a journey, and no one should walk
+        it alone. Whether you're navigating stress, seeking peace, or
+        simply want to feel heard — we're here with support that listens,
+        tools that guide, and a community that understands.
+      </p>
+      <p className="text-gray-600 dark:text-gray-50 text-base sm:text-lg lg:text-xl leading-relaxed">
+        From quiet reflections to daily wins, every moment matters. And
+        through it all, we're with you — supportive, present, and just a
+        click away.
+      </p>
+    </div>
+  </div>
+</section>
+
+
+
       <section id="features" className="bg-white dark:bg-gray-900   font-poppins ">
         <div className="  ">
       
-      <div
-        id="mind"
-        className=" py-10 text-center mb-12 px-36 relative dark:bg-gray-900  "
-      >
-        <div
-          className="absolute w-24 h-24 bg-green-300 rounded-full opacity-7 -top-10 -left-24 animate-pulse"
-          style={{ animationDuration: "2s" }}
-        ></div>
-        <h2 className="text-4xl lg:text-6xl font-bold text-primarygreen mb-4 relative z-10 bg-white/20 dark:bg-black/20 backdrop-blur-sm rounded-lg px-4 py-2 inline-block">
-          How It Works
-        </h2>
-        <p className="text-primaryblue text-lg font-semibold max-w-2xl mx-auto relative z-10 bg-white/15 dark:bg-black/20 dark:brightness-75 backdrop-blur-sm rounded-lg px-6 py-3 inline-block">
-          Discover how Mindfull helps you create a calm, guided, and
-          personalized wellness experience — at your pace, in your way.
-        </p>
-      </div>
+     <div
+  id="mind"
+  className="py-16 lg:py-24 text-center mb-12 px-4 sm:px-8 lg:px-36 relative dark:bg-gray-900 overflow-hidden"
+>
+  
+  <div className="absolute top-10 left-4 w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-green-400 to-blue-400 rounded-full opacity-20 animate-bounce" style={{ animationDelay: "0s", animationDuration: "3s" }}></div>
+  <div className="absolute top-20 right-8 w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full opacity-20 animate-bounce" style={{ animationDelay: "1s", animationDuration: "3s" }}></div>
+  <div className="absolute bottom-16 left-1/4 w-8 h-8 sm:w-12 sm:h-12 bg-gradient-to-r from-green-300 to-teal-300 rounded-full opacity-20 animate-pulse" style={{ animationDuration: "2s" }}></div>
+  <div className="absolute bottom-20 right-1/3 w-10 h-10 sm:w-14 sm:h-14 bg-gradient-to-r from-purple-300 to-pink-300 rounded-full opacity-20 animate-pulse" style={{ animationDelay: "0.5s", animationDuration: "2s" }}></div>
+
+  <div className="relative z-10 max-w-4xl mx-auto">
+    <div className="mb-8 transform hover:scale-105 transition-transform duration-300">
+      <h2 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 mb-6 relative animate-pulse">
+        How It Works
+      </h2>
+      <div className="w-24 sm:w-32 h-1 bg-gradient-to-r from-green-400 to-blue-400 mx-auto rounded-full mb-6"></div>
+    </div>
+    
+    <div>
+      <p className="text-gray-700 dark:text-gray-200 text-base sm:text-lg lg:text-xl font-medium max-w-3xl mx-auto relative bg-white/30 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl px-6 sm:px-8 py-6 sm:py-8 border border-white/20 dark:border-gray-700/30 shadow-lg leading-relaxed">
+        <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600 font-semibold">Discover</span> how 
+        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 font-semibold ml-2">Mindfull</span> helps you create a calm, guided, and
+        personalized wellness experience — at your pace, in your way.
+      </p>
+    </div>
+  </div>
+</div>
 
       
 
@@ -399,24 +412,34 @@ export default function HeroSection() {
       </section>
       <div id="journey" className="min-h-screen bg-white dark:bg-gray-900 p-4 sm:p-14 ">
         {/* Header */}
-        <div className="bg-white dark:bg-gray-900  flex flex-col sm:flex-row items-center justify-between">
-  {/* Left Content */}
-  <div className="sm:w-1/2 text-left  sm:mb-0">
-    <h1 className="text-4xl sm:text-6xl font-bold text-primarygreen mb-4">
-      Your Wellness Journey
-    </h1>
-    <p className="text-primaryblue text-lg font-semibold">
-      Follow the path to transform your wellness experience
-    </p>
-  </div>
+<div className="bg-white dark:bg-gray-900 py-12 lg:py-20 px-4 sm:px-8 lg:px-24 xl:px-32 relative overflow-hidden">
+  
+  <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 relative z-10">
+    {/* Left Content */}
+    <div className="w-full lg:w-1/2 text-center lg:text-left mb-8 lg:mb-0">
+      <div className="transform hover:scale-105 transition-transform duration-300">
+        <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-600 via-blue-600 to-purple-600 mb-6 leading-tight">
+          Your Wellness Journey
+        </h1>
+        <div className="w-20 sm:w-28 h-1 bg-gradient-to-r from-green-400 to-blue-400 mx-auto lg:mx-0 rounded-full mb-6"></div>
+      </div>
+      <div>
+        <p className="text-gray-700 dark:text-gray-200 text-base sm:text-lg lg:text-xl font-semibold max-w-lg mx-auto lg:mx-0 bg-white/20 dark:bg-gray-800/20 backdrop-blur-sm rounded-xl px-6 py-4 border border-white/30 dark:border-gray-700/30 shadow-lg">
+          Follow the path to <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600">transform</span> your wellness experience
+        </p>
+      </div>
+    </div>
 
-  {/* Right Image */}
-  <div className="sm:w-1/2 flex justify-center">
-    <img
-      src={darkMode ? "/hea8.png" : "/hea7.png"}
-      alt="Wellness Journey"
-      className="max-w-full h-auto "
-    />
+    {/* Right Image */}
+    <div className="w-full lg:w-1/2 flex justify-center lg:justify-end">
+      <div className="transform hover:scale-105 transition-transform duration-300">
+        <img
+          src={darkMode ? "/hea8.png" : "/hea7.png"}
+          alt="Wellness Journey"
+          className="w-full max-w-[300px] sm:max-w-[400px] lg:max-w-[500px] h-auto object-contain"
+        />
+      </div>
+    </div>
   </div>
 </div>
 
@@ -489,7 +512,7 @@ export default function HeroSection() {
                     </div>
                     <div
                       className={`
-                    absolute -top-28 left-1/2 transform -translate-x-1/2 
+                    absolute -top-28 -right-10 transform 
                     bg-white p-4 rounded-xl shadow-lg border border-gray-100 w-44 dark:bg-gray-800 
                     opacity-0 invisible group-hover:opacity-100 group-hover:visible
                     transition-all duration-200 z-20
@@ -516,14 +539,14 @@ export default function HeroSection() {
         </div>
 
         {/* Mobile/Tablet Layout */}
-        <div className="lg:hidden max-w-md mx-auto">
+        <div className="lg:hidden max-w-md mx-auto mb-7">
           <div className="relative">
             {journeySteps.map((step, index) => {
               const IconComponent = step.icon;
 
               return (
-                <div key={step.id} className="relative">
-                  <div className="flex items-center gap-4 bg-white p-5 rounded-2xl shadow-lg border border-gray-100 transition-all duration-200 hover:shadow-xl">
+                <div key={step.id} className="relative ">
+                  <div className="flex items-center gap-4 dark:bg-gray-800 dark:text-white p-9 rounded-2xl shadow-lg border dark:border-gray-500 transition-all duration-200 hover:shadow-xl">
                     <div
                       className={`
                     w-16 h-16 ${step.bgColor} rounded-full flex items-center justify-center 
@@ -539,10 +562,10 @@ export default function HeroSection() {
                     </div>
 
                     <div className="flex-1">
-                      <h3 className="font-bold text-gray-800 text-lg mb-1">
+                      <h3 className="font-bold dark:text-white text-gray-800 text-lg mb-1">
                         {step.title}
                       </h3>
-                      <p className="text-gray-600 text-sm">{step.subtitle}</p>
+                      <p className="text-gray-600 dark:text-white text-sm">{step.subtitle}</p>
                     </div>
                   </div>
                   {index < journeySteps.length - 1 && (
@@ -581,19 +604,6 @@ export default function HeroSection() {
                 <br />
                 MOVEMENT
               </h2>
-
-              <div className="mb-6">
-                <div className="flex gap-3">
-                  <input
-                    type="email"
-                    placeholder="EMAIL"
-                    className="flex-1 px-4 py-3 border-2 border-gray-300 focus:border-blue-500 focus:outline-none font-medium"
-                  />
-                  <button className="px-6 py-3 bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors">
-                    OK
-                  </button>
-                </div>
-              </div>
             </div>
             <div>
               <h3 className="text-lg font-bold text-gray-900  mb-6">
