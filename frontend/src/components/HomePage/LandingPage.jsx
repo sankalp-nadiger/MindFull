@@ -592,12 +592,25 @@ export default function HeroSection() {
         </div>
       </div>
 
-      <footer className=" border-t border-gray-200 bg-[url('/hea6.jpg')] bg-cover bg-center min-h-screen
-             relative dark:brightness-75  font-poppins">
+       <div className="relative w-full bg-slate-50 dark:bg-gray-900 ">
+      <div
+        className="absolute inset-0 z-0"
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, #1b2330 1px, transparent 1px),
+            linear-gradient(to bottom, #1b2330 1px, transparent 1px)
+          `,
+          backgroundSize: '20px 30px',
+          WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 0%, #000 60%, transparent 100%)',
+          maskImage: 'radial-gradient(ellipse 70% 60% at 50% 0%, #000 60%, transparent 100%)',
+        }}
+      />
+   
+      <footer className="  relative dark:brightness-75  font-poppins">
         <div className="max-w-7xl mx-auto px-6 py-16 ">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
-            <div className="lg:col-span-2">
-              <h2 className="text-2xl font-bold text-gray-900  mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 ">
+            <div className="lg:col-span-2 ">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white  mb-6">
                 JOIN THE
                 <br />
                 MINDFULL
@@ -606,14 +619,14 @@ export default function HeroSection() {
               </h2>
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-900  mb-6">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white  mb-6">
                 HELP
               </h3>
-              <ul className="space-y-3">
+              <ul className="space-y-3 ">
                 <li>
                   <a
                     href="#"
-                    className="text-gray-700  hover:text-blue-600 transition-colors"
+                    className="text-gray-700 dark:text-white  hover:text-blue-600 transition-colors"
                   >
                     Contact Us
                   </a>
@@ -621,7 +634,7 @@ export default function HeroSection() {
                 <li>
                   <a
                     href="#"
-                    className="text-gray-700  hover:text-blue-600 transition-colors"
+                    className="text-gray-700 dark:text-white  hover:text-blue-600 transition-colors"
                   >
                     FAQ
                   </a>
@@ -630,14 +643,14 @@ export default function HeroSection() {
             </div>
             <div>
               <div className="mb-8">
-                <h3 className="text-lg font-bold text-gray-900  mb-6">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white  mb-6">
                   LEGAL INFO
                 </h3>
                 <ul className="space-y-3">
                   <li>
                     <a
                       href="#"
-                      className="text-gray-700  hover:text-blue-600 transition-colors"
+                      className="text-gray-700  dark:text-white hover:text-blue-600 transition-colors"
                     >
                       Privacy Policy
                     </a>
@@ -645,7 +658,7 @@ export default function HeroSection() {
                   <li>
                     <a
                       href="#"
-                      className="text-gray-700  hover:text-blue-600 transition-colors"
+                      className="text-gray-700 dark:text-white hover:text-blue-600 transition-colors"
                     >
                       Terms & Conditions
                     </a>
@@ -653,7 +666,7 @@ export default function HeroSection() {
                   <li>
                     <a
                       href="#"
-                      className="text-gray-700  hover:text-blue-600 transition-colors"
+                      className="text-gray-700 dark:text-white hover:text-blue-600 transition-colors"
                     >
                       Cookie Policy
                     </a>
@@ -661,7 +674,7 @@ export default function HeroSection() {
                   <li>
                     <a
                       href="#"
-                      className="text-gray-700  hover:text-blue-600 transition-colors"
+                      className="text-gray-700 dark:text-white hover:text-blue-600 transition-colors"
                     >
                       Gift Card
                     </a>
@@ -670,14 +683,14 @@ export default function HeroSection() {
               </div>
 
               <div>
-                <h3 className="text-lg font-bold text-gray-900 mb-6">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
                   FOLLOW US
                 </h3>
                 <ul className="space-y-3">
                   <li>
                     <a
                       href="#"
-                      className="text-gray-700  hover:text-green-600 transition-colors"
+                      className="text-gray-700 dark:text-white hover:text-green-600 transition-colors"
                     >
                       Instagram
                     </a>
@@ -685,7 +698,7 @@ export default function HeroSection() {
                   <li>
                     <a
                       href="#"
-                      className="text-gray-700  hover:text-green-600 transition-colors"
+                      className="text-gray-700 dark:text-white hover:text-green-600 transition-colors"
                     >
                       Facebook
                     </a>
@@ -693,7 +706,7 @@ export default function HeroSection() {
                   <li>
                     <a
                       href="#"
-                      className="text-gray-700  hover:text-green-600 transition-colors"
+                      className="text-gray-700 dark:text-white hover:text-green-600 transition-colors"
                     >
                       Twitter
                     </a>
@@ -701,7 +714,7 @@ export default function HeroSection() {
                   <li>
                     <a
                       href="#"
-                      className="text-gray-700  hover:text-green-600 transition-colors"
+                      className="text-gray-700 dark:text-white hover:text-green-600 transition-colors"
                     >
                       LinkedIn
                     </a>
@@ -771,6 +784,10 @@ export default function HeroSection() {
           </div>
         </div>
       </footer>
+      
+    </div>
+
+      
     </>
   );
 }

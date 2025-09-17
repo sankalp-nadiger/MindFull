@@ -71,20 +71,20 @@ const ProfileContent = () => {
       </div>
 
       {/* Profile Form */}
-      <div className="bg-white shadow-lg rounded-lg p-6">
+      <div className="bg-white text-gray-600 shadow-lg rounded-lg p-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Column */}
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2 ">
                 Full Name
               </label>
-              <input
+              <input                
                 type="text"
                 value={profile.fullName || ''}
                 onChange={(e) => setProfile({ ...profile, fullName: e.target.value })}
                 disabled={!isEditing}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 ${isEditing ?'bg-slate-100 text-gray-700}':''} `}
               />
             </div>
 
@@ -97,7 +97,7 @@ const ProfileContent = () => {
                 value={profile.email || ''}
                 onChange={(e) => setProfile({ ...profile, email: e.target.value })}
                 disabled={!isEditing}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 ${isEditing ?'bg-slate-100 text-gray-700}':''} `}
               />
             </div>
 
@@ -110,7 +110,7 @@ const ProfileContent = () => {
                 value={profile.mobileNumber || ''}
                 onChange={(e) => setProfile({ ...profile, mobileNumber: e.target.value })}
                 disabled={!isEditing}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 ${isEditing ?'bg-slate-100 text-gray-700}':''} `}
               />
             </div>
 
@@ -123,7 +123,7 @@ const ProfileContent = () => {
                 value={profile.specification ? profile.specification.join(', ') : ''}
                 onChange={(e) => setProfile({ ...profile, specification: e.target.value.split(',').map(s => s.trim()) })}
                 disabled={!isEditing}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 ${isEditing ?'bg-slate-100 text-gray-700}':''} `}
               />
             </div>
           </div>
@@ -139,7 +139,7 @@ const ProfileContent = () => {
                 value={profile.yearexp || ''}
                 onChange={(e) => setProfile({ ...profile, yearexp: e.target.value })}
                 disabled={!isEditing}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 ${isEditing ?'bg-slate-100 text-gray-700}':''} `}
               />
             </div>
 
@@ -152,7 +152,7 @@ const ProfileContent = () => {
                 value={profile.location || ''}
                 onChange={(e) => setProfile({ ...profile, location: e.target.value })}
                 disabled={!isEditing}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 ${isEditing ?'bg-slate-100 text-gray-700}':''} `}
               />
             </div>
 
@@ -165,7 +165,7 @@ const ProfileContent = () => {
                 value={profile.credentials || ''}
                 onChange={(e) => setProfile({ ...profile, credentials: e.target.value })}
                 disabled={!isEditing}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 ${isEditing ?'bg-slate-100 text-gray-700}':''} `}
               />
             </div>
 
@@ -178,7 +178,7 @@ const ProfileContent = () => {
                 value={profile.languages || ''}
                 onChange={(e) => setProfile({ ...profile, languages: e.target.value })}
                 disabled={!isEditing}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 ${isEditing ?'bg-slate-100 text-gray-700}':''} `}
               />
             </div>
           </div>
@@ -194,7 +194,7 @@ const ProfileContent = () => {
             onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
             disabled={!isEditing}
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+           className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 ${isEditing ?'bg-slate-100 text-gray-700}':''} `}
           />
         </div>
 

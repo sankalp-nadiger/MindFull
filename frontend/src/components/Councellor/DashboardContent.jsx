@@ -63,10 +63,10 @@ const DashboardContent = () => {
   if (!stats) return null;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 ">
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-8 text-white">
-        <div className="flex items-center justify-between">
+      <div className=" bg-gradient-to-r from-blue-600 to-green-500 rounded-xl p-8 text-white">
+        <div className="flex items-center justify-center ">
           <div>
             <h2 className="text-2xl font-bold mb-2">
               Welcome back, {stats.counselorName}! 👋
@@ -114,7 +114,7 @@ const DashboardContent = () => {
       </div>
 
       {/* Today's Schedule & Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
         {/* Today's Schedule */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
@@ -144,7 +144,7 @@ const DashboardContent = () => {
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        {/* <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
             <MessageCircle className="h-5 w-5 text-gray-400" />
@@ -164,7 +164,7 @@ const DashboardContent = () => {
           <button className="w-full mt-4 py-2 text-blue-600 hover:text-blue-700 font-medium">
             View All Activity →
           </button>
-        </div>
+        </div> */}
       </div>
     </div>
   );
