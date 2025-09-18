@@ -24,8 +24,8 @@ export default function Getquotes(){
     }, []); 
 
   return (
-  <div className="shadow-[4px_4px_0_rgba(0,0,0,0.3)] hover:shadow-[6px_6px_0_rgba(0,0,0,0.4)] transition duration-300 p-3 sm:p-6 bg-black w-full">
-    <div className="max-w-[85rem] text-white px-3 py-6 sm:px-6 sm:py-10 lg:px-8 lg:py-14 mx-auto backdrop-blur-lg bg-gray-900 bg-opacity-70 p-4 sm:p-8 rounded-lg shadow-lg shadow-red-950/60 hover:shadow-blue-500/50 transition-shadow flex align-middle justify-center">
+  <div className=" p-3 sm:p-6  w-full ">
+    <div className="max-w-[85rem] text-white px-3 py-6 sm:px-6 sm:py-10 lg:px-8 lg:py-14 mx-auto backdrop-blur-sm  bg-blue-950/40 opacity-90  bg-opacity-20  p-4 sm:p-8 rounded-lg shadow-lg hover:shadow-gray-800/60 shadow-gray-800/50 transition-shadow flex align-middle justify-center">
       <p className="text-lg sm:text-xl md:text-2xl lg:text-[30px] font-semibold leading-relaxed text-center">{randomQuote}</p>
     </div>
   </div>

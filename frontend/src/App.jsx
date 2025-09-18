@@ -11,6 +11,7 @@ import Notifications from "./components/Councellor/Notifications/Notifications"
 import Clients from "./components/Councellor/Clients/Client"
 import Profile from "./components/Councellor/Profile/Profile"
 import Schedule from "./components/Councellor/Schedule/Schedule"
+import ActivityCardDemo from "./components/Activities/ActivityRecommendation"
 
 // Lazy load components for better performance
 const HomePage = React.lazy(() => import('./components/HomePage/HomePage'))
@@ -58,7 +59,7 @@ function App() {
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             <Route path="/" element={<HealthNutritionWebsite/>} />
-             
+            
             <Route path="/ParentDashboard" element={
               <Suspense fallback={<PageSkeleton />}>
                 <ParentDashboard />
@@ -176,7 +177,7 @@ function App() {
             } />
             <Route path="/activity" element={
               <Suspense fallback={<PageSkeleton />}>
-                <ActivityRecommendations />
+                <ActivityCardDemo />
               </Suspense>
             } />
         

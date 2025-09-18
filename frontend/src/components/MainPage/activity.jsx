@@ -137,7 +137,7 @@ export default function Suggestion() {
   } 
   return (
     <div className="shadow-[4px_4px_0_rgba(0,0,0,0.3)] hover:shadow-[6px_6px_0_rgba(0,0,0,0.4)] transition duration-300 p-6 bg-black w-full">
-      <div className="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto backdrop-blur-lg bg-gray-900 bg-opacity-70 p-8 rounded-lg shadow-lg shadow-red-950/60 hover:shadow-blue-500/50 transition-shadow">
+      <div className="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto backdrop-blur-sm  bg-blue-950/40 opacity-90 p-8 rounded-lg shadow-lg shadow-red-950/60 hover:shadow-blue-500/50 transition-shadow">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -240,6 +240,12 @@ export default function Suggestion() {
                       </div>
                     </div>
                   </div>
+                  <button 
+            onClick={() => navigate('/todo')}
+            className="bg-gradient-to-r mt-9 from-cyan-600 to-purple-600 hover:from-cyan-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 flex items-center space-x-2 shadow-lg shadow-cyan-500/25">
+            <Plus className="w-4 h-4" />
+            <span>Add Task Now</span>
+          </button>
                 </div>
               ))
             ) : (

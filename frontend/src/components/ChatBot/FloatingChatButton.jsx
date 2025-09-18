@@ -94,7 +94,7 @@ const FloatingChatButton = () => {
           )}
 
           <button
-            className="relative flex items-center justify-center w-10 h-10 transition-all duration-300 transform rounded-full shadow-lg bg-gradient-to-r from-green-500 to-blue-500 hover:shadow-xl hover:scale-110 z-20 p-3 cursor-pointer"
+            className="relative flex items-center justify-center w-12 h-12 transition-all duration-300 transform rounded-full shadow-lg bg-gradient-to-r from-green-500 to-blue-500 hover:shadow-xl hover:scale-110 z-20 p-3 cursor-pointer"
             onClick={handleLanguageClick}
             aria-label="Select Language"
           >
@@ -110,13 +110,13 @@ const FloatingChatButton = () => {
         >
           {/* Bot Button Tooltip */}
           {isBotHovered && !showLanguageSelector && (
-            <div className="absolute right-0 px-3 py-2 text-xs text-white transition-all duration-200 transform bg-gray-900 rounded-lg shadow-xl bottom-14 whitespace-nowrap animate-fade-in z-40 pointer-events-none cursor-default">
+            <div className="absolute right-14 bottom-3 px-3 py-2 text-xs text-white transition-all duration-200 transform bg-gray-900 rounded-lg shadow-xl  whitespace-nowrap animate-fade-in z-40 pointer-events-none cursor-default">
               <div className="flex items-center gap-2">
                 <Heart className="w-3 h-3 text-pink-400" />
                 <span>Need someone to talk to?</span>
               </div>
               <div className="text-[10px] text-gray-300 mt-1">Chat with MindFull Bot</div>
-              <div className="absolute w-0 h-0 border-t-4 border-l-4 border-r-4 border-transparent top-full right-3 border-t-gray-900"></div>
+              <div className="absolute w-0 h-0  border-transparent top-full right-3 border-t-gray-900"></div>
             </div>
           )}
 

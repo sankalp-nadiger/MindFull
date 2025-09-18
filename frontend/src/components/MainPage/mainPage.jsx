@@ -153,7 +153,7 @@ export function HeroHighlightDemo() {
         </HeroHighlight>
       </div>
 
-      <div className="w-full bg-gray-200">
+      <div className="w-full bg-black">
         <Getquotes />
       </div>
 
@@ -248,21 +248,9 @@ export function HeroHighlightDemo() {
       </div>
 
       <section className="w-full text-white bg-black body-font">
-        <div className="container px-3 py-24 mx-auto">
-          <div className="flex flex-col items-start w-full mx-auto lg:w-2/3 sm:flex-row sm:items-center">
-            <h1 className="flex-grow text-3xl font-medium text-white sm:pr-16 md:text-4xl lg:text-5xl title-font">
-              Activity Recommendations Curated for YOU .....
-            </h1>
-            <button
-              onClick={() => navigate("/activity")}
-              className="px-8 py-2 mt-10 text-lg text-black bg-green-600 rounded hover:bg-green-400 sm:mt-0">
-              See Activities
-            </button>
-          </div>
-        </div>
-        
+       
         <BentoGridDemo />
-        <BadgesCorner />
+        {/* <BadgesCorner /> */}
         <Footer />
       </section>
 
