@@ -2,7 +2,7 @@ import React from "react";
 
 function Footer() {
   return (
-    <footer className="text-gray-400 bg-black body-font">
+    <footer className="text-gray-400 body-font">
       <div className="container px-5 py-8 mx-auto flex items-center sm:flex-row flex-col">
         <a className="flex title-font font-medium items-center md:justify-start justify-center text-white">
           <img src="plant.png" className="h-10 w-10"></img>
@@ -19,7 +19,7 @@ function Footer() {
             @abc
           </a>
         </p>
-        <span className="inline-flex sm:ml-auto sm:mt-0 mt-4 justify-center sm:justify-start">
+        <span className="inline-flex sm:ml-auto sm:mt-0 mt-4 lg:mr-20 md:mr-32 justify-center sm:justify-start">
           <a className="text-gray-400">
             <svg
               fill="currentColor"

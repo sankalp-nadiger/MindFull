@@ -8,11 +8,12 @@ const ExerciseCards = () => {
       };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-blue-900 to-black text-gray-100 py-16 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen  text-gray-100 py-16 px-4 sm:px-6 lg:px-8">
          <div className="flex align-middle justify-center  py-5  ">
-          <h1 className="text-7xl font-bold text-white">
-            Additional Exercises
-          </h1>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold pb-9 text-white">
+  Additional Exercises
+</h1>
+
           </div>
       <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {/* Exercise Card 1 */}
