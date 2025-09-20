@@ -34,10 +34,10 @@ export default defineConfig({
       'axios',
       'framer-motion',
       'lucide-react',
+      'react-player',
     ],
     exclude: [
       'chart.js',
-      'react-player',
       'konva',
       'react-konva',
       'three',
