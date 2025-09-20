@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, X, Calendar } from 'lucide-react';
+import { Clock, X, Calendar, Heart, Sun, Moon } from 'lucide-react';
 import { ArrowUp, ArrowDown, ArrowLeft, Check, Plus, Award, Lightbulb, ChevronRight, Trash, Save } from 'lucide-react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
@@ -20,6 +20,8 @@ const TodoListPage = () => {
   const [deadlineTaskDescription, setDeadlineTaskDescription] = useState('');
   const [deadlineDate, setDeadlineDate] = useState('');
   const [productivityMessage, setProductivityMessage] = useState('');
+  const [showThemeModal, setShowThemeModal] = useState(true);
+  const [darkMode, setDarkMode] = useState(true);
 
   // Fetch initial data
   useEffect(() => {
@@ -48,6 +50,14 @@ const TodoListPage = () => {
     } else {
       const randomIndex = Math.floor(Math.random() * messages.length);
       setProductivityMessage(messages[randomIndex]);
+    }
+  };
+
+  const handleThemeChoice = (isDark) => {
+    setDarkMode(isDark);
+    setShowThemeModal(false);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('journalDarkMode', isDark.toString());
     }
   };
 
@@ -353,37 +363,154 @@ const TodoListPage = () => {
   
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true });
   };
+
+  // Theme-based colors
+  const theme = {
+    // Main backgrounds
+    mainBg: darkMode ? 'bg-gray-900' : 'bg-gray-50',
+    headerBg: darkMode ? 'bg-gradient-to-r from-slate-800 via-purple-900 to-slate-800' : 'bg-gradient-to-r from-blue-500 via-purple-600 to-blue-500',
+    cardBg: darkMode ? 'bg-slate-800/90' : 'bg-white/90',
+    secondaryCardBg: darkMode ? 'bg-slate-700/80' : 'bg-gray-100/80',
+    formBg: darkMode ? 'bg-slate-600/80' : 'bg-gray-200/80',
+    
+    // Text colors
+    primaryText: darkMode ? 'text-white' : 'text-gray-900',
+    secondaryText: darkMode ? 'text-gray-300' : 'text-gray-700',
+    mutedText: darkMode ? 'text-gray-400' : 'text-gray-500',
+    completedText: darkMode ? 'text-gray-500' : 'text-gray-400',
+    completedTextSecondary: darkMode ? 'text-gray-600' : 'text-gray-500',
+    
+    // Borders
+    border: darkMode ? 'border-slate-700/50' : 'border-gray-200/50',
+    secondaryBorder: darkMode ? 'border-slate-600/50' : 'border-gray-300/50',
+    inputBorder: darkMode ? 'border-slate-500/50' : 'border-gray-300/50',
+    
+    // Input fields
+    inputBg: darkMode ? 'bg-slate-600/80' : 'bg-white/80',
+    inputText: darkMode ? 'text-white' : 'text-gray-900',
+    inputPlaceholder: darkMode ? 'placeholder-gray-400' : 'placeholder-gray-500',
+    
+    // Focus states
+    focusRing: darkMode ? 'focus:ring-emerald-500/50 focus:border-emerald-400' : 'focus:ring-blue-500/50 focus:border-blue-400',
+    
+    // Buttons
+    primaryButton: darkMode ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600' : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600',
+    secondaryButton: darkMode ? 'bg-slate-600 hover:bg-slate-500' : 'bg-gray-200 hover:bg-gray-300',
+    dangerButton: darkMode ? 'bg-red-600 hover:bg-red-700' : 'bg-red-500 hover:bg-red-600',
+    
+    // Special elements
+    timelineLine: darkMode ? 'bg-slate-600' : 'bg-gray-300',
+    progressBar: darkMode ? 'bg-slate-600' : 'bg-gray-300',
+    watermarkOpacity: darkMode ? 'opacity-[0.12]' : 'opacity-[0.08]',
+    
+    // Accent colors
+    accent: darkMode ? 'text-emerald-400' : 'text-blue-600',
+    accentSecondary: darkMode ? 'text-purple-400' : 'text-purple-600',
+    warning: darkMode ? 'text-amber-400' : 'text-orange-500',
+  };
   
+if (showThemeModal) {
+    return (
+       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col items-center justify-center p-4">
+        {/* Branding */}
+        <div className="mb-8 animate-fade-in">
+          <a className="flex title-font font-medium items-center text-gray-900 group transition-all duration-300 hover:scale-105 flex-shrink-0" href="/MainPage">
+            <div className="relative">
+              <img src="plant.png" alt="Logo" className="h-12 w-12 transition-transform duration-300 group-hover:rotate-12" />
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-green-400/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm"></div>
+            </div>
+            <span className="ml-3 text-2xl bg-gradient-to-r from-blue-400 via-teal-400 to-green-400 bg-clip-text text-transparent font-bold tracking-wide">
+              Soulynk
+            </span>
+          </a>
+        </div>
+        <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl max-w-md w-full p-8 animate-fade-in">
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 bg-gradient-to-br from-indigo-900 to-purple-900 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Heart className="w-10 h-10 text-indigo-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-200 mb-3">Welcome to Your Task Manager</h2>
+            <p className="text-slate-400">Choose your preferred theme to get started</p>
+          </div>
+          
+          <div className="space-y-4">
+            <button
+              onClick={() => handleThemeChoice(false)}
+              className="w-full p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-indigo-200 rounded-xl hover:border-indigo-300 transition-all flex items-center gap-4"
+            >
+              <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
+                <Sun className="w-6 h-6 text-amber-600" />
+              </div>
+              <div className="text-left">
+                <h3 className="font-semibold text-slate-800">Light Mode</h3>
+                <p className="text-sm text-slate-600">Bright and clean interface</p>
+              </div>
+            </button>
+            
+            <button
+              onClick={() => handleThemeChoice(true)}
+              className="w-full p-4 bg-gradient-to-r from-slate-700 to-slate-800 border-2 border-slate-600 rounded-xl hover:border-slate-500 transition-all flex items-center gap-4"
+            >
+              <div className="w-12 h-12 bg-indigo-900 rounded-full flex items-center justify-center">
+                <Moon className="w-6 h-6 text-indigo-400" />
+              </div>
+              <div className="text-left">
+                <h3 className="font-semibold text-slate-200">Dark Mode</h3>
+                <p className="text-sm text-slate-400">Easy on the eyes, perfect for evening use</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white relative">
+    <div className={`min-h-screen ${theme.mainBg} ${theme.primaryText} relative`}>
       {/* Fixed watermark logo - always centered and visible */}
       <div 
-        className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-center bg-no-repeat bg-contain opacity-[0.12] pointer-events-none z-0"
+        className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-center bg-no-repeat bg-contain ${theme.watermarkOpacity} pointer-events-none z-0`}
         style={{
           backgroundImage: `url('1a.png')`,
         }}
       />
 
-      {/* Header with improved colors */}
-      <div className="bg-gradient-to-r from-slate-800 via-purple-900 to-slate-800 py-6 px-4 shadow-xl relative z-10">
+      {/* Header */}
+      <div className={`${theme.headerBg} py-6 px-4 shadow-xl relative z-10`}>
         <div className="container mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center">
             {/* Back button - Left */}
             <Link 
               to="/MainPage"
-              className="flex items-center justify-center gap-1 sm:gap-2 text-gray-300 hover:text-white transition-colors"
+              className={`flex items-center justify-center gap-1 sm:gap-2 ${darkMode ? 'text-gray-300 hover:text-white' : 'text-black hover:text-gray-800'} transition-colors`}
             >
               <ArrowLeft className="w-5 h-5" />
               <span className="hidden sm:block text-sm font-medium sm:text-base">Back to Dashboard</span>
             </Link>
             
-            <div className="flex items-center mb-4 md:mb-0 md:absolute md:left-1/2 md:transform md:-translate-x-1/2">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-300 via-blue-300 to-teal-300 bg-clip-text text-transparent">TaskMaster</h1>
+            {/* Theme toggle button - Centered */}
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className={`p-2 rounded-full transition-all duration-200 ${
+                darkMode 
+                  ? 'bg-slate-700/50 hover:bg-slate-600/50 text-amber-400 hover:text-amber-300' 
+                  : 'bg-white/20 hover:bg-white/30 text-gray-800 hover:text-gray-900'
+              }`}
+              title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {darkMode ? (
+                <Sun className="w-5 h-5" />
+              ) : (
+                <Moon className="w-5 h-5" />
+              )}
+            </button>
+            
+            <div className="flex items-center mb-4 md:mb-0">
+              <h1 className={`text-3xl font-bold ${darkMode ? 'bg-gradient-to-r from-purple-300 via-blue-300 to-teal-300 bg-clip-text text-transparent' : 'text-white'}`}>TaskMaster</h1>
             </div>
             
             <div className="text-center md:text-right">
-              <p className="text-gray-200 text-lg mb-2">{productivityMessage}</p>
+              <p className={`${darkMode ? 'text-gray-200' : 'text-white'} text-lg mb-2`}>{productivityMessage}</p>
               <div className="flex items-center justify-center md:justify-end space-x-6">
                 <div className="flex items-center">
                   <Award className="w-5 h-5 mr-2 text-amber-400" />
@@ -402,15 +529,15 @@ const TodoListPage = () => {
       <div className="container mx-auto px-4 py-8 relative z-10">
         <div className="flex flex-col md:flex-row gap-8">
           {/* Left panel - Task list */}
-          <div className="w-full md:w-2/3 bg-slate-800/90 backdrop-blur-sm rounded-lg p-6 border border-slate-700/50">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent mb-6">My Tasks</h2>
+          <div className={`w-full md:w-2/3 ${theme.cardBg} backdrop-blur-sm rounded-lg p-6 ${theme.border} border`}>
+            <h2 className={`text-2xl font-bold ${darkMode ? 'bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent' : theme.accent} mb-6`}>My Tasks</h2>
             
             {/* Deadline Tasks Section */}
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-amber-400">Upcoming Deadlines</h3>
+                <h3 className={`text-lg font-medium ${theme.warning}`}>Upcoming Deadlines</h3>
                 <button 
-                  className="text-sm text-amber-400 hover:text-amber-300 hover:underline flex items-center transition-colors"
+                  className={`text-sm ${theme.warning} hover:opacity-75 hover:underline flex items-center transition-colors`}
                   onClick={() => setShowDeadlineForm(!showDeadlineForm)}
                 >
                   <Plus className="w-4 h-4 mr-1" />
@@ -418,21 +545,21 @@ const TodoListPage = () => {
                 </button>
               </div>
               
-              {/* Deadline Task Form - Updated with better colors */}
+              {/* Deadline Task Form */}
               {showDeadlineForm && (
-                <div className="mb-6 bg-slate-700/80 backdrop-blur-sm p-4 rounded-lg border border-slate-600/50">
+                <div className={`mb-6 ${theme.secondaryCardBg} backdrop-blur-sm p-4 rounded-lg ${theme.secondaryBorder} border`}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <input
                       type="text"
                       placeholder="Deadline task name"
-                      className="px-4 py-2 bg-slate-600/80 text-white rounded-lg border border-slate-500/50 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-400"
+                      className={`px-4 py-2 ${theme.inputBg} ${theme.inputText} rounded-lg ${theme.inputBorder} border focus:outline-none focus:ring-2 ${theme.focusRing} ${theme.inputPlaceholder}`}
                       value={deadlineTaskName}
                       onChange={(e) => setDeadlineTaskName(e.target.value)}
                     />
                     <div className="relative">
                       <input
                         type="datetime-local"
-                        className="px-4 py-2 bg-slate-600/80 text-white rounded-lg border border-slate-500/50 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-400 w-full"
+                        className={`px-4 py-2 ${theme.inputBg} ${theme.inputText} rounded-lg ${theme.inputBorder} border focus:outline-none focus:ring-2 ${theme.focusRing} w-full`}
                         value={deadlineDate}
                         onChange={(e) => setDeadlineDate(e.target.value)}
                         placeholder="Deadline date and time"
@@ -440,14 +567,14 @@ const TodoListPage = () => {
                     </div>
                     <textarea
                       placeholder="Deadline task description"
-                      className="md:col-span-2 px-4 py-2 bg-slate-600/80 text-white rounded-lg border border-slate-500/50 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-400"
+                      className={`md:col-span-2 px-4 py-2 ${theme.inputBg} ${theme.inputText} rounded-lg ${theme.inputBorder} border focus:outline-none focus:ring-2 ${theme.focusRing} ${theme.inputPlaceholder}`}
                       value={deadlineTaskDescription}
                       onChange={(e) => setDeadlineTaskDescription(e.target.value)}
                       rows="2"
                     />
                     <div className="md:col-span-2 flex justify-end">
                       <button
-                        className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg flex items-center transition-all duration-200 shadow-lg"
+                        className={`px-4 py-2 ${darkMode ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600' : 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600'} text-white rounded-lg flex items-center transition-all duration-200 shadow-lg`}
                         onClick={handleAddDeadlineTask}
                       >
                         Add Deadline Task
@@ -457,7 +584,7 @@ const TodoListPage = () => {
                 </div>
               )}
               
-              {/* Horizontal Deadline Tasks Display with improved colors */}
+              {/* Horizontal Deadline Tasks Display */}
               <div className="overflow-x-auto pb-2">
                 <div className="flex space-x-4">
                   {deadlineTasks.length > 0 ? (
@@ -466,15 +593,15 @@ const TodoListPage = () => {
                       const now = new Date();
                       const daysLeft = Math.ceil((dueDate - now) / (1000 * 60 * 60 * 24));
                       
-                      let bgColor = "bg-slate-700/80";
-                      let borderColor = "border-slate-500";
+                      let bgColor = theme.secondaryCardBg;
+                      let borderColor = darkMode ? "border-slate-500" : "border-gray-300";
                       
                       if (daysLeft <= 1) {
-                        bgColor = "bg-red-900/80";
-                        borderColor = "border-red-400";
+                        bgColor = darkMode ? "bg-red-900/80" : "bg-red-100/80";
+                        borderColor = darkMode ? "border-red-400" : "border-red-500";
                       } else if (daysLeft <= 3) {
-                        bgColor = "bg-amber-900/80";
-                        borderColor = "border-amber-400";
+                        bgColor = darkMode ? "bg-amber-900/80" : "bg-amber-100/80";
+                        borderColor = darkMode ? "border-amber-400" : "border-amber-500";
                       }
                       
                       return (
@@ -483,34 +610,34 @@ const TodoListPage = () => {
                           className={`flex-shrink-0 w-64 ${bgColor} backdrop-blur-sm border-l-4 ${borderColor} rounded-lg p-4 shadow-lg`}
                         >
                           <div className="flex justify-between items-start mb-2">
-                            <h4 className="font-bold text-white">{task.title}</h4>
+                            <h4 className={`font-bold ${theme.primaryText}`}>{task.title}</h4>
                             <button 
-                              className="text-gray-400 hover:text-red-400 transition-colors"
+                              className={`${theme.mutedText} hover:text-red-500 transition-colors`}
                               onClick={() => handleDeleteDeadlineTask(task._id)}
                             >
                               <X className="w-4 h-4" />
                             </button>
                           </div>
                           
-                          <div className="flex items-center text-sm text-amber-400 mb-2">
+                          <div className={`flex items-center text-sm ${theme.warning} mb-2`}>
                             <span>
                               {dueDate.toLocaleDateString()} {dueDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
                           
-                          <p className="text-sm text-gray-300 mb-3 line-clamp-2">{task.description}</p>
+                          <p className={`text-sm ${theme.secondaryText} mb-3 line-clamp-2`}>{task.description}</p>
                           
                           <div className="flex justify-between items-center">
                             <span className={`text-xs px-2 py-1 rounded ${
-                              daysLeft <= 1 ? 'bg-red-800/80 text-red-200' : 
-                              daysLeft <= 3 ? 'bg-amber-800/80 text-amber-200' : 
-                              'bg-slate-600/80 text-slate-300'
+                              daysLeft <= 1 ? (darkMode ? 'bg-red-800/80 text-red-200' : 'bg-red-200 text-red-800') : 
+                              daysLeft <= 3 ? (darkMode ? 'bg-amber-800/80 text-amber-200' : 'bg-amber-200 text-amber-800') : 
+                              (darkMode ? 'bg-slate-600/80 text-slate-300' : 'bg-gray-200 text-gray-700')
                             }`}>
                               {daysLeft <= 0 ? 'Due today' : `${daysLeft} day${daysLeft !== 1 ? 's' : ''} left`}
                             </span>
                             
                             <button
-                              className="text-sm text-emerald-400 hover:text-emerald-300 flex items-center transition-colors"
+                              className={`text-sm ${darkMode ? 'text-emerald-400 hover:text-emerald-300' : 'text-green-600 hover:text-green-500'} flex items-center transition-colors`}
                               onClick={() => handleCompleteDeadlineTask(task._id)}
                             >
                               <Check className="w-4 h-4 mr-1" />
@@ -521,7 +648,7 @@ const TodoListPage = () => {
                       );
                     })
                   ) : (
-                    <div className="w-full text-center py-6 text-gray-400">
+                    <div className={`w-full text-center py-6 ${theme.mutedText}`}>
                       <p>No deadline tasks. Add some to stay on schedule!</p>
                     </div>
                   )}
@@ -531,20 +658,20 @@ const TodoListPage = () => {
             
             {isLoading ? (
               <div className="flex justify-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
+                <div className={`animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 ${darkMode ? 'border-emerald-500' : 'border-blue-500'}`}></div>
               </div>
             ) : (
               <div className="space-y-6">
                 {tasks.map((task, index) => (
                   <div key={task._id || index} className="flex relative pb-8 sm:items-center">
                     <div className="h-full w-6 absolute inset-0 flex items-center justify-center">
-                      <div className="h-full w-1 bg-slate-600 pointer-events-none"></div>
+                      <div className={`h-full w-1 ${theme.timelineLine} pointer-events-none`}></div>
                     </div>
-                    <div className="flex-shrink-0 w-6 h-6 rounded-full mt-10 sm:mt-0 inline-flex items-center justify-center bg-gradient-to-r from-emerald-500 to-cyan-500 text-white relative z-10 title-font font-medium text-sm">
+                    <div className={`flex-shrink-0 w-6 h-6 rounded-full mt-10 sm:mt-0 inline-flex items-center justify-center ${theme.primaryButton} text-white relative z-10 title-font font-medium text-sm`}>
                       {index + 1}
                     </div>
                     <div className="flex-grow md:pl-8 pl-6 flex sm:items-center items-start flex-col sm:flex-row">
-                      <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-r from-emerald-100 to-cyan-100 text-emerald-600 rounded-full inline-flex items-center justify-center">
+                      <div className={`flex-shrink-0 w-16 h-16 ${darkMode ? 'bg-gradient-to-r from-emerald-100 to-cyan-100 text-emerald-600' : 'bg-gradient-to-r from-blue-100 to-purple-100 text-blue-600'} rounded-full inline-flex items-center justify-center`}>
                         {task.completed ? (
                           <Check className="w-8 h-8" />
                         ) : (
@@ -563,18 +690,18 @@ const TodoListPage = () => {
                       </div>
                       
                       <div className="flex-grow sm:pl-6 mt-6 sm:mt-0">
-                        <h2 className={`font-medium title-font mb-1 text-xl ${task.completed ? 'text-gray-500 line-through' : 'text-emerald-400'}`}>
+                        <h2 className={`font-medium title-font mb-1 text-xl ${task.completed ? `${theme.completedText} line-through` : theme.accent}`}>
                           {task.title || task.name}
                         </h2>
-                        <p className={`leading-relaxed ${task.completed ? 'text-gray-600' : 'text-gray-300'}`}>
+                        <p className={`leading-relaxed ${task.completed ? theme.completedTextSecondary : theme.secondaryText}`}>
                           {task.description}
                         </p>
                         
                         {/* Display both start and end times if available */}
                         {(task.startTime || task.endTime) && (
                           <div className="flex items-center mt-2 mb-3">
-                            <Clock className="w-4 h-4 text-amber-400 mr-2" />
-                            <span className="text-sm text-amber-400">
+                            <Clock className={`w-4 h-4 ${theme.warning} mr-2`} />
+                            <span className={`text-sm ${theme.warning}`}>
                               {task.startTime && formatTime(new Date(task.startTime).toISOString())}
                               {task.startTime && task.endTime && " - "}
                               {task.endTime && formatTime(new Date(task.endTime).toISOString())}
@@ -584,7 +711,7 @@ const TodoListPage = () => {
                         
                         <div className="mt-4 flex space-x-3">
                           <button
-                            className={`px-4 py-2 ${task.completed ? 'bg-slate-600 hover:bg-slate-500' : 'bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600'} text-white rounded-lg flex items-center transition-all duration-200`}
+                            className={`px-4 py-2 ${task.completed ? theme.secondaryButton : theme.primaryButton} text-white rounded-lg flex items-center transition-all duration-200`}
                             onClick={() => handleCompleteTask(task._id)}
                           >
                             {task.completed ? 'Undo' : 'Done'}
@@ -592,14 +719,14 @@ const TodoListPage = () => {
                           
                           <div className="flex">
                             <button
-                              className="p-2 bg-slate-600 text-slate-300 rounded-l-lg hover:bg-slate-500 transition-colors"
+                              className={`p-2 ${theme.secondaryButton} ${theme.secondaryText} rounded-l-lg transition-colors`}
                               onClick={() => handleMoveTask(index, 'up')}
                               disabled={index === 0}
                             >
                               <ArrowUp className="w-4 h-4" />
                             </button>
                             <button
-                              className="p-2 bg-slate-600 text-slate-300 rounded-r-lg hover:bg-slate-500 transition-colors"
+                              className={`p-2 ${theme.secondaryButton} ${theme.secondaryText} rounded-r-lg transition-colors`}
                               onClick={() => handleMoveTask(index, 'down')}
                               disabled={index === tasks.length - 1}
                             >
@@ -608,7 +735,7 @@ const TodoListPage = () => {
                           </div>
                           
                           <button
-                            className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                            className={`p-2 ${theme.dangerButton} text-white rounded-lg transition-colors`}
                             onClick={() => handleDeleteTask(task._id)}
                           >
                             <Trash className="w-4 h-4" />
@@ -620,38 +747,38 @@ const TodoListPage = () => {
                 ))}
                 
                 {tasks.length === 0 && (
-                  <div className="text-center py-12 text-gray-400">
+                  <div className={`text-center py-12 ${theme.mutedText}`}>
                     <p>No tasks yet. Add some tasks to get started!</p>
                   </div>
                 )}
                 
-                {/* Add new task form with improved colors */}
-                <div className="mt-8 bg-slate-700/80 backdrop-blur-sm p-6 rounded-lg border border-slate-600/50">
-                  <h3 className="text-lg font-medium text-emerald-400 mb-4">Add New Task</h3>
+                {/* Add new task form */}
+                <div className={`mt-8 ${theme.secondaryCardBg} backdrop-blur-sm p-6 rounded-lg ${theme.secondaryBorder} border`}>
+                  <h3 className={`text-lg font-medium ${theme.accent} mb-4`}>Add New Task</h3>
                   <div className="space-y-4">
                     <input
                       type="text"
                       placeholder="Task name"
-                      className="w-full px-4 py-2 bg-slate-600/80 text-white rounded-lg border border-slate-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-400"
+                      className={`w-full px-4 py-2 ${theme.inputBg} ${theme.inputText} rounded-lg ${theme.inputBorder} border focus:outline-none focus:ring-2 ${theme.focusRing} ${theme.inputPlaceholder}`}
                       value={newTaskName}
                       onChange={(e) => setNewTaskName(e.target.value)}
                     />
                     <textarea
                       placeholder="Task description"
-                      className="w-full px-4 py-2 bg-slate-600/80 text-white rounded-lg border border-slate-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-400"
+                      className={`w-full px-4 py-2 ${theme.inputBg} ${theme.inputText} rounded-lg ${theme.inputBorder} border focus:outline-none focus:ring-2 ${theme.focusRing} ${theme.inputPlaceholder}`}
                       value={newTaskDescription}
                       onChange={(e) => setNewTaskDescription(e.target.value)}
                       rows="2"
                     />
 
-                    {/* Time selection with improved styling */}
+                    {/* Time selection */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="relative">
-                        <label className="block text-gray-300 text-sm mb-1">Start Time</label>
+                        <label className={`block ${theme.secondaryText} text-sm mb-1`}>Start Time</label>
                         <div className="relative">
                           <input
                             type="time"
-                            className="w-full px-4 py-2 bg-slate-600/80 text-white rounded-lg border border-slate-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-400"
+                            className={`w-full px-4 py-2 ${theme.inputBg} ${theme.inputText} rounded-lg ${theme.inputBorder} border focus:outline-none focus:ring-2 ${theme.focusRing}`}
                             value={newTaskStartTime}
                             onChange={(e) => setNewTaskStartTime(e.target.value)}
                           />
@@ -659,11 +786,11 @@ const TodoListPage = () => {
                       </div>
                       
                       <div className="relative">
-                        <label className="block text-gray-300 text-sm mb-1">End Time</label>
+                        <label className={`block ${theme.secondaryText} text-sm mb-1`}>End Time</label>
                         <div className="relative">
                           <input
                             type="time"
-                            className="w-full px-4 py-2 bg-slate-600/80 text-white rounded-lg border border-slate-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-400"
+                            className={`w-full px-4 py-2 ${theme.inputBg} ${theme.inputText} rounded-lg ${theme.inputBorder} border focus:outline-none focus:ring-2 ${theme.focusRing}`}
                             value={newTaskEndTime}
                             onChange={(e) => setNewTaskEndTime(e.target.value)}
                           />
@@ -672,7 +799,7 @@ const TodoListPage = () => {
                     </div>
                     
                     <button
-                      className="w-full px-4 py-3 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white rounded-lg flex items-center justify-center transition-all duration-200 shadow-lg"
+                      className={`w-full px-4 py-3 ${theme.primaryButton} text-white rounded-lg flex items-center justify-center transition-all duration-200 shadow-lg`}
                       onClick={handleAddTask}
                     >
                       <Plus className="w-5 h-5 mr-2" />
@@ -684,36 +811,36 @@ const TodoListPage = () => {
             )}
           </div>
           
-          {/* Right panel - AI insights and streaks with improved colors */}
+          {/* Right panel - AI insights and streaks */}
           <div className="w-full md:w-1/3 space-y-8">
             {/* Streaks section */}
-            <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-6 border border-slate-700/50">
-              <h2 className="text-xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent mb-4">Activity Streaks</h2>
-              <div className="bg-slate-700/80 backdrop-blur-sm rounded-lg p-4 border border-slate-600/50">
+            <div className={`${theme.cardBg} backdrop-blur-sm rounded-lg p-6 ${theme.border} border`}>
+              <h2 className={`text-xl font-bold ${darkMode ? 'bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent' : theme.accent} mb-4`}>Activity Streaks</h2>
+              <div className={`${theme.secondaryCardBg} backdrop-blur-sm rounded-lg p-4 ${theme.secondaryBorder} border`}>
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-white">Current Streak</span>
-                  <span className="text-emerald-400 font-bold">{currentStreak} days</span>
+                  <span className={theme.primaryText}>Current Streak</span>
+                  <span className={`${darkMode ? 'text-emerald-400' : 'text-green-600'} font-bold`}>{currentStreak} days</span>
                 </div>
-                <div className="w-full bg-slate-600 rounded-full h-2.5">
+                <div className={`w-full ${theme.progressBar} rounded-full h-2.5`}>
                   <div 
-                    className="bg-gradient-to-r from-emerald-500 to-cyan-500 h-2.5 rounded-full transition-all duration-300" 
+                    className={`${darkMode ? 'bg-gradient-to-r from-emerald-500 to-cyan-500' : 'bg-gradient-to-r from-green-500 to-blue-500'} h-2.5 rounded-full transition-all duration-300`} 
                     style={{ width: `${Math.min(100, (currentStreak / (maxStreak || 1)) * 100)}%` }}
                   ></div>
                 </div>
                 
                 <div className="flex justify-between items-center mt-6 mb-2">
-                  <span className="text-white">Max Streak</span>
-                  <span className="text-purple-400 font-bold">{maxStreak} days</span>
+                  <span className={theme.primaryText}>Max Streak</span>
+                  <span className={`${theme.accentSecondary} font-bold`}>{maxStreak} days</span>
                 </div>
-                <div className="w-full bg-slate-600 rounded-full h-2.5">
+                <div className={`w-full ${theme.progressBar} rounded-full h-2.5`}>
                   <div 
-                    className="bg-gradient-to-r from-purple-500 to-blue-500 h-2.5 rounded-full" 
+                    className={`${darkMode ? 'bg-gradient-to-r from-purple-500 to-blue-500' : 'bg-gradient-to-r from-purple-500 to-pink-500'} h-2.5 rounded-full`} 
                     style={{ width: '100%' }}
                   ></div>
                 </div>
                 
                 <div className="mt-6 text-center">
-                  <p className="text-gray-300 text-sm">
+                  <p className={`${theme.secondaryText} text-sm`}>
                     {currentStreak === 0 
                       ? "Complete all tasks today to start your streak!" 
                       : `Keep going! You're on a ${currentStreak} day streak!`}
@@ -722,12 +849,12 @@ const TodoListPage = () => {
               </div>
             </div>
             
-            {/* AI Insights section with improved colors */}
-            <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-6 border border-slate-700/50">
+            {/* AI Insights section */}
+            <div className={`${theme.cardBg} backdrop-blur-sm rounded-lg p-6 ${theme.border} border`}>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">AI Insights</h2>
+                <h2 className={`text-xl font-bold ${darkMode ? 'bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent' : theme.accent}`}>AI Insights</h2>
                 <button 
-                  className="text-sm text-emerald-400 hover:text-emerald-300 flex items-center transition-colors"
+                  className={`text-sm ${darkMode ? 'text-emerald-400 hover:text-emerald-300' : 'text-blue-600 hover:text-blue-500'} flex items-center transition-colors`}
                   onClick={fetchAiInsights}
                 >
                   <span>Refresh</span>
@@ -739,27 +866,27 @@ const TodoListPage = () => {
               
               <div className="space-y-4">
                 {aiInsights.map((insight) => (
-                  <div key={insight.id} className="bg-slate-700/80 backdrop-blur-sm rounded-lg p-4 border border-slate-600/50">
+                  <div key={insight.id} className={`${theme.secondaryCardBg} backdrop-blur-sm rounded-lg p-4 ${theme.secondaryBorder} border`}>
                     <div className="flex items-start mb-2">
-                      <Lightbulb className="w-5 h-5 text-amber-400 mr-2 flex-shrink-0 mt-1" />
-                      <h3 className="text-white font-medium">{insight.title}</h3>
+                      <Lightbulb className={`w-5 h-5 ${theme.warning} mr-2 flex-shrink-0 mt-1`} />
+                      <h3 className={`${theme.primaryText} font-medium`}>{insight.title}</h3>
                     </div>
-                    <p className="text-gray-300 text-sm mb-4">{insight.description}</p>
+                    <p className={`${theme.secondaryText} text-sm mb-4`}>{insight.description}</p>
                     
                     {insight.recommendedTasks && (
                       <div className="mt-3">
-                        <h4 className="text-emerald-400 text-sm font-medium mb-2">Recommended Task List:</h4>
-                        <ul className="text-gray-300 text-sm mb-4 space-y-2">
+                        <h4 className={`${darkMode ? 'text-emerald-400' : 'text-green-600'} text-sm font-medium mb-2`}>Recommended Task List:</h4>
+                        <ul className={`${theme.secondaryText} text-sm mb-4 space-y-2`}>
                           {insight.recommendedTasks.map((task, i) => (
                             <li key={i} className="flex items-center">
-                              <ChevronRight className="w-4 h-4 text-emerald-400 mr-2" />
+                              <ChevronRight className={`w-4 h-4 ${darkMode ? 'text-emerald-400' : 'text-green-600'} mr-2`} />
                               {task}
                             </li>
                           ))}
                         </ul>
                         
                         <button
-                          className="w-full px-4 py-2 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white rounded-lg flex items-center justify-center transition-all duration-200 shadow-lg"
+                          className={`w-full px-4 py-2 ${theme.primaryButton} text-white rounded-lg flex items-center justify-center transition-all duration-200 shadow-lg`}
                           onClick={() => adoptAiRecommendation(insight.id)}
                         >
                           <Save className="w-4 h-4 mr-2" />
@@ -771,7 +898,7 @@ const TodoListPage = () => {
                 ))}
                 
                 {aiInsights.length === 0 && (
-                  <div className="text-center py-6 text-gray-400">
+                  <div className={`text-center py-6 ${theme.mutedText}`}>
                     <p>Add more tasks to get personalized AI insights!</p>
                   </div>
                 )}

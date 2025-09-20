@@ -15,6 +15,7 @@ import ApiResponse from "../utils/API_Response.js";
 import jwt from "jsonwebtoken";
 import { Session } from "../models/session.model.js";
 import Tesseract from 'tesseract.js';
+import axios from "axios";
 import { getDistrictAndState } from "../utils/getDistrict.js";
 
 const additionalActivities = [
@@ -157,6 +158,39 @@ const generateAccessAndRefreshTokens = async (userId) => {
   }
 };
 
+/**
+ * Reverse-geocodes latitude & longitude into district and state.
+ * @param {number} lat - Latitude
+ * @param {number} lng - Longitude
+ * @returns {Promise<{district: string | null, state: string | null}>}
+ */
+export const getDistrictFromCoords = async (lat, lng) => {
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`;
+    
+    const response = await axios.get(url, {
+      headers: {
+        "User-Agent": "YourAppName/1.0 (your-email@example.com)", // required by Nominatim TOS
+      },
+    });
+
+    if (!response.data || !response.data.address) {
+      console.warn("No address found for given coordinates.");
+      return { district: null, state: null };
+    }
+
+    const address = response.data.address;
+    const district =
+      address.county || address.city_district || address.suburb || null;
+    const state = address.state || null;
+
+    return { district, state };
+  } catch (error) {
+    console.error("Error fetching district/state from coords:", error.message);
+    return { district: null, state: null };
+  }
+};
+
 const registerUser = asyncHandler(async (req, res) => {
   try {
       const { fullName, email, username, password, gender, age, location } = req.body;
@@ -197,6 +231,7 @@ const registerUser = asyncHandler(async (req, res) => {
     let state = null;
     try {
       ({ district, state } = await getDistrictFromCoords(lat, lng) || {});
+      console.log(`Geocoded location: District - ${district}, State - ${state}`);
     } catch (geocodeError) {
       console.error("Geocoding failed:", geocodeError);
     }

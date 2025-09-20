@@ -1,7 +1,6 @@
 // Send activity recommendations directly to the frontend
 export const getRecommendations = async (req, res) => {
   try {
-    // Simulated ML-generated recommendations (replace with actual ML logic as needed)
     const recommendations = [
       { title: "Yoga for Beginners", type: "Exercise", content: "Start your day with simple yoga poses." },
       { title: "Mindfulness Meditation", type: "Mental Health", content: "Relax and focus with guided meditations." },

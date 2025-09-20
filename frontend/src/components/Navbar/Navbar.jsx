@@ -33,10 +33,6 @@ const Navbar = memo(({ onStoryClick }) => {
     }
   }, []);
 
-  const handleBotClick = useCallback(() => {
-    window.location.href = '/Chatbot';
-  }, []);
-
   const toggleMenu = useCallback(() => {
     setMenuOpen(prev => !prev);
   }, []);

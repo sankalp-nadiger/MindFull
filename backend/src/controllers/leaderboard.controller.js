@@ -8,17 +8,17 @@ const getGlobalLeaderboard = asyncHandler(async (req, res) => {
     const { limit = 50, page = 1 } = req.query;
     
     const users = await User.find({})
-        .select('username fullName avatar streak gender district state lastLoginDate')
-        .sort({ streak: -1 }) // Sort by streak (you can change this to points if you add a points field)
+        .select('username fullName avatar maxStreak gender district state lastLoginDate')
+        .sort({ maxStreak: -1 }) // Sort by maxStreak in descending order
         .limit(parseInt(limit))
         .skip((parseInt(page) - 1) * parseInt(limit))
         .lean();
 
-    // Calculate points based on streak (you can modify this logic)
+    // Calculate points based on maxStreak (consistent calculation)
     const rankedUsers = users.map((user, index) => ({
         ...user,
         rank: index + 1,
-        points: user.streak * 15 + Math.floor(Math.random() * 100), // Example point calculation
+        points: user.maxStreak * 10, // Simplified point calculation - no random
         lastActive: user.lastLoginDate ? getTimeAgo(user.lastLoginDate) : 'Unknown'
     }));
 
@@ -37,16 +37,16 @@ const getDistrictLeaderboard = asyncHandler(async (req, res) => {
     }
 
     const users = await User.find(matchQuery)
-        .select('username fullName avatar streak gender district state lastLoginDate')
-        .sort({ streak: -1 })
+        .select('username fullName avatar maxStreak gender district state lastLoginDate')
+        .sort({ maxStreak: -1 })
         .limit(parseInt(limit))
         .lean();
 
-    // Calculate points and ranking
+    // Calculate points and ranking (consistent with global)
     const rankedUsers = users.map((user, index) => ({
         ...user,
         rank: index + 1,
-        points: user.streak * 15 + Math.floor(Math.random() * 100),
+        points: user.maxStreak * 10, // Consistent point calculation
         lastActive: user.lastLoginDate ? getTimeAgo(user.lastLoginDate) : 'Unknown'
     }));
 
@@ -60,21 +60,24 @@ const getDistrictStats = asyncHandler(async (req, res) => {
     const districtStats = await User.aggregate([
         {
             $match: {
-                district: { $exists: true, $ne: null }
+                district: { $exists: true, $ne: null, $ne: "" }
             }
         },
         {
             $group: {
                 _id: "$district",
                 userCount: { $sum: 1 },
-                totalStreak: { $sum: "$streak" },
-                avgStreak: { $avg: "$streak" },
-                maxStreak: { $max: "$streak" },
+                totalmaxStreak: { $sum: "$maxStreak" },
+                avgmaxStreak: { $avg: "$maxStreak" },
+                maxmaxStreak: { $max: "$maxStreak" },
                 users: {
                     $push: {
+                        _id: "$_id",
                         username: "$username",
+                        fullName: "$fullName",
                         avatar: "$avatar",
-                        streak: "$streak",
+                        maxStreak: "$maxStreak",
+                        gender: "$gender",
                         lastLoginDate: "$lastLoginDate"
                     }
                 }
@@ -84,15 +87,15 @@ const getDistrictStats = asyncHandler(async (req, res) => {
             $project: {
                 name: "$_id",
                 userCount: 1,
-                totalPoints: { $multiply: ["$totalStreak", 15] }, // Calculate total points
-                avgPoints: { $multiply: ["$avgStreak", 15] },
-                maxStreak: 1,
+                totalPoints: { $multiply: ["$totalmaxStreak", 10] }, // Consistent multiplier
+                avgPoints: { $multiply: ["$avgmaxStreak", 10] },
+                maxmaxStreak: 1,
                 topUsers: {
                     $slice: [
                         {
                             $sortArray: {
                                 input: "$users",
-                                sortBy: { streak: -1 }
+                                sortBy: { maxStreak: -1 }
                             }
                         },
                         5
@@ -111,7 +114,7 @@ const getDistrictStats = asyncHandler(async (req, res) => {
         rank: index + 1,
         topUsers: district.topUsers.map((user, userIndex) => ({
             ...user,
-            points: user.streak * 15,
+            points: user.maxStreak * 10, // Consistent calculation
             rank: userIndex + 1,
             lastActive: user.lastLoginDate ? getTimeAgo(user.lastLoginDate) : 'Unknown'
         }))
@@ -125,10 +128,10 @@ const getDistrictStats = asyncHandler(async (req, res) => {
 // Get user's leaderboard position
 const getUserPosition = asyncHandler(async (req, res) => {
     const userId = req.user._id;
-
+    
     // Get user's current data
     const user = await User.findById(userId)
-        .select('username fullName avatar streak gender district state lastLoginDate')
+        .select('username fullName avatar maxStreak gender district state lastLoginDate maxmaxStreak')
         .lean();
 
     if (!user) {
@@ -137,7 +140,7 @@ const getUserPosition = asyncHandler(async (req, res) => {
 
     // Calculate user's global rank
     const usersAhead = await User.countDocuments({
-        streak: { $gt: user.streak }
+        maxStreak: { $gt: user.maxStreak }
     });
 
     // Calculate user's district rank if district exists
@@ -145,35 +148,35 @@ const getUserPosition = asyncHandler(async (req, res) => {
     if (user.district) {
         const usersAheadInDistrict = await User.countDocuments({
             district: user.district,
-            streak: { $gt: user.streak }
+            maxStreak: { $gt: user.maxStreak }
         });
         districtRank = usersAheadInDistrict + 1;
     }
 
     // Get user above and below for motivation
     const userAbove = await User.findOne({
-        streak: { $gt: user.streak }
+        maxStreak: { $gt: user.maxStreak }
     })
-    .select('username streak')
-    .sort({ streak: 1 })
+    .select('username maxStreak')
+    .sort({ maxStreak: 1 })
     .lean();
 
     const userBelow = await User.findOne({
-        streak: { $lt: user.streak }
+        maxStreak: { $lt: user.maxStreak }
     })
-    .select('username streak')
-    .sort({ streak: -1 })
+    .select('username maxStreak')
+    .sort({ maxStreak: -1 })
     .lean();
 
     const userPosition = {
         ...user,
         globalRank: usersAhead + 1,
         districtRank,
-        points: user.streak * 15,
+        points: user.maxStreak * 10, // Consistent calculation
         lastActive: user.lastLoginDate ? getTimeAgo(user.lastLoginDate) : 'now',
         userAbove,
         userBelow,
-        pointsToNextRank: userAbove ? (userAbove.streak - user.streak) * 15 : 0
+        pointsToNextRank: userAbove ? (userAbove.maxStreak - user.maxStreak) * 10 : 0
     };
 
     return res.status(200).json(
@@ -186,23 +189,43 @@ const getTopPerformers = asyncHandler(async (req, res) => {
     const { limit = 10 } = req.query;
 
     const topUsers = await User.find({})
-        .select('username fullName avatar streak gender district state lastLoginDate maxStreak')
-        .sort({ streak: -1 })
+        .select('username fullName avatar maxStreak gender district state lastLoginDate')
+        .sort({ maxStreak: -1 })
         .limit(parseInt(limit))
         .lean();
 
     const enhancedUsers = topUsers.map((user, index) => ({
-        ...user,
-        rank: index + 1,
-        points: user.streak * 15,
-        lastActive: user.lastLoginDate ? getTimeAgo(user.lastLoginDate) : 'Unknown',
-        badges: generateBadges(user)
-    }));
+    ...user,
+    rank: index + 1,
+    points: user.maxStreak * 10,
+    currentStreak: calculateCurrentStreak(user.lastLoginDate), // Current streak
+    maxStreak: user.maxStreak || 0,  // Best streak ever
+    lastActive: user.lastLoginDate ? getTimeAgo(user.lastLoginDate) : 'Unknown',
+    badges: generateBadges(user)
+}));
 
     return res.status(200).json(
         new ApiResponse(200, enhancedUsers, "Top performers fetched successfully")
     );
 });
+
+// Helper function to calculate current streak
+const calculateCurrentStreak = (lastLoginDate) => {
+    if (!lastLoginDate) return 0;
+    
+    const now = new Date();
+    const lastLogin = new Date(lastLoginDate);
+    const diffInDays = Math.floor((now - lastLogin) / (1000 * 60 * 60 * 24));
+    
+    // If logged in today or yesterday, streak continues
+    if (diffInDays <= 1) {
+        // You'll need additional logic here based on your app's streak rules
+        // This is a simplified version - you might need to query user's activity history
+        return Math.min(diffInDays === 0 ? 1 : 0, 1); // Placeholder logic
+    }
+    
+    return 0; // Streak broken
+};
 
 // Helper function to calculate time ago
 const getTimeAgo = (date) => {
@@ -219,13 +242,13 @@ const getTimeAgo = (date) => {
 const generateBadges = (user) => {
     const badges = [];
     
-    if (user.streak >= 30) {
+    if (user.maxStreak >= 30) {
         badges.push({ type: 'fire', name: 'Fire Streak', color: 'orange' });
     }
-    if (user.streak * 15 >= 1000) {
+    if (user.maxStreak * 10 >= 1000) { // Updated to use consistent calculation
         badges.push({ type: 'star', name: 'High Achiever', color: 'yellow' });
     }
-    if (user.streak >= 7) {
+    if (user.maxStreak >= 7) {
         badges.push({ type: 'target', name: 'Weekly Warrior', color: 'green' });
     }
     if (user.maxStreak && user.maxStreak >= 50) {
