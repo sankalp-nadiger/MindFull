@@ -90,7 +90,7 @@ const Layout = ({ children, onViewCaseHistory }) => {
             
             <div className="flex-1 flex justify-center px-2 sm:px-4">
               <div className="text-center">
-                <h1 className="text-sm sm:text-xl font-bold text-gray-900">MindCare Pro</h1>
+                <h1 className="text-sm sm:text-xl font-bold text-gray-900">SoulCare Pro</h1>
                 <p className="text-xs sm:text-sm text-gray-500 text-center hidden sm:block">Counsellor Dashboard</p>
               </div>
             </div>
@@ -153,15 +153,6 @@ const Layout = ({ children, onViewCaseHistory }) => {
         w-64 lg:w-auto
       `}>
         <div className="bg-white rounded-none lg:rounded-xl shadow-sm border border-gray-200 p-6 lg:sticky lg:top-8 h-full lg:h-auto overflow-y-auto">
-         
-          <div className="lg:hidden flex justify-end mb-4">
-            <button
-              onClick={() => setIsOpen(false)}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
 
           <nav className="space-y-2">
             <NavigationItem

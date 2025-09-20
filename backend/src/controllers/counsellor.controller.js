@@ -1,3 +1,17 @@
+import asyncHandler from "../utils/asynchandler.utils.js";
+import {ApiError} from "../utils/API_Error.js";
+import ApiResponse from "../utils/API_Response.js";
+import { Counsellor } from "../models/counsellor.model.js";
+import { User } from "../models/user.model.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { Session } from "../models/session.model.js";
+import { verifyOTP } from "./parent.controller.js";
+import app from "../app.js"
+import {server,io} from "../index.js"
+import nodemailer from "nodemailer";
+import { OTP } from "../models/otp.model.js";
+import Notification from "../models/notification.model.js";
+
 // Route to check if user is in a sitting series
 export const checkSittingSeries = asyncHandler(async (req, res) => {
     const { userId } = req.query;
@@ -13,18 +27,6 @@ export const checkSittingSeries = asyncHandler(async (req, res) => {
         sittingNotes: user.sittingNotes
     });
 });
-import asyncHandler from "../utils/asynchandler.utils.js";
-import {ApiError} from "../utils/API_Error.js";
-import ApiResponse from "../utils/API_Response.js";
-import { Counsellor } from "../models/counsellor.model.js";
-import { User } from "../models/user.model.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
-import { Session } from "../models/session.model.js";
-import { verifyOTP } from "./parent.controller.js";
-import app from "../app.js"
-import {server,io} from "../index.js"
-import nodemailer from "nodemailer";
-import { OTP } from "../models/otp.model.js";
 
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
@@ -91,6 +93,19 @@ export const requestSession = asyncHandler(async (req, res) => {
         status: "Pending"
     });
     io.emit(`sessionRequested`, { sessionId: session._id, issueDetails, userId: user.username, timestamp: new Date().toISOString() });
+    const counselors = await Counsellor.find({}, "_id");
+    await Promise.all(
+      counselors.map(counselor =>
+        Notification.create({
+          counselor: counselor._id,
+          type: "session_request",
+          title: `New Session Request from ${req.user.fullName || "Student"}`,
+          message: `A new session has been requested.`,
+          unread: true,
+          relatedId: session._id,
+        })
+      )
+    );
     res.status(201).json({
         success: true,
         message: "Session requested successfully",
@@ -520,6 +535,21 @@ export const logoutCounsellor = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, {}, "User logged out"));
 });
 
+// Controller to get notifications for a counselor
+export const getCounsellorNotifications = async (req, res) => {
+  try {
+    const counselorId = req.counsellor._id;
+    const notifications = await Notification.find({ counselor: counselorId })
+      .sort({ createdAt: -1 });
+
+    // Always return an array
+    res.status(200).json(Array.isArray(notifications) ? notifications : []);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Failed to fetch notifications" });
+  }
+};
+
 export const updateFeedback = asyncHandler(async (req, res) => {
     const counsellorId = req.counsellor._id;
     const { feedback, sessionId } = req.body;
@@ -729,4 +759,83 @@ export const getCounselorProfile = asyncHandler(async (req, res) => {
     });
 });
 
+// Mark a single notification as read
+export const markNotificationAsRead = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const notification = await Notification.findByIdAndUpdate(
+      id,
+      { unread: false },
+      { new: true }
+    );
 
+    if (!notification) {
+      return res.status(404).json({ message: "Notification not found" });
+    }
+
+    res.status(200).json({ message: "Notification marked as read", notification });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to mark notification as read" });
+  }
+};
+
+// Mark all notifications as read for a counselor
+export const markAllNotificationsAsRead = async (req, res) => {
+  try {
+    const counselorId = req.counselor._id; // from JWT middleware
+    await Notification.updateMany(
+      { counselor: counselorId, unread: true },
+      { unread: false }
+    );
+
+    res.status(200).json({ message: "All notifications marked as read" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to mark all notifications as read" });
+  }
+};
+
+// Accept a session/appointment request
+export const acceptNotificationRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const notification = await Notification.findById(id);
+    if (!notification) {
+      return res.status(404).json({ message: "Notification not found" });
+    }
+
+    notification.unread = false;
+    notification.accepted = true;
+    notification.rejected = false;
+    await notification.save();
+
+    res.status(200).json({ message: "Request accepted", notification });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to accept request" });
+  }
+};
+
+// Reject a session/appointment request
+export const rejectNotificationRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const notification = await Notification.findById(id);
+    if (!notification) {
+      return res.status(404).json({ message: "Notification not found" });
+    }
+
+    notification.unread = false;
+    notification.accepted = false;
+    notification.rejected = true;
+    await notification.save();
+
+    res.status(200).json({ message: "Request rejected", notification });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to reject request" });
+  }
+};

@@ -1,32 +1,16 @@
-import mongoose, {Schema} from "mongoose";
+import mongoose from 'mongoose';
 
-const notificationSchema= new Schema({
-    message:
-    [{
-        type: String,
-        required: true
-    }],
-    user:
-    {
-        type: Schema.Types.ObjectId,
-        ref:"User",
-        required: true
-    },
-    relatedInterest:
-    {
-        type: Schema.Types.ObjectId,
-        ref: "Interest"
-    },
-    type:
-    {
-        type: String, enum: ['chat', 'update'],
-        required: true,
-    },
-    event:
-    {
-        type: Schema.Types.ObjectId,
-        ref: "Event"
-    },
-},{timestamps: true})
+const NotificationSchema = new mongoose.Schema({
+  counselor: { type: mongoose.Schema.Types.ObjectId, ref: 'Counselor', required: true },
+  title: String,
+  message: String,
+  type: String, // 'session_request', 'appointment', 'feedback', etc.
+  unread: { type: Boolean, default: true },
+  accepted: { type: Boolean, default: false },
+  rejected: { type: Boolean, default: false },
+  relatedId: { type: mongoose.Schema.Types.ObjectId, refPath: 'type' }, // optional
+  createdAt: { type: Date, default: Date.now }
+});
 
-export const Notification= mongoose.model("Notification", notificationSchema);
+const Notification = mongoose.model('Notification', NotificationSchema);
+export default Notification;

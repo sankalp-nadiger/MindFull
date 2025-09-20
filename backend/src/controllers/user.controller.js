@@ -1,6 +1,6 @@
 import { createAndPushNotification } from "../services/eventupdate.js";
 import {Event} from '../models/event.model.js';
-import {Notification} from '../models/notification.model.js';
+import Notification from '../models/notification.model.js';
 import asyncHandler from "../utils/asynchandler.utils.js";
 import {ApiError} from "../utils/API_Error.js";
 import { User } from "../models/user.model.js";

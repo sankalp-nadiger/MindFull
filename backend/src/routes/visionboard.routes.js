@@ -9,6 +9,7 @@ import {
   getAISuggestedQuote
 } from "../controllers/visionBoard.controller.js";
 import { upload } from "../middleware/multer.middleware.js";
+import { get } from "mongoose";
 
 const router = express.Router();
 
@@ -17,11 +18,7 @@ router.get("/:userId", getUserVisionBoards); // Get all boards for a user
 router.get("/board/:boardId", getVisionBoardById); // Get a single board
 router.put("/update/:boardId", updateVisionBoard); // Update Vision Board
 router.delete("/delete/:boardId", deleteVisionBoard); // Delete Vision Board
-router.post("/ai-image", async (req, res) => {
-  const { category } = req.body;
-  const image = await getAISuggestedImage(category);
-  res.json({ image });
-});
+router.post("/ai-image", getAISuggestedImage);
 
 router.post("/ai-quote", async (req, res) => {
   const { category } = req.body;

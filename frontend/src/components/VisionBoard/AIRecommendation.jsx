@@ -146,21 +146,20 @@ const AIRecommendation = ({ userId, fetchVisionBoards, darkMode }) => {
             <h4 className={`font-medium ${themeClasses.text}`}>AI Suggestions:</h4>
             
             {suggestedImage && (
-              <div className="space-y-2">
-                <p className={`text-sm font-medium ${themeClasses.textSecondary}`}>Generated Image:</p>
-                <div className={`rounded-md overflow-hidden border ${
-                  darkMode ? 'border-slate-600' : 'border-gray-200'
-                }`}>
-                  <img 
-                    src={suggestedImage} 
-                    alt="AI Generated Suggestion" 
-                    className={`w-full max-w-md mx-auto shadow-sm ${
-                      darkMode ? 'bg-slate-700' : 'bg-white'
-                    }`}
-                  />
-                </div>
-              </div>
-            )}
+  <div className="space-y-2">
+    <p className={`text-sm font-medium ${themeClasses.textSecondary}`}>Generated Image:</p>
+    <div className={`rounded-md overflow-hidden border ${darkMode ? 'border-slate-600' : 'border-gray-200'}`}>
+      <img
+        src={suggestedImage}
+        alt="AI Generated Suggestion"
+        className={`w-full max-w-md mx-auto shadow-sm ${darkMode ? 'bg-slate-700' : 'bg-white'}`}
+        loading="lazy"
+        onError={(e) => (e.currentTarget.style.display = "none")} // hide broken images
+      />
+    </div>
+  </div>
+)}
+
             
             {suggestedQuote && (
               <div className="space-y-2">

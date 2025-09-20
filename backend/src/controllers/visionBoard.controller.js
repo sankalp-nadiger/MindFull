@@ -100,24 +100,23 @@ export const deleteVisionBoard = async (req, res) => {
 };
 
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models";
-export const getAISuggestedImage = async (category) => {
+export const getAISuggestedImage = async (req, res) => {
   try {
-    const response = await axios.post(
-      `${GEMINI_API_URL}/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        contents: [{ parts: [{ text: `Generate a motivational image related to ${category}. It is for a mental wellness platform vision board feature` }] }]
-      }
-    );
+    const { category } = req.body;
 
-    const imageData = response.data.candidates[0]?.content?.parts[0]?.inlineData;
-    if (imageData) {
-      return `data:image/png;base64,${imageData.data}`;
+    if (!category) {
+      return res.status(400).json({ success: false, message: "Category is required" });
     }
 
-    throw new Error("No image generated.");
+    // Generate Pollinations image URL
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(
+      `motivational image, ${category}, aesthetic, mental wellness theme, hd, digital art`
+    )}`;
+
+    return res.status(200).json({ success: true, imageUrl });
   } catch (error) {
-    console.error("Error fetching AI image:", error.response?.data || error.message);
-    return null;
+    console.error("AI Image Generation Error:", error);
+    return res.status(500).json({ success: false, message: "Failed to generate image" });
   }
 };
 
@@ -127,7 +126,7 @@ export const getAISuggestedImage = async (category) => {
 export const getAISuggestedQuote = async (category) => {
   try {
     const response = await axios.post(
-      `${GEMINI_API_URL}/gemini-1.5-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `${GEMINI_API_URL}/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         contents: [
           {
