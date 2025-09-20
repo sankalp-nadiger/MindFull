@@ -116,7 +116,7 @@ export default function HeroSection() {
           <header className="flex items-center justify-between px-4 py-6  bg-white dark:bg-gray-900 transition-colors duration-300">
             <div className="flex items-center space-x-4">
               <img
-                src="/plant.png"
+                src="/1a.png"
                 className="w-auto lg:h-16 h-10"
                 alt="Logo"
               />

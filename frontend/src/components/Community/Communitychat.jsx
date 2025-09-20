@@ -320,6 +320,13 @@ const CommunityChat = () => {
       </style>
       <Navbar />
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-x-hidden w-full">
+        {/* Fixed watermark logo - always centered and visible */}
+      <div 
+        className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-center bg-no-repeat bg-contain opacity-[0.06] pointer-events-none z-0"
+        style={{
+          backgroundImage: `url('1a.png')`,
+        }}
+      />
         <div className="max-w-7xl mx-auto px-4 py-8 overflow-x-hidden">
           {/* Header Section */}
           <div className="text-center mb-8">
@@ -485,6 +492,7 @@ const CommunityChat = () => {
 
     return (
       <React.Fragment key={idx}>
+        
         {/* Date Separator */}
         {showDateSeparator && (
           <div className="flex justify-center mb-6 mt-4">

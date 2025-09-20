@@ -998,7 +998,7 @@ const VideoChat = () => {
             
             <div className="text-center">
               <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-                MindfulCare
+                SoulCare
               </h1>
               <p className="text-sm text-slate-400">Professional Video Counseling</p>
             </div>
