@@ -223,7 +223,7 @@ export function HeroHighlightDemo() {
               Welcome to Your Music World
             </h1>
             <p className="text-lg text-white md:text-xl">
-              Dive into a world of soothing melodies and rhythmic beats. Explore our mindfull library of music and let the tunes play on.
+              Dive into a world of soothing melodies and rhythmic beats. Explore our Soulynk library of music and let the tunes play on.
             </p>
             <button
               onClick={handleclick}

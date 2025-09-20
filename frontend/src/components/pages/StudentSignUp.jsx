@@ -175,7 +175,7 @@ const StudentSignUp = () => {
               />
                   </div>
                 </div>
-                <span className="ml-3 text-green-900 text-3xl font-bold tracking-wide">MindFull</span>
+                <span className="ml-3 text-green-900 text-3xl font-bold tracking-wide">Soulynk</span>
               </div>
               
               <h1 className="text-4xl lg:text-5xl font-bold text-primarygreen mb-6 leading-tight">

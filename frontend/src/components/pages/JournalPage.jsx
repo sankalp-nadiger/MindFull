@@ -261,7 +261,7 @@ const JournalApp = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-green-400/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm"></div>
             </div>
             <span className="ml-3 text-2xl bg-gradient-to-r from-blue-400 via-teal-400 to-green-400 bg-clip-text text-transparent font-bold tracking-wide">
-              MindFull
+              Soulynk
             </span>
           </a>
         </div>

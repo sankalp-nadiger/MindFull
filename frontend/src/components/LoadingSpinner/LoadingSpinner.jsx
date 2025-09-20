@@ -6,7 +6,7 @@ const LoadingSpinner = () => {
         <div className="mb-8">
           <img 
             src="/plant.png" 
-            alt="MindFull" 
+            alt="Soulynk" 
             className="w-24 h-24 mx-auto animate-bounce"
           />
         </div>
@@ -18,7 +18,7 @@ const LoadingSpinner = () => {
         </div>
         
         {/* Loading Text */}
-        <h2 className="mb-2 text-2xl font-bold text-white">MindFull</h2>
+        <h2 className="mb-2 text-2xl font-bold text-white">Soulynk</h2>
         <p className="text-purple-300 animate-pulse">Loading your wellness journey...</p>
         
         {/* Progress Dots */}

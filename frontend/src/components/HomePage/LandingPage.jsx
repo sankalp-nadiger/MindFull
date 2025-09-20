@@ -121,7 +121,7 @@ export default function HeroSection() {
                 alt="Logo"
               />
               <h2 className="text-xl font-bold text-green-900 dark:text-green-400">
-                MindFull
+                Soulynk
               </h2>
             </div>
 
@@ -317,7 +317,7 @@ export default function HeroSection() {
         For You,<span className="text-primaryblue"> With You</span>
       </h2>
       <p className="text-gray-600 dark:text-gray-50 text-base sm:text-lg lg:text-xl leading-relaxed mb-6">
-        At <span className="font-semibold text-primary">Mindfull</span>,
+        At <span className="font-semibold text-primary">Soulynk</span>,
         we believe mental well-being is a journey, and no one should walk
         it alone. Whether you're navigating stress, seeking peace, or
         simply want to feel heard — we're here with support that listens,
@@ -358,7 +358,7 @@ export default function HeroSection() {
     <div>
       <p className="text-gray-700 dark:text-gray-200 text-base sm:text-lg lg:text-xl font-medium max-w-3xl mx-auto relative bg-white/30 dark:bg-gray-800/30 backdrop-blur-md rounded-2xl px-6 sm:px-8 py-6 sm:py-8 border border-white/20 dark:border-gray-700/30 shadow-lg leading-relaxed">
         <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600 font-semibold">Discover</span> how 
-        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 font-semibold ml-2">Mindfull</span> helps you create a calm, guided, and
+        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 font-semibold ml-2">Soulynk</span> helps you create a calm, guided, and
         personalized wellness experience — at your pace, in your way.
       </p>
     </div>
@@ -373,7 +373,7 @@ export default function HeroSection() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10 px-10 lg:px-0 lg:pb-14 max-w-6xl mx-auto ">
           <FeatureCard
             icon={<Bot className="w-10 h-10 mx-auto text-yellow-500" />}
-            title="MindFull Bot"
+            title="Soulynk Bot"
             description="24/7 AI-powered assistant offering personalized mental health guidance, calming exercises, and instant support."
           />
 
@@ -613,7 +613,7 @@ export default function HeroSection() {
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white  mb-6">
                 JOIN THE
                 <br />
-                MINDFULL
+                Soulynk
                 <br />
                 MOVEMENT
               </h2>
@@ -729,19 +729,19 @@ export default function HeroSection() {
           <div className="relative">
             <div className="animate-marquee whitespace-nowrap">
               <span className="text-6xl md:text-8xl lg:text-9xl font-black text-white tracking-tighter mx-8">
-                MINDFULL
+                Soulynk
               </span>
               <span className="text-6xl md:text-8xl lg:text-9xl font-black text-white tracking-tighter mx-8">
-                MINDFULL
+                Soulynk
               </span>
               <span className="text-6xl md:text-8xl lg:text-9xl font-black text-white tracking-tighter mx-8">
-                MINDFULL
+                Soulynk
               </span>
               <span className="text-6xl md:text-8xl lg:text-9xl font-black text-white tracking-tighter mx-8">
-                MINDFULL
+                Soulynk
               </span>
               <span className="text-6xl md:text-8xl lg:text-9xl font-black text-white tracking-tighter mx-8">
-                MINDFULL
+                Soulynk
               </span>
             </div>
           </div>
@@ -771,13 +771,13 @@ export default function HeroSection() {
                   </div>
                 </div>
                 <span className="text-gray-400 text-sm">
-                  HUMAN • WELLNESS • MINDFULL
+                  HUMAN • WELLNESS • Soulynk
                 </span>
               </div>
 
               <div className="flex items-center space-x-6">
                 <span className="text-gray-400 text-sm">
-                  © 2025 Mindfull - All Rights Reserved
+                  © 2025 Soulynk - All Rights Reserved
                 </span>
               </div>
             </div>

@@ -115,7 +115,7 @@ const FloatingChatButton = () => {
                 <Heart className="w-3 h-3 text-pink-400" />
                 <span>Need someone to talk to?</span>
               </div>
-              <div className="text-[10px] text-gray-300 mt-1">Chat with MindFull Bot</div>
+              <div className="text-[10px] text-gray-300 mt-1">Chat with Soulynk Bot</div>
               <div className="absolute w-0 h-0  border-transparent top-full right-3 border-t-gray-900"></div>
             </div>
           )}

@@ -60,7 +60,7 @@ const Navbar = memo(({ onStoryClick }) => {
                 <div className="absolute inset-0 transition-opacity duration-300 rounded-full opacity-0 bg-gradient-to-r from-blue-400/20 to-green-400/20 group-hover:opacity-100 blur-sm"></div>
               </div>
               <span className="ml-3 text-xl font-bold tracking-wide text-transparent bg-gradient-to-r from-blue-400 via-teal-400 to-green-400 bg-clip-text">
-                MindFull
+                Soulynk
               </span>
             </a>
 
