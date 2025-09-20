@@ -312,6 +312,13 @@ const JournalApp = () => {
         ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' 
         : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50'
     }`}>
+      {/* Fixed watermark logo - always centered and visible */}
+      <div 
+        className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-center bg-no-repeat bg-contain opacity-[0.08] pointer-events-none z-0"
+        style={{
+          backgroundImage: `url('1a.png')`,
+        }}
+      />
       {/* Header */}
 
       <header className={`backdrop-blur-sm border-b sticky top-0 z-40 transition-colors duration-300 ${

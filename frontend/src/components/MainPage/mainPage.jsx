@@ -128,9 +128,8 @@ export function HeroHighlightDemo() {
   return (
     <div className="w-full overflow-x-hidden">
       <Navbar />
-
       
-      <div className="w-full">
+      <div className="w-full relative z-30">
         <HeroHighlight>
           <div className="min-h-[40vh] flex flex-col justify-center items-center text-center px-4">
             <motion.h1
@@ -152,6 +151,16 @@ export function HeroHighlightDemo() {
           </div>
         </HeroHighlight>
       </div>
+
+      {/* Fixed watermark logo - starts after hero section, always centered and visible */}
+      <div 
+        className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-center bg-no-repeat bg-contain opacity-[0.05] pointer-events-none z-20"
+        style={{
+          backgroundImage: `url('1a.png')`,
+        }}
+      />
+
+      <div className="w-full bg-black relative z-10">
 <div className="w-full h-full" style={{
     '--color': 'rgba(114, 114, 114, 0.3)',
     backgroundColor: '#000000',
@@ -185,18 +194,18 @@ export function HeroHighlightDemo() {
         <Getquotes />
       </div>
 
-      <div className="w-full ">
+      <div className="w-full  relative z-10">
         <Suggestion />
       </div>
 
-      <div className="w-full p-6 ">
+      <div className="w-full p-6  relative z-10">
         <div className="max-w-[85rem] text-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto backdrop-blur-sm  bg-blue-950/40 opacity-90  bg-opacity-20  p-8 rounded-lg shadow-lg shadow-blue-500/50 hover:shadow-green-500/50 transition-shadow flex flex-col items-center text-center">
           <DynamicCarousel />
         </div>
       </div>
 
       {/* Horizontal Layout for TaskMaster and VisionFull */}
-      <div className="w-full p-6 ">
+      <div className="w-full p-6  relative z-10">
         <div className="max-w-[85rem] mx-auto">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* TaskMaster Card */}
@@ -244,7 +253,7 @@ export function HeroHighlightDemo() {
         </div>
       </div>
 
-      <div className="flex flex-col items-center justify-center w-full px-4 py-12 text-gray-100  sm:px-6 lg:px-8">
+      <div className="flex flex-col items-center justify-center w-full px-4 py-12 text-gray-100  sm:px-6 lg:px-8 relative z-10">
         <div className="flex flex-col items-center justify-between w-full mx-auto lg:flex-row max-w-7xl">
           <div className="max-w-md space-y-6 text-center lg:text-left lg:max-w-xl">
             <h1 className="text-3xl font-bold text-white md:text-4xl lg:text-5xl">
@@ -275,8 +284,7 @@ export function HeroHighlightDemo() {
         <ExerciseCards/>      
       </div>
 
-      <section className="w-full text-white body-font">
-       
+      <section className="w-full text-white body-font relative z-10">
         <BentoGridDemo />
         {/* <BadgesCorner /> */}
         <Footer />
@@ -284,6 +292,7 @@ export function HeroHighlightDemo() {
 
       {/* Floating Chat Button */}
       <FloatingChatButton />
+    </div>
     </div>
     </div>
   );

@@ -356,29 +356,37 @@ const TodoListPage = () => {
   
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      {/* Expanded header with TaskMaster and productivity message */}
-      <div className="bg-gradient-to-r from-gray-800 to-gray-900 py-6 px-4 shadow-lg">
+    <div className="min-h-screen bg-gray-900 text-white relative">
+      {/* Fixed watermark logo - always centered and visible */}
+      <div 
+        className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-center bg-no-repeat bg-contain opacity-[0.12] pointer-events-none z-0"
+        style={{
+          backgroundImage: `url('1a.png')`,
+        }}
+      />
+
+      {/* Header with improved colors */}
+      <div className="bg-gradient-to-r from-slate-800 via-purple-900 to-slate-800 py-6 px-4 shadow-xl relative z-10">
         <div className="container mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center">
-             {/* Back button - Left */}
-  <Link 
+            {/* Back button - Left */}
+            <Link 
               to="/MainPage"
-              className="flex items-center justify-center gap-1 sm:gap-2 text-gray-900 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+              className="flex items-center justify-center gap-1 sm:gap-2 text-gray-300 hover:text-white transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
               <span className="hidden sm:block text-sm font-medium sm:text-base">Back to Dashboard</span>
             </Link>
-            <div className="flex items-center mb-4 md:mb-0">
-              <h1 className="text-3xl font-bold text-purple-400">TaskMaster</h1>
-              <span className="ml-3 px-3 py-1 bg-purple-900 text-purple-200 text-xs rounded-full">Pro</span>
+            
+            <div className="flex items-center mb-4 md:mb-0 md:absolute md:left-1/2 md:transform md:-translate-x-1/2">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-300 via-blue-300 to-teal-300 bg-clip-text text-transparent">TaskMaster</h1>
             </div>
             
             <div className="text-center md:text-right">
               <p className="text-gray-200 text-lg mb-2">{productivityMessage}</p>
               <div className="flex items-center justify-center md:justify-end space-x-6">
                 <div className="flex items-center">
-                  <Award className="w-5 h-5 mr-2 text-yellow-400" />
+                  <Award className="w-5 h-5 mr-2 text-amber-400" />
                   <span className="text-sm">Current Streak: {currentStreak} days</span>
                 </div>
                 <div className="flex items-center">
@@ -391,18 +399,18 @@ const TodoListPage = () => {
         </div>
       </div>
   
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 relative z-10">
         <div className="flex flex-col md:flex-row gap-8">
           {/* Left panel - Task list */}
-          <div className="w-full md:w-2/3 bg-gray-800 rounded-lg p-6">
-            <h2 className="text-2xl font-bold text-green-400 mb-6">My Tasks</h2>
+          <div className="w-full md:w-2/3 bg-slate-800/90 backdrop-blur-sm rounded-lg p-6 border border-slate-700/50">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent mb-6">My Tasks</h2>
             
             {/* Deadline Tasks Section */}
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-yellow-400">Upcoming Deadlines</h3>
+                <h3 className="text-lg font-medium text-amber-400">Upcoming Deadlines</h3>
                 <button 
-                  className="text-sm text-yellow-400 hover:underline flex items-center"
+                  className="text-sm text-amber-400 hover:text-amber-300 hover:underline flex items-center transition-colors"
                   onClick={() => setShowDeadlineForm(!showDeadlineForm)}
                 >
                   <Plus className="w-4 h-4 mr-1" />
@@ -410,21 +418,21 @@ const TodoListPage = () => {
                 </button>
               </div>
               
-              {/* Deadline Task Form - Updated with better placeholders */}
+              {/* Deadline Task Form - Updated with better colors */}
               {showDeadlineForm && (
-                <div className="mb-6 bg-gray-700 p-4 rounded-lg">
+                <div className="mb-6 bg-slate-700/80 backdrop-blur-sm p-4 rounded-lg border border-slate-600/50">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <input
                       type="text"
                       placeholder="Deadline task name"
-                      className="px-4 py-2 bg-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                      className="px-4 py-2 bg-slate-600/80 text-white rounded-lg border border-slate-500/50 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-400"
                       value={deadlineTaskName}
                       onChange={(e) => setDeadlineTaskName(e.target.value)}
                     />
                     <div className="relative">
                       <input
                         type="datetime-local"
-                        className="px-4 py-2 bg-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 w-full"
+                        className="px-4 py-2 bg-slate-600/80 text-white rounded-lg border border-slate-500/50 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-400 w-full"
                         value={deadlineDate}
                         onChange={(e) => setDeadlineDate(e.target.value)}
                         placeholder="Deadline date and time"
@@ -432,14 +440,14 @@ const TodoListPage = () => {
                     </div>
                     <textarea
                       placeholder="Deadline task description"
-                      className="md:col-span-2 px-4 py-2 bg-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                      className="md:col-span-2 px-4 py-2 bg-slate-600/80 text-white rounded-lg border border-slate-500/50 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-400"
                       value={deadlineTaskDescription}
                       onChange={(e) => setDeadlineTaskDescription(e.target.value)}
                       rows="2"
                     />
                     <div className="md:col-span-2 flex justify-end">
                       <button
-                        className="px-4 py-2 bg-yellow-500 text-white rounded-lg flex items-center"
+                        className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg flex items-center transition-all duration-200 shadow-lg"
                         onClick={handleAddDeadlineTask}
                       >
                         Add Deadline Task
@@ -449,7 +457,7 @@ const TodoListPage = () => {
                 </div>
               )}
               
-              {/* Horizontal Deadline Tasks Display */}
+              {/* Horizontal Deadline Tasks Display with improved colors */}
               <div className="overflow-x-auto pb-2">
                 <div className="flex space-x-4">
                   {deadlineTasks.length > 0 ? (
@@ -458,33 +466,33 @@ const TodoListPage = () => {
                       const now = new Date();
                       const daysLeft = Math.ceil((dueDate - now) / (1000 * 60 * 60 * 24));
                       
-                      let bgColor = "bg-gray-700";
-                      let borderColor = "border-gray-600";
+                      let bgColor = "bg-slate-700/80";
+                      let borderColor = "border-slate-500";
                       
                       if (daysLeft <= 1) {
-                        bgColor = "bg-red-900";
-                        borderColor = "border-red-500";
+                        bgColor = "bg-red-900/80";
+                        borderColor = "border-red-400";
                       } else if (daysLeft <= 3) {
-                        bgColor = "bg-yellow-900";
-                        borderColor = "border-yellow-500";
+                        bgColor = "bg-amber-900/80";
+                        borderColor = "border-amber-400";
                       }
                       
                       return (
                         <div 
                           key={task._id} 
-                          className={`flex-shrink-0 w-64 ${bgColor} border-l-4 ${borderColor} rounded-lg p-4 shadow-lg`}
+                          className={`flex-shrink-0 w-64 ${bgColor} backdrop-blur-sm border-l-4 ${borderColor} rounded-lg p-4 shadow-lg`}
                         >
                           <div className="flex justify-between items-start mb-2">
                             <h4 className="font-bold text-white">{task.title}</h4>
                             <button 
-                              className="text-gray-400 hover:text-red-400"
+                              className="text-gray-400 hover:text-red-400 transition-colors"
                               onClick={() => handleDeleteDeadlineTask(task._id)}
                             >
                               <X className="w-4 h-4" />
                             </button>
                           </div>
                           
-                          <div className="flex items-center text-sm text-yellow-400 mb-2">
+                          <div className="flex items-center text-sm text-amber-400 mb-2">
                             <span>
                               {dueDate.toLocaleDateString()} {dueDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
@@ -494,15 +502,15 @@ const TodoListPage = () => {
                           
                           <div className="flex justify-between items-center">
                             <span className={`text-xs px-2 py-1 rounded ${
-                              daysLeft <= 1 ? 'bg-red-800 text-red-200' : 
-                              daysLeft <= 3 ? 'bg-yellow-800 text-yellow-200' : 
-                              'bg-gray-600 text-gray-300'
+                              daysLeft <= 1 ? 'bg-red-800/80 text-red-200' : 
+                              daysLeft <= 3 ? 'bg-amber-800/80 text-amber-200' : 
+                              'bg-slate-600/80 text-slate-300'
                             }`}>
                               {daysLeft <= 0 ? 'Due today' : `${daysLeft} day${daysLeft !== 1 ? 's' : ''} left`}
                             </span>
                             
                             <button
-                              className="text-sm text-green-400 hover:text-green-300 flex items-center"
+                              className="text-sm text-emerald-400 hover:text-emerald-300 flex items-center transition-colors"
                               onClick={() => handleCompleteDeadlineTask(task._id)}
                             >
                               <Check className="w-4 h-4 mr-1" />
@@ -523,20 +531,20 @@ const TodoListPage = () => {
             
             {isLoading ? (
               <div className="flex justify-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
               </div>
             ) : (
               <div className="space-y-6">
                 {tasks.map((task, index) => (
                   <div key={task._id || index} className="flex relative pb-8 sm:items-center">
                     <div className="h-full w-6 absolute inset-0 flex items-center justify-center">
-                      <div className="h-full w-1 bg-gray-600 pointer-events-none"></div>
+                      <div className="h-full w-1 bg-slate-600 pointer-events-none"></div>
                     </div>
-                    <div className="flex-shrink-0 w-6 h-6 rounded-full mt-10 sm:mt-0 inline-flex items-center justify-center bg-green-500 text-white relative z-10 title-font font-medium text-sm">
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full mt-10 sm:mt-0 inline-flex items-center justify-center bg-gradient-to-r from-emerald-500 to-cyan-500 text-white relative z-10 title-font font-medium text-sm">
                       {index + 1}
                     </div>
                     <div className="flex-grow md:pl-8 pl-6 flex sm:items-center items-start flex-col sm:flex-row">
-                      <div className="flex-shrink-0 w-16 h-16 bg-green-100 text-green-500 rounded-full inline-flex items-center justify-center">
+                      <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-r from-emerald-100 to-cyan-100 text-emerald-600 rounded-full inline-flex items-center justify-center">
                         {task.completed ? (
                           <Check className="w-8 h-8" />
                         ) : (
@@ -555,8 +563,8 @@ const TodoListPage = () => {
                       </div>
                       
                       <div className="flex-grow sm:pl-6 mt-6 sm:mt-0">
-                        <h2 className={`font-medium title-font mb-1 text-xl ${task.completed ? 'text-gray-500 line-through' : 'text-green-400'}`}>
-                          {task.title || task.name} {/* Handle both name and title */}
+                        <h2 className={`font-medium title-font mb-1 text-xl ${task.completed ? 'text-gray-500 line-through' : 'text-emerald-400'}`}>
+                          {task.title || task.name}
                         </h2>
                         <p className={`leading-relaxed ${task.completed ? 'text-gray-600' : 'text-gray-300'}`}>
                           {task.description}
@@ -564,20 +572,19 @@ const TodoListPage = () => {
                         
                         {/* Display both start and end times if available */}
                         {(task.startTime || task.endTime) && (
-  <div className="flex items-center mt-2 mb-3">
-    <Clock className="w-4 h-4 text-yellow-400 mr-2" />
-    <span className="text-sm text-yellow-400">
-      {task.startTime && formatTime(new Date(task.startTime).toISOString())}
-      {task.startTime && task.endTime && " - "}
-      {task.endTime && formatTime(new Date(task.endTime).toISOString())}
-    </span>
-  </div>
-)}
-
+                          <div className="flex items-center mt-2 mb-3">
+                            <Clock className="w-4 h-4 text-amber-400 mr-2" />
+                            <span className="text-sm text-amber-400">
+                              {task.startTime && formatTime(new Date(task.startTime).toISOString())}
+                              {task.startTime && task.endTime && " - "}
+                              {task.endTime && formatTime(new Date(task.endTime).toISOString())}
+                            </span>
+                          </div>
+                        )}
                         
                         <div className="mt-4 flex space-x-3">
                           <button
-                            className={`px-4 py-2 ${task.completed ? 'bg-gray-600' : 'bg-green-500'} text-white rounded-lg flex items-center`}
+                            className={`px-4 py-2 ${task.completed ? 'bg-slate-600 hover:bg-slate-500' : 'bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600'} text-white rounded-lg flex items-center transition-all duration-200`}
                             onClick={() => handleCompleteTask(task._id)}
                           >
                             {task.completed ? 'Undo' : 'Done'}
@@ -585,14 +592,14 @@ const TodoListPage = () => {
                           
                           <div className="flex">
                             <button
-                              className="p-2 bg-gray-600 text-gray-300 rounded-l-lg"
+                              className="p-2 bg-slate-600 text-slate-300 rounded-l-lg hover:bg-slate-500 transition-colors"
                               onClick={() => handleMoveTask(index, 'up')}
                               disabled={index === 0}
                             >
                               <ArrowUp className="w-4 h-4" />
                             </button>
                             <button
-                              className="p-2 bg-gray-600 text-gray-300 rounded-r-lg"
+                              className="p-2 bg-slate-600 text-slate-300 rounded-r-lg hover:bg-slate-500 transition-colors"
                               onClick={() => handleMoveTask(index, 'down')}
                               disabled={index === tasks.length - 1}
                             >
@@ -601,7 +608,7 @@ const TodoListPage = () => {
                           </div>
                           
                           <button
-                            className="p-2 bg-red-500 text-white rounded-lg"
+                            className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
                             onClick={() => handleDeleteTask(task._id)}
                           >
                             <Trash className="w-4 h-4" />
@@ -618,33 +625,33 @@ const TodoListPage = () => {
                   </div>
                 )}
                 
-                {/* Updated add new task form with start and end time */}
-                <div className="mt-8 bg-gray-700 p-6 rounded-lg">
-                  <h3 className="text-lg font-medium text-green-400 mb-4">Add New Task</h3>
+                {/* Add new task form with improved colors */}
+                <div className="mt-8 bg-slate-700/80 backdrop-blur-sm p-6 rounded-lg border border-slate-600/50">
+                  <h3 className="text-lg font-medium text-emerald-400 mb-4">Add New Task</h3>
                   <div className="space-y-4">
                     <input
                       type="text"
                       placeholder="Task name"
-                      className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full px-4 py-2 bg-slate-600/80 text-white rounded-lg border border-slate-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-400"
                       value={newTaskName}
                       onChange={(e) => setNewTaskName(e.target.value)}
                     />
                     <textarea
                       placeholder="Task description"
-                      className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full px-4 py-2 bg-slate-600/80 text-white rounded-lg border border-slate-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-400"
                       value={newTaskDescription}
                       onChange={(e) => setNewTaskDescription(e.target.value)}
                       rows="2"
                     />
-                    
-                    {/* Improved time selection with start and end times */}
+
+                    {/* Time selection with improved styling */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="relative">
                         <label className="block text-gray-300 text-sm mb-1">Start Time</label>
                         <div className="relative">
                           <input
                             type="time"
-                            className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                            className="w-full px-4 py-2 bg-slate-600/80 text-white rounded-lg border border-slate-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-400"
                             value={newTaskStartTime}
                             onChange={(e) => setNewTaskStartTime(e.target.value)}
                           />
@@ -656,7 +663,7 @@ const TodoListPage = () => {
                         <div className="relative">
                           <input
                             type="time"
-                            className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                            className="w-full px-4 py-2 bg-slate-600/80 text-white rounded-lg border border-slate-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-400"
                             value={newTaskEndTime}
                             onChange={(e) => setNewTaskEndTime(e.target.value)}
                           />
@@ -665,7 +672,7 @@ const TodoListPage = () => {
                     </div>
                     
                     <button
-                      className="w-full px-4 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg flex items-center justify-center transition"
+                      className="w-full px-4 py-3 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white rounded-lg flex items-center justify-center transition-all duration-200 shadow-lg"
                       onClick={handleAddTask}
                     >
                       <Plus className="w-5 h-5 mr-2" />
@@ -677,19 +684,19 @@ const TodoListPage = () => {
             )}
           </div>
           
-          {/* Right panel - AI insights and streaks */}
+          {/* Right panel - AI insights and streaks with improved colors */}
           <div className="w-full md:w-1/3 space-y-8">
             {/* Streaks section */}
-            <div className="bg-gray-800 rounded-lg p-6">
-              <h2 className="text-xl font-bold text-green-400 mb-4">Activity Streaks</h2>
-              <div className="bg-gray-700 rounded-lg p-4">
+            <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-6 border border-slate-700/50">
+              <h2 className="text-xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent mb-4">Activity Streaks</h2>
+              <div className="bg-slate-700/80 backdrop-blur-sm rounded-lg p-4 border border-slate-600/50">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-white">Current Streak</span>
-                  <span className="text-green-400 font-bold">{currentStreak} days</span>
+                  <span className="text-emerald-400 font-bold">{currentStreak} days</span>
                 </div>
-                <div className="w-full bg-gray-600 rounded-full h-2.5">
+                <div className="w-full bg-slate-600 rounded-full h-2.5">
                   <div 
-                    className="bg-green-500 h-2.5 rounded-full" 
+                    className="bg-gradient-to-r from-emerald-500 to-cyan-500 h-2.5 rounded-full transition-all duration-300" 
                     style={{ width: `${Math.min(100, (currentStreak / (maxStreak || 1)) * 100)}%` }}
                   ></div>
                 </div>
@@ -698,9 +705,9 @@ const TodoListPage = () => {
                   <span className="text-white">Max Streak</span>
                   <span className="text-purple-400 font-bold">{maxStreak} days</span>
                 </div>
-                <div className="w-full bg-gray-600 rounded-full h-2.5">
+                <div className="w-full bg-slate-600 rounded-full h-2.5">
                   <div 
-                    className="bg-purple-500 h-2.5 rounded-full" 
+                    className="bg-gradient-to-r from-purple-500 to-blue-500 h-2.5 rounded-full" 
                     style={{ width: '100%' }}
                   ></div>
                 </div>
@@ -715,12 +722,12 @@ const TodoListPage = () => {
               </div>
             </div>
             
-            {/* AI Insights section */}
-            <div className="bg-gray-800 rounded-lg p-6">
+            {/* AI Insights section with improved colors */}
+            <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-6 border border-slate-700/50">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-green-400">AI Insights</h2>
+                <h2 className="text-xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">AI Insights</h2>
                 <button 
-                  className="text-sm text-green-400 flex items-center"
+                  className="text-sm text-emerald-400 hover:text-emerald-300 flex items-center transition-colors"
                   onClick={fetchAiInsights}
                 >
                   <span>Refresh</span>
@@ -732,27 +739,27 @@ const TodoListPage = () => {
               
               <div className="space-y-4">
                 {aiInsights.map((insight) => (
-                  <div key={insight.id} className="bg-gray-700 rounded-lg p-4">
+                  <div key={insight.id} className="bg-slate-700/80 backdrop-blur-sm rounded-lg p-4 border border-slate-600/50">
                     <div className="flex items-start mb-2">
-                      <Lightbulb className="w-5 h-5 text-yellow-400 mr-2 flex-shrink-0 mt-1" />
+                      <Lightbulb className="w-5 h-5 text-amber-400 mr-2 flex-shrink-0 mt-1" />
                       <h3 className="text-white font-medium">{insight.title}</h3>
                     </div>
                     <p className="text-gray-300 text-sm mb-4">{insight.description}</p>
                     
                     {insight.recommendedTasks && (
                       <div className="mt-3">
-                        <h4 className="text-green-400 text-sm font-medium mb-2">Recommended Task List:</h4>
+                        <h4 className="text-emerald-400 text-sm font-medium mb-2">Recommended Task List:</h4>
                         <ul className="text-gray-300 text-sm mb-4 space-y-2">
                           {insight.recommendedTasks.map((task, i) => (
                             <li key={i} className="flex items-center">
-                              <ChevronRight className="w-4 h-4 text-green-400 mr-2" />
+                              <ChevronRight className="w-4 h-4 text-emerald-400 mr-2" />
                               {task}
                             </li>
                           ))}
                         </ul>
                         
                         <button
-                          className="w-full px-4 py-2 bg-green-500 text-white rounded-lg flex items-center justify-center"
+                          className="w-full px-4 py-2 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white rounded-lg flex items-center justify-center transition-all duration-200 shadow-lg"
                           onClick={() => adoptAiRecommendation(insight.id)}
                         >
                           <Save className="w-4 h-4 mr-2" />

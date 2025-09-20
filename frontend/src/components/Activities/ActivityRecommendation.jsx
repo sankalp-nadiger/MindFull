@@ -281,7 +281,13 @@ If in person, focus on face-to-face interaction, avoiding distractions.`,
         </div>
       </header>
         <div className="min-h-screen bg-gray-950 py-8 px-4">
-            
+            {/* Fixed watermark logo - always centered and visible */}
+      <div 
+        className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-center bg-no-repeat bg-contain opacity-[0.12] pointer-events-none z-0"
+        style={{
+          backgroundImage: `url('1a.png')`,
+        }}
+      />
             <div className="max-w-7xl mx-auto">
                
 

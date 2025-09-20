@@ -1,51 +1,109 @@
-import React from 'react';
-import { Trophy, Flame, Medal, Crown, Activity, TrendingUp, MapPin, Star, Users, Target } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Trophy, Flame, Medal, Crown, Activity, TrendingUp, MapPin, Star, Users, Target, AlertCircle, RefreshCw } from 'lucide-react';
 import Navbar from '../Navbar/Navbar';
 import FloatingChatButton from '../ChatBot/FloatingChatButton';
-// Enhanced dummy data with districts and current user
-const dummyUsers = [
-  { id: 1, username: 'CodeMaster', streak: 45, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face', lastActive: '2 hours ago', district: 'Mysuru North', points: 1350 },
-  { id: 2, username: 'DevNinja', streak: 42, avatar: 'https://images.unsplash.com/photo-1494790108755-2616b68e8a62?w=150&h=150&fit=crop&crop=face', lastActive: '1 hour ago', district: 'Mysuru South', points: 1260 },
-  { id: 3, username: 'TechGuru', streak: 38, avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face', lastActive: '30 min ago', district: 'Mysuru Central', points: 1140 },
-  { id: 4, username: 'You', streak: 35, avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face', lastActive: 'now', district: 'Mysuru North', points: 1050, isCurrentUser: true },
-  { id: 5, username: 'ByteWarrior', streak: 33, avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face', lastActive: '5 min ago', district: 'Mysuru South', points: 990 },
-  { id: 6, username: 'PixelPro', streak: 31, avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face', lastActive: '15 min ago', district: 'Mysuru Central', points: 930 },
-  { id: 7, username: 'CodeCrusher', streak: 29, avatar: 'https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=150&h=150&fit=crop&crop=face', lastActive: '1 hour ago', district: 'Mysuru North', points: 870 },
-  { id: 8, username: 'AlgoAce', streak: 27, avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&h=150&fit=crop&crop=face', lastActive: '2 hours ago', district: 'Mysuru South', points: 810 },
-  { id: 9, username: 'DataDriven', streak: 25, avatar: 'https://images.unsplash.com/photo-1463453091185-61582044d556?w=150&h=150&fit=crop&crop=face', lastActive: '3 hours ago', district: 'Mysuru Central', points: 750 },
-  { id: 10, username: 'StackStar', streak: 23, avatar: 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=150&h=150&fit=crop&crop=face', lastActive: '4 hours ago', district: 'Mysuru North', points: 690 },
-  { id: 11, username: 'LogicLord', streak: 21, avatar: 'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=150&h=150&fit=crop&crop=face', lastActive: '5 hours ago', district: 'Mysuru South', points: 630 },
-  { id: 12, username: 'SyntaxSage', streak: 19, avatar: 'https://images.unsplash.com/photo-1494790108755-2616b68e8a62?w=150&h=150&fit=crop&crop=face', lastActive: '6 hours ago', district: 'Mysuru Central', points: 570 }
-];
+
+// API service functions
+const API_BASE_URL = import.meta.env.VITE_BASE_API_URL;
+
+const leaderboardAPI = {
+  getTopPerformers: async () => {
+    const response = await fetch(`${API_BASE_URL}/leaderboard/top-performers?limit=5`);
+    if (!response.ok) throw new Error('Failed to fetch top performers');
+    return response.json();
+  },
+
+  getUserPosition: async () => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return null;
+    
+    const response = await fetch(`${API_BASE_URL}/leaderboard/my-position`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    if (!response.ok) {
+      if (response.status === 401) return null; // User not authenticated
+      throw new Error('Failed to fetch user position');
+    }
+    return response.json();
+  },
+
+  getDistrictStats: async () => {
+    const response = await fetch(`${API_BASE_URL}/leaderboard/districts/stats`);
+    if (!response.ok) throw new Error('Failed to fetch district stats');
+    return response.json();
+  },
+
+  getGlobalLeaderboard: async (limit = 50) => {
+    const response = await fetch(`${API_BASE_URL}/leaderboard/global?limit=${limit}`);
+    if (!response.ok) throw new Error('Failed to fetch global leaderboard');
+    return response.json();
+  }
+};
 
 function Leaderboard() {
-  const [users, setUsers] = React.useState([]);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState(null);
-  const [activeTab, setActiveTab] = React.useState('districts');
+  const [topUsers, setTopUsers] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [districtStats, setDistrictStats] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  React.useEffect(() => {
-    const fetchLeaderboard = async () => {
-      try {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const rankedUsers = dummyUsers
-          .sort((a, b) => b.points - a.points)
-          .map((user, index) => ({
-            ...user,
-            rank: index + 1
-          }));
-        
-        setUsers(rankedUsers);
-      } catch (err) {
-        setError('Failed to fetch leaderboard data');
-      } finally {
-        setLoading(false);
+  const fetchLeaderboardData = async () => {
+    try {
+      setError(null);
+      
+      // Fetch all data concurrently
+      const [topPerformersRes, userPositionRes, districtStatsRes] = await Promise.allSettled([
+        leaderboardAPI.getTopPerformers(),
+        leaderboardAPI.getUserPosition(),
+        leaderboardAPI.getDistrictStats()
+      ]);
+
+      // Handle top performers
+      if (topPerformersRes.status === 'fulfilled') {
+        setTopUsers(topPerformersRes.value.data || []);
+      } else {
+        console.error('Failed to fetch top performers:', topPerformersRes.reason);
       }
-    };
 
-    fetchLeaderboard();
+      // Handle user position (might fail if not authenticated)
+      if (userPositionRes.status === 'fulfilled' && userPositionRes.value) {
+        setCurrentUser(userPositionRes.value.data);
+      } else if (userPositionRes.status === 'rejected') {
+        console.log('User position not available (likely not authenticated)');
+      }
+
+      // Handle district stats
+      if (districtStatsRes.status === 'fulfilled') {
+        setDistrictStats(districtStatsRes.value.data || []);
+      } else {
+        console.error('Failed to fetch district stats:', districtStatsRes.reason);
+      }
+
+    } catch (err) {
+      console.error('Error fetching leaderboard data:', err);
+      setError('Failed to fetch leaderboard data. Please try again.');
+    }
+  };
+
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      await fetchLeaderboardData();
+      setLoading(false);
+    };
+    
+    loadData();
   }, []);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchLeaderboardData();
+    setRefreshing(false);
+  };
 
   const getRankIcon = (rank) => {
     switch (rank) {
@@ -60,336 +118,443 @@ function Leaderboard() {
     }
   };
 
-  const getDistrictStats = () => {
-    const districts = {};
-    users.forEach(user => {
-      if (!districts[user.district]) {
-        districts[user.district] = {
-          name: user.district,
-          totalPoints: 0,
-          userCount: 0,
-          users: []
-        };
+  const renderBadges = (badges) => {
+    if (!badges || badges.length === 0) {
+      // Generate default badges based on user data if no badges provided
+      const defaultBadges = [];
+      if (currentUser?.streak >= 30) {
+        defaultBadges.push({ type: 'fire', name: 'Fire Streak', color: 'orange' });
       }
-      districts[user.district].totalPoints += user.points;
-      districts[user.district].userCount += 1;
-      districts[user.district].users.push(user);
-    });
+      if (currentUser?.points >= 1000) {
+        defaultBadges.push({ type: 'star', name: 'High Achiever', color: 'yellow' });
+      }
+      if (currentUser?.globalRank <= 5) {
+        defaultBadges.push({ type: 'crown', name: 'Top Performer', color: 'purple' });
+      }
+      if (currentUser?.streak >= 7) {
+        defaultBadges.push({ type: 'target', name: 'Weekly Warrior', color: 'green' });
+      }
+      badges = defaultBadges;
+    }
+    
+    if (badges.length === 0) return null;
+    
+    const badgeIcons = {
+      fire: <Flame className="w-3 h-3" />,
+      star: <Star className="w-3 h-3" />,
+      target: <Target className="w-3 h-3" />,
+      crown: <Crown className="w-3 h-3" />
+    };
 
-    return Object.values(districts)
-      .map(district => ({
-        ...district,
-        avgPoints: Math.round(district.totalPoints / district.userCount),
-        users: district.users.sort((a, b) => b.points - a.points).slice(0, 5)
-      }))
-      .sort((a, b) => b.totalPoints - a.totalPoints);
+    return (
+      <div className="flex flex-wrap gap-2">
+        {badges.map((badge, index) => (
+          <div
+            key={index}
+            className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+              badge.color === 'orange' ? 'bg-orange-500/20 text-orange-300' :
+              badge.color === 'yellow' ? 'bg-yellow-500/20 text-yellow-300' :
+              badge.color === 'green' ? 'bg-green-500/20 text-green-300' :
+              badge.color === 'purple' ? 'bg-purple-500/20 text-purple-300' :
+              'bg-blue-500/20 text-blue-300'
+            }`}
+          >
+            {badgeIcons[badge.type] || <Star className="w-3 h-3" />}
+            {badge.name}
+          </div>
+        ))}
+      </div>
+    );
   };
 
-  const getCurrentUser = () => users.find(user => user.isCurrentUser);
-  const getTopUsers = () => users.slice(0, 5);
+  const getDefaultAvatar = (gender) => {
+    const maleAvatars = [
+      "https://tse2.mm.bing.net/th?id=OIP.Yj7V4oP9Noi8p77a8Oyd5QHaJA&pid=Api&P=0&h=180",
+      "https://tse2.mm.bing.net/th?id=OIP.zxQil4x4JMZtZm-7tUNF1QHaH_&pid=Api&P=0&h=180",
+      "https://tse3.mm.bing.net/th?id=OIP.CHiM-UEsM0jqElrYHEftiwHaHa&pid=Api&P=0&h=180",
+      "https://tse2.mm.bing.net/th?id=OIP.2Be2070ayk9DYoV9xRXFEgHaHa&pid=Api&P=0&h=180"
+    ];
+
+    const femaleAvatars = [
+      "https://tse3.mm.bing.net/th?id=OIP.GYuOR-Ox5UCX3-R_Qz49aQHaHa&pid=Api&P=0&h=180",
+      "https://tse1.mm.bing.net/th?id=OIP.HJ_CpQ29Bd9OeU98QDMe-gHaHa&pid=Api&P=0&h=180",
+      "https://tse3.mm.bing.net/th?id=OIP.KpNNDej-Xh6Njm4Xf-15BQHaHa&pid=Api&P=0&h=180",
+      "https://tse1.mm.bing.net/th?id=OIP.opldioYHZSr8ja6_DlApqgHaHa&pid=Api&P=0&h=180"
+    ];
+
+    if (gender === 'Male') {
+      return maleAvatars[Math.floor(Math.random() * maleAvatars.length)];
+    } else if (gender === 'Female') {
+      return femaleAvatars[Math.floor(Math.random() * femaleAvatars.length)];
+    } else {
+      // Random choice for 'Other' or undefined
+      const allAvatars = [...maleAvatars, ...femaleAvatars];
+      return allAvatars[Math.floor(Math.random() * allAvatars.length)];
+    }
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-black via-blue-950 to-black flex items-center justify-center">
         <div className="text-center">
           <Activity className="w-12 h-12 text-blue-400 animate-spin mx-auto mb-4" />
-          <p className="text-white">Loading leaderboard...</p>
+          <p className="text-white text-lg">Loading leaderboard...</p>
+          <p className="text-gray-400 text-sm mt-2">Fetching latest rankings...</p>
         </div>
       </div>
     );
   }
 
-  if (error) {
+  if (error && topUsers.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-black via-blue-950 to-black flex items-center justify-center">
-        <div className="text-center text-red-400">
-          <p className="text-xl mb-2">Oops! Something went wrong</p>
-          <p>{error}</p>
+        <div className="text-center">
+          <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-white mb-2">Unable to Load Leaderboard</h2>
+          <p className="text-red-400 mb-4">{error}</p>
+          <button 
+            onClick={handleRefresh} 
+            className="flex items-center gap-2 mx-auto px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            disabled={refreshing}
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? 'Retrying...' : 'Try Again'}
+          </button>
         </div>
       </div>
     );
   }
-
-  const currentUser = getCurrentUser();
-  const topUsers = getTopUsers();
-  const districtStats = getDistrictStats();
 
   return (
     <>
-    <div className="min-h-screen bg-gradient-to-b from-black via-blue-950 to-black overflow-hidden">
-      <Navbar />
-      <div className="max-w-6xl mx-auto p-4">
-        {/* Current User & Top 5 Split Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Current User Progress Card - Left Side */}
-          {currentUser && (
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 shadow-2xl">
-              <div className="flex items-center gap-4 mb-4">
-                <img
-                  src={currentUser.avatar}
-                  alt={currentUser.username}
-                  className="w-16 h-16 rounded-full border-4 border-white shadow-lg"
-                />
-                <div>
-                  <h2 className="text-2xl font-bold text-white">{currentUser.username}</h2>
-                  <p className="text-blue-100">Rank #{currentUser.rank} • {currentUser.district}</p>
-                </div>
+      <div className="min-h-screen bg-gradient-to-b from-black via-blue-950 to-black overflow-x-hidden">
+        <Navbar />
+        <div className="max-w-6xl mx-auto p-4">
+          {/* Header with Refresh Button */}
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+              <Trophy className="w-8 h-8 text-yellow-400" />
+              Leaderboard
+            </h1>
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              {refreshing ? 'Refreshing...' : 'Refresh'}
+            </button>
+          </div>
+
+          {/* Error Banner (if error but data exists) */}
+          {error && (topUsers.length > 0 || districtStats.length > 0) && (
+            <div className="mb-6 p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
+              <div className="flex items-center gap-2 text-red-400">
+                <AlertCircle className="w-5 h-5" />
+                <span className="text-sm">Some data might be outdated. Last error: {error}</span>
               </div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2 text-white">
-                  <Flame className="w-6 h-6 text-orange-400" />
-                  <span className="text-2xl font-bold">{currentUser.streak}</span>
-                  <span className="text-sm">days streak</span>
+            </div>
+          )}
+
+          {/* Current User & Top 5 Split Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* Current User Progress Card - Left Side */}
+            {currentUser ? (
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 shadow-2xl">
+                <div className="flex items-center gap-4 mb-4">
+                  <img
+                    src={currentUser.avatar || getDefaultAvatar(currentUser.gender)}
+                    alt={currentUser.username}
+                    className="w-16 h-16 rounded-full border-4 border-white shadow-lg"
+                    onError={(e) => {
+                      e.target.src = getDefaultAvatar(currentUser.gender);
+                    }}
+                  />
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">{currentUser.fullName || currentUser.username}</h2>
+                    <p className="text-blue-100">
+                      Global Rank #{currentUser.globalRank} 
+                      {currentUser.district && ` • ${currentUser.district}`}
+                      {currentUser.districtRank && ` (District #${currentUser.districtRank})`}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-blue-100">
-                  <Star className="w-5 h-5 text-yellow-400" />
-                  <span className="font-semibold">{currentUser.points} pts</span>
+                
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2 text-white">
+                    <Flame className="w-6 h-6 text-orange-400" />
+                    <span className="text-2xl font-bold">{currentUser.streak}</span>
+                    <span className="text-sm">days streak</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-blue-100">
+                    <Star className="w-5 h-5 text-yellow-400" />
+                    <span className="font-semibold">{currentUser.points} pts</span>
+                  </div>
                 </div>
-              </div>
-              
-              {/* Badges Section */}
-              <div className="mb-4">
-                <h3 className="text-sm font-semibold text-blue-100 mb-2">🏆 Your Badges</h3>
-                <div className="flex flex-wrap gap-2">
-                  {currentUser.streak >= 30 && (
-                    <div className="flex items-center gap-1 bg-orange-500/20 text-orange-300 px-2 py-1 rounded-full text-xs">
-                      <Flame className="w-3 h-3" />
-                      Fire Streak
-                    </div>
-                  )}
-                  {currentUser.points >= 1000 && (
-                    <div className="flex items-center gap-1 bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded-full text-xs">
-                      <Star className="w-3 h-3" />
-                      High Achiever
-                    </div>
-                  )}
-                  {currentUser.rank <= 5 && (
-                    <div className="flex items-center gap-1 bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full text-xs">
-                      <Crown className="w-3 h-3" />
-                      Top Performer
-                    </div>
-                  )}
-                  {currentUser.streak >= 7 && (
-                    <div className="flex items-center gap-1 bg-green-500/20 text-green-300 px-2 py-1 rounded-full text-xs">
-                      <Target className="w-3 h-3" />
-                      Weekly Warrior
-                    </div>
-                  )}
-                  {currentUser.district === 'Mysuru North' && (
-                    <div className="flex items-center gap-1 bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full text-xs">
-                      <MapPin className="w-3 h-3" />
-                      District Champion
-                    </div>
-                  )}
+                
+                {/* Badges Section */}
+                <div className="mb-4">
+                  <h3 className="text-sm font-semibold text-blue-100 mb-2">🏆 Your Badges</h3>
+                  {renderBadges(currentUser.badges)}
                 </div>
-              </div>
-              {currentUser.rank > 1 && (
-                <div className="space-y-3">
+
+                {/* Progress to next rank */}
+                {currentUser.userAbove && currentUser.pointsToNextRank > 0 && (
                   <div className="p-3 bg-white/10 rounded-lg">
                     <div className="flex items-center gap-2 text-white mb-2">
                       <TrendingUp className="w-5 h-5 text-green-400" />
                       <span className="text-sm">
-                        {users[currentUser.rank - 2].points - currentUser.points} points to reach rank #{currentUser.rank - 1}
+                        {currentUser.pointsToNextRank} points to reach rank #{currentUser.globalRank - 1}
                       </span>
                     </div>
                     <div className="text-xs text-blue-200 bg-blue-600/20 p-2 rounded">
-                      💡 <strong>Quick Tips:</strong> Complete daily challenges (+50 pts), maintain your streak (+10 pts/day), 
-                      or help others in community (+25 pts per help)
+                      💡 <strong>Quick Tips:</strong> Complete daily challenges, maintain your streak, 
+                      or help others in community to earn more points!
                     </div>
                   </div>
+                )}
+              </div>
+            ) : (
+              <div className="bg-gradient-to-r from-gray-600 to-gray-700 rounded-2xl p-6 shadow-2xl">
+                <div className="text-center text-white">
+                  <Crown className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                  <h2 className="text-xl font-bold mb-2">Join the Competition!</h2>
+                  <p className="text-gray-300 mb-4">
+                    Sign in to see your ranking and compete with others in your district.
+                  </p>
+                  <button 
+                    onClick={() => window.location.href = '/login'}
+                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                  >
+                    Sign In
+                  </button>
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
 
-          {/* Top 5 Performers - Right Side */}
-          <div className="bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
-            <div className="p-4 bg-gradient-to-r from-purple-800 to-blue-800">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Crown className="w-6 h-6 text-yellow-400" />
-                Top 5 Performers
-              </h2>
-            </div>
-            
-            <div className="divide-y divide-gray-700">
-              {topUsers.map((user) => (
-                <div
-                  key={user.id}
-                  className={`p-4 flex items-center gap-3 transition-all ${
-                    user.isCurrentUser
-                      ? 'bg-blue-900/30 border-l-4 border-blue-400'
-                      : 'hover:bg-gray-750'
-                  }`}
-                >
-                  <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
-                    {user.rank <= 3 ? getRankIcon(user.rank) : <span className="text-gray-400 font-bold">#{user.rank}</span>}
-                  </div>
-                  
-                  <div className="flex-shrink-0">
-                    <img
-                      src={user.avatar}
-                      alt={user.username}
-                      className="w-10 h-10 rounded-full border-2 border-gray-600"
-                    />
-                  </div>
-                  
-                  <div className="flex-grow">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-white text-sm">
-                        {user.username}
-                      </h3>
-                      {user.isCurrentUser && (
-                        <span className="px-2 py-1 bg-blue-600 text-xs font-bold text-white rounded">
-                          YOU
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-400">{user.district}</p>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1 bg-gray-700 px-2 py-1 rounded">
-                      <Flame className="w-3 h-3 text-orange-400" />
-                      <span className="text-white font-bold text-xs">{user.streak}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-yellow-400">
-                      <Star className="w-3 h-3" />
-                      <span className="font-semibold text-xs">{user.points}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation Tab - Only Districts */}
-        <div className="flex justify-center mb-8">
-          <div className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold shadow-lg">
-            <MapPin className="w-5 h-5 inline mr-2" />
-            Districts Leaderboard
-          </div>
-        </div>
-
-        {/* Content - Districts Only */}
-        <div className="space-y-6">
-          {/* Top 3 Districts */}
-          <div className="bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
-            <div className="p-6 bg-gradient-to-r from-green-800 to-teal-800">
-              <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-                <MapPin className="w-7 h-7 text-green-400" />
-                Top 3 Districts
-              </h2>
-            </div>
-            
-            <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-              {districtStats.slice(0, 3).map((district, index) => (
-                <div
-                  key={district.name}
-                  className={`p-4 rounded-xl border-2 ${
-                    index === 0
-                      ? 'border-yellow-400 bg-yellow-400/10'
-                      : index === 1
-                      ? 'border-gray-300 bg-gray-300/10'
-                      : 'border-amber-600 bg-amber-600/10'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-3">
-                    {getRankIcon(index + 1)}
-                    <h3 className="font-bold text-white">{district.name}</h3>
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2 text-gray-300">
-                      <Users className="w-4 h-4" />
-                      <span>{district.userCount} users</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-300">
-                      <Target className="w-4 h-4" />
-                      <span>{district.totalPoints} total points</span>
-                    </div>
-                    <div className="text-green-400 font-semibold">
-                      Avg: {district.avgPoints} pts/user
-                    </div>
-                    {index > 0 && (
-                      <div className="text-red-400 text-xs">
-                        -{districtStats[0].totalPoints - district.totalPoints} pts behind leader
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* District Breakdown */}
-          {districtStats.map((district, districtIndex) => (
-            <div key={district.name} className="bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
-              <div className="p-4 bg-gradient-to-r from-gray-700 to-gray-600">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                    <MapPin className="w-6 h-6 text-blue-400" />
-                    {district.name}
-                  </h3>
-                  <div className="flex items-center gap-4 text-sm text-gray-300">
-                    <span>{district.userCount} users</span>
-                    <span>{district.totalPoints} total points</span>
-                  </div>
-                </div>
+            {/* Top 5 Performers - Right Side */}
+            <div className="bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
+              <div className="p-4 bg-gradient-to-r from-purple-800 to-blue-800">
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                  <Crown className="w-6 h-6 text-yellow-400" />
+                  Top 5 Performers
+                </h2>
               </div>
               
               <div className="divide-y divide-gray-700">
-                {district.users.map((user, userIndex) => (
-                  <div
-                    key={user.id}
-                    className={`p-4 flex items-center gap-3 ${
-                      user.isCurrentUser
-                        ? 'bg-blue-900/30 border-l-4 border-blue-400'
-                        : 'hover:bg-gray-750'
-                    } transition-all`}
-                  >
-                    <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
-                      <span className="text-gray-400 font-bold">#{userIndex + 1}</span>
-                    </div>
-                    
-                    <div className="flex-shrink-0">
-                      <img
-                        src={user.avatar}
-                        alt={user.username}
-                        className="w-10 h-10 rounded-full border-2 border-gray-600"
-                      />
-                    </div>
-                    
-                    <div className="flex-grow">
+                {topUsers.length > 0 ? (
+                  topUsers.map((user) => (
+                    <div
+                      key={user._id}
+                      className={`p-4 flex items-center gap-3 transition-all ${
+                        currentUser && user._id === currentUser._id
+                          ? 'bg-blue-900/30 border-l-4 border-blue-400'
+                          : 'hover:bg-gray-750'
+                      }`}
+                    >
+                      <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
+                        {user.rank <= 3 ? getRankIcon(user.rank) : <span className="text-gray-400 font-bold">#{user.rank}</span>}
+                      </div>
+                      
+                      <div className="flex-shrink-0">
+                        <img
+                          src={user.avatar || getDefaultAvatar(user.gender)}
+                          alt={user.username}
+                          className="w-10 h-10 rounded-full border-2 border-gray-600"
+                          onError={(e) => {
+                            e.target.src = getDefaultAvatar(user.gender);
+                          }}
+                        />
+                      </div>
+                      
+                      <div className="flex-grow">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-white text-sm">
+                            {user.fullName || user.username}
+                          </h3>
+                          {currentUser && user._id === currentUser._id && (
+                            <span className="px-2 py-1 bg-blue-600 text-xs font-bold text-white rounded">
+                              YOU
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-400">{user.district || 'No district'}</p>
+                      </div>
+                      
                       <div className="flex items-center gap-2">
-                        <h4 className="font-semibold text-white">{user.username}</h4>
-                        {user.isCurrentUser && (
-                          <span className="px-2 py-1 bg-blue-600 text-xs font-bold text-white rounded">
-                            YOU
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1 bg-gray-700 px-2 py-1 rounded">
+                          <Flame className="w-3 h-3 text-orange-400" />
+                          <span className="text-white font-bold text-xs">{user.streak}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-yellow-400">
+                          <Star className="w-3 h-3" />
+                          <span className="font-semibold text-xs">{user.points}</span>
+                        </div>
                       </div>
-                      <p className="text-xs text-gray-400">Global rank: #{user.rank}</p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-8 text-center text-gray-400">
+                    <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                    <p>No users found yet.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Navigation Tab - Only Districts */}
+          <div className="flex justify-center mb-8">
+            <div className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold shadow-lg">
+              <MapPin className="w-5 h-5 inline mr-2" />
+              Districts Leaderboard
+            </div>
+          </div>
+
+          {/* Content - Districts Only */}
+          <div className="space-y-6">
+            {districtStats.length > 0 ? (
+              <>
+                {/* Top 3 Districts */}
+                <div className="bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
+                  <div className="p-6 bg-gradient-to-r from-green-800 to-teal-800">
+                    <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                      <MapPin className="w-7 h-7 text-green-400" />
+                      Top 3 Districts
+                    </h2>
+                  </div>
+                  
+                  <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {districtStats.slice(0, 3).map((district, index) => (
+                      <div
+                        key={district.name}
+                        className={`p-4 rounded-xl border-2 ${
+                          index === 0
+                            ? 'border-yellow-400 bg-yellow-400/10'
+                            : index === 1
+                            ? 'border-gray-300 bg-gray-300/10'
+                            : 'border-amber-600 bg-amber-600/10'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-3">
+                          {getRankIcon(index + 1)}
+                          <h3 className="font-bold text-white">{district.name}</h3>
+                        </div>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex items-center gap-2 text-gray-300">
+                            <Users className="w-4 h-4" />
+                            <span>{district.userCount} users</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-gray-300">
+                            <Target className="w-4 h-4" />
+                            <span>{district.totalPoints} total points</span>
+                          </div>
+                          <div className="text-green-400 font-semibold">
+                            Avg: {Math.round(district.avgPoints)} pts/user
+                          </div>
+                          {index > 0 && districtStats[0] && (
+                            <div className="text-red-400 text-xs">
+                              -{districtStats[0].totalPoints - district.totalPoints} pts behind leader
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* District Breakdown */}
+                {districtStats.map((district, districtIndex) => (
+                  <div key={district.name} className="bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
+                    <div className="p-4 bg-gradient-to-r from-gray-700 to-gray-600">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                          <MapPin className="w-6 h-6 text-blue-400" />
+                          {district.name}
+                        </h3>
+                        <div className="flex items-center gap-4 text-sm text-gray-300">
+                          <span>{district.userCount} users</span>
+                          <span>{district.totalPoints} total points</span>
+                        </div>
+                      </div>
                     </div>
                     
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-1 bg-gray-700 px-3 py-1 rounded-full">
-                        <Flame className="w-4 h-4 text-orange-400" />
-                        <span className="text-white font-bold text-sm">{user.streak}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-yellow-400">
-                        <Star className="w-4 h-4" />
-                        <span className="font-semibold text-sm">{user.points}</span>
-                      </div>
+                    <div className="divide-y divide-gray-700">
+                      {district.topUsers && district.topUsers.length > 0 ? (
+                        district.topUsers.map((user, userIndex) => (
+                          <div
+                            key={user._id || user.username || userIndex}
+                            className={`p-4 flex items-center gap-3 ${
+                              currentUser && user.username === currentUser.username
+                                ? 'bg-blue-900/30 border-l-4 border-blue-400'
+                                : 'hover:bg-gray-750'
+                            } transition-all`}
+                          >
+                            <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
+                              <span className="text-gray-400 font-bold">#{userIndex + 1}</span>
+                            </div>
+                            
+                            <div className="flex-shrink-0">
+                              <img
+                                src={user.avatar || getDefaultAvatar(user.gender)}
+                                alt={user.username}
+                                className="w-10 h-10 rounded-full border-2 border-gray-600"
+                                onError={(e) => {
+                                  e.target.src = getDefaultAvatar(user.gender);
+                                }}
+                              />
+                            </div>
+                            
+                            <div className="flex-grow">
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-semibold text-white">{user.username}</h4>
+                                {currentUser && user.username === currentUser.username && (
+                                  <span className="px-2 py-1 bg-blue-600 text-xs font-bold text-white rounded">
+                                    YOU
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-400">
+                                District rank: #{userIndex + 1} • {user.lastActive || 'Recently active'}
+                              </p>
+                            </div>
+                            
+                            <div className="flex items-center gap-4">
+                              <div className="flex items-center gap-1 bg-gray-700 px-3 py-1 rounded-full">
+                                <Flame className="w-4 h-4 text-orange-400" />
+                                <span className="text-white font-bold text-sm">{user.streak}</span>
+                              </div>
+                              <div className="flex items-center gap-1 text-yellow-400">
+                                <Star className="w-4 h-4" />
+                                <span className="font-semibold text-sm">{user.points}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-8 text-center text-gray-400">
+                          <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                          <p>No users found in this district yet.</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
+              </>
+            ) : (
+              /* Show message if no districts found */
+              <div className="bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
+                <div className="p-8 text-center text-gray-400">
+                  <MapPin className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                  <h3 className="text-xl font-semibold mb-2">No District Data Available</h3>
+                  <p>District leaderboard will appear once users start adding their location information.</p>
+                </div>
               </div>
-            </div>
-          ))}
+            )}
+          </div>
         </div>
       </div>
-    </div>
-    <FloatingChatButton />
+      <FloatingChatButton />
     </>
   );
 }

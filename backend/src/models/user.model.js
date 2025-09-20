@@ -152,7 +152,7 @@ userSchema.methods.assignRandomAvatar = async function () {
     } else if (this.gender === "F") {
       this.avatar = female_avatars[Math.floor(Math.random() * female_avatars.length)];
     }
-    await this.save(); // Save the changes to the database
+    await this.save();
   }
 };
 

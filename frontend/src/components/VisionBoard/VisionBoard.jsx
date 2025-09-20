@@ -274,6 +274,13 @@ useEffect(() => {
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
     <div className={`min-h-screen ${themeClasses.bg} transition-all duration-300`}>
+      {/* Fixed watermark logo - always centered and visible */}
+      <div 
+        className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-center bg-no-repeat bg-contain opacity-[0.12] pointer-events-none z-0"
+        style={{
+          backgroundImage: `url('1a.png')`,
+        }}
+      />
       <div className="p-5 flex flex-col items-center relative pb-20">
         
         {/* Header row with Back button, Brand name, and Theme toggle */}

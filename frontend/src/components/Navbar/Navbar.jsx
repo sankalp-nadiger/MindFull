@@ -56,10 +56,10 @@ const Navbar = memo(({ onStoryClick }) => {
             {/* Brand Logo - Left Side */}
             <a className="flex items-center flex-shrink-0 font-medium text-gray-900 transition-all duration-300 title-font group hover:scale-105" href="/MainPage">
               <div className="relative">
-                <img src="plant.png" alt="Logo" className="w-8 h-8 transition-transform duration-300 group-hover:rotate-12" />
+                <img src="1a.png" alt="Logo" className="w-14 h-14 transition-transform duration-300 group-hover:rotate-12" />
                 <div className="absolute inset-0 transition-opacity duration-300 rounded-full opacity-0 bg-gradient-to-r from-blue-400/20 to-green-400/20 group-hover:opacity-100 blur-sm"></div>
               </div>
-              <span className="ml-3 text-xl font-bold tracking-wide text-transparent bg-gradient-to-r from-blue-400 via-teal-400 to-green-400 bg-clip-text">
+              <span className="ml-3 text-3xl font-serif tracking-wide text-transparent bg-gradient-to-r from-amber-200 via-amber-100 to-green-300 bg-clip-text" style={{ fontFamily: 'Georgia, Times, serif' }}>
                 Soulynk
               </span>
             </a>

@@ -39,6 +39,7 @@ const JournalEntryWithSuggestions = React.lazy(() => import('./components/pages/
 const ResultPage = React.lazy(() => import('./components/pages/ResultPage'))
 const ActivityRecommendations = React.lazy(() => import('./components/pages/Activity'))
 const CreatePost = React.lazy(() => import('./components/pages/CreatePost'))
+//const SuccessStories = React.lazy(() => import("./components/HomePage/SuccessStories"))
 const VideoChat = React.lazy(() => import("./components/Videochat/Videochat"))
 const AIrecommendation = React.lazy(() => import("./components/Materialrecommendation/AIrecommendation"))
 const CommunityChat = React.lazy(() => import("./components/Community/Communitychat"))
@@ -185,7 +186,11 @@ function App() {
                 <CreatePost />
               </Suspense>
             } />
-            
+            {/* <Route path="/SuccessStories" element={
+              <Suspense fallback={<PageSkeleton />}>
+                <SuccessStories />
+              </Suspense>
+            } /> */}
             <Route path="/video" element={
               <Suspense fallback={<PageSkeleton />}>
                 <VideoChat />
