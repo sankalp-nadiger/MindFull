@@ -256,30 +256,36 @@ If in person, focus on face-to-face interaction, avoiding distractions.`,
     return (
         <>
         <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-700 shadow-xl">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link 
-                          to="/MainPage"
-                          className="flex items-center justify-center gap-1 sm:gap-2 text-gray-900 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-                        >
-                          <ArrowLeft className="w-5 h-5" />
-                          <span className="hidden sm:block text-sm font-medium sm:text-base">Back to Dashboard</span>
-                        </Link>
-            
-            <div className="text-center">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-                Activity Sugesstions
-              </h1>
-              <p className="text-sm text-slate-400">Discover new activities to enhance your daily routine</p>
-            </div>
-            
-            <div className="flex items-center space-x-2 text-sm">
-              
-              <span className="text-slate-400"></span>
-            </div>
-          </div>
-        </div>
-      </header>
+  <div className="max-w-7xl mx-auto px-4 py-4">
+    <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-4 sm:gap-0 text-center sm:text-left">
+      
+   
+      <Link 
+        to="/MainPage"
+        className="flex items-center justify-center  text-gray-900 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+      >
+        <ArrowLeft className="w-5 h-5" />
+        <span className="hidden sm:block text-sm font-medium sm:text-base">Back to Dashboard</span>
+      </Link>
+      
+      <div className="flex flex-col items-center">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+          Activity Suggestions
+        </h1>
+        <p className="text-sm text-slate-400">
+          Discover new activities to enhance your daily routine
+        </p>
+      </div>
+      
+      
+      <div className="flex items-center space-x-2 text-sm">
+        <span className="text-slate-400"></span>
+      </div>
+
+    </div>
+  </div>
+</header>
+
         <div className="min-h-screen bg-gray-950 py-8 px-4">
             {/* Fixed watermark logo - always centered and visible */}
       <div 

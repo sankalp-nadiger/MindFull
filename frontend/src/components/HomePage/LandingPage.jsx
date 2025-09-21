@@ -199,11 +199,11 @@ export default function HeroSection() {
 
             {/* Sidebar */}
             <div
-              className={`fixed top-0 right-0 h-full w-64 bg-white dark:bg-gray-800 z-50 shadow-lg transform transition-transform duration-300 ${
+              className={`fixed top-0  right-0 h-full w-64 bg-white dark:bg-gray-800 z-50 shadow-lg transform transition-transform duration-300 ${
                 sidebarOpen ? "translate-x-0" : "translate-x-full"
               }`}
             >
-              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-600">
+              <div className="flex  items-center justify-between p-4 border-b border-gray-200 dark:border-gray-600">
                 <h3 className="text-xl font-bold text-green-900 dark:text-green-400">
                   Menu
                 </h3>
@@ -211,7 +211,7 @@ export default function HeroSection() {
                   <X size={24} className="text-gray-600 dark:text-gray-300" />
                 </button>
               </div>
-              <nav className="flex flex-col space-y-4 p-6">
+              <nav className="flex  flex-col space-y-4 p-6">
                 <a
                   href="/"
                   className="text-gray-800 dark:text-gray-200 font-medium hover:text-green-600 dark:hover:text-green-400 transition-colors"
@@ -347,7 +347,7 @@ export default function HeroSection() {
   <div className="absolute bottom-16 left-1/4 w-8 h-8 sm:w-12 sm:h-12 bg-gradient-to-r from-green-300 to-teal-300 rounded-full opacity-20 animate-pulse" style={{ animationDuration: "2s" }}></div>
   <div className="absolute bottom-20 right-1/3 w-10 h-10 sm:w-14 sm:h-14 bg-gradient-to-r from-purple-300 to-pink-300 rounded-full opacity-20 animate-pulse" style={{ animationDelay: "0.5s", animationDuration: "2s" }}></div>
 
-  <div className="relative z-10 max-w-4xl mx-auto">
+  <div className="relative  max-w-4xl mx-auto">
     <div className="mb-8 transform hover:scale-105 transition-transform duration-300">
       <h2 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 mb-6 relative animate-pulse">
         How It Works
@@ -410,11 +410,11 @@ export default function HeroSection() {
           />
         </div>
       </section>
-      <div id="journey" className="min-h-screen bg-white dark:bg-gray-900 p-4 sm:p-14 ">
+      <div id="journey" className="min-h-screen bg-white dark:bg-gray-900 p-4 -z-50 sm:p-14 ">
         {/* Header */}
 <div className="bg-white dark:bg-gray-900 py-12 lg:py-20 px-4 sm:px-8 lg:px-24 xl:px-32 relative overflow-hidden">
   
-  <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 relative z-10">
+  <div className="max-w-7xl z-auto mx-auto flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 relative ">
     {/* Left Content */}
     <div className="w-full lg:w-1/2 text-center lg:text-left mb-8 lg:mb-0">
       <div className="transform hover:scale-105 transition-transform duration-300">
