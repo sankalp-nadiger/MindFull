@@ -161,7 +161,7 @@ const ParentSignUp = () => {
                 <div className="w-16 h-12 bg-green/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30">
                   <div className="w-20 h-6 border-2 border-white rounded-full flex items-center justify-center">
                     <img
-                src="/plant.png"
+                src="/1a.png"
                 className="w-auto lg:h-16 h-10"
                 alt="Logo"
               />

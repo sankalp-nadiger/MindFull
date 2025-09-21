@@ -160,161 +160,164 @@ export function HeroHighlightDemo() {
         }}
       />
 
+      {/* Solid black background sections without grid */}
       <div className="w-full bg-black relative z-10">
-<div className="w-full h-full" style={{
-    '--color': 'rgba(114, 114, 114, 0.3)',
-    backgroundColor: '#000000',
-    backgroundImage: `
-      linear-gradient(0deg,
-        transparent 24%,
-        var(--color) 25%,
-        var(--color) 26%,
-        transparent 27%,
-        transparent 74%,
-        var(--color) 75%,
-        var(--color) 76%,
-        transparent 77%,
-        transparent
-      ),
-      linear-gradient(90deg,
-        transparent 24%,
-        var(--color) 25%,
-        var(--color) 26%,
-        transparent 27%,
-        transparent 74%,
-        var(--color) 75%,
-        var(--color) 76%,
-        transparent 77%,
-        transparent
-      )
-    `,
-    backgroundSize: '55px 55px',
-  }}>
-      <div className="w-full ">
-        <Getquotes />
-      </div>
+        <div className="w-full ">
+          <Getquotes />
+        </div>
 
-      <div className="w-full  relative z-10">
-        <Suggestion />
-      </div>
+        <div className="w-full relative z-10">
+          <Suggestion />
+        </div>
 
-      <div className="w-full font-poppins p-6 relative z-10">
-  <div className="relative group max-w-[85rem] text-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto backdrop-blur-sm bg-blue-950/40 opacity-90 bg-opacity-20 p-8 rounded-lg shadow-lg shadow-blue-950/60 hover:shadow-blue-600/50 transition-shadow flex flex-col items-center text-center overflow-hidden">
-   <div className="absolute inset-0 z-0 pointer-events-none before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:opacity-0 group-hover:before:opacity-100 before:blur-sm before:translate-x-[-100%] group-hover:before:translate-x-[200%] before:rotate-12 before:transition before:duration-1000 before:ease-in-out" />
-    <div className="relative z-10 w-full">
-      <DynamicCarousel />
-    </div>
-    
-  </div>
-</div>
+        <div className="w-full p-6 relative z-10 font-poppins">
+          <div className="max-w-[85rem] text-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto backdrop-blur-sm bg-blue-950/40 opacity-90 bg-opacity-20 p-8 rounded-lg shadow-lg shadow-blue-500/50 hover:shadow-green-500/50 transition-shadow flex flex-col items-center text-center">
+            <DynamicCarousel />
+          </div>
+        </div>
 
+        {/* TaskMaster and VisionFull Cards - Rounded on all edges */}
+        <div className="w-full p-6 relative z-10">
+          <div className="max-w-[85rem] mx-auto">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              {/* TaskMaster Card */}
+              <div className="relative group text-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14 bg-blue-950/40 backdrop-blur-sm rounded-lg shadow-lg shadow-purple-500/50 hover:shadow-blue-500/50 transition-all duration-300 transform hover:scale-105 flex flex-col items-center text-center overflow-hidden">
+                <div className="absolute inset-0 z-0 pointer-events-none before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:opacity-0 group-hover:before:opacity-100 before:blur-sm before:translate-x-[-100%] group-hover:before:translate-x-[200%] before:rotate-12 before:transition before:duration-1000 before:ease-in-out" />
+                
+                <div className="relative z-10 flex flex-col items-center text-center">
+                  <div className="mb-4 text-4xl">📋</div>
+                  <h2 className="text-2xl font-bold md:text-3xl">
+                    TaskMaster
+                  </h2>
+                  <p className="text-sm font-medium text-purple-400 mb-2">
+                    Your Smart To-Do List Assistant
+                  </p>
+                  <p className="mt-2 text-sm text-gray-300 md:text-base flex-grow">
+                    Organize, prioritize, and complete your tasks efficiently. 
+                    Keep track of progress, manage deadlines, and stay on top of your goals.
+                  </p>
+                  <Link
+                    to="/todo"
+                    className="px-6 py-3 mt-6 font-medium text-white transition-all duration-300 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 transform hover:scale-105 shadow-lg"
+                  >
+                    Manage Tasks
+                  </Link>
+                </div>
+              </div>
 
-      {/* Horizontal Layout for TaskMaster and VisionFull */}
-      <div className="w-full p-6  relative z-10">
-        <div className="max-w-[85rem] mx-auto">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {/* TaskMaster Card */}
-            <div className="relative group text-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14 bg-blue-950/40 backdrop-blur-sm rounded-lg shadow-lg shadow-blue-950/40 hover:shadow-blue-600/50 transition-all duration-300 transform flex flex-col items-center text-center overflow-hidden">
-
-  <div className="absolute inset-0 z-0 pointer-events-none before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:opacity-0 group-hover:before:opacity-100 before:blur-sm before:translate-x-[-100%] group-hover:before:translate-x-[200%] before:rotate-12 before:transition before:duration-1000 before:ease-in-out" />
-
-  
-  <div className="relative z-10 flex flex-col items-center text-center">
-    <div className="mb-4 text-4xl">📋</div>
-    <h2 className="text-2xl font-bold md:text-3xl">
-      TaskMaster
-    </h2>
-    <p className="text-sm font-medium text-purple-400 mb-2">
-      Your Smart To-Do List Assistant
-    </p>
-    <p className="mt-2 text-sm text-gray-300 md:text-base flex-grow">
-      Organize, prioritize, and complete your tasks efficiently. 
-      Keep track of progress, manage deadlines, and stay on top of your goals.
-    </p>
-    <Link
-      to="/todo"
-      className="px-6 py-3 mt-6 font-medium text-white transition-all duration-300 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600  hover:to-blue-700 transform hover:scale-105 shadow-lg"
-    >
-      Manage Tasks
-    </Link>
-  </div>
-</div>
-
-
-            {/* VisionFull Card */}
-            <div className="relative group text-white bg-blue-950/40  px-4 py-10 sm:px-6 lg:px-8 lg:py-14 backdrop-blur-sm rounded-lg shadow-lg shadow-blue-950/50 hover:shadow-blue-600/50 transition-all duration-300 transform  flex flex-col items-center text-center overflow-hidden">
-
-  <div className="absolute inset-0 z-0 pointer-events-none before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:opacity-0 group-hover:before:opacity-100 before:blur-sm before:translate-x-[-100%] group-hover:before:translate-x-[200%] before:rotate-12 before:transition before:duration-1000 before:ease-in-out" />
-
-  <div className="relative z-10 flex flex-col items-center text-center">
-    <div className="mb-4 text-4xl">🎯</div>
-    <h2 className="text-2xl font-bold md:text-3xl">
-      VisionFull
-    </h2>
-    <p className="text-sm font-medium text-green-400 mb-2">
-      Visualize Your Dreams Into Reality
-    </p>
-    <p className="mt-2 text-sm text-gray-300 md:text-base flex-grow">
-      Create digital vision boards that inspire and motivate. 
-      Collect images, quotes, and aspirations that help manifest your goals and dreams.
-    </p>
-    <Link
-      to="/vision-board"
-      className="px-6 py-3 mt-6 font-medium text-white transition-all duration-300 rounded-lg bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 transform hover:scale-105 shadow-lg"
-    >
-      Create Vision Board
-    </Link>
-  </div>
-</div>
-
+              {/* VisionFull Card */}
+              <div className="relative group text-white bg-blue-950/40 px-4 py-10 sm:px-6 lg:px-8 lg:py-14 backdrop-blur-sm rounded-lg shadow-lg shadow-purple-500/50 hover:shadow-green-500/50 transition-all duration-300 transform hover:scale-105 flex flex-col items-center text-center overflow-hidden">
+                <div className="absolute inset-0 z-0 pointer-events-none before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:opacity-0 group-hover:before:opacity-100 before:blur-sm before:translate-x-[-100%] group-hover:before:translate-x-[200%] before:rotate-12 before:transition before:duration-1000 before:ease-in-out" />
+                <div className="relative z-10 flex flex-col items-center text-center">
+                  <div className="mb-4 text-4xl">🎯</div>
+                  <h2 className="text-2xl font-bold md:text-3xl">
+                    VisionFull
+                  </h2>
+                  <p className="text-sm font-medium text-green-400 mb-2">
+                    Visualize Your Dreams Into Reality
+                  </p>
+                  <p className="mt-2 text-sm text-gray-300 md:text-base flex-grow">
+                    Create digital vision boards that inspire and motivate. 
+                    Collect images, quotes, and aspirations that help manifest your goals and dreams.
+                  </p>
+                  <Link
+                    to="/vision-board"
+                    className="px-6 py-3 mt-6 font-medium text-white transition-all duration-300 rounded-lg bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 transform hover:scale-105 shadow-lg"
+                  >
+                    Create Vision Board
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-col items-center justify-center w-full px-4 py-12 font-poppins text-gray-100  sm:px-6 lg:px-8 relative z-10">
-        <div className="flex flex-col items-center justify-between w-full mx-auto lg:flex-row max-w-7xl">
-          <div className="max-w-md space-y-6 text-center lg:text-left lg:max-w-xl">
-            <h1 className="text-3xl font-bold text-white md:text-4xl lg:text-5xl">
-              Welcome to Your Music World
-            </h1>
-            <p className="text-lg text-white md:text-xl">
-              Dive into a world of soothing melodies and rhythmic beats. Explore our Soulynk library of music and let the tunes play on.
-            </p>
-            <button
-              onClick={handleclick}
-              className="px-6 py-3 font-semibold text-white transition duration-300 bg-purple-500 rounded-full hover:bg-purple-600"
-            >
-              Open Music Player
-            </button>
+      {/* Grid background starts from Music World section */}
+      <div className="w-full relative">
+        {/* Edge blur masks - top, left, right */}
+        <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black via-black/60 to-transparent z-10 pointer-events-none"></div>
+        <div className="absolute top-0 left-0 w-16 h-full bg-gradient-to-r from-black via-black/60 to-transparent z-10 pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-16 h-full bg-gradient-to-l from-black via-black/60 to-transparent z-10 pointer-events-none"></div>
+        
+        {/* Overall subtle overlay to reduce line brightness */}
+        <div className="absolute inset-0 bg-black/20 z-5 pointer-events-none"></div>
+        
+        <div className="w-full" style={{
+          '--color': 'rgba(114, 114, 114, 0.23)',
+          backgroundColor: '#000000',
+          backgroundImage: `
+            linear-gradient(0deg,
+              transparent 24%,
+              var(--color) 25%,
+              var(--color) 26%,
+              transparent 27%,
+              transparent 74%,
+              var(--color) 75%,
+              var(--color) 76%,
+              transparent 77%,
+              transparent
+            ),
+            linear-gradient(90deg,
+              transparent 24%,
+              var(--color) 25%,
+              var(--color) 26%,
+              transparent 27%,
+              transparent 74%,
+              var(--color) 75%,
+              var(--color) 76%,
+              transparent 77%,
+              transparent
+            )
+          `,
+          backgroundSize: '55px 55px',
+        }}>
+          
+          {/* Music World Section */}
+          <div className="flex flex-col items-center justify-center w-full px-4 py-12 font-poppins text-gray-100 sm:px-6 lg:px-8 relative z-10">
+            <div className="flex flex-col items-center justify-between w-full mx-auto lg:flex-row max-w-7xl">
+              <div className="max-w-md space-y-6 text-center lg:text-left lg:max-w-xl">
+                <h1 className="text-3xl font-bold text-white md:text-4xl lg:text-5xl">
+                  Welcome to Your Music World
+                </h1>
+                <p className="text-lg text-white md:text-xl">
+                  Dive into a world of soothing melodies and rhythmic beats. Explore our Soulynk library of music and let the tunes play on.
+                </p>
+                <button
+                  onClick={handleclick}
+                  className="px-6 py-3 font-semibold text-white transition duration-300 bg-purple-500 rounded-full hover:bg-purple-600"
+                >
+                  Open Music Player
+                </button>
+              </div>
+
+              <div className="mt-12 lg:mt-0 lg:w-1/2 group relative overflow-hidden rounded-lg shadow-lg">
+                <div className="absolute inset-0 z-0 pointer-events-none before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:opacity-0 group-hover:before:opacity-100 before:blur-sm before:translate-x-[-100%] group-hover:before:translate-x-[200%] before:rotate-12 before:transition before:duration-1000 before:ease-in-out" />
+                <img
+                  src="music.jpg"
+                  alt="Music"
+                  className="object-cover w-full h-auto rounded-lg"
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="mt-12 lg:mt-0 lg:w-1/2 group relative overflow-hidden rounded-lg shadow-lg">
+          {/* Exercise Cards */}
+          <div className="w-full font-poppins">
+            <ExerciseCards/>      
+          </div>
 
-<div className="absolute inset-0 z-0 pointer-events-none before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:opacity-0 group-hover:before:opacity-100 before:blur-sm before:translate-x-[-100%] group-hover:before:translate-x-[200%] before:rotate-12 before:transition before:duration-1000 before:ease-in-out" />
-  <img
-    src="music.jpg"
-    alt="Music"
-    className="object-cover w-full h-auto rounded-lg"
-  />
-</div>
+          {/* Footer Section */}
+          <section className="w-full text-white body-font relative z-10">
+            <BentoGridDemo />
+            {/* <BadgesCorner /> */}
+            <Footer />
+          </section>
 
+          {/* Floating Chat Button */}
+          <FloatingChatButton />
         </div>
       </div>
-
-      <div className="w-full font-poppins">
-        <ExerciseCards/>      
-      </div>
-
-      <section className="w-full  text-white body-font relative z-10">
-        <BentoGridDemo />
-        {/* <BadgesCorner /> */}
-        <Footer />
-      </section>
-
-      {/* Floating Chat Button */}
-      <FloatingChatButton />
-    </div>
-    </div>
     </div>
   );
 }

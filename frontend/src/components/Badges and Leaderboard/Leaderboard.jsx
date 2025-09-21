@@ -14,21 +14,31 @@ const leaderboardAPI = {
   },
 
   getUserPosition: async () => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return null;
+  try {
+    const accessToken = sessionStorage.getItem('accessToken'); // Get token from sessionStorage
     
     const response = await fetch(`${API_BASE_URL}/leaderboard/my-position`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}` // Send as Authorization header
+        }
+        // Remove credentials: 'include' since you're using sessionStorage
     });
+    
+    if (response.status === 401 || response.status === 403) {
+      return null; // User not authenticated
+    }
+    
     if (!response.ok) {
-      if (response.status === 401) return null; // User not authenticated
       throw new Error('Failed to fetch user position');
     }
+    
     return response.json();
-  },
+  } catch (error) {
+    console.log('User position fetch error:', error.message);
+    return null;
+  }
+},
 
   getDistrictStats: async () => {
     const response = await fetch(`${API_BASE_URL}/leaderboard/districts/stats`);
@@ -50,6 +60,7 @@ function Leaderboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const fetchLeaderboardData = async () => {
     try {
@@ -67,20 +78,24 @@ function Leaderboard() {
         setTopUsers(topPerformersRes.value.data || []);
       } else {
         console.error('Failed to fetch top performers:', topPerformersRes.reason);
+        setError('Failed to fetch some leaderboard data');
       }
 
       // Handle user position (might fail if not authenticated)
-      if (userPositionRes.status === 'fulfilled' && userPositionRes.value) {
-        setCurrentUser(userPositionRes.value.data);
-      } else if (userPositionRes.status === 'rejected') {
-        console.log('User position not available (likely not authenticated)');
-      }
+if (userPositionRes.status === 'fulfilled' && userPositionRes.value) {
+  setCurrentUser(userPositionRes.value.data);
+  setIsAuthenticated(true);
+} else {
+  setCurrentUser(null);
+  setIsAuthenticated(false);
+}
 
       // Handle district stats
       if (districtStatsRes.status === 'fulfilled') {
         setDistrictStats(districtStatsRes.value.data || []);
       } else {
         console.error('Failed to fetch district stats:', districtStatsRes.reason);
+        if (!error) setError('Failed to fetch district statistics');
       }
 
     } catch (err) {
@@ -118,26 +133,29 @@ function Leaderboard() {
     }
   };
 
-  const renderBadges = (badges) => {
-    if (!badges || badges.length === 0) {
-      // Generate default badges based on user data if no badges provided
-      const defaultBadges = [];
-      if (currentUser?.streak >= 30) {
-        defaultBadges.push({ type: 'fire', name: 'Fire Streak', color: 'orange' });
-      }
-      if (currentUser?.points >= 1000) {
-        defaultBadges.push({ type: 'star', name: 'High Achiever', color: 'yellow' });
-      }
-      if (currentUser?.globalRank <= 5) {
-        defaultBadges.push({ type: 'crown', name: 'Top Performer', color: 'purple' });
-      }
-      if (currentUser?.streak >= 7) {
-        defaultBadges.push({ type: 'target', name: 'Weekly Warrior', color: 'green' });
-      }
-      badges = defaultBadges;
+const renderBadges = (badges) => {
+  // If no badges, generate default ones based on user data
+  if (!badges || badges.length === 0) {
+    if (!currentUser) return null;
+    
+    const defaultBadges = [];
+    if (currentUser.maxStreak >= 30) {
+      defaultBadges.push({ type: 'fire', name: 'Fire Streak', color: 'orange' });
+    }
+    if (currentUser.points >= 1000) {
+      defaultBadges.push({ type: 'star', name: 'High Achiever', color: 'yellow' });
+    }
+    if (currentUser.maxStreak >= 7) {
+      defaultBadges.push({ type: 'target', name: 'Weekly Warrior', color: 'green' });
+    }
+    if (currentUser.globalRank <= 5) {
+      defaultBadges.push({ type: 'crown', name: 'Top Performer', color: 'purple' });
     }
     
-    if (badges.length === 0) return null;
+    badges = defaultBadges;
+  }
+  
+  if (badges.length === 0) return <p className="text-gray-400 text-xs">No badges earned yet</p>;
     
     const badgeIcons = {
       fire: <Flame className="w-3 h-3" />,
@@ -259,7 +277,7 @@ function Leaderboard() {
           {/* Current User & Top 5 Split Section */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* Current User Progress Card - Left Side */}
-            {currentUser ? (
+            {isAuthenticated && currentUser ? (
               <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 shadow-2xl">
                 <div className="flex items-center gap-4 mb-4">
                   <img
@@ -281,16 +299,21 @@ function Leaderboard() {
                 </div>
                 
                 <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2 text-white">
-                    <Flame className="w-6 h-6 text-orange-400" />
-                    <span className="text-2xl font-bold">{currentUser.streak}</span>
-                    <span className="text-sm">days streak</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-blue-100">
-                    <Star className="w-5 h-5 text-yellow-400" />
-                    <span className="font-semibold">{currentUser.points} pts</span>
-                  </div>
-                </div>
+  <div className="text-white">
+    <div className="flex items-center gap-2 mb-1">
+      <Flame className="w-6 h-6 text-orange-400" />
+      <span className="text-2xl font-bold">{currentUser.currentStreak || currentUser.streak || 0}</span>
+      <span className="text-sm">current streak</span>
+    </div>
+    <div className="text-md text-blue-200">
+      Best: {currentUser.maxStreak} days
+    </div>
+  </div>
+  <div className="flex items-center gap-2 text-blue-100">
+    <Star className="w-5 h-5 text-yellow-400" />
+    <span className="font-semibold">{currentUser.points} pts</span>
+  </div>
+</div>
                 
                 {/* Badges Section */}
                 <div className="mb-4">
@@ -299,20 +322,23 @@ function Leaderboard() {
                 </div>
 
                 {/* Progress to next rank */}
-                {currentUser.userAbove && currentUser.pointsToNextRank > 0 && (
-                  <div className="p-3 bg-white/10 rounded-lg">
-                    <div className="flex items-center gap-2 text-white mb-2">
-                      <TrendingUp className="w-5 h-5 text-green-400" />
-                      <span className="text-sm">
-                        {currentUser.pointsToNextRank} points to reach rank #{currentUser.globalRank - 1}
-                      </span>
-                    </div>
-                    <div className="text-xs text-blue-200 bg-blue-600/20 p-2 rounded">
-                      💡 <strong>Quick Tips:</strong> Complete daily challenges, maintain your streak, 
-                      or help others in community to earn more points!
-                    </div>
-                  </div>
-                )}
+                {currentUser && (
+  <div className="p-3 bg-white/10 rounded-lg">
+    <div className="flex items-center gap-2 text-white mb-2">
+      <TrendingUp className="w-5 h-5 text-green-400" />
+      <span className="text-sm">
+        {currentUser.pointsToNextRank > 0 
+          ? `${currentUser.pointsToNextRank} points to reach rank #${currentUser.globalRank - 1}`
+          : "You're at the top! Keep your streak going!"
+        }
+      </span>
+    </div>
+    <div className="text-xs text-blue-200 bg-blue-600/20 p-2 rounded">
+      💡 <strong>Quick Tips:</strong> Complete daily challenges, maintain your streak, 
+      or help others in community to earn more points!
+    </div>
+  </div>
+)}
               </div>
             ) : (
               <div className="bg-gradient-to-r from-gray-600 to-gray-700 rounded-2xl p-6 shadow-2xl">
@@ -382,15 +408,18 @@ function Leaderboard() {
                       </div>
                       
                       <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1 bg-gray-700 px-2 py-1 rounded">
-                          <Flame className="w-3 h-3 text-orange-400" />
-                          <span className="text-white font-bold text-xs">{user.streak}</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-yellow-400">
-                          <Star className="w-3 h-3" />
-                          <span className="font-semibold text-xs">{user.points}</span>
-                        </div>
-                      </div>
+  <div className="flex items-center gap-1 bg-gray-700 px-2 py-1 rounded">
+    <Flame className="w-3 h-3 text-orange-400" />
+    <span className="text-white font-bold text-xs">{user.currentStreak || user.streak || 0}</span>
+  </div>
+  <div className="text-xs text-gray-400">
+    Max: {user.maxStreak}
+  </div>
+  <div className="flex items-center gap-1 text-yellow-400">
+    <Star className="w-3 h-3" />
+    <span className="font-semibold text-xs">{user.points}</span>
+  </div>
+</div>
                     </div>
                   ))
                 ) : (
@@ -450,11 +479,11 @@ function Leaderboard() {
                             <span>{district.totalPoints} total points</span>
                           </div>
                           <div className="text-green-400 font-semibold">
-                            Avg: {Math.round(district.avgPoints)} pts/user
+                            Average: {Math.round(district.avgPoints)} points/user
                           </div>
                           {index > 0 && districtStats[0] && (
                             <div className="text-red-400 text-xs">
-                              -{districtStats[0].totalPoints - district.totalPoints} pts behind leader
+                              -{districtStats[0].totalPoints - district.totalPoints} points behind leader
                             </div>
                           )}
                         </div>
@@ -522,7 +551,7 @@ function Leaderboard() {
                             <div className="flex items-center gap-4">
                               <div className="flex items-center gap-1 bg-gray-700 px-3 py-1 rounded-full">
                                 <Flame className="w-4 h-4 text-orange-400" />
-                                <span className="text-white font-bold text-sm">{user.streak}</span>
+                                <span className="text-white font-bold text-sm">{user.maxStreak}</span>
                               </div>
                               <div className="flex items-center gap-1 text-yellow-400">
                                 <Star className="w-4 h-4" />
