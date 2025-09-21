@@ -17,6 +17,18 @@ const ParentSignUp = () => {
   const [toast, setToast] = useState({ message: "", type: "info" });
   const [errorCount, setErrorCount] = useState(0);
 
+   const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault(); // Prevent form submit
+      const form = e.target.form;
+      const index = Array.prototype.indexOf.call(form, e.target);
+      const nextElement = form.elements[index + 1];
+      if (nextElement) {
+        nextElement.focus();
+      }
+    }
+  };
+
   // Validation helpers
   const validatePhone = (num) => /^\d{10}$/.test(num);
   const validatePassword = (pw) => pw.length >= 6;
@@ -223,6 +235,7 @@ const ParentSignUp = () => {
                 className="form-input"
                 placeholder="Enter your full name"
                 value={name}
+                onKeyDown={handleKeyDown}
                 onChange={(e) => setName(e.target.value)}
                 required
               />
@@ -237,6 +250,7 @@ const ParentSignUp = () => {
                 className="form-input"
                 placeholder="Enter your phone number"
                 value={phone}
+                onKeyDown={handleKeyDown}
                 onChange={(e) => setPhone(e.target.value)}
                 maxLength={10}
                 required
@@ -253,6 +267,7 @@ const ParentSignUp = () => {
                   className="form-input"
                   placeholder="Enter your password"
                   value={password}
+                  
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
@@ -279,6 +294,7 @@ const ParentSignUp = () => {
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
                     maxLength={6}
+                    onKeyDown={handleKeyDown}
                     required
                   />
                   {otpTimer > 0 ? (

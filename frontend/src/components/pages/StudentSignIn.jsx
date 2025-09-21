@@ -39,6 +39,18 @@ const StudentSignIn = () => {
   const [fieldError, setFieldError] = useState({ username: false, password: false, mood: false });
   const [errorCount, setErrorCount] = useState(0);
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault(); // Prevent form submit
+      const form = e.target.form;
+      const index = Array.prototype.indexOf.call(form, e.target);
+      const nextElement = form.elements[index + 1];
+      if (nextElement) {
+        nextElement.focus();
+      }
+    }
+  };
+
   const handleRoleClick = (roleId) => {
     setSelectedRole(roleId);
 
@@ -56,6 +68,8 @@ const StudentSignIn = () => {
         break;
     }
   };
+
+  
 
   // Email/username validation (basic: at least 3 chars, no spaces)
   const validateUsername = (username) => username && username.length >= 3 && !username.includes(" ");
@@ -225,6 +239,7 @@ const StudentSignIn = () => {
                             className={`form-input${fieldError.username ? " error" : ""}`}
                             placeholder="Enter your username"
                             autoComplete="username"
+                            onKeyDown={handleKeyDown}
                           />
                           {fieldError.username && <div className="error-message">Invalid username.</div>}
                         </div>
@@ -238,6 +253,7 @@ const StudentSignIn = () => {
                               className={`form-input${fieldError.password ? " error" : ""}`}
                               placeholder="Enter your password"
                               autoComplete="current-password"
+                              
                             />
                             <button
                               type="button"
@@ -255,6 +271,7 @@ const StudentSignIn = () => {
                             id="mood"
                             name="mood"
                             className={`form-input select-input${fieldError.mood ? " error" : ""}`}
+                            onKeyDown={handleKeyDown}
                             required
                           >
                             <option value="">Select your mood</option>

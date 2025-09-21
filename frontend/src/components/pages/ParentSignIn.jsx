@@ -16,6 +16,17 @@ const ParentSignIn = () => {
   const [toast, setToast] = useState({ message: "", type: "info" });
   const [errorCount, setErrorCount] = useState(0);
 
+     const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault(); // Prevent form submit
+      const form = e.target.form;
+      const index = Array.prototype.indexOf.call(form, e.target);
+      const nextElement = form.elements[index + 1];
+      if (nextElement) {
+        nextElement.focus();
+      }
+    }
+  };
   // Validate phone number (10 digits, numeric)
   const validatePhone = (num) => /^\d{10}$/.test(num);
 
@@ -200,6 +211,7 @@ const ParentSignIn = () => {
                 value={phoneNumber}
                 onChange={(e) => { setPhoneNumber(e.target.value); setOtpError(""); }}
                 placeholder="Enter your 10-digit phone number"
+                onKeyDown={handleKeyDown}
                 maxLength={10}
                 required
               />
@@ -216,6 +228,7 @@ const ParentSignIn = () => {
                   onChange={(e) => { setOtp(e.target.value); setOtpError(""); }}
                   placeholder="Enter 6-digit OTP"
                   maxLength={6}
+                  onKeyDown={handleKeyDown}
                   required
                   style={{ flex: 1 }}
                 />

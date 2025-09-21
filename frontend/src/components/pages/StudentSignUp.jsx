@@ -22,6 +22,18 @@ const StudentSignUp = () => {
 
   const navigate = useNavigate();
 
+   const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault(); // Prevent form submit
+      const form = e.target.form;
+      const index = Array.prototype.indexOf.call(form, e.target);
+      const nextElement = form.elements[index + 1];
+      if (nextElement) {
+        nextElement.focus();
+      }
+    }
+  };
+
   const getLocation = () => {
     if (navigator.geolocation) {
       setIsLocating(true);
@@ -240,6 +252,7 @@ const StudentSignUp = () => {
               className="form-input"
               placeholder="Enter your full name"
               value={fullName}
+              onKeyDown={handleKeyDown}
               onChange={(e) => setFullName(e.target.value)}
               required
             />
@@ -254,6 +267,7 @@ const StudentSignUp = () => {
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={handleKeyDown}
               required
             />
           </div>
@@ -267,6 +281,7 @@ const StudentSignUp = () => {
               placeholder="Choose a username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              onKeyDown={handleKeyDown}
               required
             />
           </div>
@@ -281,6 +296,7 @@ const StudentSignUp = () => {
                 placeholder="Create a password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                
                 required
               />
               <button
@@ -302,6 +318,7 @@ const StudentSignUp = () => {
               placeholder="Enter your age"
               value={age}
               onChange={(e) => setAge(e.target.value)}
+              onKeyDown={handleKeyDown}
               min="13"
               max="99"
               required
@@ -315,6 +332,7 @@ const StudentSignUp = () => {
               className="form-input select-input"
               value={gender}
               onChange={(e) => setGender(e.target.value)}
+              onKeyDown={handleKeyDown}
               required
             >
               <option value="">Select Gender</option>

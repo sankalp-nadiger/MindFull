@@ -18,6 +18,18 @@ const CounselorSignIn = () => {
   const [toast, setToast] = useState({ message: "", type: "info" });
   const [errorCount, setErrorCount] = useState(0);
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault(); // Prevent form submit
+      const form = e.target.form;
+      const index = Array.prototype.indexOf.call(form, e.target);
+      const nextElement = form.elements[index + 1];
+      if (nextElement) {
+        nextElement.focus();
+      }
+    }
+  };
+
   // Email/phone validation
   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const validatePhone = (num) => /^\d{10}$/.test(num);

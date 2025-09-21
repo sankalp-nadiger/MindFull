@@ -37,6 +37,18 @@ const CounsellorSignUp = () => {
   const [toast, setToast] = useState({ message: "", type: "info" });
   const [errorCount, setErrorCount] = useState(0);
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault(); // Prevent form submit
+      const form = e.target.form;
+      const index = Array.prototype.indexOf.call(form, e.target);
+      const nextElement = form.elements[index + 1];
+      if (nextElement) {
+        nextElement.focus();
+      }
+    }
+  };
+
   // Start OTP timer
   const startOtpTimer = () => {
     setOtpTimer(60);
@@ -424,6 +436,7 @@ const CounsellorSignUp = () => {
                 name="fullName"
                 value={formData.fullName}
                 onChange={handleChange}
+                onKeyDown={handleKeyDown}
                 className={`form-input ${errors.fullName ? 'error' : ''}`}
                 placeholder="Enter your full name"
                 required
@@ -437,6 +450,7 @@ const CounsellorSignUp = () => {
                 type="email"
                 name="email"
                 value={formData.email}
+                onKeyDown={handleKeyDown}
                 onChange={handleChange}
                 className={`form-input ${errors.email ? 'error' : ''}`}
                 placeholder="Enter your email address"
@@ -453,6 +467,7 @@ const CounsellorSignUp = () => {
                   name="mobileNumber"
                   value={formData.mobileNumber}
                   onChange={handleChange}
+                  onKeyDown={handleKeyDown}
                   className={`form-input otp-input ${errors.mobileNumber ? 'error' : ''}`}
                   placeholder="10-digit mobile number"
                   maxLength="10"
@@ -478,6 +493,7 @@ const CounsellorSignUp = () => {
                   name="otp"
                   value={formData.otp}
                   onChange={handleChange}
+                  onKeyDown={handleKeyDown}
                   className={`form-input ${errors.otp ? 'error' : ''}`}
                   placeholder="Enter the 6-digit OTP"
                   maxLength="6"
@@ -496,6 +512,7 @@ const CounsellorSignUp = () => {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
+                
                   className={`form-input ${errors.password ? 'error' : ''}`}
                   placeholder="Minimum 6 characters"
                   required
@@ -518,6 +535,7 @@ const CounsellorSignUp = () => {
                 name="yearExp"
                 value={formData.yearExp}
                 onChange={handleChange}
+                onKeyDown={handleKeyDown}
                 className={`form-input ${errors.yearExp ? 'error' : ''}`}
                 placeholder="Enter years of experience"
                 min="0"
@@ -535,6 +553,7 @@ const CounsellorSignUp = () => {
                     type="text"
                     value={spec}
                     onChange={(e) => handleSpecificationChange(e, index)}
+                
                     className={`form-input flex-1 ${errors.specification ? 'error' : ''}`}
                     placeholder="e.g., Anxiety, Depression, Family Counseling"
                     required
