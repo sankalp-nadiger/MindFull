@@ -3,6 +3,8 @@ import { Play, Pause, SkipForward, X, Smile, Frown, Moon, Zap, Heart } from 'luc
 import ReactPlayer from 'react-player';
 import Navbar from '../Navbar/Navbar';
 import Footer from '../Footer/Footer';
+import Aurora from './Aurora';
+  
 
 const moods = [
   { id: 'happy', name: 'Happy', icon: <Smile className="h-5 w-5" /> },
@@ -40,7 +42,7 @@ export default function MusicPlayerApp() {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef(null);
 
-  // Scroll to top on component mount
+  
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -66,73 +68,121 @@ export default function MusicPlayerApp() {
   return (
     <div className="overflow-x-hidden">
       <Navbar/>
-      <div className="min-h-screen flex flex-col lg:flex-row items-center justify-center bg-gradient-to-b from-black via-violet-700 to-black text-white p-6">
-        
-        <div className="w-full lg:w-1/2">
-          <h1 className="text-5xl font-bold mb-6 text-center lg:text-left">Mood-Based Music Player</h1>
-          <p className="text-lg sm:text-xl md:text-2xl py-2 font-mono text-gray-800 dark:text-gray-300 leading-relaxed tracking-wide">
-          How are you feeling TODAY ? We have carefully curated these songs according to your mood.
-          </p>
-          
-          <div className="flex gap-3 mb-6 justify-center lg:justify-start">
-            {moods.map(mood => (
-              <button 
-                key={mood.id} 
-                onClick={() => setSelectedMood(mood.id)} 
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ${selectedMood === mood.id ? 'bg-purple-600' : 'bg-gray-800 hover:bg-gray-700'}`}
-              >
-                {mood.icon} {mood.name}
-              </button>
-            ))}
+    
+<div className={`flex flex-col items-center justify-center bg-black font-poppins  text-white  ${currentSong ? 'blur-sm' : ''}`}>
+  <Aurora
+  colorStops={["#3A29FF", "#FF94B4", "#FF3232"]}
+  blend={0.5}
+  amplitude={1.0}
+  speed={0.5}
+></Aurora>
+  <div className="w-full max-w-4xl px-6">
+    <h1 className="text-5xl font-bold mb-6 text-center">Mood-Based Music Player</h1>
+    <p className="text-lg sm:text-xl md:text-2xl py-2 font-mono text-gray-800 dark:text-gray-300 leading-relaxed tracking-wide text-center">
+      How are you feeling TODAY ? We have carefully curated these songs according to your mood.
+    </p>
+    
+    <div className="flex flex-wrap gap-3 mb-6 justify-center">
+      {moods.map(mood => (
+        <button 
+          key={mood.id} 
+          onClick={() => setSelectedMood(mood.id)} 
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ${selectedMood === mood.id ? 'bg-purple-600' : 'bg-gray-800 hover:bg-gray-700'}`}
+        >
+          {mood.icon} {mood.name}
+        </button>
+      ))}
+    </div>
+    
+    <div className="w-full max-w-2xl mx-auto space-y-3">
+      {filteredSongs.length > 0 ? filteredSongs.map(song => (
+        <button 
+          key={song.id} 
+          onClick={() => handleSongSelect(song)} 
+          className="flex items-center gap-3 w-full p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition-all duration-300"
+        >
+          <img src={song.coverUrl} alt={song.title} className="w-12 h-12 rounded-lg" />
+          <div className="text-left">
+            <h3 className="text-lg font-semibold">{song.title}</h3>
+            <p className="text-sm text-gray-400">{song.artist}</p>
           </div>
-          <div className="w-full max-w-md space-y-3">
-            {filteredSongs.length > 0 ? filteredSongs.map(song => (
-              <button 
-                key={song.id} 
-                onClick={() => handleSongSelect(song)} 
-                className="flex items-center gap-3 w-full p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition-all duration-300"
-              >
-                <img src={song.coverUrl} alt={song.title} className="w-12 h-12 rounded-lg" />
-                <div className="text-left">
-                  <h3 className="text-lg font-semibold">{song.title}</h3>
-                  <p className="text-sm text-gray-400">{song.artist}</p>
-                </div>
-              </button>
-            )) : <p>No songs available for this mood.</p>}
-          </div>
-        </div>
-        {currentSong && (
-          <div className="w-1/2 h-full bg-gradient-to-b from-violet-500 via-violet-700 to-purple-950 border-2 border-white rounded-md p-6 flex flex-col items-center justify-center relative">
-            <button onClick={() => setCurrentSong(null)} className="absolute top-4 right-4 p-2 bg-gray-900  rounded-full"><X className="h-6 w-6" /></button>
-            <img 
-              src={currentSong.coverUrl} 
-              alt={currentSong.title} 
-              className={`w-64 h-64 rounded-full mb-4 ${isPlaying ? 'animate-spin-slow' : ''}`}
-            />
-            <h3 className="text-xl font-semibold">{currentSong.title}</h3>
-            <p className="text-sm text-gray-400">{currentSong.artist}</p>
-            <ReactPlayer 
-              url={currentSong.audioUrl} 
-              playing={isPlaying} 
-              controls 
-              width="0px" 
-              height="0px" 
-              config={{ youtube: { playerVars: { modestbranding: 1, showinfo: 0 } } }} 
-            />
-            <div className="flex gap-4 mt-4">
-              <button onClick={() => setIsPlaying(!isPlaying)} className="p-3 bg-purple-600 rounded-full">
-                {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
-              </button>
-              <button onClick={nextSong} className="p-3 bg-gray-900 rounded-full">
-                <SkipForward className="h-6 w-6" />
-              </button>
-            </div>
-          </div>
-        )}
+        </button>
+      )) : <p className="text-center">No songs available for this mood.</p>}
+    </div>
+  </div>
+</div>
+
+
+{currentSong && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center  bg-black bg-opacity-75 backdrop-blur-sm">
+    
+    <div className="w-full h-full max-w-4xl max-h-screen bg-black/40 z-50 border-2 border-white rounded-none sm:rounded-2xl sm:max-w-2xl sm:max-h-[90vh] p-6 sm:p-8 flex flex-col items-center justify-center relative overflow-hidden">
+      
+      
+      <button 
+        onClick={() => setCurrentSong(null)} 
+        className="absolute top-4 right-4 z-10 p-2 bg-black bg-opacity-50 hover:bg-opacity-70 rounded-full transition-all duration-300"
+      >
+        <X className="h-6 w-6" />
+      </button>
+      
+      
+      <div className="mb-6 sm:mb-8">
+        <img 
+          src={currentSong.coverUrl} 
+          alt={currentSong.title} 
+          className={`w-48 h-48 sm:w-64 sm:h-64 lg:w-80 lg:h-80 rounded-full shadow-2xl ${isPlaying ? 'animate-spin-slow' : ''}`}
+        />
       </div>
       
+      
+      <div className="text-center mb-6 sm:mb-8">
+        <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">{currentSong.title}</h3>
+        <p className="text-lg sm:text-xl text-gray-300">{currentSong.artist}</p>
+      </div>
+      
+      
+      <ReactPlayer 
+        url={currentSong.audioUrl} 
+        playing={isPlaying} 
+        controls={false}
+        width="0px" 
+        height="0px" 
+        config={{ youtube: { playerVars: { modestbranding: 1, showinfo: 0 } } }} 
+      />
+      
+     
+      <div className="flex gap-4 sm:gap-6">
+        <button 
+          onClick={() => setIsPlaying(!isPlaying)} 
+          className="p-4 sm:p-5 bg-purple-600 hover:bg-purple-700 rounded-full transition-all duration-300 shadow-lg"
+        >
+          {isPlaying ? <Pause className="h-8 w-8" /> : <Play className="h-8 w-8" />}
+        </button>
+        <button 
+          onClick={nextSong} 
+          className="p-4 sm:p-5 bg-gray-900 hover:bg-gray-800 rounded-full transition-all duration-300 shadow-lg"
+        >
+          <SkipForward className="h-8 w-8" />
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
+<style jsx>{`
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .animate-spin-slow {
+    animation: spin-slow 10s linear infinite;
+  }
+`}</style>
+      
       {/* Mental Health Podcasts Section with Grid Background */}
-      <div className="w-full relative">
+      <div className="w-full pt-10 relative font-poppins">
         {/* Edge blur masks - top, left, right, bottom */}
         <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black via-black/60 to-transparent z-10 pointer-events-none"></div>
         <div className="absolute top-0 left-0 w-16 h-full bg-gradient-to-r from-black via-black/60 to-transparent z-10 pointer-events-none"></div>

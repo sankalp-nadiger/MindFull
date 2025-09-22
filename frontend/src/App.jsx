@@ -25,7 +25,7 @@ const Councellor = React.lazy(() => import("./components/Councellor/Councellor")
 const Quiz = React.lazy(() => import("./components/Games/quizgame"))
 const VisionBoard = React.lazy(() => import("./components/VisionBoard/VisionBoard"))
 const SudokuGame = React.lazy(() => import("./components/Games/sudoku"))
-const CrosswordGame = React.lazy(() => import("./components/Games/Crosswords"))
+
 const Leaderboard = React.lazy(() => import("./components/Badges and Leaderboard/Leaderboard"))
 const OnBoardphase1 = React.lazy(() => import("./components/pages/OnBoardphase1"))
 const OnBoardphase2 = React.lazy(() => import('./components/pages/OnBoardphase2'))
@@ -93,11 +93,7 @@ function App() {
                 <SudokuGame />
               </Suspense>
             } />
-            <Route path="/Crossword" element={
-              <Suspense fallback={<PageSkeleton />}>
-                <CrosswordGame />
-              </Suspense>
-            } />
+           
             <Route path="/Leaderboard" element={
               <Suspense fallback={<PageSkeleton />}>
                 <Leaderboard />
