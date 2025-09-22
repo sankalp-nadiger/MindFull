@@ -20,6 +20,11 @@ import taskRouter from "./routes/task.route.js";
 import recomendations from "./routes/recommendations.route.js";
 import visionRouter from "./routes/visionboard.routes.js";
 import leaderboardRouter from "./routes/leaderboard.routes.js";
+import scoreRoutes from "./routes/scoreRoute.js";
+
+
+
+
 const app = express();
 
 // Middleware
@@ -49,6 +54,7 @@ app.use("/api/visionBoard", visionRouter);
 app.use("/api/tasks", taskRouter);
 app.use("/api/recommendations", recomendations);
 app.use("/api/leaderboard", leaderboardRouter);
+app.use("/api/scores", scoreRoutes);
 app.get('/health', (req, res) => {
   res.status(200).send("OK");
 });

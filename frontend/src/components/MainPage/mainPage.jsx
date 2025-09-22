@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 import LazyLoadWrapper from "../LazyLoad/LazyLoadWrapper";
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from '../common/LanguageSelector';
-
+import Card from "../Games/Gamecard";
 // Lazy load heavy components
 const BentoGridDemo = React.lazy(() => import("./BentoGridDemo").then(module => ({ default: module.BentoGridDemo })));
 const Getquotes = React.lazy(() => import("./quotes"));
@@ -34,7 +34,34 @@ export function HeroHighlightDemo() {
   const [userMood, setUserMood] = useState(null);
 
   const token = useMemo(() => sessionStorage.getItem("accessToken"), []);
-  
+
+  const cards = [
+    {
+      title: "QuickWit Quiz",
+      description: "CChallenge yourself with questions designed to boost your mental clarity and calm.",
+      image: "https://plus.unsplash.com/premium_photo-1680303134459-912abf8efe2f?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjV8fHF1aXp8ZW58MHx8MHx8fDA%3D",
+      route: "/Quiz",
+      buttonText: "Start Game"
+    },
+    {
+      title: "Memory Cards",
+      description: "Unlock your mind’s potential with every match",
+      image: "https://plus.unsplash.com/premium_photo-1720371280126-41fd99e04291?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8bWVtb3J5JTIwY2FyZHxlbnwwfHwwfHx8MA%3D%3D",
+      route: "/Memorycardgame",
+      buttonText: "Start Game"
+    },
+    {
+      title: "Coming soon",
+      description: "New games and exercises are on their way to keep your mind sharp and engaged.",
+      image: "https://images.unsplash.com/photo-1614332287897-cdc485fa562d?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Y29taW5nJTIwc29vbnxlbnwwfHwwfHx8MA%3D%3D",
+      route: "/mainpage",
+      buttonText: "Stay Tuned"
+    }
+  ];
+  const handleScoreboardClick = () => {
+    navigate('/scoreboard');
+  };
+
   // Memoized fetch functions
   const fetchUsername = useCallback(async () => {
     try {
@@ -55,16 +82,16 @@ export function HeroHighlightDemo() {
         throw new Error("User data is missing in API response.");
       }
     } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }, [token]);
 
   useEffect(() => {
     fetchUsername();
   }, [fetchUsername]);
-  
+
   const fetchStories = useCallback(async () => {
     try {
       const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/users/stories`);
@@ -100,12 +127,12 @@ export function HeroHighlightDemo() {
   useEffect(() => {
     fetchUsername();
   }, [fetchUsername]);
-  
+
   useEffect(() => {
     const activity = sessionStorage.getItem("activity");
     setSuggestedActivity(activity);
   }, []);
-  
+
   useEffect(() => {
     const mood = sessionStorage.getItem("mood");
     setUserMood(mood);
@@ -124,11 +151,11 @@ export function HeroHighlightDemo() {
       <div className="w-8 h-8 border-b-2 border-purple-500 rounded-full animate-spin"></div>
     </div>
   );
-  
+
   return (
     <div className="w-full overflow-x-hidden">
       <Navbar />
-      
+
       <div className="w-full relative z-30 font-poppins">
         <HeroHighlight>
           <div className="min-h-[40vh] flex flex-col justify-center items-center text-center px-4">
@@ -144,7 +171,7 @@ export function HeroHighlightDemo() {
               >
                 {loading ? t('common.loading') : error ? `${t('common.error')}: ${error}` : username}
               </Highlight>
-            </motion.h1>            
+            </motion.h1>
             <div className="block w-full mt-6 text-xl text-center md:text-2xl lg:text-3xl dark:text-white">
               {t('dashboard.todayQuestion')}
             </div>
@@ -153,7 +180,7 @@ export function HeroHighlightDemo() {
       </div>
 
       {/* Fixed watermark logo - starts after hero section, always centered and visible */}
-      <div 
+      <div
         className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-center bg-no-repeat bg-contain opacity-[0.05] pointer-events-none z-20"
         style={{
           backgroundImage: `url('1a.png')`,
@@ -183,7 +210,7 @@ export function HeroHighlightDemo() {
               {/* TaskMaster Card */}
               <div className="relative group text-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14 bg-blue-950/40 backdrop-blur-sm rounded-lg shadow-lg shadow-purple-500/50 hover:shadow-blue-500/50 transition-all duration-300 transform hover:scale-105 flex flex-col items-center text-center overflow-hidden">
                 <div className="absolute inset-0 z-0 pointer-events-none before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:opacity-0 group-hover:before:opacity-100 before:blur-sm before:translate-x-[-100%] group-hover:before:translate-x-[200%] before:rotate-12 before:transition before:duration-1000 before:ease-in-out" />
-                
+
                 <div className="relative z-10 flex flex-col items-center text-center">
                   <div className="mb-4 text-4xl">📋</div>
                   <h2 className="text-2xl font-bold md:text-3xl">
@@ -193,7 +220,7 @@ export function HeroHighlightDemo() {
                     Your Smart To-Do List Assistant
                   </p>
                   <p className="mt-2 text-sm text-gray-300 md:text-base flex-grow">
-                    Organize, prioritize, and complete your tasks efficiently. 
+                    Organize, prioritize, and complete your tasks efficiently.
                     Keep track of progress, manage deadlines, and stay on top of your goals.
                   </p>
                   <Link
@@ -217,7 +244,7 @@ export function HeroHighlightDemo() {
                     Visualize Your Dreams Into Reality
                   </p>
                   <p className="mt-2 text-sm text-gray-300 md:text-base flex-grow">
-                    Create digital vision boards that inspire and motivate. 
+                    Create digital vision boards that inspire and motivate.
                     Collect images, quotes, and aspirations that help manifest your goals and dreams.
                   </p>
                   <Link
@@ -239,10 +266,10 @@ export function HeroHighlightDemo() {
         <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black via-black/60 to-transparent z-10 pointer-events-none"></div>
         <div className="absolute top-0 left-0 w-16 h-full bg-gradient-to-r from-black via-black/60 to-transparent z-10 pointer-events-none"></div>
         <div className="absolute top-0 right-0 w-16 h-full bg-gradient-to-l from-black via-black/60 to-transparent z-10 pointer-events-none"></div>
-        
+
         {/* Overall subtle overlay to reduce line brightness */}
         <div className="absolute inset-0 bg-black/20 z-5 pointer-events-none"></div>
-        
+
         <div className="w-full" style={{
           '--color': 'rgba(114, 114, 114, 0.23)',
           backgroundColor: '#000000',
@@ -272,7 +299,7 @@ export function HeroHighlightDemo() {
           `,
           backgroundSize: '55px 55px',
         }}>
-          
+
           {/* Music World Section */}
           <div className="flex flex-col items-center justify-center w-full px-4 py-12 font-poppins text-gray-100 sm:px-6 lg:px-8 relative z-10">
             <div className="flex flex-col items-center justify-between w-full mx-auto lg:flex-row max-w-7xl">
@@ -304,12 +331,45 @@ export function HeroHighlightDemo() {
 
           {/* Exercise Cards */}
           <div className="w-full font-poppins">
-            <ExerciseCards/>      
+            <ExerciseCards />
           </div>
 
           {/* Footer Section */}
-          <section className="w-full text-white body-font relative z-10">
-            <BentoGridDemo />
+          <section className="w-full font-poppins text-white body-font relative z-10">
+            <div className="flex flex-col items-center justify-center py-10 text-center px-4">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-4">
+                SoulScape
+              </h1>
+              <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl text-white font-medium">
+                Play fun games to relax your mind
+              </h3>
+            </div>
+
+
+            <div className="pt-4 pb-4  flex items-center justify-center " id="games">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {cards.map((card, index) => (
+                  <Card
+                    key={index}
+                    title={card.title}
+                    description={card.description}
+                    image={card.image}
+                    route={card.route}
+                    buttonText={card.buttonText}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center justify-center pb-8">
+              <button
+                onClick={handleScoreboardClick}
+                className="w-full  max-w-sm sm:max-w-xl px-8 py-4 bg-gradient-to-r from-purple-900 to-indigo-800 text-white text-xl font-semibold rounded-lg shadow-lg hover:brightness-110 hover:scale-[1.02] transition-all duration-300"
+              >
+                View Scoreboard
+              </button>
+            </div>
+
+            {/* <BentoGridDemo /> */}
             {/* <BadgesCorner /> */}
             <Footer />
           </section>

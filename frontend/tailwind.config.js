@@ -18,6 +18,15 @@ export default {
         primaryblue: '#453cf0',      
         primarygreen: '#00bf63',    
       },
+        animation: {
+        shine: 'shine 1.5s linear infinite',
+      },
+      keyframes: {
+        shine: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
+      },
       
       },
     },

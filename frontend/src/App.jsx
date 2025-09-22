@@ -12,7 +12,10 @@ import Clients from "./components/Councellor/Clients/Client"
 import Profile from "./components/Councellor/Profile/Profile"
 import Schedule from "./components/Councellor/Schedule/Schedule"
 import ActivityCardDemo from "./components/Activities/ActivityRecommendation"
-
+import Scoreboard from "./components/Games/scoreboard"
+import BoxBreathing from "./components/Exercises/Boxbreathing"
+import MahamrityunjayaBreathing from "./components/Exercises/BreathingEX3"
+import MemoryCardGame from "./components/Games/Memorycard"
 // Lazy load components for better performance
 const HomePage = React.lazy(() => import('./components/HomePage/HomePage'))
 const ParentDashboard = React.lazy(() => import("./components/ParentPage/ParentPage"))
@@ -184,6 +187,26 @@ function App() {
             <Route path="/createPost" element={
               <Suspense fallback={<PageSkeleton />}>
                 <CreatePost />
+              </Suspense>
+            } />
+            <Route path="/scoreboard" element={
+              <Suspense fallback={<PageSkeleton />}>
+                <Scoreboard />
+              </Suspense>
+            } />
+           <Route path="/boxbreathing" element={
+              <Suspense fallback={<PageSkeleton />}>
+                <BoxBreathing />
+              </Suspense>
+            } />
+            <Route path="/MahamrityunjayaBreathing" element={
+              <Suspense fallback={<PageSkeleton />}>
+                <MahamrityunjayaBreathing/>
+              </Suspense>
+            } />
+            <Route path="/Memorycardgame" element={
+              <Suspense fallback={<PageSkeleton />}>
+                <MemoryCardGame/>
               </Suspense>
             } />
             {/* <Route path="/SuccessStories" element={
