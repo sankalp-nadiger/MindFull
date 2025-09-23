@@ -466,8 +466,8 @@ if (showThemeModal) {
   }
 
   return (
-    <div className={`min-h-screen ${theme.mainBg} ${theme.primaryText} relative`}>
-      {/* Fixed watermark logo - always centered and visible */}
+    <div className={`min-h-screen ${theme.mainBg} ${theme.primaryText} font-poppins relative`}>
+      
       <div 
         className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-center bg-no-repeat bg-contain ${theme.watermarkOpacity} pointer-events-none z-0`}
         style={{
@@ -475,56 +475,71 @@ if (showThemeModal) {
         }}
       />
 
-      {/* Header */}
-      <div className={`${theme.headerBg} py-6 px-4 shadow-xl relative z-10`}>
-        <div className="container mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            {/* Back button - Left */}
-            <Link 
-              to="/MainPage"
-              className={`flex items-center justify-center gap-1 sm:gap-2 ${darkMode ? 'text-gray-300 hover:text-white' : 'text-black hover:text-gray-800'} transition-colors`}
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span className="hidden sm:block text-sm font-medium sm:text-base">Back to Dashboard</span>
-            </Link>
-            
-            {/* Theme toggle button - Centered */}
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className={`p-2 rounded-full transition-all duration-200 ${
-                darkMode 
-                  ? 'bg-slate-700/50 hover:bg-slate-600/50 text-amber-400 hover:text-amber-300' 
-                  : 'bg-white/20 hover:bg-white/30 text-gray-800 hover:text-gray-900'
-              }`}
-              title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-            >
-              {darkMode ? (
-                <Sun className="w-5 h-5" />
-              ) : (
-                <Moon className="w-5 h-5" />
-              )}
-            </button>
-            
-            <div className="flex items-center mb-4 md:mb-0">
-              <h1 className={`text-3xl font-bold ${darkMode ? 'bg-gradient-to-r from-purple-300 via-blue-300 to-teal-300 bg-clip-text text-transparent' : 'text-white'}`}>TaskMaster</h1>
-            </div>
-            
-            <div className="text-center md:text-right">
-              <p className={`${darkMode ? 'text-gray-200' : 'text-white'} text-lg mb-2`}>{productivityMessage}</p>
-              <div className="flex items-center justify-center md:justify-end space-x-6">
-                <div className="flex items-center">
-                  <Award className="w-5 h-5 mr-2 text-amber-400" />
-                  <span className="text-sm">Current Streak: {currentStreak} days</span>
-                </div>
-                <div className="flex items-center">
-                  <Award className="w-5 h-5 mr-2 text-purple-400" />
-                  <span className="text-sm">Max Streak: {maxStreak} days</span>
-                </div>
-              </div>
-            </div>
+      <div className={`${theme.headerBg} py-5 px-4 shadow-md relative z-10 border-b border-white/10`}>
+  <div className="container mx-auto max-w-7xl">
+    <div className="flex flex-col md:flex-row justify-between items-center gap-y-4 md:gap-y-0">
+      
+      
+      <Link 
+        to="/MainPage"
+        className={`flex items-center gap-2 text-sm sm:text-base font-medium transition-colors duration-200 ${
+          darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-700 hover:text-black'
+        }`}
+      >
+        <ArrowLeft className="w-5 h-5" />
+        <span className="hidden sm:inline">Back to Dashboard</span>
+      </Link>
+
+     
+      <div className="flex items-center gap-4">
+        <h1 className={`text-2xl sm:text-3xl font-semibold tracking-tight ${
+          darkMode
+            ? 'text-transparent bg-gradient-to-r from-indigo-300 via-cyan-300 to-teal-300 bg-clip-text'
+            : 'text-gray-900'
+        }`}>
+          TaskMaster
+        </h1>
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          className={`p-2 rounded-full transition duration-200 border ${
+            darkMode
+              ? 'bg-slate-800 border-slate-700 text-amber-400 hover:bg-slate-700'
+              : 'bg-white border-gray-200 text-gray-800 hover:bg-gray-100'
+          }`}
+          title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {darkMode ? (
+            <Sun className="w-5 h-5" />
+          ) : (
+            <Moon className="w-5 h-5" />
+          )}
+        </button>
+      </div>
+
+     
+      <div className="text-center md:text-right space-y-1">
+        <p className={`text-sm sm:text-base ${
+          darkMode ? 'text-gray-300' : 'text-gray-800'
+        }`}>
+          {productivityMessage}
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-center sm:justify-end gap-2 sm:gap-6 text-sm text-gray-50">
+          <div className="flex items-center gap-2">
+            <Award className="w-4 h-4 text-yellow-400" />
+            <span>Current Streak: <span className="font-medium text-white">{currentStreak} days</span></span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Award className="w-4 h-4 text-purple-400" />
+            <span>Max Streak: <span className="font-medium text-white">{maxStreak} days</span></span>
           </div>
         </div>
       </div>
+
+    </div>
+  </div>
+</div>
+
   
       <div className="container mx-auto px-4 py-8 relative z-10">
         <div className="flex flex-col md:flex-row gap-8">

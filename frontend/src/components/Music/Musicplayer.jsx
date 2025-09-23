@@ -182,7 +182,7 @@ export default function MusicPlayerApp() {
 `}</style>
       
       {/* Mental Health Podcasts Section with Grid Background */}
-      <div className="w-full pt-10 relative font-poppins">
+      <div className="w-full pt-10 px-10 relative font-poppins">
         {/* Edge blur masks - top, left, right, bottom */}
         <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black via-black/60 to-transparent z-10 pointer-events-none"></div>
         <div className="absolute top-0 left-0 w-16 h-full bg-gradient-to-r from-black via-black/60 to-transparent z-10 pointer-events-none"></div>

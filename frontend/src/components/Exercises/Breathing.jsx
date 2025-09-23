@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Moon, Wind, Timer, Heart } from 'lucide-react';
+import { motion } from "framer-motion";
+import Prism from './Prismbg';
+
 
 function Breathingexercise() {
   const [isHolding, setIsHolding] = useState(false);
@@ -48,58 +51,108 @@ function Breathingexercise() {
   };
 
   return (
-    <div className="min-h-screen  bg-gradient-to-b from-black via-indigo-700 to-black text-gray-100">
-      <div className="container mx-auto px-4 py-8">
-        <header className="text-center mb-12">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Moon className="w-8 h-8 text-purple-400" />
-            <h1 className="text-5xl font-bold">Soulful Breathing</h1>
+    <>
+    
+    <div className="bg-black min-h-screen  text-gray-100">
+      <div style={{ width: '100%', height: '100%', position: 'absolute',overflowX:'hidden' }}>
+  <Prism
+    animationType="rotate"
+    timeScale={0.5}
+    height={3.5}
+    baseWidth={5.5}
+    scale={3.6}
+    hueShift={0}
+    colorFrequency={1}
+    noise={0}
+    glow={1}
+  />
+</div>
+      <div className="container font-poppins mx-auto px-4 pt-2 ">
+      
+        <motion.header
+          className="text-center mb-8"
+          initial={{ opacity: 0, y: -40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1 }}
+        >
+          <div className="flex items-center justify-center gap-1 mb-2">
+  
+            <h1 className="text-4xl pb-3 md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-100 to-indigo-400">
+              Soulful Breathing
+            </h1>
           </div>
-          <p className="text-2xl text-gray-400">Enhance your mental well-being through controlled breathing</p>
-        </header>
+          <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">
+            Enhance your mental well-being through mindful breathing practices.
+          </p>
+        </motion.header>
 
+        
         <main className="max-w-2xl mx-auto">
-          <div className="bg-gray-800 rounded-lg p-8 mb-8 shadow-xl">
-            <div className="flex items-center gap-3 mb-6">
-              <Wind className="w-6 h-6 text-blue-400" />
-              <h2 className="text-xl font-semibold">Breath Holding Exercise</h2>
+          <motion.div
+            className="rounded-2xl p-8  shadow-2xl backdrop-blur-lg bg-white/10 border border-white/20"
+            initial={{ opacity: 0, y: 60 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.3 }}
+          >
+           
+            <div className="flex items-center gap-3 ">
+              <Wind className="w-7 h-7 text-blue-400" />
+              <h2 className="text-2xl font-semibold tracking-wide">
+                Breath Holding Exercise
+              </h2>
             </div>
-            
-            <p className="text-gray-400 mb-6">
-              This exercise helps improve lung capacity and reduces stress. Take a deep breath, 
-              click the button, and hold your breath as long as comfortable. Aim for 1 minute 
-              for optimal benefits.
+
+            <p className="text-gray-300 mb-8 leading-relaxed">
+              This exercise helps improve lung capacity and reduces stress. Take
+              a deep breath, click the button, and hold your breath as long as
+              comfortable. Aim for{" "}
+              <span className="font-bold text-indigo-300">1 minute</span> for
+              optimal benefits.
             </p>
 
-            <div className="text-center mb-8">
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <Timer className="w-6 h-6 text-green-400" />
-                <span className="text-4xl font-mono">{formatTime(time)}</span>
+          
+            <motion.div
+              className="text-center mb-8"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.7, delay: 0.5 }}
+            >
+              <div className="flex items-center justify-center gap-3 mb-6">
+                <Timer className="w-7 h-7 text-green-400" />
+                <span className="text-5xl md:text-6xl font-mono font-bold drop-shadow-sm">
+                  {formatTime(time)}
+                </span>
               </div>
-              
-              <button
+
+              <motion.button
                 onClick={handleStartStop}
-                className={`px-6 py-3 rounded-full font-semibold transition-all ${
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.05 }}
+                className={`px-8 py-4 rounded-full font-bold tracking-wide transition-all shadow-lg text-lg md:text-xl ${
                   isHolding
-                    ? 'bg-red-500 hover:bg-red-600'
-                    : 'bg-green-500 hover:bg-green-600'
+                    ? "bg-red-500 hover:bg-red-600"
+                    : "bg-green-500 hover:bg-green-600"
                 }`}
               >
-                {isHolding ? 'Release Breath' : 'Hold Breath'}
-              </button>
-            </div>
+                {isHolding ? "Release Breath" : "Hold Breath"}
+              </motion.button>
+            </motion.div>
 
+            
             {showResults && (
-              <div className="bg-gray-700 rounded-lg p-6 animate-fade-in">
+              <motion.div
+                className="rounded-xl p-6 bg-indigo-300/50 animate-fade-in"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.7 }}
+              >
                 <div className="flex items-center gap-2 mb-4">
-                  <Heart className="w-6 h-6 text-pink-400" />
+                  <Heart className="w-6 h-6 text-pink-600" />
                   <h3 className="text-lg font-semibold">Your Results</h3>
                 </div>
-                <p className="text-gray-300 mb-4">{feedback}</p>
-                <div className="text-sm text-gray-400">
-                  <p className="mb-2">
-                    Regular breath-holding exercises can:
-                  </p>
+                <p className="text-white  mb-4 italic font-semibold">{feedback}</p>
+                <div className="text-sm text-blue-950 font-semibold">
+                  <p className="mb-2">Regular breath-holding exercises can:</p>
                   <ul className="list-disc list-inside space-y-1">
                     <li>Increase lung capacity</li>
                     <li>Reduce stress and anxiety</li>
@@ -107,12 +160,13 @@ function Breathingexercise() {
                     <li>Enhance overall well-being</li>
                   </ul>
                 </div>
-              </div>
+              </motion.div>
             )}
-          </div>
+          </motion.div>
         </main>
       </div>
     </div>
+    </>
   );
 }
 
