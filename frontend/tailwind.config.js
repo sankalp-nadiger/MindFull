@@ -13,6 +13,7 @@ export default {
         },
         fontFamily: {
         poppins: ['Poppins', 'sans-serif'],
+        rye: ['Rye', 'cursive'],
       },
        colors: {
         primaryblue: '#453cf0',      

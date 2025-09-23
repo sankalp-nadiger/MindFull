@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, Square, Volume2, VolumeX } from 'lucide-react';
-
+import { motion } from "framer-motion";
 const MahamrityunjayaBreathing = () => {
-  const [stage, setStage] = useState('preparation'); // preparation, instructions, breathing, complete
+  const [stage, setStage] = useState('preparation'); 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [breathingPhase, setBreathingPhase] = useState(0); // 0-3 for the 4 phases
+  const [breathingPhase, setBreathingPhase] = useState(0); 
   const [cycleCount, setCycleCount] = useState(0);
   const [instructionStep, setInstructionStep] = useState(0);
   const [phaseTimer, setPhaseTimer] = useState(0);
@@ -37,20 +37,10 @@ const MahamrityunjayaBreathing = () => {
   ];
 
   useEffect(() => {
-    // Initialize audio element with placeholder for Mahamrityunjaya mantra
-    // Replace 'path/to/your/mahamrityunjaya-mantra.mp3' with your actual audio file path
+
     const audio = new Audio();
     
-    // Placeholder for actual mantra audio file
-    // audio.src = 'path/to/your/mahamrityunjaya-mantra.mp3';
-    // audio.loop = true;
-    // audio.preload = 'auto';
-    
-    // For now, using a placeholder URL - replace with your actual audio file
-    // You can use any Mahamrityunjaya mantra audio file from:
-    // - Local file: './assets/mahamrityunjaya-mantra.mp3'
-    // - Online source: 'https://example.com/mahamrityunjaya-mantra.mp3'
-    audio.src = '/Mahamrityunjay.mp3'; // Silent placeholder
+    audio.src = '/Mahamrityunjay.mp3'; 
     
     audio.volume = isMuted ? 0 : 0.3;
     audio.loop = true;
@@ -78,7 +68,7 @@ const MahamrityunjayaBreathing = () => {
 
   useEffect(() => {
     if (stage === 'breathing' && isPlaying) {
-      // Each breathing phase lasts 5 seconds
+      
       phaseIntervalRef.current = setInterval(() => {
         setPhaseTimer(prev => {
           if (prev >= 5) {
@@ -176,14 +166,24 @@ const MahamrityunjayaBreathing = () => {
   };
 
   const renderPreparation = () => (
-    <div className="text-center space-y-8">
-      <h1 className="text-4xl font-bold text-amber-300 mb-8">
-        Mahamrityunjaya Mantra
-      </h1>
-      <h2 className="text-2xl font-semibold text-white mb-6">
-        Breathing Exercise
-      </h2>
-      <div className="bg-gray-800 rounded-lg p-6 max-w-2xl mx-auto">
+    <div className="text-center font-poppins space-y-8">
+       <motion.header
+                className="text-center mb-8"
+                initial={{ opacity: 0, y: -40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1 }}
+              >
+                <div className="flex items-center justify-center gap-1 mb-2">
+        
+                  <h1 className="text-4xl font-rye pb-3 md:text-6xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-100 to-indigo-400">
+                     Mahamrityunjaya Mantra
+                  </h1>
+                </div>
+                <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">
+                  Breathing Exercise
+                </p>
+              </motion.header>
+      <div className="shadow-2xl bg-white/10 border border-white/20 backdrop-blur-md rounded-lg p-6 max-w-2xl mx-auto">
         <p className="text-gray-300 text-lg leading-relaxed mb-6">
           This sacred breathing exercise combines the powerful Mahamrityunjaya mantra with mindful breathing. 
           The practice helps promote healing, inner peace, and spiritual growth.
@@ -195,7 +195,7 @@ const MahamrityunjayaBreathing = () => {
       
       <button
         onClick={startExercise}
-        className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-4 rounded-lg text-xl font-semibold transition-colors"
+        className="bg-indigo-600 font-rye hover:bg-indigo-700 text-white px-8 py-4 rounded-lg text-xl font-semibold transition-colors"
       >
         Begin Preparation
       </button>
@@ -203,32 +203,69 @@ const MahamrityunjayaBreathing = () => {
   );
 
   const renderInstructions = () => (
-    <div className="text-center space-y-8">
-      <h2 className="text-3xl font-bold text-amber-300 mb-8">Preparation</h2>
+     <div className="text-center font-poppins space-y-10 px-4">
       
-      <div className="bg-gray-800 rounded-lg p-8 max-w-xl mx-auto">
-        <div className="text-2xl font-bold text-white mb-6">
-          Step {instructionStep + 1} of {preparationSteps.length}
-        </div>
-        <div className="text-xl text-amber-200 leading-relaxed">
-          {preparationSteps[instructionStep]}
-        </div>
-      </div>
+      <motion.h2
+        className="text-4xl md:text-5xl font-rye pb-3  tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-100 to-indigo-400 drop-shadow-lg"
+        initial={{ opacity: 0, y: -40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+      >
+        Preparation
+      </motion.h2>
 
-      {instructionStep === preparationSteps.length - 1 && (
-        <button
-          onClick={startExercise}
-          className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-lg text-xl font-semibold transition-colors animate-pulse"
+      
+      <motion.div
+        className="rounded-2xl p-10 max-w-xl mx-auto shadow-2xl bg-white/10 border border-white/20 backdrop-blur-md"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.7, delay: 0.3 }}
+      >
+       
+        <motion.div
+          className="text-2xl md:text-3xl font-bold text-white mb-6"
+          key={instructionStep} 
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
         >
-          <Play className="inline mr-2" size={24} />
-          START EXERCISE
-        </button>
+          Step {instructionStep + 1} of {preparationSteps.length}
+        </motion.div>
+
+        
+        <motion.div
+          className="text-xl md:text-2xl text-amber-200 leading-relaxed font-medium"
+          key={preparationSteps[instructionStep]}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          {preparationSteps[instructionStep]}
+        </motion.div>
+      </motion.div>
+
+     
+      {instructionStep === preparationSteps.length - 1 && (
+        <motion.button
+          onClick={startExercise}
+          className="bg-gradient-to-r bg-indigo-600 font-rye hover:bg-indigo-700
+                     text-white px-10 py-4 rounded-full text-xl md:text-2xl font-bold tracking-wide 
+                     shadow-lg flex items-center justify-center mx-auto"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.95 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+        >
+          <Play className="inline mr-2 " size={26} />
+          Start Exercise
+        </motion.button>
       )}
     </div>
   );
 
   const renderBreathing = () => (
-    <div className="text-center space-y-8">
+    <div className="text-center font-poppins space-y-8">
       {/* Controls */}
       <div className="flex justify-center space-x-4 mb-8">
         <button
@@ -278,17 +315,17 @@ const MahamrityunjayaBreathing = () => {
       </div>
 
       {/* Mantra Display */}
-      <div className="bg-gray-800 rounded-lg p-6 max-w-lg mx-auto">
-        <div className="text-sm text-gray-400 mb-2">
+      <div className="shadow-2xl  bg-white/10 border border-white/20 backdrop-blur-md rounded-lg p-6 max-w-lg mx-auto">
+        <div className="text-sm text-gray-100 mb-2">
           {breathingPhase === 0 || breathingPhase === 2 ? 'Inhale with:' : 'Exhale with:'}
         </div>
-        <div className="text-2xl font-bold text-amber-300">
+        <div className="text-2xl font-bold font-rye text-amber-300">
           {mantraParts[breathingPhase]}
         </div>
       </div>
 
       {/* Visualization Guide */}
-      <div className="bg-gray-700 rounded-lg p-4 max-w-md mx-auto">
+      <div className="shadow-2xl bg-white/10 border border-white/20 backdrop-blur-md rounded-lg p-4 max-w-md mx-auto">
         <p className="text-gray-300 text-sm">
           {breathingPhase === 0 || breathingPhase === 2 
             ? "Visualize healing energy flowing through you" 
@@ -299,12 +336,12 @@ const MahamrityunjayaBreathing = () => {
   );
 
   const renderComplete = () => (
-    <div className="text-center space-y-8">
-      <h2 className="text-4xl font-bold text-green-400 mb-8">
-        🙏 Practice Complete
+    <div className="text-center font-poppins space-y-8">
+      <h2 className="text-4xl font-bold font-rye text-green-400 mb-8">
+       Practice Complete
       </h2>
       
-      <div className="bg-gray-800 rounded-lg p-6 max-w-lg mx-auto">
+      <div className="shadow-2xl  bg-white/10 border border-white/20 backdrop-blur-md rounded-lg p-6 max-w-lg mx-auto">
         <div className="text-xl text-white mb-4">
           Congratulations! You completed <span className="text-amber-300 font-bold">{cycleCount}</span> cycles.
         </div>
@@ -349,7 +386,7 @@ const MahamrityunjayaBreathing = () => {
 
       <button
         onClick={resetExercise}
-        className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-4 rounded-lg text-xl font-semibold transition-colors"
+        className="bg-indigo-600 font-rye hover:bg-indigo-700 text-white px-8 py-4 rounded-lg text-xl font-semibold transition-colors"
       >
         Practice Again
       </button>
@@ -357,13 +394,27 @@ const MahamrityunjayaBreathing = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 p-6 flex items-center justify-center">
+    <div className="relative w-full h-screen overflow-hidden">
+  {/* Background Video */}
+  <video
+    className="absolute inset-0 w-full h-full object-cover"
+    src="/BreathingexVideo.mp4"
+    autoPlay
+    loop
+    muted
+    playsInline
+  ></video>
+
+  {/* Dark overlay */}
+  <div className="absolute inset-0 bg-black/50"></div>
+    <div className="min-h-screen relative z-10  p-6 flex items-center justify-center">
       <div className="w-full max-w-4xl">
         {stage === 'preparation' && renderPreparation()}
         {stage === 'instructions' && renderInstructions()}
         {stage === 'breathing' && renderBreathing()}
         {stage === 'complete' && renderComplete()}
       </div>
+    </div>
     </div>
   );
 };
