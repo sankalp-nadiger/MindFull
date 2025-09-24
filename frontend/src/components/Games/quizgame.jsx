@@ -190,6 +190,12 @@ function Quiz() {
 
   return (
     <div className="min-h-screen flex justify-center items-center bg-gray-900 text-white p-4">
+      <div
+        className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-center bg-no-repeat bg-contain opacity-[0.05] pointer-events-none z-20"
+        style={{
+          backgroundImage: `url('1a.png')`,
+        }}
+      />
       <div className="w-full max-w-2xl bg-gray-800 p-6 rounded-lg shadow-xl">
         <h1 className="text-4xl font-bold text-center mb-6">Mental Wellness Quiz</h1>
         

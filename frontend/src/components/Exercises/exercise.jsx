@@ -14,7 +14,7 @@ const ExerciseCards = () => {
       };
 
   return (
-    <div className="min-h-screen z-50  py-10 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen z-50  pt-16 px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center justify-center py-10 text-center px-4">
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-4">
                 Serenity Sessions
@@ -24,7 +24,7 @@ const ExerciseCards = () => {
               </h3>
             </div>
         
-      <div className="max-w-4xl mx-auto flex flex-wrap justify-center gap-8">
+      <div className="max-w-9xl  mx-auto flex flex-wrap justify-center gap-8">
         {/* Exercise Card 1 */}
         <div className="bg-gray-800 rounded-lg shadow-lg overflow-hidden group hover:scale-105 transform transition-all w-80 max-w-sm">
           <img
@@ -74,7 +74,7 @@ const ExerciseCards = () => {
           <div className="p-5">
             <h2 className="text-xl font-bold text-white">Mahamrityunjaya Breathing</h2>
             <p className="text-base text-gray-400 my-3">
-              A common method to divide the mantra and coordinate it with breaths, inhaling and exhaling through one nostril for each part of the mantra as part of a Nadi Shodhana Pranayama practice
+              Inhaling and exhaling through one nostril for each part of the mantra as part of a Nadi Shodhana Pranayama practice
             </p>
             <button
               onClick={handleclickex3}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, Square, Volume2, VolumeX } from 'lucide-react';
+import { Play, Pause, Square, Volume2, VolumeX,ArrowLeft } from 'lucide-react';
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 const MahamrityunjayaBreathing = () => {
   const [stage, setStage] = useState('preparation'); 
   const [isPlaying, setIsPlaying] = useState(false);
@@ -396,6 +397,12 @@ const MahamrityunjayaBreathing = () => {
   return (
     <div className="relative w-full h-screen overflow-hidden">
   {/* Background Video */}
+  <Link
+            to="/mainpage"
+            className="fixed top-2  sm:left-4 left-2 z-50 px-4 py-2  text-white font-semibold rounded-xl  text-sm sm:text-base"
+          >
+            <ArrowLeft className="inline-block w-4 h-4 mr-1 hover:scale-125 " />
+          </Link>
   <video
     className="absolute inset-0 w-full h-full object-cover"
     src="/BreathingexVideo.mp4"

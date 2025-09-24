@@ -210,6 +210,12 @@ const MemoryCardGame = () => {
   if (!gameLevel) {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
+        <div
+        className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-center bg-no-repeat bg-contain opacity-[0.05] pointer-events-none z-20"
+        style={{
+          backgroundImage: `url('1a.png')`,
+        }}
+      />
         <div className="bg-gray-800 rounded-xl p-8 shadow-2xl max-w-md w-full">
           <div className="text-center mb-8">
             <Trophy className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
@@ -254,6 +260,12 @@ const MemoryCardGame = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
+      <div
+        className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-center bg-no-repeat bg-contain opacity-[0.05] pointer-events-none z-20"
+        style={{
+          backgroundImage: `url('1a.png')`,
+        }}
+      />
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="bg-gray-800 rounded-xl p-6 mb-6 shadow-xl">

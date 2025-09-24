@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, } from 'react';
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import { ArrowLeft } from 'lucide-react';
 import Particles from './Particlesbg';
 const BoxBreathing = () => {
   const [isActive, setIsActive] = useState(false);
@@ -187,7 +189,12 @@ const BoxBreathing = () => {
   />
 </div>
     <div className=" relative z-50 font-poppins flex items-center justify-center p-6">
-     
+     <Link
+            to="/mainpage"
+            className="fixed top-2  sm:left-4 left-2 z-50 px-4 py-2  text-white font-semibold rounded-xl  text-sm sm:text-base"
+          >
+            <ArrowLeft className="inline-block w-4 h-4 mr-1 hover:scale-125 " />
+          </Link>
       <div className="max-w-lg w-full">
          <motion.header
                   className="text-center mb-8"

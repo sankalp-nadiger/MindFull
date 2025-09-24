@@ -334,9 +334,9 @@ export function HeroHighlightDemo() {
             <ExerciseCards />
           </div>
 
-          {/* Footer Section */}
-          <section className="w-full font-poppins text-white body-font relative z-10">
-            <div className="flex flex-col items-center justify-center py-10 text-center px-4">
+          
+          <section className="w-full font-poppins  text-white body-font relative z-10">
+            <div className="flex flex-col items-center justify-center py-4 text-center px-4">
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-4">
                 SoulScape
               </h1>
@@ -363,7 +363,7 @@ export function HeroHighlightDemo() {
             <div className="flex items-center justify-center pb-8">
               <button
                 onClick={handleScoreboardClick}
-                className="w-full  max-w-sm sm:max-w-xl px-8 py-4 bg-gradient-to-r from-purple-900 to-indigo-800 text-white text-xl font-semibold rounded-lg shadow-lg hover:brightness-110 hover:scale-[1.02] transition-all duration-300"
+                className="w-full  max-w-sm px-8 py-4 bg-gradient-to-r from-purple-900 to-indigo-800 text-white text-xl font-semibold rounded-lg shadow-lg hover:brightness-110 hover:scale-[1.02] transition-all duration-300"
               >
                 View Scoreboard
               </button>
