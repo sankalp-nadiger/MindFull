@@ -1,7 +1,6 @@
-import asyncHandler from "express-async-handler";
-
-import { User } from "../models/user.model.js"; // Adjust path based on your structure
-import ApiResponse from "../utils/API_Response.js"; // Adjust path based on your structure
+import asyncHandler from "../utils/asynchandler.utils.js";
+import { User } from "../models/user.model.js";
+import ApiResponse from "../utils/API_Response.js";
 
 const addScore = asyncHandler(async (req, res) => {
   const { gameName, score, totalQuestions } = req.body;
