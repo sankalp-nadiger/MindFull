@@ -275,7 +275,7 @@ const VideoMeetWindow = ({ activeRoom, onClose, socket, userId, userType }) => {
     if (isDragging) {
       setPosition({
         x: Math.max(0, Math.min(window.innerWidth - size.width, e.clientX - dragStart.x)),
-        y: Math.max(0, Math.min(window.innerHeight - size.height, e.clientY - dragStart.y))
+        y: Math.max(-size.height + 100, Math.min(window.innerHeight - 100, e.clientY - dragStart.y))
       });
     }
   };

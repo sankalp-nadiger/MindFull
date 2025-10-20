@@ -11,7 +11,11 @@ import Notifications from "./components/Councellor/Notifications/Notifications"
 import Clients from "./components/Councellor/Clients/Client"
 import Profile from "./components/Councellor/Profile/Profile"
 import Schedule from "./components/Councellor/Schedule/Schedule"
-
+import ActivityCardDemo from "./components/Activities/ActivityRecommendation"
+import Scoreboard from "./components/Games/scoreboard"
+import BoxBreathing from "./components/Exercises/Boxbreathing"
+import MahamrityunjayaBreathing from "./components/Exercises/BreathingEX3"
+import MemoryCardGame from "./components/Games/Memorycard"
 // Lazy load components for better performance
 const HomePage = React.lazy(() => import('./components/HomePage/HomePage'))
 const ParentDashboard = React.lazy(() => import("./components/ParentPage/ParentPage"))
@@ -21,7 +25,7 @@ const Councellor = React.lazy(() => import("./components/Councellor/Councellor")
 const Quiz = React.lazy(() => import("./components/Games/quizgame"))
 const VisionBoard = React.lazy(() => import("./components/VisionBoard/VisionBoard"))
 const SudokuGame = React.lazy(() => import("./components/Games/sudoku"))
-const CrosswordGame = React.lazy(() => import("./components/Games/Crosswords"))
+
 const Leaderboard = React.lazy(() => import("./components/Badges and Leaderboard/Leaderboard"))
 const OnBoardphase1 = React.lazy(() => import("./components/pages/OnBoardphase1"))
 const OnBoardphase2 = React.lazy(() => import('./components/pages/OnBoardphase2'))
@@ -38,7 +42,7 @@ const JournalEntryWithSuggestions = React.lazy(() => import('./components/pages/
 const ResultPage = React.lazy(() => import('./components/pages/ResultPage'))
 const ActivityRecommendations = React.lazy(() => import('./components/pages/Activity'))
 const CreatePost = React.lazy(() => import('./components/pages/CreatePost'))
-const SuccessStories = React.lazy(() => import("./components/HomePage/SuccessStories"))
+//const SuccessStories = React.lazy(() => import("./components/HomePage/SuccessStories"))
 const VideoChat = React.lazy(() => import("./components/Videochat/Videochat"))
 const AIrecommendation = React.lazy(() => import("./components/Materialrecommendation/AIrecommendation"))
 const CommunityChat = React.lazy(() => import("./components/Community/Communitychat"))
@@ -58,7 +62,7 @@ function App() {
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             <Route path="/" element={<HealthNutritionWebsite/>} />
-             
+            
             <Route path="/ParentDashboard" element={
               <Suspense fallback={<PageSkeleton />}>
                 <ParentDashboard />
@@ -89,11 +93,7 @@ function App() {
                 <SudokuGame />
               </Suspense>
             } />
-            <Route path="/Crossword" element={
-              <Suspense fallback={<PageSkeleton />}>
-                <CrosswordGame />
-              </Suspense>
-            } />
+           
             <Route path="/Leaderboard" element={
               <Suspense fallback={<PageSkeleton />}>
                 <Leaderboard />
@@ -176,7 +176,7 @@ function App() {
             } />
             <Route path="/activity" element={
               <Suspense fallback={<PageSkeleton />}>
-                <ActivityRecommendations />
+                <ActivityCardDemo />
               </Suspense>
             } />
         
@@ -185,11 +185,31 @@ function App() {
                 <CreatePost />
               </Suspense>
             } />
-            <Route path="/SuccessStories" element={
+            <Route path="/scoreboard" element={
+              <Suspense fallback={<PageSkeleton />}>
+                <Scoreboard />
+              </Suspense>
+            } />
+           <Route path="/boxbreathing" element={
+              <Suspense fallback={<PageSkeleton />}>
+                <BoxBreathing />
+              </Suspense>
+            } />
+            <Route path="/MahamrityunjayaBreathing" element={
+              <Suspense fallback={<PageSkeleton />}>
+                <MahamrityunjayaBreathing/>
+              </Suspense>
+            } />
+            <Route path="/Memorycardgame" element={
+              <Suspense fallback={<PageSkeleton />}>
+                <MemoryCardGame/>
+              </Suspense>
+            } />
+            {/* <Route path="/SuccessStories" element={
               <Suspense fallback={<PageSkeleton />}>
                 <SuccessStories />
               </Suspense>
-            } />
+            } /> */}
             <Route path="/video" element={
               <Suspense fallback={<PageSkeleton />}>
                 <VideoChat />

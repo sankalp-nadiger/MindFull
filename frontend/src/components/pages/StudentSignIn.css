@@ -5,7 +5,7 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Poppins', Roboto, sans-serif;
   background-size: 400% 400%;
   animation: gradientBG 15s ease infinite;
-  min-height: 60vh;
+  min-height: 20vh;
 }
 
 @keyframes gradientBG {
@@ -20,7 +20,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
+  min-height: 60vh;
   padding: 1.5rem;
 }
 

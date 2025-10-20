@@ -18,6 +18,10 @@ import {
   getUserSessions,
   getLastCounselorProgress,
   updateCounselorProgress,
+  getCaseHistory,
+  rejoinUserSession,
+  getUserActiveSession,
+  dismissUserSession
 } from "../controllers/user.controller.js";
 import { addNotesToSession, endSession } from "../controllers/counsellor.controller.js";
 import {upload} from "../middleware/multer.middleware.js"
@@ -55,6 +59,10 @@ router.get('/last-counselor-progress', user_verifyJWT, getLastCounselorProgress)
 router.post('/update-counselor-progress', user_verifyJWT, updateCounselorProgress);
 router.get("/week-mood-chart", user_verifyJWT, getWeeklyMoodData); 
 router.get("/sessions",user_verifyJWT,getActiveSessions)
+router.get('/case_history', getCaseHistory);
+router.get('/active-session', user_verifyJWT, getUserActiveSession);
+router.post('/rejoin', user_verifyJWT, rejoinUserSession);
+router.post('/dismiss-session', user_verifyJWT, dismissUserSession);
 router.get('/generate-report', async (req, res) => {
   const userId = req.user._id;
 

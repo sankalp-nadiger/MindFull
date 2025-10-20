@@ -261,7 +261,7 @@ const JournalApp = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-green-400/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm"></div>
             </div>
             <span className="ml-3 text-2xl bg-gradient-to-r from-blue-400 via-teal-400 to-green-400 bg-clip-text text-transparent font-bold tracking-wide">
-              MindFull
+              Soulynk
             </span>
           </a>
         </div>
@@ -312,6 +312,13 @@ const JournalApp = () => {
         ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' 
         : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50'
     }`}>
+      {/* Fixed watermark logo - always centered and visible */}
+      <div 
+        className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-center bg-no-repeat bg-contain opacity-[0.08] pointer-events-none z-0"
+        style={{
+          backgroundImage: `url('1a.png')`,
+        }}
+      />
       {/* Header */}
 
       <header className={`backdrop-blur-sm border-b sticky top-0 z-40 transition-colors duration-300 ${

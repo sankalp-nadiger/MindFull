@@ -102,7 +102,10 @@ export default function Suggestion() {
   };
 
   const TaskPlaceholder = () => (
-    <div className="bg-gradient-to-r from-cyan-900/20 to-purple-900/20 backdrop-blur-sm p-8 rounded-2xl border-2 border-dashed border-cyan-500/40 hover:border-cyan-400/60 transition-all duration-300 h-48 flex items-center justify-center text-center w-full">
+  <div className="relative font-poppins bg-gradient-to-r from-cyan-900/20 to-purple-900/20 backdrop-blur-sm p-6 sm:p-8 rounded-2xl border-2 border-dashed border-cyan-500/40 hover:border-cyan-400/60 transition-all duration-300 h-auto min-h-[12rem] flex items-center justify-center text-center w-full group overflow-hidden">
+  
+  {/* Shine Effect */}
+  <div className="absolute inset-0 z-0 pointer-events-none before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:opacity-0 group-hover:before:opacity-100 before:blur-sm before:translate-x-[-100%] group-hover:before:translate-x-[200%] before:rotate-12 before:transition before:duration-1000 before:ease-in-out" />
       <div className="flex items-center space-x-6">
         <div className="w-20 h-20 bg-gradient-to-br from-cyan-500/20 to-purple-500/20 rounded-full flex items-center justify-center">
           <Calendar className="w-8 h-8 text-cyan-400" />
@@ -120,7 +123,8 @@ export default function Suggestion() {
           </button>
         </div>
       </div>
-    </div>
+</div>
+
   );
 
   const todaysTasks = getTodaysTasks();
@@ -136,8 +140,8 @@ export default function Suggestion() {
     );
   } 
   return (
-    <div className="shadow-[4px_4px_0_rgba(0,0,0,0.3)] hover:shadow-[6px_6px_0_rgba(0,0,0,0.4)] transition duration-300 p-6 bg-black w-full">
-      <div className="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto backdrop-blur-lg bg-gray-900 bg-opacity-70 p-8 rounded-lg shadow-lg shadow-red-950/60 hover:shadow-blue-500/50 transition-shadow">
+    <div className="shadow-[4px_4px_0_rgba(0,0,0,0.3)] hover:shadow-[6px_6px_0_rgba(0,0,0,0.4)] transition duration-300 p-6  w-full">
+      <div className="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto backdrop-blur-sm  bg-blue-950/40 opacity-90 p-8 rounded-lg shadow-lg shadow-red-950/60 hover:shadow-blue-500/50 transition-shadow">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -240,6 +244,12 @@ export default function Suggestion() {
                       </div>
                     </div>
                   </div>
+                  <button 
+            onClick={() => navigate('/todo')}
+            className="bg-gradient-to-r mt-9 from-cyan-600 to-purple-600 hover:from-cyan-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 flex items-center space-x-2 shadow-lg shadow-cyan-500/25">
+            <Plus className="w-4 h-4" />
+            <span>Add Task Now</span>
+          </button>
                 </div>
               ))
             ) : (

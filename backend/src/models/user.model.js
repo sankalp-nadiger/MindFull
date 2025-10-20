@@ -1,7 +1,9 @@
 import mongoose, { Schema } from "mongoose"
 import bcrypt from 'bcryptjs';
 import jwt from "jsonwebtoken";
+
 const userSchema = new Schema( {
+  
     username:
     {
         type: String,
@@ -38,6 +40,28 @@ const userSchema = new Schema( {
         type: String,
         required:true
     },
+  gameScores: [{
+  gameName: {
+    type: String,
+    required: true
+  },
+  score: {
+    type: Number,
+    required: true
+  },
+  totalQuestions: {
+    type: Number,
+    required: true
+  },
+  playedAt: {
+    type: Date,
+    default: Date.now
+  }
+}],
+  totalScore: {
+  type: Number,
+  default: 0
+},
     journals: [
         {
             type: Schema.Types.ObjectId,
@@ -152,7 +176,7 @@ userSchema.methods.assignRandomAvatar = async function () {
     } else if (this.gender === "F") {
       this.avatar = female_avatars[Math.floor(Math.random() * female_avatars.length)];
     }
-    await this.save(); // Save the changes to the database
+    await this.save();
   }
 };
 

@@ -50,8 +50,8 @@ function  SudokuGame ()  {
   const handleSubmit = () => {
     if (checkSolution(userBoard)) {
       setEndTime(Date.now());
-      const timeTaken = Math.floor((endTime - startTime) / 1000); // Calculate time in seconds
-      const score = Math.max(100 - timeTaken, 0); // Simple score based on time taken (you can improve this)
+      const timeTaken = Math.floor((endTime - startTime) / 1000); 
+      const score = Math.max(100 - timeTaken, 0); 
       setScore(score);
       setIsGameOver(true);
     } else {

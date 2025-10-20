@@ -13,7 +13,7 @@ const ChatBox = () => {
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      content: "# Hello! I'm MindFull Bot 🌟\n\nI'm your compassionate mental health companion, here to provide support, guidance, and evidence-based information about mental wellness.\n\n## I can help you with:\n\n• **Stress management** techniques\n• **Mindfulness** and meditation practices\n• **Coping strategies** for anxiety and depression\n• Building **healthy habits**\n• **Self-care** routines\n• **Sleep hygiene**\n• **Emotional regulation**\n• Building **resilience**\n\nHow can I support your mental wellness journey today? 💙",
+      content: "# Hello! I'm Soulynk Bot 🌟\n\nI'm your compassionate mental health companion, here to provide support, guidance, and evidence-based information about mental wellness.\n\n## I can help you with:\n\n• **Stress management** techniques\n• **Mindfulness** and meditation practices\n• **Coping strategies** for anxiety and depression\n• Building **healthy habits**\n• **Self-care** routines\n• **Sleep hygiene**\n• **Emotional regulation**\n• Building **resilience**\n\nHow can I support your mental wellness journey today? 💙",
       timestamp: new Date()
     }
   ]);
@@ -200,7 +200,7 @@ Respond in a caring, supportive manner that promotes healing and growth.`;
   const clearChat = () => {
     setMessages([{
       role: "assistant",
-      content: "# Hello! I'm MindFull Bot 🌟\n\nI'm your compassionate mental health companion, here to provide support, guidance, and evidence-based information about mental wellness.\n\n## I can help you with:\n\n• **Stress management** techniques\n• **Mindfulness** and meditation practices\n• **Coping strategies** for anxiety and depression\n• Building **healthy habits**\n• **Self-care** routines\n• **Sleep hygiene**\n• **Emotional regulation**\n• Building **resilience**\n\nHow can I support your mental wellness journey today? 💙",
+      content: "# Hello! I'm Soulynk Bot 🌟\n\nI'm your compassionate mental health companion, here to provide support, guidance, and evidence-based information about mental wellness.\n\n## I can help you with:\n\n• **Stress management** techniques\n• **Mindfulness** and meditation practices\n• **Coping strategies** for anxiety and depression\n• Building **healthy habits**\n• **Self-care** routines\n• **Sleep hygiene**\n• **Emotional regulation**\n• Building **resilience**\n\nHow can I support your mental wellness journey today? 💙",
       timestamp: new Date()
     }]);
   };
@@ -249,7 +249,7 @@ Respond in a caring, supportive manner that promotes healing and growth.`;
               </div>
               <div className="text-center">
                 <h1 className={`text-lg sm:text-3xl font-bold ${themeClasses.text} bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent`}>
-                  MindFull Bot
+                  Soulynk Bot
                 </h1>
                 <p className={`text-xs sm:text-sm ${themeClasses.textSecondary} hidden sm:block`}>Your compassionate AI mental health companion</p>
               </div>
@@ -293,7 +293,7 @@ Respond in a caring, supportive manner that promotes healing and growth.`;
                 <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full shadow-lg sm:w-24 sm:h-24 sm:mb-6 bg-gradient-to-r from-blue-500 to-purple-500">
                   <Heart className="w-8 h-8 text-white sm:w-12 sm:h-12" />
                 </div>
-                <h3 className={`text-xl sm:text-2xl font-bold ${themeClasses.text} mb-2 sm:mb-3`}>Welcome to MindFull Bot</h3>
+                <h3 className={`text-xl sm:text-2xl font-bold ${themeClasses.text} mb-2 sm:mb-3`}>Welcome to Soulynk Bot</h3>
                 <p className={`${themeClasses.textSecondary} mb-6 sm:mb-8 max-w-md mx-auto text-sm sm:text-base px-4`}>
                   I'm here to support your mental wellness journey with compassionate guidance and evidence-based techniques.
                 </p>
@@ -407,7 +407,7 @@ Respond in a caring, supportive manner that promotes healing and growth.`;
                   </div>
                   <div className={`${themeClasses.botBubble} px-3 py-3 sm:px-5 sm:py-4 rounded-2xl shadow-xl`}>
                     <div className="flex items-center gap-2 sm:gap-3">
-                      <span className={`text-xs sm:text-sm ${themeClasses.textSecondary}`}>MindFull Bot is thinking</span>
+                      <span className={`text-xs sm:text-sm ${themeClasses.textSecondary}`}>SoulynkBot is thinking</span>
                       <div className="flex gap-1">
                         <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-500 rounded-full animate-bounce"></div>
                         <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
@@ -502,7 +502,7 @@ Respond in a caring, supportive manner that promotes healing and growth.`;
                 <div className="flex items-center gap-1">
                   <span className="text-gray-400">Powered by</span>
                   <Sparkles className="w-4 h-4 text-blue-400" />
-                  <span className="font-medium text-blue-400">MindFull AI</span>
+                  <span className="font-medium text-blue-400">Soulynk AI</span>
                 </div>
               </div>
             </div>
@@ -510,7 +510,7 @@ Respond in a caring, supportive manner that promotes healing and growth.`;
         </div>        {/* Enhanced Disclaimer */}
         <div className={`mt-8 p-6 ${themeClasses.cardBg} rounded-2xl border text-center shadow-xl`}>
           <p className={`text-sm ${themeClasses.textSecondary} mb-6`}>
-            <strong>Important:</strong> MindFull Bot provides supportive information and is not a replacement for professional mental health care. 
+            <strong>Important:</strong> Soulynk Bot provides supportive information and is not a replacement for professional mental health care. 
             If you're experiencing a mental health crisis, please contact emergency services or a crisis helpline immediately.
           </p>
           

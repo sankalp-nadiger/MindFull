@@ -1,4 +1,4 @@
-import {Notification} from '../models/notification.model.js';
+import Notification from '../models/notification.model.js';
 
 export const createAndPushNotification = async (data, io) => {
   const { message, user, relatedInterest, event } = data;

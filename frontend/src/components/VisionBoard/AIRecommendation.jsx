@@ -66,8 +66,8 @@ const AIRecommendation = ({ userId, fetchVisionBoards, darkMode }) => {
   };
 
   return (
-     <div className={`ai-recommendation rounded-xl shadow-lg p-6 mb-8 w-full max-w-4xl mx-auto border ${themeClasses.card}`}>
-      <h3 className={`text-xl font-semibold mb-5 ${themeClasses.text} flex items-center`}>
+     <div className={`ai-recommendation ${darkMode ? 'bg-indigo-400/50' : 'bg-white'} rounded-xl shadow-lg p-6 mb-8 w-full max-w-4xl mx-auto border ${themeClasses.card}`}>
+      <h3 className={`text-xl font-semibold mb-5 ${themeClasses.text} flex items-center ${darkMode ? 'text-white' : 'text-black'}`}>
         <Sparkles className={`mr-2 w-5 h-5 ${themeClasses.brandText}`} />
         AI-Powered Vision Board Suggestions
       </h3>
@@ -119,7 +119,7 @@ const AIRecommendation = ({ userId, fetchVisionBoards, darkMode }) => {
           disabled={loading || (!includeImage && !includeQuote)}
           className={`w-full py-3 px-4 rounded-md font-medium transition-all duration-200 text-white disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 ${
             darkMode
-              ? 'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500 focus:ring-offset-slate-800 disabled:bg-slate-600 disabled:text-slate-400'
+              ? 'bg-indigo-600  hover:bg-indigo-700 focus:ring-indigo-500 focus:ring-offset-slate-800 disabled:bg-slate-600 disabled:text-slate-400'
               : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 focus:ring-offset-white disabled:bg-gray-400 disabled:text-gray-200'
           }`}
         >
@@ -146,21 +146,20 @@ const AIRecommendation = ({ userId, fetchVisionBoards, darkMode }) => {
             <h4 className={`font-medium ${themeClasses.text}`}>AI Suggestions:</h4>
             
             {suggestedImage && (
-              <div className="space-y-2">
-                <p className={`text-sm font-medium ${themeClasses.textSecondary}`}>Generated Image:</p>
-                <div className={`rounded-md overflow-hidden border ${
-                  darkMode ? 'border-slate-600' : 'border-gray-200'
-                }`}>
-                  <img 
-                    src={suggestedImage} 
-                    alt="AI Generated Suggestion" 
-                    className={`w-full max-w-md mx-auto shadow-sm ${
-                      darkMode ? 'bg-slate-700' : 'bg-white'
-                    }`}
-                  />
-                </div>
-              </div>
-            )}
+  <div className="space-y-2">
+    <p className={`text-sm font-medium ${themeClasses.textSecondary}`}>Generated Image:</p>
+    <div className={`rounded-md overflow-hidden border ${darkMode ? 'border-slate-600' : 'border-gray-200'}`}>
+      <img
+        src={suggestedImage}
+        alt="AI Generated Suggestion"
+        className={`w-full max-w-md mx-auto shadow-sm ${darkMode ? 'bg-slate-700' : 'bg-white'}`}
+        loading="lazy"
+        onError={(e) => (e.currentTarget.style.display = "none")} // hide broken images
+      />
+    </div>
+  </div>
+)}
+
             
             {suggestedQuote && (
               <div className="space-y-2">

@@ -17,6 +17,18 @@ const ParentSignUp = () => {
   const [toast, setToast] = useState({ message: "", type: "info" });
   const [errorCount, setErrorCount] = useState(0);
 
+   const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault(); // Prevent form submit
+      const form = e.target.form;
+      const index = Array.prototype.indexOf.call(form, e.target);
+      const nextElement = form.elements[index + 1];
+      if (nextElement) {
+        nextElement.focus();
+      }
+    }
+  };
+
   // Validation helpers
   const validatePhone = (num) => /^\d{10}$/.test(num);
   const validatePassword = (pw) => pw.length >= 6;
@@ -127,12 +139,7 @@ const ParentSignUp = () => {
     <>
     <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: "", type: "info" })} />
      
-     <div className="min-h-screen font-poppins bg-gradient-to-b from-primarygreen via-[#1fa313] to-primaryblue flex items-center justify-center p-4 ">
-      {/* Animated background elements */}
-     
-        <div className="absolute -top-40 -right-40 w-80 h-80  rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-50 animate-pulse delay-500"></div>
+     <div className="min-h-screen font-poppins bg-gradient-to-b from-green-400 via-green-200 to-blue-300  flex items-center justify-center p-4 ">
       
 
       {/* Main container */}
@@ -154,13 +161,13 @@ const ParentSignUp = () => {
                 <div className="w-16 h-12 bg-green/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30">
                   <div className="w-20 h-6 border-2 border-white rounded-full flex items-center justify-center">
                     <img
-                src="/plant.png"
+                src="/1a.png"
                 className="w-auto lg:h-16 h-10"
                 alt="Logo"
               />
                   </div>
                 </div>
-                <span className="ml-3 text-green-900 text-3xl font-bold tracking-wide">MindFull</span>
+                <span className="ml-3 text-green-900 text-3xl font-bold tracking-wide">Soulynk</span>
               </div>
               
               <h1 className="text-4xl lg:text-5xl font-bold text-primarygreen mb-6 leading-tight">
@@ -176,7 +183,7 @@ const ParentSignUp = () => {
       <img
         src="/hea10.png" // replace with your image path
         alt="Descriptive Alt Text"
-        className="w-full max-w-4xl h-[600px]  object-contain "
+        className="w-[300px] sm:w-[400px] max-w-4xl h-[400px]  object-contain "
       />
     </div>
             </div>
@@ -228,6 +235,7 @@ const ParentSignUp = () => {
                 className="form-input"
                 placeholder="Enter your full name"
                 value={name}
+                onKeyDown={handleKeyDown}
                 onChange={(e) => setName(e.target.value)}
                 required
               />
@@ -242,6 +250,7 @@ const ParentSignUp = () => {
                 className="form-input"
                 placeholder="Enter your phone number"
                 value={phone}
+                onKeyDown={handleKeyDown}
                 onChange={(e) => setPhone(e.target.value)}
                 maxLength={10}
                 required
@@ -258,6 +267,7 @@ const ParentSignUp = () => {
                   className="form-input"
                   placeholder="Enter your password"
                   value={password}
+                  
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
@@ -284,6 +294,7 @@ const ParentSignUp = () => {
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
                     maxLength={6}
+                    onKeyDown={handleKeyDown}
                     required
                   />
                   {otpTimer > 0 ? (

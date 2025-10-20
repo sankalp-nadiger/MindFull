@@ -44,7 +44,6 @@
 
 /* Main boards container */
 .vision-board {
-  background: white;
   border-radius: 16px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
   padding: 25px;
@@ -117,7 +116,7 @@
 
 /* AI Recommendation section */
 .ai-recommendation {
-  background: white;
+  
   border-radius: 16px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
   padding: 25px;
@@ -140,7 +139,7 @@
 
 .ai-recommendation h2,
 .ai-recommendation h3 {
-  color: #333;
+  
   margin-bottom: 15px;
 }
 
@@ -186,7 +185,7 @@
 
 /* File Upload section */
 .file-upload {
-  background: white;
+  
   border-radius: 16px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
   padding: 25px;
@@ -207,8 +206,8 @@
 }
 
 .file-upload h3 {
-  color: #333;
-  margin-bottom: 15px;
+  color: white;
+  margin-bottom: 5px;
 }
 
 .file-upload input[type="file"] {
