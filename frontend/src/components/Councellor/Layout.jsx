@@ -1,37 +1,84 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Calendar, Users, Settings, LogOut, Video, Home, Heart } from 'lucide-react';
+import { Bell, Calendar, Users, Settings, LogOut, Video, Home, Menu, X } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { Menu, X } from 'lucide-react';
 
 const Layout = ({ children, onViewCaseHistory }) => {
   const navigate = useNavigate();
   const location = useLocation();
+
   const [counselor, setCounselor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
-  useEffect(() => {
-    const fetchCounselorProfile = async () => {
-      try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_BASE_API_URL}/counsellor/profile`,
-          {
-            headers: {
-              Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
-            },
-          }
-        );
-        setCounselor(response.data.counselor);
-      } catch (error) {
-        console.error('Error fetching counselor profile:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const [unreadCount, setUnreadCount] = useState(0);
 
-    fetchCounselorProfile();
-  }, []);
-  
+  useEffect(() => {
+  const fetchCounselorProfile = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_BASE_API_URL}/counsellor/profile`,
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
+          },
+        }
+      );
+      setCounselor(response.data.counselor);
+    } catch (error) {
+      console.error('Error fetching counselor profile:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUnreadNotifications = async () => {
+    try {
+      const token = sessionStorage.getItem('accessToken');
+      if (!token) {
+        console.warn('No accessToken found in sessionStorage');
+        setUnreadCount(0);
+        return;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_BASE_API_URL}/counsellor/notifications`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`, // ✅ always send token from sessionStorage
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch notifications');
+      }
+
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        const unread = data.filter(n => n.unread).length;
+        setUnreadCount(unread);
+      } else {
+        setUnreadCount(0);
+      }
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+      setUnreadCount(0);
+    }
+  };
+
+  // initial calls
+  fetchCounselorProfile();
+  fetchUnreadNotifications();
+
+  // ✅ polling every 30 seconds
+  const interval = setInterval(fetchUnreadNotifications, 30000);
+
+  // ✅ cleanup on unmount
+  return () => clearInterval(interval);
+}, []);
+
+
   const handleLogout = () => {
     sessionStorage.removeItem('accessToken');
     window.location.href = '/';
@@ -96,11 +143,18 @@ const Layout = ({ children, onViewCaseHistory }) => {
             </div>
             
             <div className="flex items-center space-x-2 sm:space-x-4">
-              <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-                <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">3</span>
-              </button>
-              
+              <button 
+  onClick={() => navigate('/notifications')}
+  className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+>
+  <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
+  {unreadCount > 0 && (
+    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
+      {unreadCount}
+    </span>
+  )}
+</button>
+   
               <div className="flex items-center space-x-2 sm:space-x-3 border-l pl-2 sm:pl-4">
                 {!loading && (
                   <>
@@ -161,11 +215,11 @@ const Layout = ({ children, onViewCaseHistory }) => {
               route="/councellor"
             />
             <NavigationItem
-              icon={Bell}
-              label="Notifications"
-              route="/notifications"
-              notifications={3}
-            />
+  icon={Bell}
+  label="Notifications"
+  route="/notifications"
+  notifications={unreadCount}
+/>
             <NavigationItem
               icon={Video}
               label="Sessions"

@@ -21,6 +21,8 @@ const SessionsContent = () => {
   const [currentUserId, setCurrentUserId] = useState(null);
   const [inSittingSeries, setInSittingSeries] = useState(false);
   const [sittingNotes, setSittingNotes] = useState('');
+  const [currentSittingNumber, setCurrentSittingNumber] = useState(1);
+  const [totalRecommendedSittings, setTotalRecommendedSittings] = useState(0);
   const [counselorData, setCounselorData] = useState(null);
   const [isCounselorDataLoading, setIsCounselorDataLoading] = useState(true);
 
@@ -40,7 +42,7 @@ const SessionsContent = () => {
         
         if (response.data.success && response.data.counselor) {
           setCounselorData(response.data.counselor);
-          setError(null); // Clear any previous errors
+          setError(null);
           console.log('👨‍⚕️ Counselor data loaded:', response.data.counselor);
         } else {
           throw new Error('Invalid counselor data format');
@@ -48,16 +50,14 @@ const SessionsContent = () => {
       } catch (error) {
         console.error('❌ Error fetching counselor data:', error);
         setError(error.response?.data?.message || "Failed to load counselor data");
-        setCounselorData(null); // Reset counselor data on error
+        setCounselorData(null);
       } finally {
         setIsCounselorDataLoading(false);
       }
     };
 
-    // Initial fetch
     fetchCounselorData();
 
-    // Retry on failure every 5 seconds up to 3 times
     let retryCount = 0;
     const retryInterval = setInterval(() => {
       if (!counselorData && !isCounselorDataLoading && retryCount < 3) {
@@ -69,7 +69,6 @@ const SessionsContent = () => {
       }
     }, 5000);
     
-    // Cleanup function
     return () => {
       clearInterval(retryInterval);
       setIsCounselorDataLoading(false);
@@ -88,11 +87,23 @@ const SessionsContent = () => {
           },
         }
       );
+      
       setInSittingSeries(response.data.inSittingSeries);
       setSittingNotes(response.data.sittingNotes || '');
+      setCurrentSittingNumber(response.data.currentSittingNumber || 1);
+      setTotalRecommendedSittings(response.data.totalRecommendedSittings || 0);
+      
+      console.log('📊 Sitting series data:', {
+        inSittingSeries: response.data.inSittingSeries,
+        currentSitting: response.data.currentSittingNumber,
+        totalSittings: response.data.totalRecommendedSittings
+      });
     } catch (err) {
+      console.error('❌ Error fetching sitting series:', err);
       setInSittingSeries(false);
       setSittingNotes('');
+      setCurrentSittingNumber(1);
+      setTotalRecommendedSittings(0);
     }
   };
 
@@ -121,7 +132,6 @@ const SessionsContent = () => {
 
     fetchActiveSessions();
 
-    // Listen for new session requests
     socket.on('sessionRequested', (data) => {
       console.log('🔔 New session requested:', data);
       setSessions(prevSessions => [...prevSessions, {
@@ -138,6 +148,37 @@ const SessionsContent = () => {
     };
   }, []);
 
+  const rejoinSession = async (sessionId) => {
+    try {
+      setLoading(true);
+      console.log('🔄 Rejoining session:', sessionId);
+      
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_API_URL}/counsellor/rejoin`,
+        { sessionId },
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
+          },
+        }
+      );
+
+      console.log('🎥 Rejoining session:', response.data);
+      
+      if (response.data.session?.roomName) {
+        setActiveRoom(response.data.session.roomName);
+        console.log('🏠 Video room reactivated:', response.data.session.roomName);
+      } else {
+        throw new Error('No room name provided in session response');
+      }
+    } catch (error) {
+      setError("Failed to rejoin session.");
+      console.error('❌ Error rejoining session:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const acceptSession = async (sessionId) => {
     try {
       if (isCounselorDataLoading) {
@@ -151,7 +192,7 @@ const SessionsContent = () => {
       }
 
       setLoading(true);
-      setError(null); // Clear any previous errors
+      setError(null);
       console.log('✅ Accepting session:', sessionId, 'as counselor:', counselorData._id);
       
       const response = await axios.post(
@@ -166,7 +207,6 @@ const SessionsContent = () => {
 
       console.log('📞 Session accepted:', response.data);
 
-      // Find userId for this session
       const session = sessions.find(s => s._id === sessionId);
       if (session && session.user && session.user._id) {
         await fetchSittingSeries(session.user._id);
@@ -178,7 +218,6 @@ const SessionsContent = () => {
         )
       );
 
-      // Set active room for WebRTC
       console.log('📄 Full response data:', response.data);
       if (!response.data.session?.roomName) {
         console.error('❌ No room name in response');
@@ -216,16 +255,14 @@ const SessionsContent = () => {
         await fetchSittingSeries(response.data.user.userId);
       }
 
-      // Show review modal if not in sitting series or sittings just ended
-      if (!response.data.user?.inSittingSeries) {
-        setReviewSessionData({
-          sessionId: sessionId,
-          duration: response.data.duration || 'N/A',
-          fullName: response.data.user.fullName || ''
-        });
-        setCurrentUserId(response.data.user.userId);
-        setShowReview(true);
-      }
+      // Show review modal
+      setReviewSessionData({
+        sessionId: sessionId,
+        duration: response.data.duration || 'N/A',
+        fullName: response.data.user?.fullName || ''
+      });
+      setCurrentUserId(response.data.user?.userId);
+      setShowReview(true);
 
       socket.emit('sessionEnded', { sessionId });
       setSessions((prevSessions) =>
@@ -241,7 +278,6 @@ const SessionsContent = () => {
     }
   };
 
-  // Monitor activeRoom changes
   useEffect(() => {
     if (activeRoom) {
       console.log('🎥 Attempting to open VideoMeetWindow with:', {
@@ -298,7 +334,6 @@ const SessionsContent = () => {
               </div>
             </div>
             
-            {/* Stats Bar */}
             <div className="mt-6 flex items-center space-x-6">
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
@@ -377,7 +412,6 @@ const SessionsContent = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: index * 0.1 }}
                   >
-                    {/* Status Indicator */}
                     <div className={`absolute top-0 left-0 right-0 h-1 ${
                       session.status === 'Active' 
                         ? 'bg-gradient-to-r from-green-400 to-emerald-500' 
@@ -385,7 +419,6 @@ const SessionsContent = () => {
                     }`}></div>
                     
                     <div className="p-6">
-                      {/* Header */}
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center space-x-3">
                           <div className={`p-2 rounded-lg ${
@@ -417,15 +450,13 @@ const SessionsContent = () => {
                         </div>
                       </div>
 
-                      {/* Issue Details */}
                       <div className="mb-6">
-                        <h6 className="text-sm font-semibold text-slate-700 mb-2">Session Details</h6>
+                        <h6 className="text-sm font-semibold text-slate-700 mb-2">Issue Details</h6>
                         <p className="text-slate-600 text-sm leading-relaxed bg-slate-50 p-3 rounded-lg border">
                           {session.issueDetails}
                         </p>
                       </div>
 
-                      {/* Action Buttons */}
                       <div className="space-y-3">
                         {session.status === 'Pending' && (
                           <button
@@ -447,7 +478,7 @@ const SessionsContent = () => {
                                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                     </svg>
                                   </div>
-                                  <span className="text-sm font-semibold tracking-wide">Accept Session</span>
+                                  <span className="text-sm font-semibold tracking-wide">Join Session</span>
                                 </div>
                               )}
                             </div>
@@ -455,25 +486,46 @@ const SessionsContent = () => {
                         )}
 
                         {session.status === 'Active' && (
-                          <button
-                            onClick={() => endSession(session._id)}
-                            className="w-full bg-gradient-to-r from-red-600 to-rose-600 text-white py-3 px-4 rounded-lg hover:from-red-700 hover:to-rose-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                            disabled={ending}
-                          >
-                            {ending ? (
-                              <div className="flex items-center justify-center space-x-2">
-                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                                <span>Ending...</span>
-                              </div>
-                            ) : (
-                              <div className="flex items-center justify-center space-x-2">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                                <span>End Session</span>
-                              </div>
-                            )}
-                          </button>
+                          <div className="space-y-2">
+                            <button
+                              onClick={() => rejoinSession(session._id)}
+                              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                              disabled={loading}
+                            >
+                              {loading ? (
+                                <div className="flex items-center justify-center space-x-2">
+                                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                  <span>Joining...</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center justify-center space-x-2">
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                  </svg>
+                                  <span>Rejoin Meet</span>
+                                </div>
+                              )}
+                            </button>
+                            <button
+                              onClick={() => endSession(session._id)}
+                              className="w-full bg-gradient-to-r from-red-600 to-rose-600 text-white py-3 px-4 rounded-lg hover:from-red-700 hover:to-rose-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                              disabled={ending}
+                            >
+                              {ending ? (
+                                <div className="flex items-center justify-center space-x-2">
+                                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                  <span>Ending...</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center justify-center space-x-2">
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                  <span>End Session</span>
+                                </div>
+                              )}
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -484,7 +536,6 @@ const SessionsContent = () => {
           )}
         </motion.div>
 
-        {/* WebRTC Video Session - Draggable Window */}
         {activeRoom && counselorData?._id ? (
           <VideoMeetWindow 
             activeRoom={activeRoom}
@@ -508,6 +559,8 @@ const SessionsContent = () => {
         userId={currentUserId}
         inSittingSeries={inSittingSeries}
         sittingNotes={sittingNotes}
+        currentSittingNumber={currentSittingNumber}
+        totalRecommendedSittings={totalRecommendedSittings}
       />
     </div>
   );

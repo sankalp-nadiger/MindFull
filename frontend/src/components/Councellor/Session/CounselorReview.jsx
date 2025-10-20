@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, User, Stethoscope, Calendar, CheckCircle, XCircle } from 'lucide-react';
 
-const CounsellorReview = ({ isOpen, onClose, sessionData, userId, inSittingSeries, sittingNotes }) => {
+const CounsellorReview = ({ isOpen, onClose, sessionData, userId, inSittingSeries, sittingNotes, currentSittingNumber, totalRecommendedSittings }) => {
   const [formData, setFormData] = useState({
     diagnosis: '',
     symptoms: [],
@@ -11,8 +11,12 @@ const CounsellorReview = ({ isOpen, onClose, sessionData, userId, inSittingSerie
     willingToTreat: false,
     notes: '',
     sittingNotes: '',
-    curedSittingReason: false
+    curedSittingReason: false,
+    progressPercentage: 0,
+    adjustSittings: 'maintain', // 'increase', 'decrease', 'maintain'
+    adjustedSittingsCount: 0
   });
+  
   // If in sitting series, hide needsSittings/recommendedSittings/willingToTreat, and show sittingNotes
   React.useEffect(() => {
     if (inSittingSeries) {
@@ -20,9 +24,11 @@ const CounsellorReview = ({ isOpen, onClose, sessionData, userId, inSittingSerie
         ...prev,
         needsSittings: true,
         sittingNotes: sittingNotes || '',
+        adjustedSittingsCount: totalRecommendedSittings || 0
       }));
     }
-  }, [inSittingSeries, sittingNotes]);
+  }, [inSittingSeries, sittingNotes, totalRecommendedSittings]);
+  
   const [loading, setLoading] = useState(false);
   const [customSymptom, setCustomSymptom] = useState('');
 
@@ -65,9 +71,20 @@ const CounsellorReview = ({ isOpen, onClose, sessionData, userId, inSittingSerie
       return;
     }
 
+    // Validation for sittings
+    if (!inSittingSeries && formData.needsSittings && (!formData.recommendedSittings || formData.recommendedSittings === 0)) {
+      alert('Please specify the number of recommended sessions');
+      return;
+    }
+
+    // Validation for sitting progress
+    if (inSittingSeries && formData.progressPercentage === 0) {
+      alert('Please assess the treatment progress percentage');
+      return;
+    }
+
     setLoading(true);
     try {
-      // You'll need to replace this with your actual API call using axios
       const response = await fetch(
         `${import.meta.env.VITE_BASE_API_URL}/counsellor/review`,
         {
@@ -151,7 +168,7 @@ const CounsellorReview = ({ isOpen, onClose, sessionData, userId, inSittingSerie
                 value={formData.diagnosis}
                 onChange={(e) => handleInputChange('diagnosis', e.target.value)}
                 placeholder="Provide your professional diagnosis and assessment..."
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-white text-gray-900"
                 rows={4}
               />
             </div>
@@ -185,7 +202,7 @@ const CounsellorReview = ({ isOpen, onClose, sessionData, userId, inSittingSerie
                   value={customSymptom}
                   onChange={(e) => setCustomSymptom(e.target.value)}
                   placeholder="Add custom symptom..."
-                  className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
                   onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomSymptom())}
                 />
                 <button
@@ -219,6 +236,43 @@ const CounsellorReview = ({ isOpen, onClose, sessionData, userId, inSittingSerie
               )}
             </div>
 
+            {/* Needs Sittings Question - Only show if NOT in sitting series */}
+            {!inSittingSeries && (
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="flex items-center space-x-3 mb-3">
+                  <Calendar className="h-5 w-5 text-blue-600" />
+                  <span className="font-semibold text-blue-800">Treatment Plan</span>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="radio"
+                      id="needsSittingsYes"
+                      name="needsSittings"
+                      checked={formData.needsSittings === true}
+                      onChange={() => handleInputChange('needsSittings', true)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                    />
+                    <label htmlFor="needsSittingsYes" className="text-sm text-gray-700">
+                      Yes, this patient needs additional sessions
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="radio"
+                      id="needsSittingsNo"
+                      name="needsSittings"
+                      checked={formData.needsSittings === false}
+                      onChange={() => handleInputChange('needsSittings', false)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                    />
+                    <label htmlFor="needsSittingsNo" className="text-sm text-gray-700">
+                      No, this was sufficient for now
+                    </label>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Sitting Series Section */}
             {inSittingSeries ? (
@@ -252,12 +306,12 @@ const CounsellorReview = ({ isOpen, onClose, sessionData, userId, inSittingSerie
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Recommended number of sessions
+                    Recommended number of sessions *
                   </label>
                   <select
                     value={formData.recommendedSittings}
                     onChange={(e) => handleInputChange('recommendedSittings', parseInt(e.target.value))}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
                   >
                     <option value={0}>Select sessions</option>
                     {[1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20].map(num => (
@@ -265,66 +319,73 @@ const CounsellorReview = ({ isOpen, onClose, sessionData, userId, inSittingSerie
                     ))}
                   </select>
                 </div>
-                <div className="bg-amber-50 p-4 rounded-lg">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <Calendar className="h-5 w-5 text-amber-600" />
-                    <span className="font-semibold text-amber-800">Treatment Commitment</span>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-3">
+                
+                {formData.recommendedSittings > 0 && (
+                  <>
+                    <div className="bg-amber-50 p-4 rounded-lg">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <Calendar className="h-5 w-5 text-amber-600" />
+                        <span className="font-semibold text-amber-800">Treatment Commitment</span>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-3">
+                          <input
+                            type="radio"
+                            id="willingYes"
+                            name="willingToTreat"
+                            checked={formData.willingToTreat === true}
+                            onChange={() => handleInputChange('willingToTreat', true)}
+                            className="h-4 w-4 text-green-600 focus:ring-green-500"
+                          />
+                          <label htmlFor="willingYes" className="flex items-center space-x-2 text-sm text-gray-700">
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                            <span>Yes, I will continue treating this patient</span>
+                          </label>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <input
+                            type="radio"
+                            id="willingNo"
+                            name="willingToTreat"
+                            checked={formData.willingToTreat === false}
+                            onChange={() => handleInputChange('willingToTreat', false)}
+                            className="h-4 w-4 text-red-600 focus:ring-red-500"
+                          />
+                          <label htmlFor="willingNo" className="flex items-center space-x-2 text-sm text-gray-700">
+                            <XCircle className="h-4 w-4 text-red-600" />
+                            <span>No, refer to another counsellor</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Sitting Notes
+                      </label>
+                      <textarea
+                        value={formData.sittingNotes}
+                        onChange={(e) => handleInputChange('sittingNotes', e.target.value)}
+                        placeholder="Notes for this sitting series..."
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-white text-gray-900"
+                        rows={2}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center space-x-3 mt-2">
                       <input
-                        type="radio"
-                        id="willingYes"
-                        name="willingToTreat"
-                        checked={formData.willingToTreat === true}
-                        onChange={() => handleInputChange('willingToTreat', true)}
+                        type="checkbox"
+                        id="curedSittingReason"
+                        checked={formData.curedSittingReason}
+                        onChange={(e) => handleInputChange('curedSittingReason', e.target.checked)}
                         className="h-4 w-4 text-green-600 focus:ring-green-500"
                       />
-                      <label htmlFor="willingYes" className="flex items-center space-x-2 text-sm text-gray-700">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                        <span>Yes, I will continue treating this patient</span>
+                      <label htmlFor="curedSittingReason" className="text-sm text-gray-700">
+                        User is cured of the reason for recommended sittings
                       </label>
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <input
-                        type="radio"
-                        id="willingNo"
-                        name="willingToTreat"
-                        checked={formData.willingToTreat === false}
-                        onChange={() => handleInputChange('willingToTreat', false)}
-                        className="h-4 w-4 text-red-600 focus:ring-red-500"
-                      />
-                      <label htmlFor="willingNo" className="flex items-center space-x-2 text-sm text-gray-700">
-                        <XCircle className="h-4 w-4 text-red-600" />
-                        <span>No, refer to another counsellor</span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Sitting Notes
-                  </label>
-                  <textarea
-                    value={formData.sittingNotes}
-                    onChange={(e) => handleInputChange('sittingNotes', e.target.value)}
-                    placeholder="Notes for this sitting series..."
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                    rows={2}
-                  />
-                </div>
-                <div className="flex items-center space-x-3 mt-2">
-                  <input
-                    type="checkbox"
-                    id="curedSittingReason"
-                    checked={formData.curedSittingReason}
-                    onChange={(e) => handleInputChange('curedSittingReason', e.target.checked)}
-                    className="h-4 w-4 text-green-600 focus:ring-green-500"
-                  />
-                  <label htmlFor="curedSittingReason" className="text-sm text-gray-700">
-                    User is cured of the reason for recommended sittings
-                  </label>
-                </div>
+                  </>
+                )}
               </div>
             ) : null}
 
@@ -337,7 +398,7 @@ const CounsellorReview = ({ isOpen, onClose, sessionData, userId, inSittingSerie
                 value={formData.notes}
                 onChange={(e) => handleInputChange('notes', e.target.value)}
                 placeholder="Any additional observations, recommendations, or notes..."
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-white text-gray-900"
                 rows={3}
               />
             </div>

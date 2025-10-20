@@ -33,7 +33,7 @@ const CaseHistoryContent = ({ clientId, onBack }) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${API_BASE_URL}/user/case_history?clientId=${clientId}`);
+      const response = await fetch(`${API_BASE_URL}/users/case_history?clientId=${clientId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch case history');
       }

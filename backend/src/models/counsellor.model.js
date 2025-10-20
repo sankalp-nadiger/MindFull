@@ -2,70 +2,85 @@ import mongoose, {Schema} from "mongoose";
 import bcrypt from 'bcryptjs';
 import jwt from "jsonwebtoken";
 
-const counsellorSchema= new Schema({
-    specification:
-    [{
+const counsellorSchema = new Schema({
+    specification: [{
         type: String,
         required: true
     }],
-    gender: {type:String,enum:["Male","Female","Other"],
-},
+    gender: {
+        type: String, 
+        enum: ["Male", "Female", "Other"],
+    },
     fullName: {
-      type: String,
-      required: true,
-      trim: true,
+        type: String,
+        required: true,
+        trim: true,
     },
     email: {
-      type: String,
-      //required: true,
-      unique: true,
-      lowercase: true,
+        type: String,
+        unique: true,
+        lowercase: true,
     },
-    mobileNumber:
-    {
-      type: Number,
-      required: true
-    },
-    yearexp:
-    {
+    mobileNumber: {
         type: Number,
         required: true
     },
-    certifications:[
-    {
+    yearexp: {
+        type: Number,
+        required: true
+    },
+    certifications: [{
         type: String
     }],
     password: String,
-    rating:
-    {
+    rating: {
         type: Number
     },
-    feedback: [
-      {
-          userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-          feedback: { type: String, required: true }
-      }
-  ],  
-    availability: [
-        {
-            day: { type: String, enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] },
-            slots: [
-                {
-                    startTime: { type: String, required: true }, // e.g., "14:30"
-                    endTime: { type: String, required: true }   // e.g., "15:30"
-                }
-            ]
-        }
-    ],
-    isAvailable:
-    {
-      type: Boolean,
-      default: false
+    feedback: [{
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+        feedback: { type: String, required: true }
+    }],
+    availability: [{
+        day: { type: String, enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] },
+        slots: [{
+            startTime: { type: String, required: true }, // e.g., "14:30"
+            endTime: { type: String, required: true }   // e.g., "15:30"
+        }]
+    }],
+    isAvailable: {
+        type: Boolean,
+        default: false
     },
     profilePic: {
-      type: String
-    }
+        type: String
+    },
+    // New field: Array of clients this counsellor is treating
+    clients: [{
+        userId: { 
+            type: mongoose.Schema.Types.ObjectId, 
+            ref: 'User', 
+            required: true 
+        },
+        addedAt: { 
+            type: Date, 
+            default: Date.now 
+        },
+        status: {
+            type: String,
+            enum: ['active', 'completed', 'referred'],
+            default: 'active'
+        },
+        sessionCount: {
+            type: Number,
+            default: 0
+        },
+        recommendedSessions: {
+            type: Number,
+            default: 0
+        }
+    }]
 });
+
 counsellorSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next();
   

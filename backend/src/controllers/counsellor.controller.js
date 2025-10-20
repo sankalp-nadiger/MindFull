@@ -6,7 +6,8 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Session } from "../models/session.model.js";
 import { verifyOTP } from "./parent.controller.js";
-import app from "../app.js"
+import moment from "moment";
+import { Appointment } from "../models/appointment.model.js";
 import {server,io} from "../index.js"
 import nodemailer from "nodemailer";
 import { OTP } from "../models/otp.model.js";
@@ -15,17 +16,76 @@ import Notification from "../models/notification.model.js";
 // Route to check if user is in a sitting series
 export const checkSittingSeries = asyncHandler(async (req, res) => {
     const { userId } = req.query;
+    const counselorId = req.counsellor._id;
+    
     if (!userId) {
         return res.status(400).json({ message: "User ID is required" });
     }
-    const user = await User.findById(userId);
-    if (!user) {
-        return res.status(404).json({ message: "User not found" });
+
+    try {
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Find the latest counselor review with needsSittings and recommendedSittings
+        const lastReview = (user.counsellorReviews || []).slice().reverse().find(r => 
+            r.needsSittings && 
+            r.recommendedSittings > 0 && 
+            r.counselorId.toString() === counselorId.toString()
+        );
+
+        if (!lastReview || !user.inSittingSeries) {
+            return res.status(200).json({
+                inSittingSeries: false,
+                sittingNotes: '',
+                currentSittingNumber: 0,
+                totalRecommendedSittings: 0
+            });
+        }
+
+        // Calculate current sitting number based on counselorProgress
+        const progressArr = user.counselorProgress || [];
+        let totalSittingsCompleted = 0;
+
+        // Sum all sittingProgress from different counselors
+        for (let cp of progressArr) {
+            totalSittingsCompleted += (cp.sittingProgress || 0);
+        }
+
+        // Current sitting number is the next one (completed + 1)
+        const currentSittingNumber = totalSittingsCompleted + 1;
+        const totalRecommendedSittings = lastReview.recommendedSittings;
+
+        // Handle session adjustments if any
+        let adjustedTotalSittings = totalRecommendedSittings;
+        
+        // Check if there are any recent reviews with session adjustments
+        const recentReviews = (user.counsellorReviews || [])
+            .filter(r => r.counselorId.toString() === counselorId.toString())
+            .sort((a, b) => new Date(b.reviewedAt) - new Date(a.reviewedAt));
+        
+        const latestReviewWithAdjustment = recentReviews.find(r => 
+            r.adjustSittings && r.adjustSittings !== 'maintain' && r.adjustedSittingsCount
+        );
+        
+        if (latestReviewWithAdjustment) {
+            adjustedTotalSittings = latestReviewWithAdjustment.adjustedSittingsCount;
+        }
+
+        return res.status(200).json({
+            inSittingSeries: user.inSittingSeries,
+            sittingNotes: Array.isArray(user.sittingNotes) ? user.sittingNotes.join('\n') : (user.sittingNotes || ''),
+            currentSittingNumber: Math.min(currentSittingNumber, adjustedTotalSittings),
+            totalRecommendedSittings: adjustedTotalSittings,
+            originalRecommendedSittings: totalRecommendedSittings,
+            totalCompletedSittings: totalSittingsCompleted
+        });
+
+    } catch (error) {
+        console.error('Error checking sitting series:', error);
+        return res.status(500).json({ message: "Internal server error" });
     }
-    res.status(200).json({
-        inSittingSeries: user.inSittingSeries,
-        sittingNotes: user.sittingNotes
-    });
 });
 
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -147,6 +207,62 @@ export const addNotesToSession = async (req, res) => {
     }
   };
 
+  export const rejoinSession = asyncHandler(async (req, res) => {
+    const { sessionId } = req.body;
+    const counselorId = req.counsellor._id;
+    
+    if (!sessionId) {
+        return res.status(400).json({ message: "Session ID is required" });
+    }
+
+    try {
+        // Find the session
+        const session = await Session.findById(sessionId);
+        if (!session) {
+            return res.status(404).json({ message: "Session not found" });
+        }
+
+        // Verify that the counselor is assigned to this session
+        if (session.counselor.toString() !== counselorId.toString()) {
+            return res.status(403).json({ message: "Not authorized to rejoin this session" });
+        }
+
+        // Verify session is active
+        if (session.status !== 'Active') {
+            return res.status(400).json({ message: "Session is not active" });
+        }
+
+        // Check if session has a room name
+        if (!session.roomName) {
+            return res.status(400).json({ message: "Session room not available" });
+        }
+
+        // Log the rejoin attempt
+        console.log('🔄 Counselor rejoining session:', {
+            sessionId,
+            counselorId,
+            roomName: session.roomName
+        });
+
+        // Return session data for rejoining
+        res.status(200).json({
+            success: true,
+            message: "Session ready to rejoin",
+            session: {
+                _id: session._id,
+                roomName: session.roomName,
+                status: session.status,
+                user: session.user,
+                counselor: session.counselor
+            }
+        });
+
+    } catch (error) {
+        console.error('Error rejoining session:', error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+
 // Accept Session (Counselor Side)
 export const acceptSession = asyncHandler(async (req, res) => {
     const { sessionId } = req.body;
@@ -262,7 +378,21 @@ export const endSession = asyncHandler(async (req, res) => {
             // Sum all sittingProgress
             const totalSittings = progressArr.reduce((sum, cp) => sum + (cp.sittingProgress || 0), 0);
             
-            if (totalSittings >= lastReview.recommendedSittings) {
+            // Check for session adjustments
+            let adjustedTotalSittings = lastReview.recommendedSittings;
+            const recentReviews = (user.counsellorReviews || [])
+                .filter(r => r.counselorId && r.counselorId.toString() === session.counselor.toString())
+                .sort((a, b) => new Date(b.reviewedAt) - new Date(a.reviewedAt));
+            
+            const latestReviewWithAdjustment = recentReviews.find(r => 
+                r.adjustSittings && r.adjustSittings !== 'maintain' && r.adjustedSittingsCount
+            );
+            
+            if (latestReviewWithAdjustment) {
+                adjustedTotalSittings = latestReviewWithAdjustment.adjustedSittingsCount;
+            }
+            
+            if (totalSittings >= adjustedTotalSittings) {
                 // Sittings completed, clear progress and mark as not in series
                 user.counselorProgress = [];
                 user.inSittingSeries = false;
@@ -272,7 +402,7 @@ export const endSession = asyncHandler(async (req, res) => {
             } else {
                 user.counselorProgress = progressArr;
                 user.inSittingSeries = true;
-                console.log('📈 Sitting progress updated:', totalSittings, '/', lastReview.recommendedSittings);
+                console.log('📈 Sitting progress updated:', totalSittings, '/', adjustedTotalSittings);
             }
         } else {
             user.inSittingSeries = false;
@@ -295,6 +425,7 @@ export const endSession = asyncHandler(async (req, res) => {
     });
     
     console.log('📡 Session ended event emitted for session:', sessionId);
+    
     // Make counselor available again
     const counselor = await Counsellor.findById(session.counselor);
     if (counselor) {
@@ -312,6 +443,39 @@ export const endSession = asyncHandler(async (req, res) => {
         console.log('✅ Counselor marked as available:', counselor._id);
     }
 
+    // Calculate sitting series info for response
+    let sittingSeriesInfo = {
+        inSittingSeries: false,
+        currentSittingNumber: 0,
+        totalRecommendedSittings: 0
+    };
+
+    if (user && user.inSittingSeries) {
+        const progressArr = user.counselorProgress || [];
+        const totalSittingsCompleted = progressArr.reduce((sum, cp) => sum + (cp.sittingProgress || 0), 0);
+        
+        const lastReview = (user.counsellorReviews || []).slice().reverse().find(r => r.needsSittings && r.recommendedSittings > 0);
+        let adjustedTotalSittings = lastReview?.recommendedSittings || 0;
+        
+        const recentReviews = (user.counsellorReviews || [])
+            .filter(r => r.counselorId && r.counselorId.toString() === session.counselor.toString())
+            .sort((a, b) => new Date(b.reviewedAt) - new Date(a.reviewedAt));
+        
+        const latestReviewWithAdjustment = recentReviews.find(r => 
+            r.adjustSittings && r.adjustSittings !== 'maintain' && r.adjustedSittingsCount
+        );
+        
+        if (latestReviewWithAdjustment) {
+            adjustedTotalSittings = latestReviewWithAdjustment.adjustedSittingsCount;
+        }
+
+        sittingSeriesInfo = {
+            inSittingSeries: true,
+            currentSittingNumber: Math.min(totalSittingsCompleted + 1, adjustedTotalSittings),
+            totalRecommendedSittings: adjustedTotalSittings
+        };
+    }
+
     res.status(200).json({
         success: true,
         message: "Session ended successfully",
@@ -320,27 +484,40 @@ export const endSession = asyncHandler(async (req, res) => {
             sessionProgress: user.sessionProgress, 
             fullName: user.fullName, 
             inSittingSeries: user.inSittingSeries, 
-            sittingNotes: user.sittingNotes 
+            sittingNotes: user.sittingNotes,
+            ...sittingSeriesInfo
         } : null,
         duration: session.duration || null,
-        roomName: session.roomName // Include room name for cleanup
+        roomName: session.roomName
     });
 });
 
 // Get Active Sessions (Counselor Side)
 export const getActiveSessions = asyncHandler(async (req, res) => {
-    const counselorId  = req.counsellor._id;
+  const counselorId = req.counsellor._id;
 
-    const sessions = await Session.find({
-        counselor: counselorId,
-        status: { $in: ["Pending", "Active"] }
-    }).populate('user', 'username');
+  // Step 1: Get all accepted notifications for this counselor
+  const acceptedNotifications = await Notification.find({
+    counselor: counselorId,
+    type: 'session_request',
+    accepted: true,
+  }).select('relatedId');
 
-    res.status(200).json({
-        success: true,
-        sessions
-    });
+  const acceptedSessionIds = acceptedNotifications.map(n => n.relatedId);
+
+  // Step 2: Fetch only sessions whose IDs match accepted notifications
+  const sessions = await Session.find({
+    _id: { $in: acceptedSessionIds },
+    counselor: counselorId,
+    status: { $in: ['Pending', 'Active'] }
+  }).populate('user', 'username');
+
+  res.status(200).json({
+    success: true,
+    sessions,
+  });
 });
+
 export const registerCounsellor = asyncHandler(async (req, res) => {
     if (typeof req.body.availability === 'string') {
         req.body.availability = JSON.parse(req.body.availability);
@@ -539,17 +716,39 @@ export const logoutCounsellor = asyncHandler(async (req, res) => {
 export const getCounsellorNotifications = async (req, res) => {
   try {
     const counselorId = req.counsellor._id;
-    const notifications = await Notification.find({ counselor: counselorId })
+
+    let notifications = await Notification.find({ counselor: counselorId })
       .sort({ createdAt: -1 });
 
-    // Always return an array
-    res.status(200).json(Array.isArray(notifications) ? notifications : []);
+    // Get all sitting_recommendation related userIds
+    const sittingUserIds = notifications
+      .filter(n => n.type === "sitting_recommendation" && n.userId)
+      .map(n => n.userId);
+
+    const acceptedSittings = await Notification.find({
+      userId: { $in: sittingUserIds },
+      type: "sitting_recommendation",
+      accepted: true,
+      counselor: { $ne: counselorId }
+    }).select("userId");
+
+    const acceptedUserIds = new Set(acceptedSittings.map(s => s.userId.toString()));
+
+    const filteredNotifications = notifications.filter(n => {
+      if (n.type === "sitting_recommendation" && n.userId) {
+        return !acceptedUserIds.has(n.userId.toString());
+      }
+      return true;
+    });
+
+    res.status(200).json(filteredNotifications);
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching notifications:", err);
     res.status(500).json({ success: false, message: "Failed to fetch notifications" });
   }
 };
 
+// Update Feedback (Counselor Feedback)
 export const updateFeedback = asyncHandler(async (req, res) => {
     const counsellorId = req.counsellor._id;
     const { feedback, sessionId } = req.body;
@@ -640,68 +839,137 @@ export const updateProfile = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, { updatedCounsellor: counsellor }, "Profile updated successfully"));
 });
+
 // Add Review to Session (Counselor Review)
 export const addCounsellorReview = asyncHandler(async (req, res) => {
-    const { sessionId, userId, diagnosis, symptoms, needsSittings, recommendedSittings, willingToTreat, notes, sittingNotes, curedSittingReason } = req.body;
-    if (!sessionId || !userId || !diagnosis) {
-        return res.status(400).json({ message: "Session ID, user ID, and diagnosis are required." });
-    }
-    const session = await Session.findById(sessionId);
-    if (!session) {
-        return res.status(404).json({ message: "Session not found." });
-    }
-    // Attach review fields to session
-    session.counsellorReview = {
-        diagnosis,
-        symptoms,
-        needsSittings,
-        recommendedSittings,
-        willingToTreat,
-        notes,
-        sittingNotes,
-        curedSittingReason,
-        reviewedAt: new Date()
-    };
-    await session.save();
+  const { 
+    sessionId, 
+    userId, 
+    diagnosis, 
+    symptoms, 
+    needsSittings, 
+    recommendedSittings, 
+    willingToTreat, 
+    notes, 
+    sittingNotes, 
+    curedSittingReason,
+    progressPercentage,
+    adjustSittings,
+    adjustedSittingsCount
+  } = req.body;
+  
+  if (!sessionId || !userId || !diagnosis) {
+    return res.status(400).json({ message: "Session ID, user ID, and diagnosis are required." });
+  }
 
-    // Also push review to user's counsellorReviews array
-    const user = await User.findById(userId);
-    if (user) {
-        user.counsellorReviews = user.counsellorReviews || [];
-        user.counsellorReviews.push({
-            sessionId,
-            counselorId: session.counselor,
-            diagnosis,
-            symptoms,
-            needsSittings,
-            recommendedSittings,
-            willingToTreat,
-            notes,
-            sittingNotes,
-            curedSittingReason,
-            reviewedAt: new Date()
-        });
-        // Update user sittingNotes and inSittingSeries
-        if (needsSittings && recommendedSittings > 0) {
-            // If counselor says user is cured, clear sittingNotes and mark not in series
-            if (curedSittingReason) {
-                user.sittingNotes = [];
-                user.inSittingSeries = false;
-            } else {
-                // Not cured, append sittingNotes if provided
-                if (sittingNotes && sittingNotes.trim()) {
-                    if (!Array.isArray(user.sittingNotes)) user.sittingNotes = [];
-                    user.sittingNotes.push(sittingNotes.trim());
-                }
-                user.inSittingSeries = true;
-            }
-        } else {
-            user.sittingNotes = [];
-            user.inSittingSeries = false;
+  const session = await Session.findById(sessionId);
+  if (!session) return res.status(404).json({ message: "Session not found." });
+
+  session.counsellorReview = {
+    diagnosis,
+    symptoms,
+    needsSittings,
+    recommendedSittings,
+    willingToTreat,
+    notes,
+    sittingNotes,
+    curedSittingReason,
+    progressPercentage,
+    adjustSittings,
+    adjustedSittingsCount,
+    reviewedAt: new Date()
+  };
+  await session.save();
+
+  // Update User record 
+  const user = await User.findById(userId);
+  if (user) {
+    user.counsellorReviews = user.counsellorReviews || [];
+    user.counsellorReviews.push({
+      sessionId,
+      counselorId: session.counselor,
+      diagnosis,
+      symptoms,
+      needsSittings,
+      recommendedSittings,
+      willingToTreat,
+      notes,
+      sittingNotes,
+      curedSittingReason,
+      progressPercentage,
+      adjustSittings,
+      adjustedSittingsCount,
+      reviewedAt: new Date()
+    });
+
+    if (needsSittings && recommendedSittings > 0) {
+      if (curedSittingReason) {
+        user.sittingNotes = [];
+        user.inSittingSeries = false;
+      } else {
+        if (sittingNotes && sittingNotes.trim()) {
+          if (!Array.isArray(user.sittingNotes)) user.sittingNotes = [];
+          user.sittingNotes.push(sittingNotes.trim());
         }
-        await user.save();
+        user.inSittingSeries = true;
+        if (adjustSittings && adjustSittings !== 'maintain' && adjustedSittingsCount) {
+          user.totalRecommendedSittings = adjustedSittingsCount;
+        }
+      }
+    } else {
+      user.sittingNotes = [];
+      user.inSittingSeries = false;
     }
-    return res.status(200).json({ message: "Review submitted successfully!" });
+
+    await user.save();
+  }
+
+  // counsellor-client logic
+  if (needsSittings && recommendedSittings > 0 && willingToTreat) {
+    const counsellor = await Counsellor.findById(session.counselor);
+    if (counsellor) {
+      const existingClientIndex = counsellor.clients.findIndex(
+        client => client.userId.toString() === userId.toString()
+      );
+
+      if (existingClientIndex !== -1) {
+        counsellor.clients[existingClientIndex].sessionCount += 1;
+        counsellor.clients[existingClientIndex].recommendedSessions = recommendedSittings;
+        counsellor.clients[existingClientIndex].status = curedSittingReason ? 'completed' : 'active';
+      } else {
+        counsellor.clients.push({
+          userId: userId,
+          addedAt: new Date(),
+          status: curedSittingReason ? 'completed' : 'active',
+          sessionCount: 1,
+          recommendedSessions: recommendedSittings
+        });
+      }
+
+      await counsellor.save();
+    }
+  }
+
+  // CREATE NOTIFICATIONS FOR OTHER COUNSELLORS
+  if (needsSittings && recommendedSittings > 0 && !willingToTreat) {
+    const allCounsellors = await Counsellor.find({ _id: { $ne: session.counselor } }).select("_id");
+
+    const notifications = allCounsellors.map(c => ({
+      counselor: c._id,
+      title: "New Sitting Recommendation",
+      message: `User ${user.username} has been recommended ${recommendedSittings} sittings. Will you take it up?`,
+      type: "sitting_recommendation",
+      userId,
+      meta: { diagnosis, recommendedSittings },
+      unread: true
+    }));
+
+    if (notifications.length > 0) {
+      await Notification.insertMany(notifications);
+    }
+  }
+
+  return res.status(200).json({ message: "Review submitted successfully!" });
 });
 
 // Dashboard Stats for Counsellor
@@ -783,7 +1051,7 @@ export const markNotificationAsRead = async (req, res) => {
 // Mark all notifications as read for a counselor
 export const markAllNotificationsAsRead = async (req, res) => {
   try {
-    const counselorId = req.counselor._id; // from JWT middleware
+    const counselorId = req.counsellor._id; // from JWT middleware
     await Notification.updateMany(
       { counselor: counselorId, unread: true },
       { unread: false }
@@ -838,4 +1106,277 @@ export const rejectNotificationRequest = async (req, res) => {
     console.error(err);
     res.status(500).json({ message: "Failed to reject request" });
   }
+};
+
+// Get all clients for a counsellor
+export const getClients = async (req, res) => {
+    try {
+        const counsellorId = req.counsellor._id;
+
+        const counsellor = await Counsellor.findById(counsellorId)
+            .populate('clients.userId', 'fullName email mobileNumber')
+            .select('clients');
+
+        if (!counsellor) {
+            return res.status(404).json({ message: 'Counsellor not found' });
+        }
+
+        // Format the clients data for frontend
+        const clientsData = counsellor.clients.map(client => {
+            const userInfo = client.userId;
+            return {
+                id: client.userId._id,
+                name: userInfo.fullName,
+                clientName: userInfo.fullName,
+                email: userInfo.email,
+                phone: userInfo.mobileNumber,
+                sessions: client.sessionCount,
+                sessionCount: client.sessionCount,
+                lastSession: client.lastSession,
+                status: client.status,
+                notes: client.notes || 'No notes available',
+                addedAt: client.addedAt,
+                recommendedSessions: client.recommendedSessions
+            };
+        });
+
+        res.status(200).json(clientsData);
+    } catch (error) {
+        console.error('Error fetching clients:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+// Get available time slots for a week
+export const getAvailableSlots = async (req, res) => {
+    try {
+        const counsellorId = req.counsellor._id;
+        const { clientId } = req.params;
+
+        // Get counsellor availability
+        const counsellor = await Counsellor.findById(counsellorId).select('availability');
+        if (!counsellor) {
+            return res.status(404).json({ message: 'Counsellor not found' });
+        }
+
+        // Get current date and next 7 days
+        const today = moment().startOf('day');
+        const weekDates = [];
+        
+        for (let i = 0; i < 7; i++) {
+            const date = moment(today).add(i, 'days');
+            weekDates.push({
+                date: date.format('YYYY-MM-DD'),
+                dayName: date.format('dddd'),
+                fullDate: date.toDate()
+            });
+        }
+
+        // Get existing appointments for the week
+        const startOfWeek = today.toDate();
+        const endOfWeek = moment(today).add(6, 'days').endOf('day').toDate();
+        
+        const existingAppointments = await Appointment.find({
+            counsellorId: counsellorId,
+            appointmentDate: {
+                $gte: startOfWeek,
+                $lte: endOfWeek
+            },
+            status: { $ne: 'cancelled' }
+        }).select('appointmentDate startTime endTime');
+
+        // Create available slots
+        const availableSlots = [];
+
+        weekDates.forEach(dateInfo => {
+            const dayAvailability = counsellor.availability.find(
+                avail => avail.day === dateInfo.dayName
+            );
+
+            if (dayAvailability && dayAvailability.slots.length > 0) {
+                const daySlots = [];
+
+                dayAvailability.slots.forEach(slot => {
+                    // Check if this slot is already booked
+                    const isBooked = existingAppointments.some(appointment => {
+                        const appointmentDate = moment(appointment.appointmentDate).format('YYYY-MM-DD');
+                        return appointmentDate === dateInfo.date && 
+                               appointment.startTime === slot.startTime;
+                    });
+
+                    // Only include future slots (not past slots for today)
+                    const slotDateTime = moment(`${dateInfo.date} ${slot.startTime}`, 'YYYY-MM-DD HH:mm');
+                    const now = moment();
+
+                    if (!isBooked && slotDateTime.isAfter(now)) {
+                        daySlots.push({
+                            startTime: slot.startTime,
+                            endTime: slot.endTime,
+                            available: true
+                        });
+                    }
+                });
+
+                if (daySlots.length > 0) {
+                    availableSlots.push({
+                        date: dateInfo.date,
+                        dayName: dateInfo.dayName,
+                        slots: daySlots
+                    });
+                }
+            }
+        });
+
+        res.status(200).json(availableSlots);
+    } catch (error) {
+        console.error('Error fetching available slots:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+// Schedule an appointment
+export const scheduleAppointment = async (req, res) => {
+    try {
+        const counsellorId = req.user.id;
+        const { clientId, appointmentDate, startTime, endTime, notes, sessionType } = req.body;
+
+        // Validate input
+        if (!clientId || !appointmentDate || !startTime || !endTime) {
+            return res.status(400).json({ 
+                message: 'Client ID, appointment date, start time, and end time are required' 
+            });
+        }
+
+        // Check if client exists and belongs to this counsellor
+        const counsellor = await Counsellor.findById(counsellorId);
+        const clientExists = counsellor.clients.some(
+            client => client.userId.toString() === clientId
+        );
+
+        if (!clientExists) {
+            return res.status(400).json({ message: 'Client not found or not assigned to this counsellor' });
+        }
+
+        // Check if slot is available
+        const appointmentDateTime = moment(`${appointmentDate} ${startTime}`, 'YYYY-MM-DD HH:mm');
+        
+        // Check if appointment is in the future
+        if (!appointmentDateTime.isAfter(moment())) {
+            return res.status(400).json({ message: 'Appointment must be scheduled for a future time' });
+        }
+
+        // Check if slot conflicts with existing appointments
+        const existingAppointment = await Appointment.findOne({
+            counsellorId: counsellorId,
+            appointmentDate: new Date(appointmentDate),
+            startTime: startTime,
+            status: { $ne: 'cancelled' }
+        });
+
+        if (existingAppointment) {
+            return res.status(400).json({ message: 'This time slot is already booked' });
+        }
+
+        // Create new appointment
+        const newAppointment = new Appointment({
+            counsellorId,
+            clientId,
+            appointmentDate: new Date(appointmentDate),
+            startTime,
+            endTime,
+            notes: notes || '',
+            sessionType: sessionType || 'follow-up'
+        });
+
+        await newAppointment.save();
+
+        // Populate the appointment with client details for response
+        const populatedAppointment = await Appointment.findById(newAppointment._id)
+            .populate('clientId', 'fullName email');
+
+        res.status(201).json({
+            message: 'Appointment scheduled successfully',
+            appointment: populatedAppointment
+        });
+    } catch (error) {
+        console.error('Error scheduling appointment:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+// Get appointments for a counsellor
+export const getAppointments = async (req, res) => {
+    try {
+        const counsellorId = req.counsellor._id;
+        const { date, status } = req.query;
+
+        let query = { counsellorId };
+        
+        // Filter by date if provided
+        if (date) {
+            const startDate = moment(date).startOf('day').toDate();
+            const endDate = moment(date).endOf('day').toDate();
+            query.appointmentDate = { $gte: startDate, $lte: endDate };
+        }
+
+        // Filter by status if provided
+        if (status && status !== 'all') {
+            query.status = status;
+        }
+
+        const appointments = await Appointment.find(query)
+            .populate('clientId', 'fullName email mobileNumber')
+            .sort({ appointmentDate: 1, startTime: 1 });
+
+        res.status(200).json(appointments);
+    } catch (error) {
+        console.error('Error fetching appointments:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+// Update appointment status
+export const updateAppointmentStatus = async (req, res) => {
+    try {
+        const { appointmentId } = req.params;
+        const { status, notes } = req.body;
+        const counsellorId = req.counsellor._id;
+
+        const appointment = await Appointment.findOne({
+            _id: appointmentId,
+            counsellorId: counsellorId
+        });
+
+        if (!appointment) {
+            return res.status(404).json({ message: 'Appointment not found' });
+        }
+
+        appointment.status = status || appointment.status;
+        appointment.notes = notes || appointment.notes;
+        appointment.updatedAt = new Date();
+
+        await appointment.save();
+
+        // If appointment is completed, update session count
+        if (status === 'completed') {
+            await Counsellor.updateOne(
+                { 
+                    _id: counsellorId,
+                    'clients.userId': appointment.clientId 
+                },
+                { 
+                    $inc: { 'clients.$.sessionCount': 1 },
+                    $set: { 'clients.$.lastSession': new Date() }
+                }
+            );
+        }
+
+        res.status(200).json({
+            message: 'Appointment updated successfully',
+            appointment
+        });
+    } catch (error) {
+        console.error('Error updating appointment:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
 };

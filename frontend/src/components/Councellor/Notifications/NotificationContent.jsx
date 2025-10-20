@@ -91,14 +91,16 @@ const handleAcceptRequest = async (notificationId, type) => {
       method: 'POST',
       headers: getAuthHeaders(),
     });
+
     if (response.ok) {
       setNotifications(prev =>
         prev.map(notif =>
-          notif.id === notificationId ? { ...notif, unread: false, accepted: true } : notif
+          notif._id === notificationId ? { ...notif, unread: false, accepted: true } : notif
         )
       );
       if (type === 'session_request' && onNavigate) onNavigate('/session');
       else if (type === 'appointment' && onNavigate) onNavigate('/clients');
+      else if (type === 'sitting_recommendation' && onNavigate) onNavigate('/clients'); // ✅ redirect counselor
     }
   } catch (err) {
     console.error('Error accepting request:', err);
@@ -150,18 +152,20 @@ const handleRejectRequest = async (notificationId) => {
   };
 
   // Notification icon
-  const getNotificationIcon = (type) => {
-    switch (type) {
-      case 'session_request': return <Video className="h-5 w-5 text-blue-600" />;
-      case 'session_reminder': return <Clock className="h-5 w-5 text-yellow-600" />;
-      case 'appointment': return <Calendar className="h-5 w-5 text-purple-600" />;
-      case 'feedback':
-      case 'review': return <Star className="h-5 w-5 text-green-600" />;
-      case 'message': return <MessageSquare className="h-5 w-5 text-indigo-600" />;
-      case 'client_update': return <User className="h-5 w-5 text-teal-600" />;
-      default: return <Bell className="h-5 w-5 text-gray-600" />;
-    }
-  };
+  // Notification icon
+const getNotificationIcon = (type) => {
+  switch (type) {
+    case 'session_request': return <Video className="h-5 w-5 text-blue-600" />;
+    case 'session_reminder': return <Clock className="h-5 w-5 text-yellow-600" />;
+    case 'appointment': return <Calendar className="h-5 w-5 text-purple-600" />;
+    case 'feedback':
+    case 'review': return <Star className="h-5 w-5 text-green-600" />;
+    case 'sitting_recommendation': return <User className="h-5 w-5 text-pink-600" />; // ✅ New type
+    case 'message': return <MessageSquare className="h-5 w-5 text-indigo-600" />;
+    case 'client_update': return <User className="h-5 w-5 text-teal-600" />;
+    default: return <Bell className="h-5 w-5 text-gray-600" />;
+  }
+};
 
   const getNotificationColor = (type, unread) => {
     return unread ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-white';
@@ -245,26 +249,30 @@ const handleRejectRequest = async (notificationId) => {
                     </div>
 
                     {/* Action buttons */}
-                    {(notification.type === 'session_request' || notification.type === 'appointment') && !notification.accepted && !notification.rejected && (
-                      <div className="flex items-center space-x-2 mt-3">
-                        <button
-                          onClick={() => handleAcceptRequest(notification._id, notification.type)}
-                          disabled={processingActions.has(notification._id)}
-                          className="px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
-                        >
-                          {processingActions.has(notification._id) ? <Loader className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
-                          <span>Accept</span>
-                        </button>
-                        <button
-                          onClick={() => handleRejectRequest(notification._id)}
-                          disabled={processingActions.has(notification._id)}
-                          className="px-3 py-1 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
-                        >
-                          <X className="h-3 w-3" />
-                          <span>Reject</span>
-                        </button>
-                      </div>
-                    )}
+{(notification.type === 'session_request' || 
+  notification.type === 'appointment' ||
+  notification.type === 'sitting_recommendation') && 
+  !notification.accepted && !notification.rejected && (
+    <div className="flex items-center space-x-2 mt-3">
+      <button
+        onClick={() => handleAcceptRequest(notification._id, notification.type)}
+        disabled={processingActions.has(notification._id)}
+        className="px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+      >
+        {processingActions.has(notification._id) ? <Loader className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+        <span>Accept</span>
+      </button>
+      <button
+        onClick={() => handleRejectRequest(notification._id)}
+        disabled={processingActions.has(notification._id)}
+        className="px-3 py-1 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+      >
+        <X className="h-3 w-3" />
+        <span>Reject</span>
+      </button>
+    </div>
+)}
+
 
                     {/* Status */}
                     {notification.accepted && <span className="mt-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"><Check className="h-3 w-3 mr-1" />Accepted</span>}

@@ -15,6 +15,12 @@ import {
   getCounsellorDashboardStats,
   getCounselorProfile,
   checkSittingSeries,
+  rejoinSession,
+  getClients,
+  getAvailableSlots,
+  scheduleAppointment,
+  getAppointments,
+  updateAppointmentStatus,
   // Notifications controllers
   getCounsellorNotifications,
   markNotificationAsRead,
@@ -46,6 +52,7 @@ router.post('/review', counsellor_verifyJWT, addCounsellorReview);
 router.get('/dashboard-stats', counsellor_verifyJWT, getCounsellorDashboardStats);
 router.get("/profile", counsellor_verifyJWT, getCounselorProfile);
 router.get('/check-sitting-series', counsellor_verifyJWT, checkSittingSeries);
+router.post('/rejoin', counsellor_verifyJWT, rejoinSession);
 
 // ---------------- Notifications Routes ----------------
 router.get('/notifications', counsellor_verifyJWT, getCounsellorNotifications); // fetch all notifications
@@ -53,5 +60,12 @@ router.patch('/notifications/:id/read', counsellor_verifyJWT, markNotificationAs
 router.patch('/notifications/read-all', counsellor_verifyJWT, markAllNotificationsAsRead); // mark all read
 router.post('/notifications/:id/accept', counsellor_verifyJWT, acceptNotificationRequest); // accept request
 router.post('/notifications/:id/reject', counsellor_verifyJWT, rejectNotificationRequest); // reject request
+
+// Routes for counsellor client management and appointments
+router.get('/clients', counsellor_verifyJWT, getClients);
+router.get('/available-slots/:clientId', counsellor_verifyJWT, getAvailableSlots);
+router.post('/schedule-appointment', counsellor_verifyJWT, scheduleAppointment);
+router.get('/appointments', counsellor_verifyJWT, getAppointments);
+router.patch('/appointments/:appointmentId', counsellor_verifyJWT, updateAppointmentStatus);
 
 export default router;

@@ -27,7 +27,7 @@ import { Link } from "react-router-dom";
 import Toast from "../pages/Toast";
 
 // WebRTC Configuration
-  const rtcConfig = {
+const rtcConfig = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
@@ -37,7 +37,9 @@ import Toast from "../pages/Toast";
   ],
   iceTransportPolicy: 'all',
   iceCandidatePoolSize: 10
-};const getSocket = () => {
+};
+
+const getSocket = () => {
   if (!window.socketInstance) {
     window.socketInstance = io(`${import.meta.env.VITE_BASE_URL}`, {
       transports: ['websocket'],
@@ -47,92 +49,141 @@ import Toast from "../pages/Toast";
   return window.socketInstance;
 };
 
- // Trust indicators component
-  const TrustIndicators = () => (
-    <div className="flex items-center justify-center space-x-6 mb-8 text-sm text-slate-400">
-      <div className="flex items-center space-x-2">
-        <Shield className="w-4 h-4 text-emerald-400" />
-        <span>HIPAA Compliant</span>
-      </div>
-      <div className="flex items-center space-x-2">
-        <Heart className="w-4 h-4 text-rose-400" />
-        <span>Licensed Therapists</span>
-      </div>
-      <div className="flex items-center space-x-2">
-        <CheckCircle className="w-4 h-4 text-blue-400" />
-        <span>End-to-End Encrypted</span>
-      </div>
+// Trust indicators component
+const TrustIndicators = () => (
+  <div className="flex items-center justify-center space-x-6 mb-8 text-sm text-slate-400">
+    <div className="flex items-center space-x-2">
+      <Shield className="w-4 h-4 text-emerald-400" />
+      <span>HIPAA Compliant</span>
     </div>
-  );
+    <div className="flex items-center space-x-2">
+      <Heart className="w-4 h-4 text-rose-400" />
+      <span>Licensed Therapists</span>
+    </div>
+    <div className="flex items-center space-x-2">
+      <CheckCircle className="w-4 h-4 text-blue-400" />
+      <span>End-to-End Encrypted</span>
+    </div>
+  </div>
+);
 
-  // Request form component
-  const RequestForm = ({ issueDetails, loading, requestSession, handleIssueDetailsChange }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
-      <div className="text-center mb-8">
-        <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/20">
-          <Video className="w-8 h-8 text-white" />
-        </div>
-        <h3 className="text-2xl font-semibold text-white mb-2">
-          Start Your Healing Journey
-        </h3>
-        <p className="text-slate-400">
-          Connect with a licensed mental health professional in a safe, private space
-        </p>
-      </div>
-
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
-            What brings you here today? *
-          </label>
-          <textarea
-            value={issueDetails}
-            onChange={handleIssueDetailsChange}
-            placeholder="Share what's on your mind. This helps us match you with the right counselor..."
-            rows="4"
-            maxLength={500}
-            className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors resize-none text-slate-200 placeholder-slate-500"
-            autoComplete="off"
-            spellCheck="true"
-          />
-          <div className="flex justify-between items-center mt-2 text-xs text-slate-500">
-            <span>Your information is completely confidential</span>
-            <span>{issueDetails.length}/500</span>
+// Request form component
+const RequestForm = ({ issueDetails, loading, requestSession, handleIssueDetailsChange, activeSession, rejoinSession, rejoinLoading, dismissActiveSession }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="space-y-6"
+  >
+    {/* Active Session Alert */}
+    {activeSession && (
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-r from-blue-900/50 to-indigo-900/50 border border-blue-500/30 rounded-xl p-4 backdrop-blur-sm"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse"></div>
+            <div>
+              <h4 className="font-semibold text-white">Active Session Found</h4>
+              <p className="text-sm text-slate-300">
+                You have an ongoing session with {activeSession.counselor?.fullName || 'a counselor'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => rejoinSession(activeSession._id)}
+              disabled={rejoinLoading}
+              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all font-semibold shadow-lg disabled:opacity-50"
+            >
+              {rejoinLoading ? (
+                <div className="flex items-center space-x-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Joining...</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <Video className="w-4 h-4" />
+                  <span>Rejoin</span>
+                </div>
+              )}
+            </button>
+            <button
+              onClick={() => dismissActiveSession(activeSession._id)}
+              disabled={rejoinLoading}
+              className="px-3 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-all font-semibold border border-slate-600 disabled:opacity-50"
+              title="Dismiss and mark session as completed"
+            >
+              <div className="flex items-center space-x-1">
+                <AlertCircle className="w-4 h-4" />
+                <span>Dismiss</span>
+              </div>
+            </button>
           </div>
         </div>
+      </motion.div>
+    )}
 
-        <button
-          onClick={requestSession}
-          disabled={loading || !issueDetails.trim()}
-          className={`w-full py-4 px-6 rounded-xl font-semibold text-white transition-all duration-200 transform ${
-            loading || !issueDetails.trim()
-              ? 'bg-slate-700 cursor-not-allowed'
-              : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 hover:scale-[1.02] shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30'
-          }`}
-        >
-          {loading ? (
-            <div className="flex items-center justify-center space-x-2">
-              <Loader2 className="w-5 h-5 animate-spin" />
-              <span>Finding Your Counselor...</span>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center space-x-2">
-              <Video className="w-5 h-5" />
-              <span>Request Session</span>
-            </div>
-          )}
-        </button>
+    <div className="text-center mb-8">
+      <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/20">
+        <Video className="w-8 h-8 text-white" />
       </div>
-    </motion.div>
-  );
+      <h3 className="text-2xl font-semibold text-white mb-2">
+        {activeSession ? 'Start New Session' : 'Start Your Healing Journey'}
+      </h3>
+      <p className="text-slate-400">
+        Connect with a licensed mental health professional in a safe, private space
+      </p>
+    </div>
 
-  
+    <div className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-slate-300 mb-2">
+          What brings you here today? *
+        </label>
+        <textarea
+          value={issueDetails}
+          onChange={handleIssueDetailsChange}
+          placeholder="Share what's on your mind. This helps us match you with the right counselor..."
+          rows="4"
+          maxLength={500}
+          className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors resize-none text-slate-200 placeholder-slate-500"
+          autoComplete="off"
+          spellCheck="true"
+        />
+        <div className="flex justify-between items-center mt-2 text-xs text-slate-500">
+          <span>Your information is completely confidential</span>
+          <span>{issueDetails.length}/500</span>
+        </div>
+      </div>
 
-  // Active session component
+      <button
+        onClick={requestSession}
+        disabled={loading || !issueDetails.trim()}
+        className={`w-full py-4 px-6 rounded-xl font-semibold text-white transition-all duration-200 transform ${
+          loading || !issueDetails.trim()
+            ? 'bg-slate-700 cursor-not-allowed'
+            : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 hover:scale-[1.02] shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30'
+        }`}
+      >
+        {loading ? (
+          <div className="flex items-center justify-center space-x-2">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            <span>Finding Your Counselor...</span>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center space-x-2">
+            <Video className="w-5 h-5" />
+            <span>Request New Session</span>
+          </div>
+        )}
+      </button>
+    </div>
+  </motion.div>
+);
+
+// Active session component
 const ActiveSession = ({ 
   session, 
   endSession, 
@@ -167,12 +218,10 @@ const ActiveSession = ({
     try {
       console.log('📡 Starting WebRTC initialization');
       
-      // Check if media devices are available
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error('Media devices not supported in this browser');
       }
 
-      // Try to get media stream with fallbacks
       let stream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({ 
@@ -229,7 +278,6 @@ const ActiveSession = ({
 
         if (state === 'failed' || state === 'disconnected') {
           console.log('🔄 Connection lost, attempting to reconnect...');
-          // Wait a bit before attempting reconnection
           setTimeout(() => {
             if (session?.status === 'Active') {
               console.log('♻️ Reinitializing WebRTC connection');
@@ -240,7 +288,6 @@ const ActiveSession = ({
         }
       };
 
-      // Join WebRTC room
       console.log('🏠 Joining WebRTC room:', session.roomName);
       socket.emit('join-room', {
         room: session.roomName,
@@ -248,7 +295,6 @@ const ActiveSession = ({
         userType: userType
       });
 
-      // Socket event handlers
       socket.on('user-joined', handleUserJoined);
       socket.on('offer', handleOffer);
       socket.on('answer', handleAnswer);
@@ -367,7 +413,6 @@ const ActiveSession = ({
       animate={{ opacity: 1, scale: 1 }}
       className="space-y-6"
     >
-      {/* Session Status */}
       <div className="bg-gradient-to-r from-emerald-900/50 to-teal-900/50 border border-emerald-500/30 rounded-xl p-4 backdrop-blur-sm">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-3">
@@ -398,7 +443,6 @@ const ActiveSession = ({
         </div>
       </div>
 
-      {/* Video Interface */}
       {session?.status === 'Active' && (
         <div className="relative bg-slate-900 rounded-xl overflow-hidden shadow-2xl border border-slate-700">
           <div className="aspect-video w-full relative">
@@ -417,7 +461,6 @@ const ActiveSession = ({
             />
           </div>
           
-          {/* Video Controls */}
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center space-x-3 bg-black/70 backdrop-blur-md rounded-full px-4 py-2 border border-slate-700">
             <button 
               onClick={toggleAudio}
@@ -466,7 +509,6 @@ const ActiveSession = ({
         </div>
       )}
 
-      {/* Session Notes */}
       <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
         <div className="flex items-center space-x-2 mb-4">
           <FileText className="w-5 h-5 text-slate-400" />
@@ -505,8 +547,8 @@ const ActiveSession = ({
   );
 };
 
-  // Feedback form component
-  const FeedbackForm = ({ 
+// Feedback form component
+const FeedbackForm = ({ 
   feedback, 
   rating, 
   setRating, 
@@ -514,141 +556,139 @@ const ActiveSession = ({
   handleFeedbackSubmit, 
   handleSkipFeedback, 
   feedbackStatus 
-})  => (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
-      <div className="text-center mb-6">
-        <div className="w-16 h-16 bg-gradient-to-br from-rose-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-rose-500/20">
-          <Heart className="w-8 h-8 text-white" />
-        </div>
-        <h3 className="text-2xl font-semibold text-white mb-2">How was your session?</h3>
-        <p className="text-slate-400">Your feedback helps us improve our care</p>
+}) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="space-y-6"
+  >
+    <div className="text-center mb-6">
+      <div className="w-16 h-16 bg-gradient-to-br from-rose-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-rose-500/20">
+        <Heart className="w-8 h-8 text-white" />
       </div>
-
-      {/* Rating */}
-      <div className="text-center space-y-4">
-        <p className="text-lg font-medium text-white">Rate your experience</p>
-        <div className="flex justify-center space-x-2">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <button
-              key={star}
-              onClick={() => setRating(star)}
-              className={`text-3xl transition-all transform hover:scale-110 ${
-                star <= rating ? 'text-amber-400' : 'text-slate-600'
-              }`}
-            >
-              <Star className={`w-8 h-8 ${star <= rating ? 'fill-current' : ''}`} />
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Feedback text */}
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-slate-300">
-          Share your thoughts (optional)
-        </label>
-        <textarea
-          value={feedback}
-          onChange={handleFeedbackChange}
-          placeholder="What went well? How could we improve?"
-          rows="4"
-          className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors resize-none text-slate-200 placeholder-slate-500"
-        />
-      </div>
-
-      {feedbackStatus && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`p-4 rounded-xl text-center font-medium ${
-            feedbackStatus.includes('Thank you') 
-              ? 'bg-emerald-900/50 text-emerald-400 border border-emerald-500/30' 
-              : 'bg-red-900/50 text-red-400 border border-red-500/30'
-          }`}
-        >
-          {feedbackStatus}
-        </motion.div>
-      )}
-
-      <div className="flex space-x-4">
-        <button
-          onClick={handleFeedbackSubmit}
-          className="flex-1 py-3 px-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all font-semibold shadow-lg shadow-emerald-500/20"
-        >
-          Submit Feedback
-        </button>
-        <button
-          onClick={handleSkipFeedback}
-          className="flex-1 py-3 px-6 bg-slate-700 text-slate-300 rounded-xl hover:bg-slate-600 transition-colors font-semibold border border-slate-600"
-        >
-          Skip
-        </button>
-      </div>
-    </motion.div>
-  );
-
-  // Session history component
-  const SessionHistory = ({ sessions, isLoadingSessions }) => (
-    <div className="space-y-4">
-      {isLoadingSessions ? (
-        <div className="flex flex-col items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-emerald-400 animate-spin mb-4" />
-          <p className="text-slate-400">Loading your sessions...</p>
-        </div>
-      ) : sessions.length > 0 ? (
-        <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
-          {sessions.map((session, index) => (
-            <motion.div
-              key={session._id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="bg-slate-800 border border-slate-700 rounded-xl p-4 hover:bg-slate-750 hover:border-slate-600 transition-all"
-            >
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h4 className="font-semibold text-white">{session.counselor?.fullName || session.counselorName}</h4>
-                  <p className="text-sm text-slate-400">{session.counselor?.specialization || session.counselorSpecialization || 'General'}</p>
-                </div>
-                <div className="text-right">
-                  {session.rating && (
-                    <div className="flex items-center space-x-1 text-amber-400 mb-1">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} className={`w-3 h-3 ${i < session.rating ? 'fill-current' : 'text-slate-600'}`} />
-                      ))}
-                    </div>
-                  )}
-                  <span className="text-xs text-slate-500">
-                    {new Date(session.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-              </div>
-              
-              <p className="text-sm text-slate-300 mb-2 line-clamp-2">
-                <span className="font-medium">Discussed:</span> {session.issueDetails}
-              </p>
-              
-              {session.notes && (
-                <p className="text-sm text-slate-400 bg-slate-700 rounded-lg p-2 line-clamp-2">
-                  <span className="font-medium">Notes:</span> {session.notes}
-                </p>
-              )}
-            </motion.div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-12 bg-slate-800 rounded-xl border-2 border-dashed border-slate-700">
-          <Calendar className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <p className="text-slate-400 mb-2">No previous sessions</p>
-          <p className="text-sm text-slate-500">Your session history will appear here</p>
-        </div>
-      )}
+      <h3 className="text-2xl font-semibold text-white mb-2">How was your session?</h3>
+      <p className="text-slate-400">Your feedback helps us improve our care</p>
     </div>
-  );
+
+    <div className="text-center space-y-4">
+      <p className="text-lg font-medium text-white">Rate your experience</p>
+      <div className="flex justify-center space-x-2">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            onClick={() => setRating(star)}
+            className={`text-3xl transition-all transform hover:scale-110 ${
+              star <= rating ? 'text-amber-400' : 'text-slate-600'
+            }`}
+          >
+            <Star className={`w-8 h-8 ${star <= rating ? 'fill-current' : ''}`} />
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-slate-300">
+        Share your thoughts (optional)
+      </label>
+      <textarea
+        value={feedback}
+        onChange={handleFeedbackChange}
+        placeholder="What went well? How could we improve?"
+        rows="4"
+        className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors resize-none text-slate-200 placeholder-slate-500"
+      />
+    </div>
+
+    {feedbackStatus && (
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={`p-4 rounded-xl text-center font-medium ${
+          feedbackStatus.includes('Thank you') 
+            ? 'bg-emerald-900/50 text-emerald-400 border border-emerald-500/30' 
+            : 'bg-red-900/50 text-red-400 border border-red-500/30'
+        }`}
+      >
+        {feedbackStatus}
+      </motion.div>
+    )}
+
+    <div className="flex space-x-4">
+      <button
+        onClick={handleFeedbackSubmit}
+        className="flex-1 py-3 px-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all font-semibold shadow-lg shadow-emerald-500/20"
+      >
+        Submit Feedback
+      </button>
+      <button
+        onClick={handleSkipFeedback}
+        className="flex-1 py-3 px-6 bg-slate-700 text-slate-300 rounded-xl hover:bg-slate-600 transition-colors font-semibold border border-slate-600"
+      >
+        Skip
+      </button>
+    </div>
+  </motion.div>
+);
+
+// Session history component
+const SessionHistory = ({ sessions, isLoadingSessions }) => (
+  <div className="space-y-4">
+    {isLoadingSessions ? (
+      <div className="flex flex-col items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 text-emerald-400 animate-spin mb-4" />
+        <p className="text-slate-400">Loading your sessions...</p>
+      </div>
+    ) : sessions.length > 0 ? (
+      <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+        {sessions.map((session, index) => (
+          <motion.div
+            key={session._id}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+            className="bg-slate-800 border border-slate-700 rounded-xl p-4 hover:bg-slate-750 hover:border-slate-600 transition-all"
+          >
+            <div className="flex justify-between items-start mb-3">
+              <div>
+                <h4 className="font-semibold text-white">{session.counselor?.fullName || session.counselorName}</h4>
+                <p className="text-sm text-slate-400">{session.counselor?.specialization || session.counselorSpecialization || 'General'}</p>
+              </div>
+              <div className="text-right">
+                {session.rating && (
+                  <div className="flex items-center space-x-1 text-amber-400 mb-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className={`w-3 h-3 ${i < session.rating ? 'fill-current' : 'text-slate-600'}`} />
+                    ))}
+                  </div>
+                )}
+                <span className="text-xs text-slate-500">
+                  {new Date(session.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+            
+            <p className="text-sm text-slate-300 mb-2 line-clamp-2">
+              <span className="font-medium">Discussed:</span> {session.issueDetails}
+            </p>
+            
+            {session.notes && (
+              <p className="text-sm text-slate-400 bg-slate-700 rounded-lg p-2 line-clamp-2">
+                <span className="font-medium">Notes:</span> {session.notes}
+              </p>
+            )}
+          </motion.div>
+        ))}
+      </div>
+    ) : (
+      <div className="text-center py-12 bg-slate-800 rounded-xl border-2 border-dashed border-slate-700">
+        <Calendar className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+        <p className="text-slate-400 mb-2">No previous sessions</p>
+        <p className="text-sm text-slate-500">Your session history will appear here</p>
+      </div>
+    )}
+  </div>
+);
 
 const VideoChat = () => {
   const navigate = useNavigate();
@@ -672,10 +712,106 @@ const VideoChat = () => {
   const [showCounselorChoice, setShowCounselorChoice] = useState(false);
   const [lastCounselor, setLastCounselor] = useState(null);
   const [toast, setToast] = useState({ message: "", type: "info" });
+  const [activeSession, setActiveSession] = useState(null);
+  const [rejoinLoading, setRejoinLoading] = useState(false);
+
+  // Get user ID from token or storage
+  const getUserId = useCallback(() => {
+    const token = sessionStorage.getItem('accessToken');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.id || payload._id;
+      } catch (e) {
+        console.error('Error parsing token:', e);
+      }
+    }
+    return null;
+  }, []);
+
+  // Check for active session
+  const checkActiveSession = useCallback(async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/users/active-session`, {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
+        },
+      });
+      
+      if (response.data.activeSession) {
+        setActiveSession(response.data.activeSession);
+      }
+    } catch (error) {
+      console.error('Error checking active session:', error);
+    }
+  }, []);
+
+  // Dismiss active session function
+  const dismissActiveSession = useCallback(async (sessionId) => {
+    try {
+      setRejoinLoading(true);
+      console.log('❌ Dismissing active session:', sessionId);
+      
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_API_URL}/users/dismiss-session`,
+        { sessionId },
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
+          },
+        }
+      );
+
+      console.log('✅ Session dismissed:', response.data);
+      
+      // Clear the active session alert
+      setActiveSession(null);
+      setToast({
+        message: "Session has been dismissed and marked as completed.",
+        type: "info"
+      });
+    } catch (error) {
+      setError("Failed to dismiss session. Please try again.");
+      console.error('❌ Error dismissing session:', error);
+    } finally {
+      setRejoinLoading(false);
+    }
+  }, []);
+  const rejoinSession = useCallback(async (sessionId) => {
+    try {
+      setRejoinLoading(true);
+      console.log('🔄 Rejoining session:', sessionId);
+      
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_API_URL}/users/rejoin`,
+        { sessionId },
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
+          },
+        }
+      );
+
+      console.log('🎥 Rejoined session:', response.data);
+      
+      if (response.data.session) {
+        setSession(response.data.session);
+        setActiveSession(null); // Clear the active session alert
+        setError('');
+      } else {
+        throw new Error('No session data returned');
+      }
+    } catch (error) {
+      setError("Failed to rejoin session. Please try again.");
+      console.error('❌ Error rejoining session:', error);
+    } finally {
+      setRejoinLoading(false);
+    }
+  }, []);
 
   // Memoized API functions to prevent re-creation
   const requestSession = useCallback(async () => {
-    console.log('RequestSession called with:', issueDetails); // Debug log
+    console.log('RequestSession called with:', issueDetails);
     
     if (!issueDetails.trim()) {
       setError('Please provide issue details.');
@@ -692,8 +828,6 @@ const VideoChat = () => {
         return;
       }
       
-      console.log('Making API request...'); // Debug log
-      
       const response = await axios.post(
         `${import.meta.env.VITE_BASE_API_URL}/counsellor/request`,
         { issueDetails },
@@ -705,10 +839,11 @@ const VideoChat = () => {
         }
       );
       
-      console.log('API Response:', response.data); // Debug log
+      console.log('API Response:', response.data);
       
       const newSession = response.data.session;
       setSession(newSession);
+      setActiveSession(null); // Clear any active session alert
       
       // Emit socket event for new session request
       socket.emit('sessionRequested', {
@@ -719,7 +854,7 @@ const VideoChat = () => {
       });
       
     } catch (error) {
-      console.error('Request session error:', error); // Debug log
+      console.error('Request session error:', error);
       setError(error.response?.data?.message || 'Failed to request session. Please try again.');
     } finally {
       setLoading(false);
@@ -854,7 +989,7 @@ const VideoChat = () => {
     fetchSessions(); // Refresh sessions
   }, [fetchSessions]);
 
-  // On mount, check for last counselor progress
+  // On mount, check for last counselor progress and active session
   useEffect(() => {
     const checkProgress = async () => {
       try {
@@ -871,8 +1006,10 @@ const VideoChat = () => {
         // ignore
       }
     };
+    
     checkProgress();
-  }, []);
+    checkActiveSession(); // Check for active session
+  }, [checkActiveSession]);
 
   // Handler for user choice
   const handleCounselorChoice = async (continueWithSame) => {
@@ -958,6 +1095,7 @@ const VideoChat = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {toast.message && <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: "", type: "info" })} />}
+      
       {/* Counselor choice modal */}
       {showCounselorChoice && lastCounselor && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
@@ -984,17 +1122,18 @@ const VideoChat = () => {
           </div>
         </div>
       )}
+
       {/* Header */}
       <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-700 shadow-xl">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link 
-                          to="/MainPage"
-                          className="flex items-center justify-center gap-1 sm:gap-2 text-gray-900 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-                        >
-                          <ArrowLeft className="w-5 h-5" />
-                          <span className="hidden sm:block text-sm font-medium sm:text-base">Back to Dashboard</span>
-                        </Link>
+              to="/MainPage"
+              className="flex items-center justify-center gap-1 sm:gap-2 text-gray-900 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="hidden sm:block text-sm font-medium sm:text-base">Back to Dashboard</span>
+            </Link>
             
             <div className="text-center">
               <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
@@ -1017,7 +1156,7 @@ const VideoChat = () => {
       </div>
 
       {/* Main Content */}
-  <div className="max-w-7xl mx-auto px-4 pb-12">
+      <div className="max-w-7xl mx-auto px-4 pb-12">
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Session Area */}
           <div className="lg:col-span-2">
@@ -1057,6 +1196,8 @@ const VideoChat = () => {
                     handleNotesChange={handleNotesChange}
                     handleAddNotes={handleAddNotes}
                     noteStatus={noteStatus}
+                    userId={getUserId()}
+                    userType="user"
                   />
                 ) :  (
                   <RequestForm
@@ -1064,6 +1205,10 @@ const VideoChat = () => {
                     loading={loading}
                     requestSession={requestSession}
                     handleIssueDetailsChange={handleIssueDetailsChange}
+                    activeSession={activeSession}
+                    rejoinSession={rejoinSession}
+                    rejoinLoading={rejoinLoading}
+                    dismissActiveSession={dismissActiveSession}
                   />
                 )}
               </AnimatePresence>

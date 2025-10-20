@@ -1021,6 +1021,571 @@ const updateCounselorProgress = asyncHandler(async (req, res) => {
   return res.status(200).json({ success: true, message: 'Counselor progress updated', counselorProgress: user.counselorProgress });
 });
 
+// Add this to your user controller file
+
+const getCaseHistory = async (req, res) => {
+  try {
+    const { clientId } = req.query;
+    
+    if (!clientId) {
+      return res.status(400).json({
+        success: false,
+        message: "Client ID is required"
+      });
+    }
+
+    // Fetch user with all related data
+    const user = await User.findById(clientId)
+      .populate('issues', 'illnessType severity createdAt')
+      .populate('interests', 'name isGoal')
+      .populate('journals', 'title content mood createdAt')
+      .populate('events', 'title description date')
+      .lean();
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Client not found"
+      });
+    }
+
+    // Find counselor who has this client
+    const counselor = await Counsellor.findOne({
+      'clients.userId': clientId
+    }).populate('clients.userId', 'fullName email').lean();
+
+    // Get client info from counselor's clients array
+    const clientInfo = counselor?.clients?.find(
+      client => client.userId._id.toString() === clientId
+    );
+
+    // Calculate total sessions from sessionProgress or counselorProgress
+    const totalSessions = user.counselorProgress?.reduce((sum, progress) => {
+      return sum + (progress.sittingProgress || 0);
+    }, 0) || Math.floor((user.sessionProgress || 15) / 5); // Assuming 5% per session
+
+    // Get current mood from latest journal or mood field
+    const currentMood = user.journals?.[0]?.mood || user.mood || 'Not recorded';
+
+    // Format active issues
+    const activeIssues = user.issues?.map(issue => ({
+      title: issue.illnessType,
+      severity: issue.severity,
+      status: 'active', // You might want to add status to schema
+      dateIdentified: issue.createdAt
+    })) || [];
+
+    // Calculate progress score
+    const progressScore = user.progress || 
+      (user.counselorProgress?.[0]?.sittingProgress || 0) * 5 || // Convert sitting progress to percentage
+      Math.min(user.sessionProgress || 15, 100);
+
+    // Calculate activity score based on recent activity
+    const activityScore = calculateActivityScore(user);
+
+    // Format counselor issues (from counselor reviews)
+    const counselorIssues = user.counsellorReviews?.map(review => ({
+      title: review.diagnosis || 'General Assessment',
+      description: review.notes,
+      severity: review.symptoms?.length > 3 ? 'High' : 
+                review.symptoms?.length > 1 ? 'Medium' : 'Low',
+      status: review.willingToTreat ? 'in-progress' : 'assessment',
+      dateIdentified: review.reviewedAt,
+      issue: review.diagnosis,
+      notes: review.notes
+    })) || [];
+
+    // Format recent sessions (mock data based on sitting notes and progress)
+    const recentSessions = formatRecentSessions(user, counselor);
+
+    // Format activity timeline
+    const activityTimeline = formatActivityTimeline(user);
+
+    // Format progress metrics
+    const progressMetrics = formatProgressMetrics(user);
+
+    // Prepare case history response
+    const caseHistory = {
+      clientName: user.fullName,
+      name: user.fullName,
+      totalSessions: totalSessions,
+      currentMood: currentMood,
+      activeIssues: activeIssues,
+      progressScore: Math.round(progressScore),
+      activityScore: activityScore,
+      
+      // Issues designated by counselors
+      counselorIssues: counselorIssues,
+      
+      // Recent sessions
+      recentSessions: recentSessions,
+      
+      // Activity timeline
+      activityTimeline: activityTimeline,
+      
+      // Progress metrics
+      progressMetrics: progressMetrics,
+      
+      // Counselor notes
+      counselorNotes: user.sittingNotes?.join('\n\n') || 
+                     user.counsellorReviews?.[0]?.notes || 
+                     'No counselor notes available yet.'
+    };
+
+    res.status(200).json({
+      success: true,
+      data: caseHistory
+    });
+
+  } catch (error) {
+    console.error('Error fetching case history:', error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+};
+
+// Helper function to calculate activity score
+function calculateActivityScore(user) {
+  let score = 0;
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  // Points for recent login
+  if (user.lastLoginDate && user.lastLoginDate > thirtyDaysAgo) {
+    score += 2;
+  }
+
+  // Points for journals in last 30 days
+  const recentJournals = user.journals?.filter(journal => 
+    new Date(journal.createdAt) > thirtyDaysAgo
+  ).length || 0;
+  score += Math.min(recentJournals * 0.5, 3);
+
+  // Points for events in last 30 days
+  const recentEvents = user.events?.filter(event => 
+    new Date(event.date) > thirtyDaysAgo
+  ).length || 0;
+  score += Math.min(recentEvents * 0.3, 2);
+
+  // Points for current streak
+  score += Math.min(user.streak * 0.1, 2);
+
+  // Points for having interests/goals
+  if (user.interests?.length > 0) {
+    score += 1;
+  }
+
+  return Math.min(Math.round(score), 10);
+}
+
+// Helper function to format recent sessions
+function formatRecentSessions(user, counselor) {
+  const sessions = [];
+  
+  // If there are sitting notes, create sessions from them
+  if (user.sittingNotes && user.sittingNotes.length > 0) {
+    user.sittingNotes.forEach((note, index) => {
+      const sessionDate = new Date();
+      sessionDate.setDate(sessionDate.getDate() - (index * 7)); // Weekly sessions
+      
+      sessions.push({
+        sessionNumber: user.sittingNotes.length - index,
+        date: sessionDate,
+        duration: '50 min',
+        notes: note,
+        summary: note,
+        mood: 'In Progress',
+        progress: Math.min((user.sittingNotes.length - index) * 10, 100),
+        type: 'Individual'
+      });
+    });
+  }
+  
+  // Add sessions from counselor reviews
+  if (user.counsellorReviews && user.counsellorReviews.length > 0) {
+    user.counsellorReviews.forEach((review, index) => {
+      sessions.push({
+        sessionNumber: sessions.length + index + 1,
+        date: review.reviewedAt || new Date(),
+        duration: '50 min',
+        notes: review.notes || 'Assessment session completed',
+        summary: `Diagnosis: ${review.diagnosis || 'General assessment'}`,
+        mood: review.symptoms?.includes('anxiety') ? 'Anxious' : 
+              review.symptoms?.includes('depression') ? 'Low' : 'Neutral',
+        progress: review.willingToTreat ? 70 : 40,
+        type: 'Assessment'
+      });
+    });
+  }
+
+  // If no sessions exist, create a placeholder
+  if (sessions.length === 0) {
+    sessions.push({
+      sessionNumber: 1,
+      date: new Date(),
+      duration: '50 min',
+      notes: 'Initial consultation scheduled',
+      summary: 'Awaiting first session',
+      mood: 'Not recorded',
+      progress: 0,
+      type: 'Initial'
+    });
+  }
+
+  return sessions.slice(0, 5); // Return last 5 sessions
+}
+
+// Helper function to format activity timeline
+function formatActivityTimeline(user) {
+  const timeline = [];
+  
+  // Add recent journal entries
+  if (user.journals && user.journals.length > 0) {
+    user.journals.slice(0, 3).forEach(journal => {
+      timeline.push({
+        action: 'Journal Entry',
+        activity: 'Added new journal entry',
+        description: `"${journal.title}" - Mood: ${journal.mood || 'Not specified'}`,
+        details: journal.title,
+        timestamp: journal.createdAt
+      });
+    });
+  }
+
+  // Add recent events
+  if (user.events && user.events.length > 0) {
+    user.events.slice(0, 3).forEach(event => {
+      timeline.push({
+        action: 'Event Scheduled',
+        activity: 'Added new event',
+        description: event.description || event.title,
+        details: `Event: ${event.title}`,
+        timestamp: event.date
+      });
+    });
+  }
+
+  // Add login activity
+  if (user.lastLoginDate) {
+    timeline.push({
+      action: 'Platform Login',
+      activity: 'Logged into platform',
+      description: 'User accessed the platform',
+      details: 'Login activity',
+      timestamp: user.lastLoginDate
+    });
+  }
+
+  // Add progress updates
+  timeline.push({
+    action: 'Progress Update',
+    activity: 'Session progress updated',
+    description: `Current progress: ${user.sessionProgress || 15}%`,
+    details: 'Progress tracking',
+    timestamp: user.updatedAt || new Date()
+  });
+
+  // Sort by timestamp (most recent first)
+  return timeline.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 10);
+}
+
+// Helper function to format progress metrics
+function formatProgressMetrics(user) {
+  const metrics = [];
+
+  // Overall progress
+  metrics.push({
+    name: 'Overall Progress',
+    metric: 'Overall Progress',
+    value: user.progress || Math.min(user.sessionProgress || 15, 100),
+    score: user.progress || Math.min(user.sessionProgress || 15, 100)
+  });
+
+  // Session completion
+  if (user.counselorProgress && user.counselorProgress.length > 0) {
+    const avgProgress = user.counselorProgress.reduce((sum, cp) => 
+      sum + (cp.sittingProgress || 0), 0) / user.counselorProgress.length;
+    
+    metrics.push({
+      name: 'Session Completion',
+      metric: 'Session Completion',
+      value: Math.round(avgProgress * 5), // Convert to percentage
+      score: Math.round(avgProgress * 5)
+    });
+  }
+
+  // Engagement level (based on activity)
+  const engagementScore = calculateActivityScore(user) * 10;
+  metrics.push({
+    name: 'Platform Engagement',
+    metric: 'Platform Engagement',
+    value: engagementScore,
+    score: engagementScore
+  });
+
+  // Goal achievement (based on interests marked as goals)
+  const goals = user.interests?.filter(interest => interest.isGoal) || [];
+  const goalScore = goals.length > 0 ? Math.min(goals.length * 20, 100) : 0;
+  metrics.push({
+    name: 'Goal Setting',
+    metric: 'Goal Setting',
+    value: goalScore,
+    score: goalScore
+  });
+
+  // Consistency (based on streak)
+  const consistencyScore = Math.min((user.streak || 0) * 10, 100);
+  metrics.push({
+    name: 'Consistency',
+    metric: 'Consistency',
+    value: consistencyScore,
+    score: consistencyScore
+  });
+
+  return metrics;
+}
+
+// Check for user's active session
+const getUserActiveSession = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+    
+    try {
+        // Find any active session for this user
+        const activeSession = await Session.findOne({
+            user: userId,
+            status: 'Active'
+        }).populate('counselor', 'fullName specialization');
+        
+        if (activeSession) {
+            // Check if session is older than 3 hours
+            const sessionCreatedTime = new Date(activeSession.createdAt);
+            const currentTime = new Date();
+            const threeHoursAgo = new Date(currentTime.getTime() - (3 * 60 * 60 * 1000)); // 3 hours in milliseconds
+            
+            if (sessionCreatedTime < threeHoursAgo) {
+                console.log('Session older than 3 hours, marking as completed:', activeSession._id);
+                
+                // Mark session as completed if older than 3 hours
+                activeSession.status = 'Completed';
+                activeSession.endTime = currentTime;
+                
+                // Calculate duration if not already set
+                if (activeSession.startTime && !activeSession.duration) {
+                    activeSession.duration = Math.round((currentTime - activeSession.startTime) / 1000);
+                }
+                
+                await activeSession.save();
+                
+                // Make counselor available again
+                if (activeSession.counselor) {
+                    const counselor = await Counsellor.findById(activeSession.counselor);
+                    if (counselor) {
+                        counselor.isAvailable = true;
+                        await counselor.save();
+                    }
+                }
+                
+                return res.status(200).json({
+                    success: true,
+                    activeSession: null,
+                    message: 'Previous session automatically ended due to inactivity'
+                });
+            }
+            
+            return res.status(200).json({
+                success: true,
+                activeSession: {
+                    _id: activeSession._id,
+                    status: activeSession.status,
+                    roomName: activeSession.roomName,
+                    counselor: activeSession.counselor,
+                    issueDetails: activeSession.issueDetails,
+                    createdAt: activeSession.createdAt
+                }
+            });
+        }
+        
+        return res.status(200).json({
+            success: true,
+            activeSession: null
+        });
+        
+    } catch (error) {
+        console.error('Error checking active session:', error);
+        return res.status(500).json({ 
+            success: false,
+            message: "Internal server error" 
+        });
+    }
+});
+
+// Rejoin active session for user
+const rejoinUserSession = asyncHandler(async (req, res) => {
+    const { sessionId } = req.body;
+    const userId = req.user._id;
+    
+    if (!sessionId) {
+        return res.status(400).json({ message: "Session ID is required" });
+    }
+
+    try {
+        // Find the session
+        const session = await Session.findById(sessionId).populate('counselor', 'fullName specialization');
+        if (!session) {
+            return res.status(404).json({ message: "Session not found" });
+        }
+
+        // Verify that the user owns this session
+        if (session.user.toString() !== userId.toString()) {
+            return res.status(403).json({ message: "Not authorized to rejoin this session" });
+        }
+
+        // Verify session is still active
+        if (session.status !== 'Active') {
+            return res.status(400).json({ message: "Session is no longer active" });
+        }
+
+        // Check if session is older than 3 hours
+        const sessionCreatedTime = new Date(session.createdAt);
+        const currentTime = new Date();
+        const threeHoursAgo = new Date(currentTime.getTime() - (3 * 60 * 60 * 1000));
+        
+        if (sessionCreatedTime < threeHoursAgo) {
+            // Auto-end the session
+            session.status = 'Completed';
+            session.endTime = currentTime;
+            
+            if (session.startTime && !session.duration) {
+                session.duration = Math.round((currentTime - session.startTime) / 1000);
+            }
+            
+            await session.save();
+            
+            // Make counselor available again
+            if (session.counselor) {
+                const counselor = await Counsellor.findById(session.counselor);
+                if (counselor) {
+                    counselor.isAvailable = true;
+                    await counselor.save();
+                }
+            }
+            
+            return res.status(400).json({ 
+                message: "Session has been automatically ended due to inactivity (3+ hours)" 
+            });
+        }
+
+        // Check if session has a room name
+        if (!session.roomName) {
+            return res.status(400).json({ message: "Session room not available" });
+        }
+
+        // Log the rejoin attempt
+        console.log('🔄 User rejoining session:', {
+            sessionId,
+            userId,
+            roomName: session.roomName
+        });
+
+        // Return session data for rejoining
+        res.status(200).json({
+            success: true,
+            message: "Session ready to rejoin",
+            session: {
+                _id: session._id,
+                roomName: session.roomName,
+                status: session.status,
+                user: session.user,
+                counselor: session.counselor,
+                issueDetails: session.issueDetails,
+                createdAt: session.createdAt
+            }
+        });
+
+    } catch (error) {
+        console.error('Error rejoining session:', error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+// Dismiss active session for user
+const dismissUserSession = asyncHandler(async (req, res) => {
+    const { sessionId } = req.body;
+    const userId = req.user._id;
+    
+    if (!sessionId) {
+        return res.status(400).json({ message: "Session ID is required" });
+    }
+
+    try {
+        // Find the session
+        const session = await Session.findById(sessionId);
+        if (!session) {
+            return res.status(404).json({ message: "Session not found" });
+        }
+
+        // Verify that the user owns this session
+        if (session.user.toString() !== userId.toString()) {
+            return res.status(403).json({ message: "Not authorized to dismiss this session" });
+        }
+
+        // Only allow dismissing active sessions
+        if (session.status !== 'Active') {
+            return res.status(400).json({ message: "Session is not active" });
+        }
+
+        // Mark session as completed
+        const currentTime = new Date();
+        session.status = 'Completed';
+        session.endTime = currentTime;
+
+        // Calculate duration if there was a start time
+        if (session.startTime && !session.duration) {
+            session.duration = Math.round((currentTime - session.startTime) / 1000);
+        }
+
+        await session.save();
+
+        // Make counselor available again if they were assigned
+        if (session.counselor) {
+            const counselor = await Counsellor.findById(session.counselor);
+            if (counselor) {
+                counselor.isAvailable = true;
+                await counselor.save();
+                console.log('✅ Counselor marked as available after session dismissal:', counselor._id);
+            }
+        }
+
+        // Emit session ended event to notify counselor if needed
+        if (session.roomName) {
+            io.emit(`sessionEnded-${sessionId}`, { 
+                sessionId,
+                roomName: session.roomName,
+                endedBy: userId,
+                reason: 'dismissed_by_user'
+            });
+        }
+
+        console.log('🗑️ Session dismissed by user:', {
+            sessionId,
+            userId,
+            counselorId: session.counselor
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Session dismissed and marked as completed successfully"
+        });
+
+    } catch (error) {
+        console.error('Error dismissing session:', error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+
 export {
   registerUser, extractMobileNumber,
   loginUser,
@@ -1032,5 +1597,5 @@ export {
   updateAccountDetails,
   addInterests, userProgress, calculateAverageMood,
   getWeeklyMoodData, getUserSessions,
-  updateCounselorProgress
+  updateCounselorProgress, getCaseHistory, rejoinUserSession, getUserActiveSession, dismissUserSession
 };
