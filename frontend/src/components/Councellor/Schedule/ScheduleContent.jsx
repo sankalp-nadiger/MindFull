@@ -11,13 +11,18 @@ const ScheduleContent = () => {
 
   useEffect(() => {
     fetchScheduleData();
-  }, []);
+  }, [selectedDate]);
 
   const fetchScheduleData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${API_BASE_URL}/counselor/schedule`);
+      const response = await fetch(`${API_BASE_URL}/counsellor/appointments?date=${selectedDate}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${sessionStorage.getItem('accessToken')}`
+        },
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch schedule data');
       }
@@ -32,8 +37,9 @@ const ScheduleContent = () => {
   };
 
   const filteredAppointments = appointments.filter(
-    appointment => appointment.date === selectedDate
-  );
+  appointment => 
+    new Date(appointment.appointmentDate).toISOString().split('T')[0] === selectedDate
+);
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
@@ -127,7 +133,10 @@ const ScheduleContent = () => {
           <input
             type="date"
             value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
+            onChange={(e) => {
+              setSelectedDate(e.target.value);
+              fetchScheduleData();
+            }}
             className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
@@ -156,7 +165,7 @@ const ScheduleContent = () => {
                   <div className="flex-1">
                     <div className="flex items-center space-x-4 mb-2">
                       <h4 className="text-lg font-medium text-gray-900">
-                        {appointment.client || appointment.clientName || 'Client'}
+                        {appointment.clientId?.fullName || 'Client'}
                       </h4>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(appointment.status)}`}>
                         {appointment.status || 'pending'}
@@ -165,7 +174,7 @@ const ScheduleContent = () => {
                     <div className="flex items-center space-x-4 text-sm text-gray-600">
                       <div className="flex items-center space-x-1">
                         <Clock className="h-4 w-4" />
-                        <span>{appointment.time}</span>
+                        <span>{appointment.startTime}</span>
                       </div>
                       <span>•</span>
                       <span>{appointment.type || appointment.sessionType || 'Therapy Session'}</span>

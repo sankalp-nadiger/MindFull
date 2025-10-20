@@ -1237,7 +1237,7 @@ export const getAvailableSlots = async (req, res) => {
 // Schedule an appointment
 export const scheduleAppointment = async (req, res) => {
     try {
-        const counsellorId = req.user.id;
+        const counsellorId = req.counsellor._id;
         const { clientId, appointmentDate, startTime, endTime, notes, sessionType } = req.body;
 
         // Validate input
@@ -1309,15 +1309,21 @@ export const getAppointments = async (req, res) => {
     try {
         const counsellorId = req.counsellor._id;
         const { date, status } = req.query;
-
+        console.log('Query params:', req.query);
         let query = { counsellorId };
         
         // Filter by date if provided
-        if (date) {
-            const startDate = moment(date).startOf('day').toDate();
-            const endDate = moment(date).endOf('day').toDate();
-            query.appointmentDate = { $gte: startDate, $lte: endDate };
+       if (date) {
+    query = {
+        ...query,
+        $expr: {
+            $eq: [
+                { $dateToString: { format: "%Y-%m-%d", date: "$appointmentDate" } },
+                date
+            ]
         }
+    };
+}
 
         // Filter by status if provided
         if (status && status !== 'all') {
