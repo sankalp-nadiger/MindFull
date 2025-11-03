@@ -14,6 +14,7 @@ import {
   addCounsellorReview,
   getCounsellorDashboardStats,
   getCounselorProfile,
+  updateProfile,
   checkSittingSeries,
   rejoinSession,
   getClients,
@@ -53,6 +54,7 @@ router.post("/logout-counsellor", counsellor_verifyJWT, logoutCounsellor);
 router.post('/review', counsellor_verifyJWT, addCounsellorReview);
 router.get('/dashboard-stats', counsellor_verifyJWT, getCounsellorDashboardStats);
 router.get("/profile", counsellor_verifyJWT, getCounselorProfile);
+router.post("/profile", counsellor_verifyJWT, updateProfile);
 router.get('/check-sitting-series', counsellor_verifyJWT, checkSittingSeries);
 router.post('/rejoin', counsellor_verifyJWT, rejoinSession);
 
