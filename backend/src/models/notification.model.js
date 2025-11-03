@@ -11,7 +11,7 @@ const NotificationSchema = new mongoose.Schema({
   relatedId: { type: mongoose.Schema.Types.ObjectId }, // can be sessionId, or null
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, 
   meta: { type: Object }, // for extra info (diagnosis, count)
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now, expires: '4d' }
 });
 
 

@@ -3,7 +3,7 @@ import axios from "axios";
 import "./StudentSignIn.css";
 import Toast from "./Toast";
 import { Link, useNavigate } from "react-router-dom";
-const CounsellorSignUp = () => {
+const CounselorSignUp = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -252,8 +252,8 @@ const CounsellorSignUp = () => {
       );
 
       if (response.status === 201) {
-        setToast({ message: "Counsellor Sign-up successful!", type: "success" });
-        setTimeout(() => navigate("/counsellorDashboard"), 1200);
+        setToast({ message: "Counselor Sign-up successful!", type: "success" });
+        setTimeout(() => navigate("/counselorDashboard"), 1200);
       } else {
         setToast({ message: (response.data?.message || "Registration failed.") + " If the issue persists, please contact the developer.", type: "error" });
       }
@@ -423,7 +423,7 @@ const CounsellorSignUp = () => {
         
         <div className="auth-card">
           <div className="card-header">
-            <h2 className="card-title">Counsellor Sign-Up</h2>
+            <h2 className="card-title">Counselor Sign-Up</h2>
             <p className="text-violet-500">Join our platform to support students, parents & mentally disturbed individuals</p>
           </div>
           
@@ -711,11 +711,11 @@ const CounsellorSignUp = () => {
               className="primary-button"
               disabled={loading}
             >
-              {loading ? "Creating Account..." : "Sign Up as Counsellor"}
+              {loading ? "Creating Account..." : "Sign Up as Counselor"}
             </button>
             
             <div className="auth-links">
-              Already have an account? <a href="/counsellor-signin" className="auth-link">Login here</a>
+              Already have an account? <a href="/counselor-signin" className="auth-link">Login here</a>
                <p>
                           
                           <Link to="/signin" className="auth-link text-primaryblue">
@@ -745,4 +745,4 @@ const CounsellorSignUp = () => {
   );
 };
 
-export default CounsellorSignUp;
+export default CounselorSignUp;

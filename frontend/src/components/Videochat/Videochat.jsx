@@ -1018,7 +1018,9 @@ const VideoChat = () => {
       const token = sessionStorage.getItem('accessToken');
       await axios.post(
         `${import.meta.env.VITE_BASE_API_URL}/users/update-counselor-progress`,
-        { counselorId: lastCounselor._id, continueWithSame },
+        { counselorId: lastCounselor._id,
+          sittingProgress: lastCounselor.sittingProgress || 0,
+           continueWithSame },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (!continueWithSame) {

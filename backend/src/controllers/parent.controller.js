@@ -41,9 +41,9 @@ const sendOTP = async (req, res) => {
     const otp=generateOTP();
     console.log('Generated OTP:', otp, 'for mobile number:', mobileNumber);
     await OTP.create({ mobileNumber, otp, createdAt: new Date() });
-    const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_API_KEY_SECRET;
-const Twilio_Number = process.env.TWILIO_NUMBER;
+    const accountSid = process.env.TWILIO_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const Twilio_Number = process.env.TWILIO_PHONE_NUMBER;
 
 const client = twilio(accountSid, authToken);
 

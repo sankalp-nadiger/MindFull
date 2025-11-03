@@ -2,7 +2,7 @@ import React from 'react';
 import Layout from './Layout';
 import DashboardContent from './DashboardContent';
 
-const Counsellor = () => {
+const Counselor = () => {
   return (
     <Layout>
       <DashboardContent />
@@ -10,4 +10,4 @@ const Counsellor = () => {
   );
 };
 
-export default Counsellor;
+export default Counselor;

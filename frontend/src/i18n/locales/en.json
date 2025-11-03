@@ -36,7 +36,7 @@
     "community": "Community",
     "activities": "Activities",
     "journals": "Journals",
-    "counsellor": "Counsellor",
+    "counselor": "Counselor",
     "profile": "Profile",
     "settings": "Settings",
     "help": "Help",
@@ -60,11 +60,11 @@
     "selectRole": "Select Your Role",
     "student": "Student",
     "parent": "Parent",
-    "counsellor": "Counsellor",
+    "counselor": "Counselor",
     "roleDescription": {
       "student": "Access mental health resources, activities, and peer support",
       "parent": "Monitor your child's mental health journey and progress",
-      "counsellor": "Provide professional mental health support and guidance"
+      "counselor": "Provide professional mental health support and guidance"
     },
     "idCard": "ID Card/Verification Document",
     "uploadFile": "Upload File",
@@ -96,7 +96,7 @@
       },
       "professional": {
         "title": "Professional Support",
-        "description": "Access licensed counsellors and mental health professionals when you need them"
+        "description": "Access licensed counselors and mental health professionals when you need them"
       },
       "personalized": {
         "title": "Personalized Content",
@@ -225,8 +225,8 @@
     "support": "Support Group",
     "guidelines": "Community Guidelines"
   },
-  "counsellor": {
-    "title": "Counsellor Dashboard",
+  "counselor": {
+    "title": "Counselor Dashboard",
     "sessions": "Sessions",
     "students": "Students",
     "schedule": "Schedule",

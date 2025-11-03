@@ -5,9 +5,9 @@ import { User, Users, Mail, BookA, Edit2, Upload } from "lucide-react";
 import Navbar from "../Navbar/Navbar";
 import Footer from "../Footer/Footer";
 
-export default function CounsellorProfile() {
+export default function CounselorProfile() {
   const [isEditing, setIsEditing] = useState(false);
-  const [counsellorDetails, setCounsellorDetails] = useState({
+  const [counselorDetails, setCounselorDetails] = useState({
     fullName: "ABC",
     email: "ABC.doe@example.com",
     Expereince: "5",
@@ -25,23 +25,23 @@ export default function CounsellorProfile() {
   const [image, setImage] = useState("profile.png");
 
   useEffect(() => {
-    const fetchCounsellorProfile = async () => {
+    const fetchCounselorProfile = async () => {
       try {
         const response = await fetch("/api/getCounsellorProfile");
         if (response.ok) {
           const data = await response.json();
-          setCounsellorDetails(data);
+          setCounselorDetails(data);
           const profileImage = data.profileImage || "profile.png";
           setImage(profileImage);
         } else {
-          console.error("Failed to fetch counsellor profile");
+          console.error("Failed to fetch counselor profile");
         }
       } catch (error) {
-        console.error("Error fetching counsellor profile:", error);
+        console.error("Error fetching counselor profile:", error);
       }
     };
 
-    fetchCounsellorProfile();
+    fetchCounselorProfile();
   }, []);
 
   const handleImageChange = (event) => {
@@ -53,13 +53,13 @@ export default function CounsellorProfile() {
   };
 
   const handleEdit = (field, value) => {
-    setCounsellorDetails((prev) => ({ ...prev, [field]: value }));
+    setCounselorDetails((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSaveProfile = async () => {
     const formData = new FormData();
-    Object.keys(counsellorDetails).forEach((field) => {
-      formData.append(field, counsellorDetails[field]);
+    Object.keys(counselorDetails).forEach((field) => {
+      formData.append(field, counselorDetails[field]);
     });
 
     const fileInput = document.getElementById("fileInput");
@@ -86,7 +86,7 @@ export default function CounsellorProfile() {
   };
 
   const handleAvailabilityChange = (index, day, slotType, value) => {
-    const updatedAvailability = [...counsellorDetails.availability];
+    const updatedAvailability = [...counselorDetails.availability];
     if (slotType === "day") {
       updatedAvailability[index].day = value;
     } else if (slotType === "startTime") {
@@ -94,14 +94,14 @@ export default function CounsellorProfile() {
     } else if (slotType === "endTime") {
       updatedAvailability[index].slots[0].endTime = value;
     }
-    setCounsellorDetails((prev) => ({
+    setCounselorDetails((prev) => ({
       ...prev,
       availability: updatedAvailability,
     }));
   };
 
   const handleSpecificationChange = (value) => {
-    setCounsellorDetails((prev) => ({
+    setCounselorDetails((prev) => ({
       ...prev,
       specification: value,
     }));
@@ -135,29 +135,29 @@ export default function CounsellorProfile() {
                 </button>
               </div>
               <h2 className="mt-4 text-2xl font-bold text-gradient bg-clip-text text-transparent bg-gradient-to-r from-blue-100 to-indigo-500">
-                {counsellorDetails.fullName}
+                {counselorDetails.fullName}
               </h2>
-              <p className="text-blue-400">{counsellorDetails.email}</p>
+              <p className="text-blue-400">{counselorDetails.email}</p>
               <div className="mt-6 w-full">
                 <div className="flex items-center mb-3">
                   <User className="mr-2 text-blue-400" size={20} />
                   <span className="font-semibold text-gray-300">Full Name:</span>
-                  <span className="ml-2 text-gray-200">{counsellorDetails.fullName}</span>
+                  <span className="ml-2 text-gray-200">{counselorDetails.fullName}</span>
                 </div>
                 <div className="flex items-center mb-3">
                   <Mail className="mr-2 text-blue-400" size={20} />
                   <span className="font-semibold text-gray-300">Email:</span>
-                  <span className="ml-2 text-gray-200">{counsellorDetails.email}</span>
+                  <span className="ml-2 text-gray-200">{counselorDetails.email}</span>
                 </div>
                 <div className="flex items-center mb-3">
                   <Users className="mr-2 text-blue-400" size={20} />
                   <span className="font-semibold text-gray-300">Mobile:</span>
-                  <span className="ml-2 text-gray-200">{counsellorDetails.mobileNumber}</span>
+                  <span className="ml-2 text-gray-200">{counselorDetails.mobileNumber}</span>
                 </div>
                 <div className="flex items-center mb-3">
                   <BookA className="mr-2 text-blue-400" size={20} />
                   <span className="font-semibold text-gray-300">Experience:</span>
-                  <span className="ml-2 text-gray-200">{counsellorDetails.Expereince} years</span>
+                  <span className="ml-2 text-gray-200">{counselorDetails.Expereince} years</span>
                 </div>
                 
                 
@@ -170,7 +170,7 @@ export default function CounsellorProfile() {
                 Profile
               </h1>
               <div className="space-y-6">
-                {Object.keys(counsellorDetails).map((field) => (
+                {Object.keys(counselorDetails).map((field) => (
                   field !== "specification" && field !== "availability" && (
                     <div key={field}>
                       <label className="block text-sm font-medium mb-2 text-gray-400">
@@ -178,7 +178,7 @@ export default function CounsellorProfile() {
                       </label>
                       <input
                         type={field === "yearexp" ? "number" : "text"}
-                        value={counsellorDetails[field]}
+                        value={counselorDetails[field]}
                         onChange={(e) => handleEdit(field, e.target.value)}
                         disabled={!isEditing}
                         className={`w-full bg-gray-900 rounded px-2 py-1 focus:ring-blue-500 ${isEditing ? "border-2 border-white" : ""}`}
@@ -190,7 +190,7 @@ export default function CounsellorProfile() {
                   <label className="block text-sm font-medium mb-2 text-gray-400">Specializations</label>
                   <input
                     type="text"
-                    value={counsellorDetails.specification}
+                    value={counselorDetails.specification}
                     onChange={(e) => handleSpecificationChange(e.target.value)}
                     disabled={!isEditing}
                     className="w-full bg-gray-900 rounded px-2 py-1 mb-2 focus:ring-blue-500"
@@ -198,7 +198,7 @@ export default function CounsellorProfile() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2 text-gray-400">Availability</label>
-                  {counsellorDetails.availability.map((avail, index) => (
+                  {counselorDetails.availability.map((avail, index) => (
                     <div key={index} className="mb-3">
                     <label className="block text-sm font-medium mb-2 text-gray-400">DAY</label>
                       <input

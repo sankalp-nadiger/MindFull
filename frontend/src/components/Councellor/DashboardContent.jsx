@@ -7,6 +7,8 @@ const DashboardContent = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const [todaySessions, setTodaySessions] = useState([]);
+
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -27,15 +29,30 @@ const DashboardContent = () => {
         setLoading(false);
       }
     };
+    const fetchTodaySessions = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_BASE_API_URL}/counsellor/appointments/today`,
+          {
+            headers: {
+              Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+            },
+          }
+        );
+        if (!response.ok) throw new Error("Failed to fetch today's sessions");
+        const data = await response.json();
+        setTodaySessions(data);
+      } catch (error) {
+        console.error(error);
+        setTodaySessions([]);
+      }
+    };
+
+    fetchTodaySessions();
     fetchStats();
   }, []);
 
-  // Simulated data for demonstration (keep for now, but can be replaced with real data)
-  const upcomingSessions = [
-    { id: 1, client: 'Anonymous Client A', time: '2:00 PM', type: 'Individual Therapy' },
-    { id: 2, client: 'Anonymous Client B', time: '3:30 PM', type: 'Couples Therapy' },
-    { id: 3, client: 'Anonymous Client C', time: '5:00 PM', type: 'Group Session' }
-  ];
+
 
   const recentActivities = [
     { id: 1, action: 'Session completed', client: 'Client A', time: '1 hour ago' },
@@ -122,20 +139,38 @@ const DashboardContent = () => {
             <Calendar className="h-5 w-5 text-gray-400" />
           </div>
           <div className="space-y-4">
-            {upcomingSessions.map((session) => (
-              <div key={session.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="font-medium text-gray-900">{session.client}</p>
-                  <p className="text-sm text-gray-600">{session.type}</p>
+            {todaySessions.length > 0 ? (
+              todaySessions.map((session) => (
+                <div
+                  key={session._id}
+                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                >
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      {session.clientId?.fullName || "Unknown Client"}
+                    </p>
+                    <p className="text-sm text-gray-600 capitalize">
+                      {session.type || "Session"}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium text-blue-600">
+                      {session.startTime || "N/A"}
+                    </p>
+                    <button
+                      onClick={() => navigate(`/appointments/${session._id}`)}
+                      className="text-sm text-gray-500 hover:text-gray-700"
+                    >
+                      View Details
+                    </button>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-medium text-blue-600">{session.time}</p>
-                  <button className="text-sm text-gray-500 hover:text-gray-700">View Details</button>
-                </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-center text-gray-500">No sessions scheduled for today.</p>
+            )}
           </div>
-          <button 
+          <button
             onClick={() => navigate('/schedule')}
             className="w-full mt-4 py-2 text-blue-600 hover:text-blue-700 font-medium"
           >

@@ -14,13 +14,16 @@ import {
   addCounsellorReview,
   getCounsellorDashboardStats,
   getCounselorProfile,
+  updateProfile,
   checkSittingSeries,
   rejoinSession,
   getClients,
   getAvailableSlots,
   scheduleAppointment,
   getAppointments,
+  getTodaysAppointments,
   updateAppointmentStatus,
+  deleteAppointment,
   // Notifications controllers
   getCounsellorNotifications,
   markNotificationAsRead,
@@ -51,6 +54,7 @@ router.post("/logout-counsellor", counsellor_verifyJWT, logoutCounsellor);
 router.post('/review', counsellor_verifyJWT, addCounsellorReview);
 router.get('/dashboard-stats', counsellor_verifyJWT, getCounsellorDashboardStats);
 router.get("/profile", counsellor_verifyJWT, getCounselorProfile);
+router.post("/profile", counsellor_verifyJWT, updateProfile);
 router.get('/check-sitting-series', counsellor_verifyJWT, checkSittingSeries);
 router.post('/rejoin', counsellor_verifyJWT, rejoinSession);
 
@@ -66,6 +70,8 @@ router.get('/clients', counsellor_verifyJWT, getClients);
 router.get('/available-slots/:clientId', counsellor_verifyJWT, getAvailableSlots);
 router.post('/schedule-appointment', counsellor_verifyJWT, scheduleAppointment);
 router.get('/appointments', counsellor_verifyJWT, getAppointments);
+router.get('/appointments/today', counsellor_verifyJWT, getTodaysAppointments);
 router.patch('/appointments/:appointmentId', counsellor_verifyJWT, updateAppointmentStatus);
+router.delete('/appointments/:appointmentId', counsellor_verifyJWT, deleteAppointment);
 
 export default router;

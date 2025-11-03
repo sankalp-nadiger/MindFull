@@ -197,6 +197,74 @@ const ProfileContent = () => {
            className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 ${isEditing ?'bg-slate-100 text-gray-700}':''} `}
           />
         </div>
+        {/* Availability Section */}
+<div className="mt-6">
+  <h3 className="text-lg font-semibold text-gray-800 mb-3">Weekly Availability</h3>
+
+  {profile.availability && profile.availability.length > 0 ? (
+    profile.availability.map((daySlot, index) => (
+      <div key={index} className="mb-4 border p-3 rounded-lg bg-gray-50">
+        <label className="block font-medium text-gray-700 mb-1">{daySlot.day}</label>
+
+        {daySlot.slots.map((slot, sIndex) => (
+          <div key={sIndex} className="flex items-center gap-4 mb-2">
+            <input
+              type="time"
+              value={slot.startTime}
+              onChange={(e) => {
+                const newAvailability = [...profile.availability];
+                newAvailability[index].slots[sIndex].startTime = e.target.value;
+                setProfile({ ...profile, availability: newAvailability });
+              }}
+              disabled={!isEditing}
+              className={`border rounded-md px-2 py-1 ${!isEditing && 'bg-gray-100'}`}
+            />
+            <span>-</span>
+            <input
+              type="time"
+              value={slot.endTime}
+              onChange={(e) => {
+                const newAvailability = [...profile.availability];
+                newAvailability[index].slots[sIndex].endTime = e.target.value;
+                setProfile({ ...profile, availability: newAvailability });
+              }}
+              disabled={!isEditing}
+              className={`border rounded-md px-2 py-1 ${!isEditing && 'bg-gray-100'}`}
+            />
+          </div>
+        ))}
+
+        {isEditing && (
+          <button
+            onClick={() => {
+              const newAvailability = [...profile.availability];
+              newAvailability[index].slots.push({ startTime: '', endTime: '' });
+              setProfile({ ...profile, availability: newAvailability });
+            }}
+            className="text-blue-600 text-sm mt-1"
+          >
+            + Add Slot
+          </button>
+        )}
+      </div>
+    ))
+  ) : (
+    <p className="text-gray-500">No availability set.</p>
+  )}
+
+  {isEditing && (
+    <button
+      onClick={() => {
+        const newAvailability = [...(profile.availability || [])];
+        newAvailability.push({ day: '', slots: [] });
+        setProfile({ ...profile, availability: newAvailability });
+      }}
+      className="mt-2 text-blue-600 text-sm"
+    >
+      + Add Day
+    </button>
+  )}
+</div>
 
         {/* Save Button */}
         {isEditing && (

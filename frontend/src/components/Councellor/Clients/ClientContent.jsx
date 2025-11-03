@@ -53,7 +53,7 @@ const ClientsContent = ({ onViewCaseHistory }) => {
       setLoadingSlots(true);
       const response = await fetch(`${API_BASE_URL}/counsellor/available-slots/${clientId}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${sessionStorage.getItem('accessToken')}`
         }
       });
       
@@ -78,7 +78,7 @@ const ClientsContent = ({ onViewCaseHistory }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${sessionStorage.getItem('accessToken')}`
         },
         body: JSON.stringify({
           clientId: selectedClient.id,

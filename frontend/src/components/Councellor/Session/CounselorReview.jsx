@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, User, Stethoscope, Calendar, CheckCircle, XCircle } from 'lucide-react';
 
-const CounsellorReview = ({ isOpen, onClose, sessionData, userId, inSittingSeries, sittingNotes, currentSittingNumber, totalRecommendedSittings }) => {
+const CounselorReview = ({ isOpen, onClose, sessionData, userId, inSittingSeries, sittingNotes, currentSittingNumber, totalRecommendedSittings }) => {
   const [formData, setFormData] = useState({
     diagnosis: '',
     symptoms: [],
@@ -353,7 +353,7 @@ const CounsellorReview = ({ isOpen, onClose, sessionData, userId, inSittingSerie
                           />
                           <label htmlFor="willingNo" className="flex items-center space-x-2 text-sm text-gray-700">
                             <XCircle className="h-4 w-4 text-red-600" />
-                            <span>No, refer to another counsellor</span>
+                            <span>No, refer to another counselor</span>
                           </label>
                         </div>
                       </div>
@@ -428,4 +428,4 @@ const CounsellorReview = ({ isOpen, onClose, sessionData, userId, inSittingSerie
   );
 };
 
-export default CounsellorReview;
+export default CounselorReview;
