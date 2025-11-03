@@ -20,7 +20,9 @@ import {
   getAvailableSlots,
   scheduleAppointment,
   getAppointments,
+  getTodaysAppointments,
   updateAppointmentStatus,
+  deleteAppointment,
   // Notifications controllers
   getCounsellorNotifications,
   markNotificationAsRead,
@@ -66,6 +68,8 @@ router.get('/clients', counsellor_verifyJWT, getClients);
 router.get('/available-slots/:clientId', counsellor_verifyJWT, getAvailableSlots);
 router.post('/schedule-appointment', counsellor_verifyJWT, scheduleAppointment);
 router.get('/appointments', counsellor_verifyJWT, getAppointments);
+router.get('/appointments/today', counsellor_verifyJWT, getTodaysAppointments);
 router.patch('/appointments/:appointmentId', counsellor_verifyJWT, updateAppointmentStatus);
+router.delete('/appointments/:appointmentId', counsellor_verifyJWT, deleteAppointment);
 
 export default router;

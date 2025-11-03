@@ -5,7 +5,7 @@ import { Server } from "socket.io";
 import http from "http";
 
 dotenv.config({
-    path: './.env'
+    path: '../.env'
 })
 
 const server = http.createServer(app);
@@ -15,6 +15,9 @@ const io = new Server(server, {
         methods: ["GET", "POST"]
     }
 });
+
+
+console.log("mongo url:", process.env.MONGODB_URL);
 
 // Store active rooms and users for WebRTC
 const activeRooms = new Map(); // roomId -> Set of users

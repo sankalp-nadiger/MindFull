@@ -12,6 +12,9 @@ import {server,io} from "../index.js"
 import nodemailer from "nodemailer";
 import { OTP } from "../models/otp.model.js";
 import Notification from "../models/notification.model.js";
+import twilio from 'twilio';
+
+const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH_TOKEN);
 
 // Route to check if user is in a sitting series
 export const checkSittingSeries = asyncHandler(async (req, res) => {
@@ -717,8 +720,14 @@ export const getCounsellorNotifications = async (req, res) => {
   try {
     const counselorId = req.counsellor._id;
 
-    let notifications = await Notification.find({ counselor: counselorId })
-      .sort({ createdAt: -1 });
+     // Calculate 1 day ago
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    // Get notifications only from the past 1 day
+    let notifications = await Notification.find({
+      counselor: counselorId,
+      createdAt: { $gte: oneDayAgo }  // ✅ only within last 24 hours
+    }).sort({ createdAt: -1 });
 
     // Get all sitting_recommendation related userIds
     const sittingUserIds = notifications
@@ -1240,14 +1249,12 @@ export const scheduleAppointment = async (req, res) => {
         const counsellorId = req.counsellor._id;
         const { clientId, appointmentDate, startTime, endTime, notes, sessionType } = req.body;
 
-        // Validate input
         if (!clientId || !appointmentDate || !startTime || !endTime) {
             return res.status(400).json({ 
                 message: 'Client ID, appointment date, start time, and end time are required' 
             });
         }
 
-        // Check if client exists and belongs to this counsellor
         const counsellor = await Counsellor.findById(counsellorId);
         const clientExists = counsellor.clients.some(
             client => client.userId.toString() === clientId
@@ -1257,19 +1264,15 @@ export const scheduleAppointment = async (req, res) => {
             return res.status(400).json({ message: 'Client not found or not assigned to this counsellor' });
         }
 
-        // Check if slot is available
         const appointmentDateTime = moment(`${appointmentDate} ${startTime}`, 'YYYY-MM-DD HH:mm');
-        
-        // Check if appointment is in the future
         if (!appointmentDateTime.isAfter(moment())) {
             return res.status(400).json({ message: 'Appointment must be scheduled for a future time' });
         }
 
-        // Check if slot conflicts with existing appointments
         const existingAppointment = await Appointment.findOne({
-            counsellorId: counsellorId,
+            counsellorId,
             appointmentDate: new Date(appointmentDate),
-            startTime: startTime,
+            startTime,
             status: { $ne: 'cancelled' }
         });
 
@@ -1277,7 +1280,6 @@ export const scheduleAppointment = async (req, res) => {
             return res.status(400).json({ message: 'This time slot is already booked' });
         }
 
-        // Create new appointment
         const newAppointment = new Appointment({
             counsellorId,
             clientId,
@@ -1290,9 +1292,22 @@ export const scheduleAppointment = async (req, res) => {
 
         await newAppointment.save();
 
-        // Populate the appointment with client details for response
         const populatedAppointment = await Appointment.findById(newAppointment._id)
-            .populate('clientId', 'fullName email');
+            .populate('clientId', 'fullName email mobileNumber');
+
+        // ✅ Twilio SMS Notification
+        try {
+            if (populatedAppointment.clientId?.mobileNumber) {
+                await client.messages.create({
+                    body: `Hello ${populatedAppointment.clientId.fullName}, your appointment has been scheduled for ${appointmentDate} at ${startTime}.`,
+                    from: process.env.TWILIO_PHONE_NUMBER,
+                    to: populatedAppointment.clientId.mobileNumber
+                });
+                console.log('Twilio: appointment created SMS sent');
+            }
+        } catch (err) {
+            console.error('Twilio error:', err.message);
+        }
 
         res.status(201).json({
             message: 'Appointment scheduled successfully',
@@ -1302,6 +1317,26 @@ export const scheduleAppointment = async (req, res) => {
         console.error('Error scheduling appointment:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
+};
+
+// Get today's appointments for a counsellor
+export const getTodaysAppointments = async (req, res) => {
+  try {
+    const counsellorId = req.counsellor._id;
+    const today = new Date();
+    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+
+    const appointments = await Appointment.find({
+      counsellorId,
+      appointmentDate: { $gte: startOfDay, $lte: endOfDay },
+    }).populate("clientId", "fullName");
+
+    res.status(200).json(appointments);
+  } catch (error) {
+    console.error("Error fetching today’s appointments:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
 
 // Get appointments for a counsellor
@@ -1350,8 +1385,8 @@ export const updateAppointmentStatus = async (req, res) => {
 
         const appointment = await Appointment.findOne({
             _id: appointmentId,
-            counsellorId: counsellorId
-        });
+            counsellorId
+        }).populate('clientId', 'fullName mobileNumber');
 
         if (!appointment) {
             return res.status(404).json({ message: 'Appointment not found' });
@@ -1363,18 +1398,37 @@ export const updateAppointmentStatus = async (req, res) => {
 
         await appointment.save();
 
-        // If appointment is completed, update session count
         if (status === 'completed') {
             await Counsellor.updateOne(
-                { 
-                    _id: counsellorId,
-                    'clients.userId': appointment.clientId 
-                },
+                { _id: counsellorId, 'clients.userId': appointment.clientId },
                 { 
                     $inc: { 'clients.$.sessionCount': 1 },
                     $set: { 'clients.$.lastSession': new Date() }
                 }
             );
+        }
+
+        // ✅ Twilio SMS Notification
+        try {
+            if (appointment.clientId?.mobileNumber) {
+                let messageBody = '';
+                if (status === 'completed') {
+                    messageBody = `Hi ${appointment.clientId.fullName}, your counselling session has been marked as completed. Thank you!`;
+                } else if (status === 'cancelled') {
+                    messageBody = `Hi ${appointment.clientId.fullName}, your appointment scheduled on ${appointment.appointmentDate.toDateString()} has been cancelled.`;
+                } else {
+                    messageBody = `Your appointment status has been updated to: ${status}.`;
+                }
+
+                await client.messages.create({
+                    body: messageBody,
+                    from: process.env.TWILIO_PHONE_NUMBER,
+                    to: appointment.clientId.mobileNumber
+                });
+                console.log('Twilio: appointment status update SMS sent');
+            }
+        } catch (err) {
+            console.error('Twilio error:', err.message);
         }
 
         res.status(200).json({
@@ -1385,4 +1439,62 @@ export const updateAppointmentStatus = async (req, res) => {
         console.error('Error updating appointment:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
+};
+
+// Delete appointment
+export const deleteAppointment = async (req, res) => {
+  try {
+    const { appointmentId } = req.params;
+    const counsellorId = req.counsellor._id;
+
+    // Find appointment
+    const appointment = await Appointment.findOne({
+      _id: appointmentId,
+      counsellorId,
+    }).populate("clientId", "fullName email mobileNumber parentMobileNumber");
+
+    if (!appointment) {
+      return res
+        .status(404)
+        .json({ message: "Appointment not found or unauthorized" });
+    }
+
+    // Delete from DB
+    await Appointment.findByIdAndDelete(appointmentId);
+
+    // --- Twilio SMS Notification ---
+    try {
+      const twilioClient = twilio(
+        process.env.TWILIO_SID,
+        process.env.TWILIO_AUTH_TOKEN
+      );
+
+      const messageBody = `Dear ${appointment.clientId.fullName}, your appointment scheduled on ${appointment.appointmentDate.toDateString()} at ${appointment.startTime} has been cancelled.`;
+
+      // Send SMS to student
+      if (appointment.clientId.mobileNumber) {
+        await twilioClient.messages.create({
+          body: messageBody,
+          from: process.env.TWILIO_PHONE_NUMBER,
+          to: appointment.clientId.mobileNumber,
+        });
+      }
+
+      // Send SMS to parent if available
+      if (appointment.clientId.parentMobileNumber) {
+        await twilioClient.messages.create({
+          body: messageBody,
+          from: process.env.TWILIO_PHONE_NUMBER,
+          to: appointment.clientId.parentMobileNumber,
+        });
+      }
+    } catch (twilioError) {
+      console.error("Twilio SMS error:", twilioError.message);
+    }
+
+    res.status(200).json({ message: "Appointment deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting appointment:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
