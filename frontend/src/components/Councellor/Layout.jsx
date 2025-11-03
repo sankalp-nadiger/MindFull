@@ -138,7 +138,7 @@ const Layout = ({ children, onViewCaseHistory }) => {
             <div className="flex-1 flex justify-center px-2 sm:px-4">
               <div className="text-center">
                 <h1 className="text-sm sm:text-xl font-bold text-gray-900">SoulCare Pro</h1>
-                <p className="text-xs sm:text-sm text-gray-500 text-center hidden sm:block">Counsellor Dashboard</p>
+                <p className="text-xs sm:text-sm text-gray-500 text-center hidden sm:block">Counselor Dashboard</p>
               </div>
             </div>
             

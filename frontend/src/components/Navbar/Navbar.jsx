@@ -74,7 +74,7 @@ const Navbar = memo(({ onStoryClick }) => {
                 { href: "/community", text: t('navigation.community') },
                 { href: "/activity", text: t('navigation.activities') },
                 { href: "/journals", text: t('navigation.journals') },
-                { href: "/video", text: t('navigation.counsellor') },
+                { href: "/video", text: t('navigation.counselor') },
                 { href: "/Leaderboard", text: t('navigation.leaderboard') }
               ].map((item, index) => (
                 <a 
@@ -111,7 +111,7 @@ const Navbar = memo(({ onStoryClick }) => {
                 { href: "/community", text: t('navigation.community') },
                 { href: "/activity", text: t('navigation.activities') },
                 { href: "/journals", text: t('navigation.journals') },
-                { href: "/video", text: t('navigation.counsellor') },
+                { href: "/video", text: t('navigation.counselor') },
                 { href: "/Leaderboard", text: t('navigation.leaderboard') }
               ].map((item, index) => (
                 <a 

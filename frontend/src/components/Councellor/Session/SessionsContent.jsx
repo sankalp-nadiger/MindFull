@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { io } from "socket.io-client";
 import { motion } from 'framer-motion';
-import CounsellorReview from './CounselorReview';
+import CounselorReview from './CounselorReview';
 import VideoMeetWindow from './VideoMeetWindow'; //WebRTC Component
 
 const socket = io(`${import.meta.env.VITE_BASE_URL}`, {
@@ -552,7 +552,7 @@ const SessionsContent = () => {
         ) : null}
       </div>
 
-      <CounsellorReview
+      <CounselorReview
         isOpen={showReview}
         onClose={() => setShowReview(false)}
         sessionData={reviewSessionData}

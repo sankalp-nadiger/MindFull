@@ -116,7 +116,7 @@ const MultilingualExample = () => {
             'navigation.community',
             'navigation.activities',
             'navigation.journals',
-            'navigation.counsellor',
+            'navigation.counselor',
             'navigation.profile',
             'navigation.settings'
           ].map((key) => (

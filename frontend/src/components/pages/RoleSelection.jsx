@@ -9,8 +9,8 @@ const RoleSelection = () => {
   const handleRoleSelection = () => {
     if (role === "Parent") {
       navigate("/parent-signin");
-    } else if (role === "Counsellor") {
-      navigate("/counsellor-signin");
+    } else if (role === "Counselor") {
+      navigate("/counselor-signin");
     } else {
       alert("Please select a role to proceed.");
     }
@@ -36,7 +36,7 @@ const RoleSelection = () => {
           >
             <option value="">-- Select a Role --</option>
             <option value="Parent">Parent</option>
-            <option value="Counsellor">Counsellor</option>
+            <option value="Counselor">Counselor</option>
           </select>
         </div>
   

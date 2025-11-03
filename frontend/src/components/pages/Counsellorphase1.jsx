@@ -31,7 +31,7 @@ const CounselorOnboarding = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen  bg-gradient-to-b from-black via-blue-950 to-black text-white px-4 py-10">
     <h2 className="text-3xl font-semibold text-green-500 text-center mb-4">
-      Counsellor Onboarding
+      Counselor Onboarding
     </h2>
     <form onSubmit={handleSubmit}>
       <div className="card mb-4 p-4 shadow-sm bg-gray-800 rounded-lg">

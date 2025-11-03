@@ -32,10 +32,10 @@ const OnBoardphase2 = React.lazy(() => import('./components/pages/OnBoardphase2'
 const OnBoardphase3 = React.lazy(() => import("./components/pages/OnBoardPhase3"))
 const RoleSelection = React.lazy(() => import("./components/pages/RoleSelection"))
 const ParentSignIn = React.lazy(() => import("./components/pages/ParentSignIn"))
-const CounsellorSignIn = React.lazy(() => import("./components/pages/CounsellorSignIn"))
+const CounselorSignIn = React.lazy(() => import("./components/pages/CounsellorSignIn"))
 const ParentSignUp = React.lazy(() => import("./components/pages/ParentSignUp"))
-const CounsellorSignUp = React.lazy(() => import("./components/pages/CounsellorSignUp"))
-const Counsellorphase1 = React.lazy(() => import("./components/pages/Counsellorphase1"))
+const CounselorSignUp = React.lazy(() => import("./components/pages/CounsellorSignUp"))
+const Counselorphase1 = React.lazy(() => import("./components/pages/Counsellorphase1"))
 const StudentSignIn = React.lazy(() => import('./components/pages/StudentSignIn'))
 const StudentSignUp = React.lazy(() => import('./components/pages/StudentSignUp'))
 const JournalEntryWithSuggestions = React.lazy(() => import('./components/pages/JournalPage'))
@@ -48,7 +48,7 @@ const AIrecommendation = React.lazy(() => import("./components/Materialrecommend
 const CommunityChat = React.lazy(() => import("./components/Community/Communitychat"))
 const Session = React.lazy(() => import("./components/Councellor/Session/Session"))
 const UserProfile = React.lazy(() => import("./components/Profiles/userprofile"))
-const CounsellorProfile = React.lazy(() => import("./components/Profiles/Councellorprofile"))
+const CounselorProfile = React.lazy(() => import("./components/Profiles/Councellorprofile"))
 const ChatBox = React.lazy(() => import("./components/pages/Chatbot"))
 const MusicPlayerApp = React.lazy(() => import("./components/Music/Musicplayer"))
 const Breathingexercise = React.lazy(() => import("./components/Exercises/Breathing"))
@@ -134,9 +134,9 @@ function App() {
                 <ParentSignIn />
               </Suspense>
             } />
-            <Route path="/counsellor-signin" element={
+            <Route path="/counselor-signin" element={
               <Suspense fallback={<PageSkeleton />}>
-                <CounsellorSignIn />
+                <CounselorSignIn />
               </Suspense>
             } />
             <Route path="/parent-signup" element={
@@ -144,14 +144,14 @@ function App() {
                 <ParentSignUp />
               </Suspense>
             } />
-            <Route path="/counsellor-signup" element={
+            <Route path="/counselor-signup" element={
               <Suspense fallback={<PageSkeleton />}>
-                <CounsellorSignUp />
+                <CounselorSignUp />
               </Suspense>
             } />
-            <Route path="/counsellorphase1" element={
+            <Route path="/counselorphase1" element={
               <Suspense fallback={<PageSkeleton />}>
-                <Counsellorphase1 />
+                <Counselorphase1 />
               </Suspense>
             } />
             <Route path="/signin" element={
@@ -237,7 +237,7 @@ function App() {
             } />
             <Route path="/Councellorprofile" element={
               <Suspense fallback={<PageSkeleton />}>
-                <CounsellorProfile />
+                <CounselorProfile />
               </Suspense>
             } />
             <Route path="/Musicplayer" element={
