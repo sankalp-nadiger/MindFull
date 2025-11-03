@@ -819,6 +819,7 @@ export const getCounselorStats = async (req, res) => {
 };
 
 export const updateProfile = asyncHandler(async (req, res) => {
+    console.log("Update profile request body:", req.body);
     const counsellorId= req.counsellor._id;
     const { updates } = req.body;
 
