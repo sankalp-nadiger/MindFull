@@ -14,6 +14,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import ApiResponse from "../utils/API_Response.js";
 import jwt from "jsonwebtoken";
 import { Session } from "../models/session.model.js";
+import { Appointment } from "../models/appointment.model.js";
 import Tesseract from 'tesseract.js';
 import axios from "axios";
 import { getDistrictAndState } from "../utils/getDistrict.js";
@@ -302,6 +303,7 @@ const getUserSessions = async (req, res) => {
       createdAt: session.createdAt,
       endedAt: session.endedAt,
       notes: session.notes,
+      userNotes: session.userNotes,
       feedback: session.feedback,
       rating: session.rating,
       counselor: session.counselor ? {
@@ -322,10 +324,10 @@ const getUserSessions = async (req, res) => {
 // feedback
 export const updateFeedback = asyncHandler(async (req, res) => {
   const userId = req.user._id;
-  const { feedback, sessionId } = req.body;
+  const { feedback, sessionId, rating } = req.body;
   // Validate inputs
   if (!userId || !feedback?.trim() || !sessionId) {
-      throw new ApiError(400, "User ID, counsellor ID, and feedback are required");
+      throw new ApiError(400, "User ID, session ID, and feedback are required");
   }
 
   // Find the user
@@ -333,15 +335,29 @@ export const updateFeedback = asyncHandler(async (req, res) => {
   if (!user) {
       throw new ApiError(404, "User not found");
   }
-  // Find the counsellor and update feedback
-  const session = await Session.findById(sessionId).populate('counselor');;
+  // Find the session and update feedback and rating
+  const session = await Session.findById(sessionId).populate('counselor');
+  
+  if (!session) {
+      throw new ApiError(404, "Session not found");
+  }
 
-  session.counselor.feedback.push({ userId, feedback });
-  await session.counselor.save();
+  // Update session with feedback and rating
+  session.feedback = feedback;
+  if (rating) {
+      session.rating = rating;
+  }
+  await session.save();
+
+  // Also add feedback to counselor if needed
+  if (session.counselor && session.counselor.feedback) {
+      session.counselor.feedback.push({ userId, feedback });
+      await session.counselor.save();
+  }
 
   return res
       .status(200)
-      .json(new ApiResponse(200, { feedback: session.counselor.feedback }, "Feedback updated successfully"));
+      .json(new ApiResponse(200, { feedback: session.feedback, rating: session.rating }, "Feedback updated successfully"));
 });
 
   
@@ -1064,8 +1080,13 @@ const getCaseHistory = async (req, res) => {
       return sum + (progress.sittingProgress || 0);
     }, 0) || Math.floor((user.sessionProgress || 15) / 5); // Assuming 5% per session
 
-    // Get current mood from latest journal or mood field
-    const currentMood = user.journals?.[0]?.mood || user.mood || 'Not recorded';
+    // Get current mood from latest mood entry in Mood collection
+    const latestMood = await Mood.findOne({ user: clientId })
+      .sort({ timestamp: -1 })
+      .limit(1)
+      .lean();
+    
+    const currentMood = latestMood?.mood || user.journals?.[0]?.mood || user.mood || 'Not recorded';
 
     // Format active issues
     const activeIssues = user.issues?.map(issue => ({
@@ -1132,10 +1153,7 @@ const getCaseHistory = async (req, res) => {
                      'No counselor notes available yet.'
     };
 
-    res.status(200).json({
-      success: true,
-      data: caseHistory
-    });
+    res.status(200).json(caseHistory);
 
   } catch (error) {
     console.error('Error fetching case history:', error);
@@ -1586,6 +1604,97 @@ const dismissUserSession = asyncHandler(async (req, res) => {
     }
 });
 
+// Get user appointments
+const getUserAppointments = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  
+  try {
+    const appointments = await Appointment.find({ clientId: userId })
+      .populate('counsellorId', 'fullName email specialization')
+      .sort({ appointmentDate: 1, startTime: 1 });
+    
+    return res.status(200).json({
+      success: true,
+      appointments
+    });
+  } catch (error) {
+    console.error('Error fetching appointments:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch appointments'
+    });
+  }
+});
+
+// Get today's appointments
+const getTodaysUserAppointments = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const appointments = await Appointment.find({
+      clientId: userId,
+      appointmentDate: { $gte: today, $lt: tomorrow },
+      status: { $in: ['scheduled'] }
+    })
+      .populate('counsellorId', 'fullName email specialization')
+      .sort({ startTime: 1 });
+    
+    return res.status(200).json({
+      success: true,
+      appointments
+    });
+  } catch (error) {
+    console.error('Error fetching today\'s appointments:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch today\'s appointments'
+    });
+  }
+});
+
+const markAppointmentJoined = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const { appointmentId } = req.params;
+  
+  try {
+    const appointment = await Appointment.findById(appointmentId);
+    
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Appointment not found'
+      });
+    }
+    
+    if (appointment.clientId.toString() !== userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to update this appointment'
+      });
+    }
+    
+    appointment.userJoined = true;
+    await appointment.save();
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Appointment marked as joined',
+      appointment
+    });
+  } catch (error) {
+    console.error('Error marking appointment as joined:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to mark appointment as joined'
+    });
+  }
+});
+
 export {
   registerUser, extractMobileNumber,
   loginUser,
@@ -1597,5 +1706,6 @@ export {
   updateAccountDetails,
   addInterests, userProgress, calculateAverageMood,
   getWeeklyMoodData, getUserSessions,
-  updateCounselorProgress, getCaseHistory, rejoinUserSession, getUserActiveSession, dismissUserSession
+  updateCounselorProgress, getCaseHistory, rejoinUserSession, getUserActiveSession, dismissUserSession,
+  getUserAppointments, getTodaysUserAppointments, markAppointmentJoined
 };

@@ -23,6 +23,16 @@ const CaseHistoryContent = ({ clientId, onBack }) => {
 
   const API_BASE_URL = import.meta.env.VITE_BASE_API_URL;
 
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Date not recorded';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Invalid date';
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
   useEffect(() => {
     if (clientId) {
       fetchCaseHistory();
@@ -205,7 +215,7 @@ const CaseHistoryContent = ({ clientId, onBack }) => {
                     <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
                       <span>Severity: {issue.severity || 'Medium'}</span>
                       <span>•</span>
-                      <span>Identified: {issue.dateIdentified ? new Date(issue.dateIdentified).toLocaleDateString() : 'Unknown'}</span>
+                      <span>Identified: {formatDate(issue.dateIdentified)}</span>
                     </div>
                   </div>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -239,7 +249,7 @@ const CaseHistoryContent = ({ clientId, onBack }) => {
                     <div className="flex items-center space-x-4 mb-2">
                       <span className="font-medium text-gray-900">Session {session.sessionNumber || index + 1}</span>
                       <span className="text-sm text-gray-500">
-                        {session.date ? new Date(session.date).toLocaleDateString() : 'Date not recorded'}
+                        {formatDate(session.date)}
                       </span>
                       <span className="text-sm text-gray-500">{session.duration || '50 min'}</span>
                     </div>
@@ -281,15 +291,15 @@ const CaseHistoryContent = ({ clientId, onBack }) => {
                     <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
                   </div>
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-gray-900">{activity.action || activity.activity}</h3>
-                    <span className="text-xs text-gray-500">
-                      {activity.timestamp ? new Date(activity.timestamp).toLocaleString() : 'Recently'}
-                    </span>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-medium text-gray-900">{activity.action || activity.activity}</h3>
+                      <span className="text-xs text-gray-500">
+                        {formatDate(activity.timestamp)}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">{activity.description || activity.details}</p>
                   </div>
-                  <p className="text-sm text-gray-600 mt-1">{activity.description || activity.details}</p>
-                </div>
               </div>
             ))}
           </div>

@@ -283,7 +283,9 @@ export default function UserProfile() {
                       const excludedFields = [
                         "interests", "journals", "_id", "avatar", "goals", "events", 
                         "location", "progress", "refreshToken", "createdAt", "updatedAt", 
-                        "lastLoginDate", "issues", "parent", "__v"
+                        "lastLoginDate", "issues", "parent", "__v", "sittingProgress",
+                        "counselorProgress", "sessionProgress", "counsellorReviews",
+                        "inSittingSeries", "sittingNotes", "gameScores"
                       ];
                       
                       if (excludedFields.includes(field)) return null;
@@ -313,6 +315,47 @@ export default function UserProfile() {
                       );
                     })}
                   </div>
+
+                  {/* Game Scores Section */}
+                  {userDetails.gameScores && userDetails.gameScores.length > 0 && (
+                    <div className="bg-gray-800/30 rounded-xl p-6 border border-gray-700">
+                      <div className="flex items-center space-x-2 mb-4">
+                        <Star className="w-5 h-5 text-yellow-400" />
+                        <h4 className="text-lg font-semibold text-white">Game Performance</h4>
+                      </div>
+                      
+                      <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
+                        {userDetails.gameScores.slice(0, 5).map((game, index) => {
+                          const date = new Date(game.playedAt);
+                          const formattedDate = `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
+                          
+                          return (
+                            <div key={index} className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                              <div className="flex justify-between items-start mb-2">
+                                <h5 className="text-white font-semibold">{game.gameName}</h5>
+                                <span className="text-emerald-400 text-sm">
+                                  {formattedDate}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-gray-400">Score: <span className="text-white font-medium">{game.score}/{game.totalQuestions}</span></span>
+                                <span className="text-yellow-400 font-medium">
+                                  {((game.score / game.totalQuestions) * 100).toFixed(0)}%
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      
+                      <div className="mt-4 bg-emerald-900/20 border border-emerald-800/50 rounded-lg p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-emerald-300 text-sm font-medium">Total Score</span>
+                          <span className="text-emerald-400 text-lg font-bold">{userDetails.totalScore || 0}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Wellness Interests & Goals Section */}
                   <div className="bg-gray-800/30 rounded-xl p-6 border border-gray-700">

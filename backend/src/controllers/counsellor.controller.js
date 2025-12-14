@@ -1442,6 +1442,70 @@ export const updateAppointmentStatus = async (req, res) => {
     }
 };
 
+
+        // Update appointment details (date/time/type/notes/client)
+        export const updateAppointment = async (req, res) => {
+          try {
+            console.log('Update appointment request body:', req.body);
+            const counsellorId = req.counsellor._id;
+            const { appointmentId } = req.params;
+            const {
+              clientId,
+              appointmentDate,
+              startTime,
+              endTime,
+              sessionType,
+              notes,
+              status,
+            } = req.body;
+
+            const appointment = await Appointment.findById(appointmentId);
+            if (!appointment) {
+              return res.status(404).json({ success: false, message: 'Appointment not found' });
+            }
+            if (appointment.counsellorId.toString() !== counsellorId.toString()) {
+              return res.status(403).json({ success: false, message: 'Not authorized to update this appointment' });
+            }
+
+            const updates = {};
+            if (typeof clientId === 'string' && clientId.trim()) updates.clientId = clientId;
+            if (appointmentDate) {
+              const dateObj = new Date(appointmentDate);
+              if (isNaN(dateObj)) {
+                return res.status(400).json({ success: false, message: 'Invalid appointmentDate' });
+              }
+              updates.appointmentDate = dateObj;
+            }
+
+            const timeRegex = /^([01]?\d|2[0-3]):[0-5]\d$/; // HH:MM
+            if (typeof startTime === 'string') {
+              if (!timeRegex.test(startTime)) {
+                return res.status(400).json({ success: false, message: 'Invalid startTime format. Use HH:MM' });
+              }
+              updates.startTime = startTime;
+            }
+            if (typeof endTime === 'string') {
+              if (!timeRegex.test(endTime)) {
+                return res.status(400).json({ success: false, message: 'Invalid endTime format. Use HH:MM' });
+              }
+              updates.endTime = endTime;
+            }
+            if (typeof sessionType === 'string') updates.sessionType = sessionType;
+            if (typeof notes === 'string') updates.notes = notes;
+            if (typeof status === 'string') updates.status = status;
+
+            updates.updatedAt = new Date();
+
+            const updated = await Appointment.findByIdAndUpdate(appointmentId, { $set: updates }, { new: true })
+              .populate('clientId', 'fullName email mobileNumber');
+
+            return res.status(200).json({ success: true, appointment: updated });
+          } catch (error) {
+            console.error('Error updating appointment:', error);
+            return res.status(500).json({ success: false, message: 'Failed to update appointment' });
+          }
+        };
+
 // Delete appointment
 export const deleteAppointment = async (req, res) => {
   try {

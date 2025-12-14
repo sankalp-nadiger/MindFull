@@ -10,6 +10,7 @@ import LazyLoadWrapper from "../LazyLoad/LazyLoadWrapper";
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from '../common/LanguageSelector';
 import Card from "../Games/Gamecard";
+import AppointmentNotification from "../Appointments/AppointmentNotification";
 // Lazy load heavy components
 const BentoGridDemo = React.lazy(() => import("./BentoGridDemo").then(module => ({ default: module.BentoGridDemo })));
 const Getquotes = React.lazy(() => import("./quotes"));
@@ -376,6 +377,9 @@ export function HeroHighlightDemo() {
 
           {/* Floating Chat Button */}
           <FloatingChatButton />
+          
+                  {/* Appointment Notification */}
+                  <AppointmentNotification />
         </div>
       </div>
     </div>

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Plus, Edit, Trash2, AlertCircle, Loader } from 'lucide-react';
+import ReactDOM from 'react-dom';
+import { Calendar, Clock, Plus, Edit, Trash2, AlertCircle, Loader, ChevronLeft, ChevronRight } from 'lucide-react';
+import Toast from '../../pages/Toast';
 
 const ScheduleContent = () => {
   const [appointments, setAppointments] = useState([]);
@@ -9,6 +11,7 @@ const ScheduleContent = () => {
   const [showModal, setShowModal] = useState(false);
   const [clients, setClients] = useState([]);
   const [editingAppointment, setEditingAppointment] = useState(null);
+  const [toast, setToast] = useState({ message: '', type: 'info' });
 
 
   const API_BASE_URL = import.meta.env.VITE_BASE_API_URL;
@@ -18,6 +21,18 @@ const ScheduleContent = () => {
 
     fetchClients();
   }, [selectedDate]);
+
+  useEffect(() => {
+    if (showModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showModal]);
+  
   const fetchClients = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/counsellor/clients`, {
@@ -103,7 +118,20 @@ const ScheduleContent = () => {
 
   const handleNewAppointment = () => {
     // Handle new appointment creation
+    setEditingAppointment(null);
     setShowModal(true);
+  };
+
+  const handlePreviousDay = () => {
+    const currentDate = new Date(selectedDate);
+    currentDate.setDate(currentDate.getDate() - 1);
+    setSelectedDate(currentDate.toISOString().split('T')[0]);
+  };
+
+  const handleNextDay = () => {
+    const currentDate = new Date(selectedDate);
+    currentDate.setDate(currentDate.getDate() + 1);
+    setSelectedDate(currentDate.toISOString().split('T')[0]);
   };
 
   if (loading) {
@@ -153,24 +181,47 @@ const ScheduleContent = () => {
 
       {/* Date Selector */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center space-x-4">
-          <Calendar className="h-5 w-5 text-gray-600" />
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => {
-              setSelectedDate(e.target.value);
-              fetchScheduleData();
-            }}
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
+        <div className="flex items-center justify-between">
+          <button
+            onClick={handlePreviousDay}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors group relative"
+            aria-label="Previous day"
+          >
+            <ChevronLeft className="h-5 w-5 text-gray-600" />
+            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+              Previous day
+            </span>
+          </button>
+          
+          <div className="flex items-center space-x-4">
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => {
+                setSelectedDate(e.target.value);
+                fetchScheduleData();
+              }}
+              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <button
+            onClick={handleNextDay}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors group relative"
+            aria-label="Next day"
+          >
+            <ChevronRight className="h-5 w-5 text-gray-600" />
+            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+              Next day
+            </span>
+          </button>
         </div>
       </div>
 
       {/* Appointments List */}
       <div className="bg-white shadow-lg rounded-lg p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-6">
-          Appointments for {new Date(selectedDate).toLocaleDateString()}
+          Appointments for {new Date(selectedDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
         </h3>
 
         {filteredAppointments.length === 0 ? (
@@ -228,10 +279,11 @@ const ScheduleContent = () => {
           </div>
         )}
       </div>
-      {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-lg">
-            <h2 className="text-xl font-semibold mb-4">Create New Appointment</h2>
+      
+      {showModal && ReactDOM.createPortal(
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[9999] p-4">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-lg max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl font-semibold mb-4">{editingAppointment ? 'Edit Appointment' : 'Create New Appointment'}</h2>
 
             <form
               onSubmit={async (e) => {
@@ -263,17 +315,20 @@ const ScheduleContent = () => {
                     body: JSON.stringify(newAppointment),
                   });
 
-                  const result = await response.json();
+                  let result = {};
+                  try { result = await response.json(); } catch {}
 
                   if (response.ok) {
+                    setToast({ message: editingAppointment ? 'Appointment updated successfully.' : 'Appointment created successfully.', type: 'success' });
                     setShowModal(false);
                     setEditingAppointment(null);
                     fetchScheduleData(); // refresh
                   } else {
-                    alert(result.message || 'Operation failed');
+                    setToast({ message: result.message || 'Operation failed.', type: 'error' });
                   }
                 } catch (err) {
                   console.error('Error creating/updating appointment:', err);
+                  setToast({ message: 'Unexpected error during update.', type: 'error' });
                 }
               }}
             >
@@ -283,11 +338,12 @@ const ScheduleContent = () => {
                 name="clientId"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2"
                 required
+                defaultValue={editingAppointment?.clientId?._id || editingAppointment?.clientId || ''}
               >
                 <option value="">Select a client</option>
                 {clients.map((client) => (
-                  <option key={client.id} value={client.id}>
-                    {client.name}
+                  <option key={client.id || client._id} value={client.id || client._id}>
+                    {client.name || client.fullName}
                   </option>
                 ))}
               </select>
@@ -297,7 +353,7 @@ const ScheduleContent = () => {
               <input
                 name="date"
                 type="date"
-                defaultValue={selectedDate}
+                defaultValue={editingAppointment ? new Date(editingAppointment.appointmentDate).toISOString().split('T')[0] : selectedDate}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2"
                 required
               />
@@ -307,6 +363,7 @@ const ScheduleContent = () => {
               <input
                 name="startTime"
                 type="time"
+                defaultValue={editingAppointment?.startTime || ''}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2"
                 required
               />
@@ -314,6 +371,7 @@ const ScheduleContent = () => {
               <input
                 name="endTime"
                 type="time"
+                defaultValue={editingAppointment?.endTime || ''}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2"
                 required
               />
@@ -323,7 +381,7 @@ const ScheduleContent = () => {
               <select
                 name="type"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                defaultValue="follow-up"
+                defaultValue={editingAppointment?.sessionType || 'follow-up'}
               >
                 <option value="initial">Initial</option>
                 <option value="follow-up">Follow-up</option>
@@ -335,6 +393,7 @@ const ScheduleContent = () => {
               <textarea
                 name="notes"
                 placeholder="Add any notes..."
+                defaultValue={editingAppointment?.notes || ''}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2"
               />
 
@@ -343,7 +402,7 @@ const ScheduleContent = () => {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+                  className="px-4 py-2 bg-gray-300 text-gray-800 font-medium rounded-lg hover:bg-gray-400 transition-colors"
                 >
                   Cancel
                 </button>
@@ -351,15 +410,26 @@ const ScheduleContent = () => {
                   type="submit"
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
-                  Create
+                  {editingAppointment ? 'Update' : 'Create'}
                 </button>
               </div>
             </form>
           </div>
+        </div>,
+        document.body
+      )}
+      
+      {/* Toast Notification */}
+      {toast.message && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast({ message: '', type: 'info' })}
+          />
         </div>
       )}
     </div>
-
   );
 };
 

@@ -18,7 +18,8 @@ import {
   Camera,
   Mic,
   MicOff,
-  VideoOff
+  VideoOff,
+  Bell
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -180,6 +181,183 @@ const RequestForm = ({ issueDetails, loading, requestSession, handleIssueDetails
         )}
       </button>
     </div>
+  </motion.div>
+);
+
+// Appointments Display Component
+const AppointmentsDisplay = ({ appointments, loading }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="bg-slate-900/80 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-700 p-6 mb-6"
+  >
+    <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center space-x-3">
+        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+          <Calendar className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h3 className="text-xl font-semibold text-white">Scheduled Appointments</h3>
+          <p className="text-sm text-slate-400">Your upcoming counseling sessions</p>
+        </div>
+      </div>
+    </div>
+
+    {loading ? (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
+      </div>
+    ) : (() => {
+      // Filter appointments to only show scheduled ones after current time
+      const now = new Date();
+      const upcoming = (appointments || []).filter((appointment) => {
+        if (!appointment) return false;
+        if (appointment.status !== 'scheduled') return false;
+
+        const appointmentDate = new Date(appointment.appointmentDate);
+        if (isNaN(appointmentDate)) return false;
+
+        // Parse end time "HH:MM" for today's appointments
+        const today = new Date();
+        const isToday = appointmentDate.toDateString() === today.toDateString();
+        
+        if (isToday) {
+          // For today's appointments, check if end time hasn't passed
+          if (!appointment.endTime || !/^[0-2]?\d:\d{2}$/.test(appointment.endTime)) return false;
+          const [endH, endM] = appointment.endTime.split(':').map((x) => parseInt(x, 10));
+          const appointmentEndTime = new Date(appointmentDate);
+          appointmentEndTime.setHours(endH, endM, 0, 0);
+          
+          return appointmentEndTime.getTime() > now.getTime();
+        } else {
+          // For future dates, check if start time is after now
+          if (!appointment.startTime || !/^[0-2]?\d:\d{2}$/.test(appointment.startTime)) return false;
+          const [h, m] = appointment.startTime.split(':').map((x) => parseInt(x, 10));
+          appointmentDate.setHours(h, m, 0, 0);
+          
+          return appointmentDate.getTime() > now.getTime();
+        }
+      });
+
+      return upcoming.length > 0 ? (
+        <div className="space-y-4">
+          {upcoming.map((appointment, index) => {
+          const appointmentDate = new Date(appointment.appointmentDate);
+          const today = new Date();
+          const isToday = appointmentDate.toDateString() === today.toDateString();
+          const isPast = appointmentDate < today && !isToday;
+          
+          return (
+            <motion.div
+              key={appointment._id}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className={`relative overflow-hidden rounded-xl border ${
+                isPast 
+                  ? 'bg-slate-800/50 border-slate-600/50' 
+                  : isToday 
+                    ? 'bg-gradient-to-r from-blue-900/50 to-indigo-900/50 border-blue-500/50' 
+                    : 'bg-slate-800 border-slate-700'
+              } p-4 hover:border-blue-500/50 transition-all`}
+            >
+              {isToday && (
+                <div className="absolute top-2 right-2">
+                  <div className="flex items-center space-x-1 bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                    <Clock className="w-3 h-3" />
+                    <span>Today</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center shadow-lg">
+                      <User className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-white text-lg">
+                        {appointment.counsellorId?.fullName || 'Counselor'}
+                      </h4>
+                      <p className="text-sm text-slate-400">
+                        {appointment.counsellorId?.specialization || 'Mental Health Professional'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 mt-4">
+                    <div className="flex items-center space-x-2 text-slate-300">
+                      <Calendar className="w-4 h-4 text-blue-400" />
+                      <div>
+                        <p className="text-xs text-slate-500">Date</p>
+                        <p className="font-medium">
+                          {appointmentDate.toLocaleDateString('en-US', { 
+                            weekday: 'short', 
+                            month: 'short', 
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2 text-slate-300">
+                      <Clock className="w-4 h-4 text-emerald-400" />
+                      <div>
+                        <p className="text-xs text-slate-500">Time</p>
+                        <p className="font-medium">
+                          {appointment.startTime} - {appointment.endTime}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2 text-slate-300">
+                      <FileText className="w-4 h-4 text-purple-400" />
+                      <div>
+                        <p className="text-xs text-slate-500">Session Type</p>
+                        <p className="font-medium capitalize">
+                          {appointment.sessionType || 'Follow-up'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2 text-slate-300">
+                      <CheckCircle className={`w-4 h-4 ${
+                        appointment.status === 'scheduled' ? 'text-green-400' :
+                        appointment.status === 'completed' ? 'text-blue-400' :
+                        appointment.status === 'cancelled' ? 'text-red-400' :
+                        'text-amber-400'
+                      }`} />
+                      <div>
+                        <p className="text-xs text-slate-500">Status</p>
+                        <p className="font-medium capitalize">
+                          {appointment.status}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {appointment.notes && (
+                    <div className="mt-4 bg-slate-700/50 rounded-lg p-3 border border-slate-600">
+                      <p className="text-xs text-slate-400 mb-1">Notes</p>
+                      <p className="text-sm text-slate-200">{appointment.notes}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          );
+          })}
+        </div>
+      ) : (
+        <div className="text-center py-12 bg-slate-800 rounded-xl border-2 border-dashed border-slate-700">
+          <Calendar className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+          <p className="text-slate-400 mb-2">No upcoming scheduled appointments</p>
+          <p className="text-sm text-slate-500">Only future scheduled appointments are shown here</p>
+        </div>
+      );
+    })()}
   </motion.div>
 );
 
@@ -632,9 +810,18 @@ const FeedbackForm = ({
 );
 
 // Session history component
-const SessionHistory = ({ sessions, isLoadingSessions }) => (
-  <div className="space-y-4">
-    {isLoadingSessions ? (
+const SessionHistory = ({ sessions, isLoadingSessions }) => {
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [selectedNotes, setSelectedNotes] = useState('');
+
+  const handleViewNotes = (notes) => {
+    setSelectedNotes(notes);
+    setShowNotesModal(true);
+  };
+
+  return (
+    <div className="space-y-4">
+      {isLoadingSessions ? (
       <div className="flex flex-col items-center justify-center py-12">
         <Loader2 className="w-8 h-8 text-emerald-400 animate-spin mb-4" />
         <p className="text-slate-400">Loading your sessions...</p>
@@ -655,22 +842,37 @@ const SessionHistory = ({ sessions, isLoadingSessions }) => (
                 <p className="text-sm text-slate-400">{session.counselor?.specialization || session.counselorSpecialization || 'General'}</p>
               </div>
               <div className="text-right">
+                <span className="text-xs text-slate-500 block mb-1">
+                  {new Date(session.createdAt).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                  })}
+                </span>
                 {session.rating && (
-                  <div className="flex items-center space-x-1 text-amber-400 mb-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className={`w-3 h-3 ${i < session.rating ? 'fill-current' : 'text-slate-600'}`} />
-                    ))}
+                  <div className="flex items-center justify-end space-x-1">
+                    <Star className="w-3 h-3 text-amber-400 fill-current" />
+                    <span className="text-xs text-slate-400">{session.rating}/5</span>
                   </div>
                 )}
-                <span className="text-xs text-slate-500">
-                  {new Date(session.createdAt).toLocaleDateString()}
-                </span>
               </div>
             </div>
             
             <p className="text-sm text-slate-300 mb-2 line-clamp-2">
               <span className="font-medium">Discussed:</span> {session.issueDetails}
             </p>
+            
+            {session.userNotes && (
+              <div className="flex justify-center mb-2">
+                <button
+                  onClick={() => handleViewNotes(session.userNotes)}
+                  className="flex items-center space-x-2 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>View Notes</span>
+                </button>
+              </div>
+            )}
             
             {session.notes && (
               <p className="text-sm text-slate-400 bg-slate-700 rounded-lg p-2 line-clamp-2">
@@ -687,8 +889,34 @@ const SessionHistory = ({ sessions, isLoadingSessions }) => (
         <p className="text-sm text-slate-500">Your session history will appear here</p>
       </div>
     )}
+
+    {/* Notes Modal */}
+    {showNotesModal && (
+      <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setShowNotesModal(false)}>
+        <div className="bg-slate-800 rounded-xl p-6 max-w-2xl w-full border border-slate-700 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <FileText className="w-5 h-5 text-blue-400" />
+              <h3 className="text-xl font-semibold text-white">Session Notes</h3>
+            </div>
+            <button
+              onClick={() => setShowNotesModal(false)}
+              className="text-slate-400 hover:text-white transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="bg-slate-900 rounded-lg p-4 border border-slate-700 max-h-96 overflow-y-auto">
+            <p className="text-slate-200 whitespace-pre-wrap">{selectedNotes}</p>
+          </div>
+        </div>
+      </div>
+    )}
   </div>
 );
+};
 
 const VideoChat = () => {
   const navigate = useNavigate();
@@ -714,6 +942,8 @@ const VideoChat = () => {
   const [toast, setToast] = useState({ message: "", type: "info" });
   const [activeSession, setActiveSession] = useState(null);
   const [rejoinLoading, setRejoinLoading] = useState(false);
+  const [appointments, setAppointments] = useState([]);
+  const [isLoadingAppointments, setIsLoadingAppointments] = useState(false);
 
   // Get user ID from token or storage
   const getUserId = useCallback(() => {
@@ -818,6 +1048,36 @@ const VideoChat = () => {
       return;
     }
 
+    // Check for last counselor progress before making request
+    try {
+      const token = sessionStorage.getItem('accessToken');
+      if (!token) {
+        setError('Authentication token not found. Please login again.');
+        return;
+      }
+
+      const progressRes = await axios.get(
+        `${import.meta.env.VITE_BASE_API_URL}/users/last-counselor-progress`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      if (progressRes.data.hasProgress) {
+        // Show counselor choice modal
+        setLastCounselor(progressRes.data.counselor);
+        setShowCounselorChoice(true);
+        return; // Don't proceed with request yet
+      }
+    } catch (e) {
+      // If check fails, proceed with request
+      console.log('No previous counselor progress found, proceeding with request');
+    }
+
+    // Proceed with actual session request
+    await proceedWithSessionRequest();
+  }, [issueDetails]);
+
+  // Separate function to actually make the session request
+  const proceedWithSessionRequest = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -875,6 +1135,23 @@ const VideoChat = () => {
       console.error('Error fetching sessions:', error);
     } finally {
       setIsLoadingSessions(false);
+    }
+  }, []);
+
+  const fetchAppointments = useCallback(async () => {
+    setIsLoadingAppointments(true);
+    
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/users/appointments`, {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+        },
+      });
+      setAppointments(response.data.appointments || []);
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+    } finally {
+      setIsLoadingAppointments(false);
     }
   }, []);
 
@@ -989,26 +1266,9 @@ const VideoChat = () => {
     fetchSessions(); // Refresh sessions
   }, [fetchSessions]);
 
-  // On mount, check for last counselor progress and active session
+  // On mount, check for active session only
   useEffect(() => {
-    const checkProgress = async () => {
-      try {
-        const token = sessionStorage.getItem('accessToken');
-        const res = await axios.get(
-          `${import.meta.env.VITE_BASE_API_URL}/users/last-counselor-progress`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (res.data.hasProgress) {
-          setLastCounselor(res.data.counselor);
-          setShowCounselorChoice(true);
-        }
-      } catch (e) {
-        // ignore
-      }
-    };
-    
-    checkProgress();
-    checkActiveSession(); // Check for active session
+    checkActiveSession();
   }, [checkActiveSession]);
 
   // Handler for user choice
@@ -1034,6 +1294,9 @@ const VideoChat = () => {
           type: "success"
         });
       }
+      
+      // Proceed with the session request after choice is made
+      await proceedWithSessionRequest();
     } catch (e) {
       setToast({ message: "Error updating counselor progress.", type: "error" });
     }
@@ -1042,6 +1305,7 @@ const VideoChat = () => {
   // Effects
   useEffect(() => {
     fetchSessions();
+    fetchAppointments();
     
     const handleSessionsUpdated = () => {
       fetchSessions();
@@ -1052,7 +1316,7 @@ const VideoChat = () => {
     return () => {
       socket.off('sessionsUpdated', handleSessionsUpdated);
     };
-  }, [fetchSessions, socket]);
+  }, [fetchSessions, fetchAppointments, socket]);
 
   useEffect(() => {
     if (!session || session.status === 'Active') return;
@@ -1162,6 +1426,12 @@ const VideoChat = () => {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Session Area */}
           <div className="lg:col-span-2">
+            {/* Appointments Display */}
+            <AppointmentsDisplay 
+              appointments={appointments} 
+              loading={isLoadingAppointments}
+            />
+            
             <div className="bg-slate-900/80 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-700 p-6 lg:p-8">
               <AnimatePresence mode="wait">
                 {error && (

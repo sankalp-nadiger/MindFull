@@ -1,12 +1,62 @@
-import React, { useState, memo, useCallback } from "react";
-import { Bot, User, LogOut } from 'lucide-react';
+import React, { useState, memo, useCallback, useEffect } from "react";
+import { Bot, User, LogOut, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import Chatbox from "../pages/Chatbot";
+import axios from 'axios';
 
 const Navbar = memo(({ onStoryClick }) => {
   const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [hasTodayAppointment, setHasTodayAppointment] = useState(false);
+
+  // Check for today's appointments
+  const checkTodaysAppointments = useCallback(async () => {
+    try {
+      const token = sessionStorage.getItem("accessToken");
+      if (!token) return;
+
+      const response = await axios.get(
+        `${import.meta.env.VITE_BASE_API_URL}/users/appointments/today`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.appointments && response.data.appointments.length > 0) {
+        const now = new Date();
+        
+        // Filter appointments that haven't ended yet AND user hasn't joined
+        const activeAppointments = response.data.appointments.filter(appointment => {
+          if (!appointment.endTime || !/^[0-2]?\d:\d{2}$/.test(appointment.endTime)) return false;
+          
+          const appointmentDate = new Date(appointment.appointmentDate);
+          const [endH, endM] = appointment.endTime.split(':').map(x => parseInt(x, 10));
+          appointmentDate.setHours(endH, endM, 0, 0);
+          
+          // Show clock icon if end time hasn't passed AND user hasn't joined
+          return appointmentDate.getTime() > now.getTime() && !appointment.userJoined;
+        });
+        
+        setHasTodayAppointment(activeAppointments.length > 0);
+      } else {
+        setHasTodayAppointment(false);
+      }
+    } catch (error) {
+      console.error('Error checking today\'s appointments:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkTodaysAppointments();
+    
+    // Check every 5 minutes
+    const interval = setInterval(checkTodaysAppointments, 5 * 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }, [checkTodaysAppointments]);
 
   const handleLogout = useCallback(async () => {
     const token = sessionStorage.getItem("accessToken");
@@ -74,7 +124,7 @@ const Navbar = memo(({ onStoryClick }) => {
                 { href: "/community", text: t('navigation.community') },
                 { href: "/activity", text: t('navigation.activities') },
                 { href: "/journals", text: t('navigation.journals') },
-                { href: "/video", text: t('navigation.counselor') },
+                { href: "/video", text: t('navigation.counselor'), showBadge: hasTodayAppointment },
                 { href: "/Leaderboard", text: t('navigation.leaderboard') }
               ].map((item, index) => (
                 <a 
@@ -83,7 +133,15 @@ const Navbar = memo(({ onStoryClick }) => {
                   href={item.href}
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
-                  <span className="relative z-10">{item.text}</span>
+                  <span className="relative z-10 flex items-center gap-2">
+                    {item.text}
+                    {item.showBadge && (
+                      <span className="relative flex items-center justify-center">
+                        <Clock className="w-4 h-4 text-blue-400 animate-pulse" />
+                        <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75 animate-ping"></span>
+                      </span>
+                    )}
+                  </span>
                   <div className="absolute inset-0 transition-all duration-300 rounded-lg bg-gradient-to-r from-blue-500/0 via-blue-500/0 to-green-500/0 group-hover:from-blue-500/25 group-hover:via-blue-500/15 group-hover:to-green-500/10"></div>
                   <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-400 to-green-400 group-hover:w-full transition-all duration-300"></div>
                 </a>
@@ -111,7 +169,7 @@ const Navbar = memo(({ onStoryClick }) => {
                 { href: "/community", text: t('navigation.community') },
                 { href: "/activity", text: t('navigation.activities') },
                 { href: "/journals", text: t('navigation.journals') },
-                { href: "/video", text: t('navigation.counselor') },
+                { href: "/video", text: t('navigation.counselor'), showBadge: hasTodayAppointment },
                 { href: "/Leaderboard", text: t('navigation.leaderboard') }
               ].map((item, index) => (
                 <a 
@@ -120,7 +178,15 @@ const Navbar = memo(({ onStoryClick }) => {
                   href={item.href}
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
-                  <span className="relative z-10">{item.text}</span>
+                  <span className="relative z-10 flex items-center justify-center gap-2">
+                    {item.text}
+                    {item.showBadge && (
+                      <span className="relative flex items-center justify-center">
+                        <Clock className="w-4 h-4 text-blue-400 animate-pulse" />
+                        <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75 animate-ping"></span>
+                      </span>
+                    )}
+                  </span>
                   <div className="absolute inset-0 transition-all duration-300 rounded-lg bg-gradient-to-r from-blue-500/0 via-blue-500/0 to-green-500/0 group-hover:from-blue-500/25 group-hover:via-blue-500/15 group-hover:to-green-500/10"></div>
                 </a>
               ))}
