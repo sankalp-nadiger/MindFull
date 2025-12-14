@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, BookOpen, Plus, RefreshCw, Lock, Unlock, Sparkles, Lightbulb, ArrowLeft, Calendar, Smile, Meh, Frown, Moon, Sun } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const JournalApp = () => {
+  const { t } = useTranslation();
   const [currentView, setCurrentView] = useState('view');
   const [entryText, setEntryText] = useState('');
   const [topic, setTopic] = useState('');
@@ -224,7 +226,7 @@ const JournalApp = () => {
       <div className="flex items-center justify-between">
         <label className={`font-medium flex items-center gap-2 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
           <Heart className="w-4 h-4 text-rose-500" />
-          How are you feeling today?
+          {t('journal.howFeeling')}
         </label>
         <div className="flex items-center gap-2">
           <span className="text-2xl">{getMoodEmoji(value)}</span>
@@ -242,9 +244,9 @@ const JournalApp = () => {
           className="w-full h-3 bg-gradient-to-r from-red-200 via-yellow-200 to-emerald-200 rounded-lg appearance-none cursor-pointer slider"
         />
         <div className={`flex justify-between text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-          <span className="flex items-center gap-1"><Frown className="w-3 h-3" />Low</span>
-          <span className="flex items-center gap-1"><Meh className="w-3 h-3" />Okay</span>
-          <span className="flex items-center gap-1"><Smile className="w-3 h-3" />Great</span>
+          <span className="flex items-center gap-1"><Frown className="w-3 h-3" />{t('journal.low')}</span>
+          <span className="flex items-center gap-1"><Meh className="w-3 h-3" />{t('journal.okay')}</span>
+          <span className="flex items-center gap-1"><Smile className="w-3 h-3" />{t('journal.great')}</span>
         </div>
       </div>
     </div>
@@ -270,8 +272,8 @@ const JournalApp = () => {
             <div className="w-20 h-20 bg-gradient-to-br from-indigo-900 to-purple-900 rounded-full flex items-center justify-center mx-auto mb-6">
               <Heart className="w-10 h-10 text-indigo-400" />
             </div>
-            <h2 className="text-2xl font-bold text-slate-200 mb-3">Welcome to Your Wellness Journal</h2>
-            <p className="text-slate-400">Choose your preferred theme to get started</p>
+            <h2 className="text-2xl font-bold text-slate-200 mb-3">{t('journal.themeModal.welcome')}</h2>
+            <p className="text-slate-400">{t('journal.themeModal.chooseTheme')}</p>
           </div>
           
           <div className="space-y-4">
@@ -283,8 +285,8 @@ const JournalApp = () => {
                 <Sun className="w-6 h-6 text-amber-600" />
               </div>
               <div className="text-left">
-                <h3 className="font-semibold text-slate-800">Light Mode</h3>
-                <p className="text-sm text-slate-600">Bright and clean interface</p>
+                <h3 className="font-semibold text-slate-800">{t('journal.themeModal.lightMode')}</h3>
+                <p className="text-sm text-slate-600">{t('journal.themeModal.lightDesc')}</p>
               </div>
             </button>
             
@@ -296,8 +298,8 @@ const JournalApp = () => {
                 <Moon className="w-6 h-6 text-indigo-400" />
               </div>
               <div className="text-left">
-                <h3 className="font-semibold text-slate-200">Dark Mode</h3>
-                <p className="text-sm text-slate-400">Easy on the eyes, perfect for evening use</p>
+                <h3 className="font-semibold text-slate-200">{t('journal.themeModal.darkMode')}</h3>
+                <p className="text-sm text-slate-400">{t('journal.themeModal.darkDesc')}</p>
               </div>
             </button>
           </div>
@@ -335,7 +337,7 @@ const JournalApp = () => {
               className="flex items-center justify-center gap-1 sm:gap-2 text-gray-900 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
-              <span className="hidden sm:block text-sm font-medium sm:text-base">Back to Dashboard</span>
+              <span className="hidden sm:block text-sm font-medium sm:text-base">{t('journal.backToDashboard')}</span>
             </Link>
 
             {/* Center: Title */}
@@ -343,12 +345,12 @@ const JournalApp = () => {
               <h1 className={`hidden md:block text-3xl font-bold ${
                 darkMode ? 'text-white' : 'text-slate-800'
               }`}>
-                My Wellness Journal
+                {t('journal.myWellnessJournal')}
               </h1>
               <h1 className={`md:hidden text-2xl font-bold ${
                 darkMode ? 'text-white' : 'text-slate-800'
               }`}>
-                Journal
+                {t('journal.title')}
               </h1>
             </div>
 
@@ -380,7 +382,7 @@ const JournalApp = () => {
               }`}
             >
               <BookOpen className="w-4 h-4" />
-              <span className="font-medium">View Entries</span>
+              <span className="font-medium">{t('journal.viewEntries')}</span>
             </button>
             <button
               onClick={() => setCurrentView('create')}
@@ -416,7 +418,7 @@ const JournalApp = () => {
               ></div>
               
               <Plus className="w-4 h-4 relative z-10 text-white" />
-              <span className="font-medium relative z-10 text-white">New Entry</span>
+              <span className="font-medium relative z-10 text-white">{t('journal.newEntry')}</span>
             </button>
           </div>
 
@@ -438,7 +440,7 @@ const JournalApp = () => {
                 }`}
               >
                 <BookOpen className="w-4 h-4" />
-                <span className="font-medium text-sm">View</span>
+                <span className="font-medium text-sm">{t('journal.view')}</span>
               </button>
               <button
                 onClick={() => setCurrentView('create')}
@@ -453,7 +455,7 @@ const JournalApp = () => {
                 }`}
               >
                 <Plus className="w-4 h-4" />
-                <span className="font-medium text-sm">Create</span>
+                <span className="font-medium text-sm">{t('journal.create')}</span>
               </button>
             </div>
           </div>
@@ -467,8 +469,8 @@ const JournalApp = () => {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className={`text-3xl font-bold mb-2 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>Your Journal Entries</h2>
-                <p className={darkMode ? 'text-slate-400' : 'text-slate-600'}>A safe space for your thoughts and feelings</p>
+                <h2 className={`text-3xl font-bold mb-2 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{t('journal.yourEntries')}</h2>
+                <p className={darkMode ? 'text-slate-400' : 'text-slate-600'}>{t('journal.safeSpace')}</p>
               </div>
               <button
                 onClick={fetchJournalEntries}
@@ -480,7 +482,7 @@ const JournalApp = () => {
                 }`}
               >
                 <RefreshCw className={`w-4 h-4 ${loadingEntries ? 'animate-spin' : ''}`} />
-                Refresh
+                {t('journal.refresh')}
               </button>
             </div>
 
@@ -505,7 +507,7 @@ const JournalApp = () => {
     <p className={`text-sm mt-3 font-medium ${
       darkMode ? 'text-slate-400' : 'text-slate-500'
     }`}>
-      Loading entries...
+      {t('journal.loadingEntries')}
     </p>
   </div>
 ) : journalEntries.length === 0 ? (
@@ -517,9 +519,9 @@ const JournalApp = () => {
                 }`}>
                   <BookOpen className={`w-10 h-10 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`} />
                 </div>
-                <h3 className={`text-xl font-semibold mb-2 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>Start Your Wellness Journey</h3>
+                <h3 className={`text-xl font-semibold mb-2 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{t('journal.startJourney')}</h3>
                 <p className={`mb-6 max-w-md mx-auto ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                  Your journal is empty. Begin by creating your first entry to track your thoughts and emotions.
+                  {t('journal.emptyMessage')}
                 </p>
                <button
   onClick={() => setCurrentView('create')}
@@ -538,7 +540,7 @@ const JournalApp = () => {
   ></div>
   
   <Plus className="w-5 h-5 relative z-10" />
-  <span className="relative z-10">Create Your First Entry</span>
+  <span className="relative z-10">{t('journal.createFirst')}</span>
 </button>
               </div>
             ) : (
@@ -584,9 +586,9 @@ const JournalApp = () => {
                           }`}>
                             <Lock className={`w-8 h-8 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`} />
                           </div>
-                          <h4 className={`font-semibold mb-2 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>Protected Entry</h4>
+                          <h4 className={`font-semibold mb-2 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{t('journal.protectedEntry')}</h4>
                           <p className={`mb-4 max-w-sm mx-auto ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                            This entry contains sensitive content and is securely locked for your privacy and wellbeing.
+                            {t('journal.sensitiveContent')}
                           </p>
                           <button
                             onClick={() => handleUnlockEntry(entry.id)}
@@ -597,7 +599,7 @@ const JournalApp = () => {
                             }`}
                           >
                             <Unlock className="w-4 h-4" />
-                            Unlock Entry
+                            {t('journal.unlockEntry')}
                           </button>
                         </div>
                       ) : (
@@ -615,8 +617,8 @@ const JournalApp = () => {
           // Create Entry Section
           <div className="max-w-3xl mx-auto">
             <div className="mb-8">
-              <h2 className={`text-3xl font-bold mb-2 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>Create New Entry</h2>
-              <p className={darkMode ? 'text-slate-400' : 'text-slate-600'}>Take a moment to reflect on your thoughts and feelings</p>
+              <h2 className={`text-3xl font-bold mb-2 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{t('journal.createNewEntry')}</h2>
+              <p className={darkMode ? 'text-slate-400' : 'text-slate-600'}>{t('journal.reflectMoment')}</p>
             </div>
 
             <div className={`rounded-2xl shadow-sm border p-8 space-y-8 ${
@@ -628,13 +630,13 @@ const JournalApp = () => {
               <div className="space-y-3">
                 <label className={`font-medium flex items-center gap-2 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
                   <Lightbulb className="w-4 h-4 text-amber-500" />
-                  What's on your mind today?
+                  {t('journal.whatsOnMind')}
                 </label>
                 <input
                   type="text"
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
-                  placeholder="e.g., Work stress, Family time, Personal growth..."
+                  placeholder={t('journal.topicPlaceholder')}
                   className={`w-full p-4 border rounded-lg transition-all focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
                     darkMode 
                       ? 'bg-slate-700 border-slate-600 text-slate-200 placeholder-slate-400' 
@@ -650,12 +652,12 @@ const JournalApp = () => {
               <div className="space-y-3">
                 <label className={`font-medium flex items-center gap-2 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
                   <BookOpen className="w-4 h-4 text-indigo-500" />
-                  Share your thoughts
+                  {t('journal.shareThoughts')}
                 </label>
                 <textarea
                   value={entryText}
                   onChange={(e) => setEntryText(e.target.value)}
-                  placeholder="This is your safe space. Write freely about your experiences, feelings, challenges, or victories. There's no right or wrong way to express yourself here..."
+                  placeholder={t('journal.textPlaceholder')}
                   className={`w-full p-4 border rounded-lg resize-none transition-all focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
                     darkMode 
                       ? 'bg-slate-700 border-slate-600 text-slate-200 placeholder-slate-400' 
@@ -664,7 +666,7 @@ const JournalApp = () => {
                   rows="10"
                 />
                 <div className={`text-right text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                  {entryText.length} characters
+                  {entryText.length} {t('journal.characters')}
                 </div>
               </div>
 
@@ -678,12 +680,12 @@ const JournalApp = () => {
                   {loadingSave ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Saving...
+                      {t('journal.saving')}
                     </>
                   ) : (
                     <>
                       <Heart className="w-4 h-4" />
-                      Save Entry
+                      {t('journal.saveEntry')}
                     </>
                   )}
                 </button>
@@ -696,12 +698,12 @@ const JournalApp = () => {
                   {loadingAI ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Getting Help...
+                      {t('journal.gettingHelp')}
                     </>
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4" />
-                      Get AI Support
+                      {t('journal.getAISupport')}
                     </>
                   )}
                 </button>
@@ -714,12 +716,12 @@ const JournalApp = () => {
                   {loadingTopics ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Loading...
+                      {t('common.loading')}
                     </>
                   ) : (
                     <>
                       <Lightbulb className="w-4 h-4" />
-                      Topic Ideas
+                      {t('journal.topicIdeas')}
                     </>
                   )}
                 </button>
@@ -730,7 +732,7 @@ const JournalApp = () => {
                 <div className="mt-8 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-6">
                   <h4 className="font-semibold text-purple-800 mb-4 flex items-center gap-2">
                     <Sparkles className="w-5 h-5" />
-                    AI Writing Support
+                    {t('journal.aiWritingSupport')}
                   </h4>
                   <div className="text-slate-700 leading-relaxed">
                     {typeof aiSuggestions === "string" ? (
@@ -784,7 +786,7 @@ const JournalApp = () => {
                 <div className="mt-8 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-6">
                   <h4 className="font-semibold text-amber-800 mb-4 flex items-center gap-2">
                     <Lightbulb className="w-5 h-5" />
-                    Writing Prompts for You
+                    {t('journal.writingPrompts')}
                   </h4>
                   <div className="grid gap-3">
                     {suggestedTopics.map((topic, index) => {

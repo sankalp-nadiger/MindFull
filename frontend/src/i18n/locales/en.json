@@ -141,6 +141,124 @@
     "leaderboard": "Leaderboard",
     "quickActions": "Quick Actions"
   },
+  "mainPage": {
+    "taskMaster": {
+      "title": "TaskMaster",
+      "subtitle": "Your Smart To-Do List Assistant",
+      "description": "Organize, prioritize, and complete your tasks efficiently. Keep track of progress, manage deadlines, and stay on top of your goals.",
+      "button": "Manage Tasks"
+    },
+    "visionFull": {
+      "title": "VisionFull",
+      "subtitle": "Visualize Your Dreams Into Reality",
+      "description": "Create digital vision boards that inspire and motivate. Collect images, quotes, and aspirations that help manifest your goals and dreams.",
+      "button": "Create Vision Board"
+    },
+    "musicWorld": {
+      "title": "Welcome to Your Music World",
+      "description": "Dive into a world of soothing melodies and rhythmic beats. Explore our Soulynk library of music and let the tunes play on.",
+      "button": "Open Music Player"
+    },
+    "soulScape": {
+      "title": "SoulScape",
+      "subtitle": "Play fun games to relax your mind"
+    },
+    "games": {
+      "quickWit": {
+        "title": "QuickWit Quiz",
+        "description": "Challenge yourself with questions designed to boost your mental clarity and calm.",
+        "button": "Start Game"
+      },
+      "memoryCards": {
+        "title": "Memory Cards",
+        "description": "Unlock your mind's potential with every match",
+        "button": "Start Game"
+      },
+      "comingSoon": {
+        "title": "Coming soon",
+        "description": "New games and exercises are on their way to keep your mind sharp and engaged.",
+        "button": "Stay Tuned"
+      }
+    },
+    "scoreboard": {
+      "button": "View Scoreboard"
+    }
+  },
+  "exercises": {
+    "title": "Serenity Sessions",
+    "subtitle": "Exercises for Mind and Body",
+    "kumbhaka": {
+      "title": "Kumbhaka",
+      "description": "A great exercise to help in improving lung capacity, oxygen intake, and can promote relaxation and mental clarity.",
+      "button": "Start Exercise"
+    },
+    "boxBreathing": {
+      "title": "Box breathing",
+      "description": "A simple yet effective way to calm the nervous system, manage stress, and improve focus by activating the parasympathetic nervous system.",
+      "button": "Start Exercise"
+    },
+    "mahamrityunjaya": {
+      "title": "Mahamrityunjaya Breathing",
+      "description": "Inhaling and exhaling through one nostril for each part of the mantra as part of a Nadi Shodhana Pranayama practice",
+      "button": "Start Exercise"
+    },
+    "comingSoon": {
+      "title": "Coming Soon",
+      "description": "Stay tuned! A fun cardio exercise that will get your heart pumping and your body moving."
+    }
+  },
+  "activity": {
+    "title": "Your To-Do today",
+    "tasksToday": "Tasks Today",
+    "now": "NOW",
+    "anytime": "Anytime",
+    "noTasks": {
+      "title": "No Tasks Scheduled",
+      "description": "Your day is clear! Add a task to start optimizing your time.",
+      "button": "Add Task Now"
+    },
+    "allCaughtUp": {
+      "title": "All Caught Up!",
+      "description": "No more tasks scheduled for today. Great work!"
+    },
+    "loading": "Loading tasks...",
+    "timeFormat": {
+      "minutes": "in {{mins}}m",
+      "hours": "in {{hours}}h {{mins}}m"
+    }
+  },
+  "posts": {
+    "memories": {
+      "title": "Revisit some happy memories from your journey",
+      "titlePositive": "More joyful moments like today",
+      "titleEmpty": "Start capturing your beautiful moments",
+      "readFull": "Read Full Memory",
+      "placeholder": {
+        "title": "Start Your Memory Journey",
+        "description": "Capture your precious moments and experiences.",
+        "button": "Write Memory"
+      }
+    },
+    "gratitude": {
+      "title": "Community Gratitude",
+      "titleEmpty": "Share Your Gratitude",
+      "gratefulHeart": "Grateful heart",
+      "placeholder": {
+        "title": "Share Your Gratitude",
+        "description": "Spread positivity by sharing what you're grateful for.",
+        "button": "Add Gratitude Post"
+      }
+    },
+    "actions": {
+      "viewJournals": "View All Journals",
+      "shareGratitude": "Share Gratitude"
+    },
+    "loading": "Loading your memories...",
+    "error": "Couldn't load your content"
+  },
+  "hero": {
+    "explore": "Explore"
+  },
   "activities": {
     "title": "Mental Health Activities",
     "description": "Curated activities to support your mental wellness journey",
@@ -165,10 +283,17 @@
       "title": "Welcome to Your Music World",
       "description": "Dive into a world of soothing melodies and rhythmic beats. Explore our mindful library of music and let the tunes play on.",
       "openPlayer": "Open Music Player"
-    }
+    },
+    "showLess": "Show less",
+    "readMore": "Read more",
+    "backToDashboard": "Back to Dashboard",
+    "activitySuggestions": "Activity Suggestions",
+    "discoverActivities": "Discover new activities to enhance your daily routine"
   },
   "journal": {
     "title": "Journal Entry",
+    "myWellnessJournal": "My Wellness Journal",
+    "backToDashboard": "Back to Dashboard",
     "newEntry": "New Entry",
     "viewEntries": "View Entries",
     "writeSomething": "Write something...",
@@ -183,7 +308,44 @@
     "entryPlaceholder": "Share your thoughts, feelings, or experiences today...",
     "topicPlaceholder": "What's on your mind today?",
     "noEntries": "No journal entries yet. Start writing your first entry!",
-    "backToJournals": "Back to Journals"
+    "backToJournals": "Back to Journals",
+    "themeModal": {
+      "welcome": "Welcome to Your Wellness Journal",
+      "chooseTheme": "Choose your preferred theme to get started",
+      "lightMode": "Light Mode",
+      "lightDesc": "Bright and clean interface",
+      "darkMode": "Dark Mode",
+      "darkDesc": "Easy on the eyes, perfect for evening use"
+    },
+    "view": "View",
+    "create": "Create",
+    "yourEntries": "Your Journal Entries",
+    "safeSpace": "A safe space for your thoughts and feelings",
+    "refresh": "Refresh",
+    "loadingEntries": "Loading entries...",
+    "startJourney": "Start Your Wellness Journey",
+    "emptyMessage": "Your journal is empty. Begin by creating your first entry to track your thoughts and emotions.",
+    "createFirst": "Create Your First Entry",
+    "howFeeling": "How are you feeling today?",
+    "low": "Low",
+    "okay": "Okay",
+    "great": "Great",
+    "whatsOnMind": "What's on your mind today?",
+    "shareThoughts": "Share your thoughts",
+    "textPlaceholder": "This is your safe space. Write freely about your experiences, feelings, challenges, or victories. There's no right or wrong way to express yourself here...",
+    "characters": "characters",
+    "saving": "Saving...",
+    "gettingHelp": "Getting Help...",
+    "getAISupport": "Get AI Support",
+    "topicIdeas": "Topic Ideas",
+    "aiWritingSupport": "AI Writing Support",
+    "writingPrompts": "Writing Prompts for You",
+    "protectedEntry": "Protected Entry",
+    "sensitiveContent": "This entry contains sensitive content and is securely locked for your privacy and wellbeing.",
+    "unlockEntry": "Unlock Entry",
+    "savedSuccess": "✨ Your thoughts have been safely saved",
+    "createNewEntry": "Create New Entry",
+    "reflectMoment": "Take a moment to reflect on your thoughts and feelings"
   },
   "games": {
     "quiz": {
@@ -223,7 +385,23 @@
     "share": "Share",
     "discussion": "Discussion",
     "support": "Support Group",
-    "guidelines": "Community Guidelines"
+    "guidelines": "Community Guidelines",
+    "createSupportRoom": "Create Support Room",
+    "joinWithRoomId": "Join with Room ID",
+    "createRoomSubtitle": "Create a safe space for meaningful conversations",
+    "roomName": "Room Name",
+    "roomNamePlaceholder": "e.g., Anxiety Support Group",
+    "description": "Description",
+    "descriptionPlaceholder": "Describe the purpose and guidelines for this room...",
+    "createRoom": "Create Room",
+    "joinRoom": "Join Room",
+    "joinRoomSubtitle": "Enter the room ID to join a specific conversation",
+    "roomId": "Room ID",
+    "roomIdPlaceholder": "Enter the room ID...",
+    "joinConversation": "Join Conversation",
+    "activeNow": "Active now",
+    "noRoomsAvailable": "No rooms available",
+    "beFirstToCreate": "Be the first to create a support room for the community!"
   },
   "counselor": {
     "title": "Counselor Dashboard",
@@ -260,6 +438,54 @@
     "changePassword": "Change Password",
     "deleteAccount": "Delete Account"
   },
+  "userProfile": {
+    "pageTitle": "Your Wellness Profile",
+    "pageSubtitle": "Manage your personal information and wellness preferences",
+    "loadingProfile": "Loading your profile...",
+    "editProfile": "Edit Profile",
+    "saveChanges": "Save Changes",
+    "personalInformation": "Personal Information",
+    "protected": "(Protected)",
+    "enterYour": "Enter your",
+    "wellnessStats": {
+      "wellnessGoals": "Wellness Goals",
+      "interests": "Interests"
+    },
+    "gamePerformance": {
+      "title": "Game Performance",
+      "score": "Score",
+      "totalScore": "Total Score"
+    },
+    "wellnessInterests": {
+      "title": "Wellness Interests & Goals",
+      "goal": "Goal",
+      "addNew": "Add a new wellness interest...",
+      "add": "Add"
+    },
+    "privacy": {
+      "title": "Your Privacy Matters",
+      "message": "All your personal information is encrypted and stored securely. We never share your data with third parties without your explicit consent."
+    },
+    "fields": {
+      "fullName": "Full Name",
+      "email": "Email",
+      "username": "Username",
+      "age": "Age",
+      "gender": "Gender",
+      "phone_no": "Phone No",
+      "parent_phone_no": "Parent Phone No",
+      "totalScore": "Total Score"
+    },
+    "messages": {
+      "profileUpdated": "Profile updated successfully",
+      "updateFailed": "Failed to update profile. Please try again.",
+      "updateError": "There was an error while updating the profile.",
+      "authRequired": "Authentication required.",
+      "addInterestFailed": "Failed to add interest. Please try again.",
+      "addInterestError": "There was an error while adding the interest.",
+      "avatarUpdateFailed": "Failed to update avatar"
+    }
+  },
   "settings": {
     "title": "Settings",
     "language": "Language",
@@ -280,21 +506,309 @@
     "createBoard": "Create Board",
     "startCreating": "Start Creating",
     "backToMainPage": "Back to Main Page",
-    "wellnessTips": "Wellness Tips"
+    "backToDashboard": "Back to Dashboard",
+    "wellnessTips": "Wellness Tips",
+    "drawVisionBoard": "Draw a Vision Board",
+    "light": "Light",
+    "dark": "Dark",
+    "visualizeBelieveAchieve": "Visualize • Believe • Achieve",
+    "delete": "Delete",
+    "noBoardsYet": "No vision boards yet",
+    "createFirstBoard": "Create your first vision board to visualize your goals and dreams",
+    "refresh": "Refresh vision boards",
+    "fileUpload": {
+      "title": "Upload Your Vision Board Image",
+      "clickToSelect": "Click to select an image",
+      "fileTypes": "PNG, JPG, GIF up to 10MB",
+      "createBoard": "Create Vision Board",
+      "preview": "Preview:",
+      "titleLabel": "Title:",
+      "titlePlaceholder": "My Vision Board",
+      "categoryLabel": "Category:",
+      "selectImage": "Please select an image to upload",
+      "enterTitle": "Please enter a title for your vision board",
+      "uploadError": "Failed to upload vision board. Please try again.",
+      "uploading": "Saving...",
+      "saveBoard": "Save Board",
+      "categories": {
+        "health": "Health",
+        "career": "Career",
+        "education": "Education",
+        "relationships": "Relationships",
+        "finance": "Finance",
+        "personalGrowth": "Personal Growth"
+      }
+    },
+    "aiRecommendation": {
+      "title": "AI-Powered Vision Board Suggestions",
+      "categoryPlaceholder": "Enter goal category (e.g., Health, Career, Finance)",
+      "includeImage": "Include AI-Generated Image",
+      "includeQuote": "Include AI-Generated Quote",
+      "generateSuggestions": "Generate AI Suggestions",
+      "generating": "Generating...",
+      "aiSuggestions": "AI Suggestions:",
+      "generatedImage": "Generated Image:",
+      "generatedQuote": "Generated Quote:",
+      "addToBoard": "Add to Vision Board",
+      "enterCategory": "Please enter a goal category",
+      "fetchError": "Failed to generate AI suggestions. Please try again.",
+      "addError": "Failed to add to vision board. Please try again."
+    },
+    "drawingBoard": {
+      "createYourBoard": "Create your Vision Board",
+      "featureUnavailable": "Drawing Feature Unavailable on Mobile",
+      "unavailableMessage": "The Vision Board drawing feature requires a larger screen for the best experience. Please access this feature on a tablet or desktop device.",
+      "viewExistingBoards": "You can still view your existing boards and use the upload/AI features above!"
+    },
+    "info": {
+      "title": "Vision Board Creator",
+      "description": "Create beautiful vision boards to visualize your goals, dreams, and wellness journey. This tool helps you craft digital collages with images, text, and meaningful connections.",
+      "features": {
+        "draw": "Draw & Sketch",
+        "upload": "Upload Images",
+        "aiSuggestions": "AI Suggestions",
+        "customize": "Customize"
+      },
+      "howToUse": "How to use the Canvas",
+      "elementEditing": {
+        "title": "Element Editing",
+        "rightClick": "Right-click any element for quick actions",
+        "changeColors": "Change colors of text, lines, and shapes",
+        "adjustSizes": "Adjust sizes using the context menu",
+        "dragElements": "Drag elements to reposition them",
+        "deleteElements": "Delete elements with right-click menu"
+      },
+      "flexibleToolbar": {
+        "title": "Flexible Toolbar",
+        "dragToolbar": "Drag toolbar anywhere on the screen",
+        "minimize": "Minimize/maximize with the arrow button",
+        "draggable": "Toolbar stays draggable even when minimized",
+        "dragSpace": "Drag from any empty space in the toolbar"
+      },
+      "canvasControls": {
+        "title": "Canvas Controls",
+        "zoom": "Zoom in/out with dedicated buttons",
+        "backgroundColor": "Change background color using palette",
+        "clearBoard": "Clear entire board with one click",
+        "undoRedo": "Undo/redo actions with buttons or keyboard shortcuts"
+      },
+      "drawingTools": {
+        "title": "Drawing Tools",
+        "pen": "Pen tool for freehand drawing",
+        "eraser": "Eraser tool with adjustable size",
+        "flowLines": "Flow lines with straight or curved styles",
+        "lineThickness": "Adjust line thickness for all drawing tools",
+        "customizeColors": "Customize colors for all elements"
+      },
+      "saveExport": {
+        "title": "Save & Export",
+        "saveBoard": "Save board to your account",
+        "exportPNG": "Export as PNG for sharing",
+        "downloadHD": "Download high-resolution images",
+        "returnToWork": "Return to work anytime"
+      },
+      "keyboardShortcuts": "Keyboard Shortcuts",
+      "shortcuts": {
+        "undo": "Undo",
+        "redo": "Redo",
+        "delete": "Delete",
+        "save": "Save",
+        "clearAll": "Clear All",
+        "zoomIn": "Zoom In"
+      },
+      "wellnessTipsTitle": "✨ Wellness Tips",
+      "wellnessTips": {
+        "mindfulCreation": {
+          "title": "🌱 Mindful Creation",
+          "description": "Take deep breaths while creating. Let your intuition guide your vision board design."
+        },
+        "intentionalGoals": {
+          "title": "🎯 Intentional Goals",
+          "description": "Focus on goals that align with your values and bring you genuine joy."
+        },
+        "dailyReflection": {
+          "title": "💫 Daily Reflection",
+          "description": "Spend a few minutes daily looking at your vision board with gratitude."
+        }
+      }
+    },
+    "fullscreen": {
+      "close": "Close fullscreen view",
+      "previous": "Previous board",
+      "next": "Next board",
+      "download": "Download",
+      "navigation": "Use arrow keys or click arrows to navigate • ESC to close"
+    },
+    "theme": {
+      "welcome": "Welcome to Your Vision Space",
+      "chooseTheme": "Choose your preferred theme for a personalized wellness experience",
+      "lightMode": "Light Mode",
+      "lightDesc": "Bright and uplifting interface",
+      "darkMode": "Dark Mode",
+      "darkDesc": "Calming and gentle on the eyes"
+    },
+    "decorativeWords": {
+      "success": "Success",
+      "growth": "Growth",
+      "harmony": "Harmony",
+      "fulfillment": "Fulfillment",
+      "joy": "Joy",
+      "dreams": "Dreams",
+      "peace": "Peace",
+      "hope": "Hope"
+    }
   },
   "todoList": {
-    "title": "TaskMaster: Your Smart To-Do List Assistant",
+    "title": "TaskMaster",
     "description": "Organize, prioritize, and complete your tasks efficiently. Keep track of progress, manage deadlines, and stay on top of your goals.",
-    "viewTasks": "View Tasks",
-    "addTask": "Add Task",
-    "completeTask": "Complete Task",
-    "editTask": "Edit Task",
-    "deleteTask": "Delete Task"
+    "header": {
+      "backToDashboard": "Back to Dashboard",
+      "switchToLight": "Switch to light mode",
+      "switchToDark": "Switch to dark mode",
+      "currentStreak": "Current Streak",
+      "maxStreak": "Max Streak",
+      "days": "days"
+    },
+    "themeModal": {
+      "welcome": "Welcome to Your Task Manager",
+      "chooseTheme": "Choose your preferred theme to get started",
+      "lightMode": "Light Mode",
+      "lightDesc": "Bright and clean interface",
+      "darkMode": "Dark Mode",
+      "darkDesc": "Easy on the eyes, perfect for evening use"
+    },
+    "productivityMessages": {
+      "message1": "Focus on completing 3 important tasks today to boost your productivity!",
+      "message2": "Break down complex tasks into smaller steps for better progress.",
+      "message3": "You're making great progress! Keep the momentum going.",
+      "message4": "Time blocking your tasks can help you achieve more throughout the day.",
+      "message5": "Remember to take short breaks between tasks to maintain focus.",
+      "streakHigh": "You're on fire with a {{count}}-day streak! Incredible consistency!",
+      "streakMedium": "Your {{count}}-day streak shows great dedication. Keep it up!"
+    },
+    "tasks": {
+      "myTasks": "My Tasks",
+      "addTask": "Add Task",
+      "taskName": "Task name",
+      "taskDescription": "Task description",
+      "startTime": "Start Time",
+      "endTime": "End Time",
+      "addNewTask": "Add New Task",
+      "noTasks": "No tasks yet. Add some tasks to get started!",
+      "done": "Done",
+      "undo": "Undo"
+    },
+    "deadlines": {
+      "upcomingDeadlines": "Upcoming Deadlines",
+      "addDeadline": "Add Deadline",
+      "addDeadlineTask": "Add Deadline Task",
+      "deadlineTaskName": "Deadline task name",
+      "deadlineTaskDescription": "Deadline task description",
+      "deadlineDateTime": "Deadline date and time",
+      "noDeadlines": "No deadline tasks. Add some to stay on schedule!",
+      "dueToday": "Due today",
+      "dayLeft": "{{count}} day left",
+      "daysLeft": "{{count}} days left"
+    },
+    "streaks": {
+      "activityStreaks": "Activity Streaks",
+      "currentStreak": "Current Streak",
+      "maxStreak": "Max Streak",
+      "startStreak": "Complete all tasks today to start your streak!",
+      "keepGoing": "Keep going! You're on a {{count}} day streak!"
+    },
+    "aiInsights": {
+      "title": "AI Insights",
+      "refresh": "Refresh",
+      "recommendedTasks": "Recommended Task List:",
+      "adoptPlan": "Adopt This Plan",
+      "noInsights": "Add more tasks to get personalized AI insights!",
+      "errorTitle": "Couldn't generate insights",
+      "errorDescription": "There was a problem analyzing your tasks. Please try again later."
+    }
+  },
+  "leaderboard": {
+    "title": "Global Leaderboard",
+    "topPerformers": "Top Performers",
+    "yourPosition": "Your Position",
+    "rank": "Rank",
+    "points": "Points",
+    "streak": "Streak",
+    "badges": "Badges",
+    "district": "District",
+    "districtStats": "District Statistics",
+    "noBadges": "No badges earned yet",
+    "loading": "Loading leaderboard...",
+    "refresh": "Refresh",
+    "notLoggedIn": "Login to see your position",
+    "globalRanking": "Global Ranking",
+    "maxStreak": "Max Streak",
+    "currentStreak": "Current Streak",
+    "topDistricts": "Top Districts",
+    "avgPoints": "Average",
+    "users": "Users",
+    "max": "Max",
+    "quickTips": "Quick Tips",
+    "tipMessage": "Complete daily challenges, maintain your streak, or help others in community to earn more points!",
+    "atTop": "You're at the top! Keep your streak going!",
+    "pointsToNext": "points to reach rank",
+    "behindLeader": "behind leader",
+    "totalPoints": "total points"
   },
   "example": {
     "demo": "Demo",
     "currentLanguage": "Current Language",
     "title": "Multilingual Example"
+  },
+  "videoChat": {
+    "hipaaCompliant": "HIPAA Compliant",
+    "licensedTherapists": "Licensed Therapists",
+    "endToEndEncrypted": "End-to-End Encrypted",
+    "activeSessionFound": "Active Session Found",
+    "ongoingSessionWith": "You have an ongoing session with {{counselor}}",
+    "aCounselor": "a counselor",
+    "joining": "Joining...",
+    "rejoin": "Rejoin",
+    "dismiss": "Dismiss",
+    "dismissTooltip": "Dismiss and mark session as completed",
+    "startNewSession": "Start New Session",
+    "startHealingJourney": "Start Your Healing Journey",
+    "connectDescription": "Connect with a licensed mental health professional in a safe, private space",
+    "whatBringsYou": "What brings you here today? *",
+    "sharePlaceholder": "Share what's on your mind. This helps us match you with the right counselor...",
+    "confidential": "Your information is completely confidential",
+    "findingCounselor": "Finding Your Counselor...",
+    "requestNewSession": "Request New Session",
+    "scheduledAppointments": "Scheduled Appointments",
+    "upcomingSessions": "Your upcoming counseling sessions",
+    "today": "Today",
+    "noAppointments": "No upcoming scheduled appointments",
+    "onlyFutureShown": "Only future scheduled appointments are shown here",
+    "date": "Date",
+    "time": "Time",
+    "notes": "Notes",
+    "counselor": "Counselor",
+    "mentalHealthProfessional": "Mental Health Professional",
+    "joinCall": "Join Call",
+    "recentSessions": "Recent Sessions",
+    "needImmediateHelp": "Need Immediate Help?",
+    "crisisHotline": "Crisis Hotline",
+    "support24_7": "24/7 Support",
+    "chatSupport": "Chat Support",
+    "getHelpNow": "Get help now"
+  },
+  "floatingChat": {
+    "needSomeoneToTalk": "Need someone to talk to?",
+    "chatWithBot": "Chat with Soulynk Bot",
+    "hereToHelp": "I'm here to help! 💚"
+  },
+  "appointments": {
+    "upcomingSession": "Upcoming Session",
+    "sessionInProgress": "Session in progress",
+    "startingNow": "Starting now!",
+    "oneMinuteToGo": "1 minute to go",
+    "minutesToGo": "{{minutes}} minutes to go",
+    "joinSession": "Join Session"
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",

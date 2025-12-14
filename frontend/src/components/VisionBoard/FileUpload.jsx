@@ -1,8 +1,10 @@
 import React, { useState, useRef } from "react";
 import axios from "axios";
 import { Sparkles } from "lucide-react";
+import { useTranslation } from 'react-i18next';
 
 const FileUpload = ({ userId, fetchVisionBoards, darkMode }) => {
+  const { t } = useTranslation();
   // Define theme classes locally based on darkMode
   const themeClasses = {
     card: darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200',
@@ -24,12 +26,12 @@ const FileUpload = ({ userId, fetchVisionBoards, darkMode }) => {
   const [category, setCategory] = useState("Personal Growth");
 
   const categories = [
-    "Health", 
-    "Career", 
-    "Education", 
-    "Relationships", 
-    "Finance", 
-    "Personal Growth"
+    { value: "Health", label: t('visionBoard.fileUpload.categories.health') },
+    { value: "Career", label: t('visionBoard.fileUpload.categories.career') },
+    { value: "Education", label: t('visionBoard.fileUpload.categories.education') },
+    { value: "Relationships", label: t('visionBoard.fileUpload.categories.relationships') },
+    { value: "Finance", label: t('visionBoard.fileUpload.categories.finance') },
+    { value: "Personal Growth", label: t('visionBoard.fileUpload.categories.personalGrowth') }
   ];
 
   const handleFileChange = (e) => {
@@ -62,12 +64,12 @@ const FileUpload = ({ userId, fetchVisionBoards, darkMode }) => {
     e.preventDefault();
     
     if (!file) {
-      setError("Please select an image to upload");
+      setError(t('visionBoard.fileUpload.selectImage'));
       return;
     }
     
     if (!title.trim()) {
-      setError("Please enter a title for your vision board");
+      setError(t('visionBoard.fileUpload.enterTitle'));
       return;
     }
 
@@ -116,7 +118,7 @@ const FileUpload = ({ userId, fetchVisionBoards, darkMode }) => {
       
     } catch (err) {
       console.error("Upload error:", err);
-      setError("Failed to upload vision board. Please try again.");
+      setError(t('visionBoard.fileUpload.uploadError'));
     } finally {
       setUploading(false);
     }
@@ -138,7 +140,7 @@ return (
         <div className={`px-6 py-2 rounded-xl ${darkMode ? 'bg-indigo-600' : 'bg-blue-600'}`}>
           <h3 className="text-xl font-semibold flex items-center ">
             <Sparkles className="mr-2 w-5 h-5" />
-            Upload Your Vision Board Image
+            {t('visionBoard.fileUpload.title')}
           </h3>
         </div>
       
@@ -165,8 +167,8 @@ return (
           <svg xmlns="http://www.w3.org/2000/svg" className={`h-12 w-12 mb-3 transition-colors ${themeClasses.brandText}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2z" />
 </svg>
-<p className={`text-sm font-medium ${themeClasses.text}`}>Click to select an image</p>
-<p className={`text-xs ${themeClasses.textSecondary} mt-1`}>PNG, JPG, GIF up to 10MB</p>
+<p className={`text-sm font-medium ${themeClasses.text}`}>{t('visionBoard.fileUpload.clickToSelect')}</p>
+<p className={`text-xs ${themeClasses.textSecondary} mt-1`}>{t('visionBoard.fileUpload.fileTypes')}</p>
         </div>
       </div>
     </div>
@@ -175,12 +177,12 @@ return (
     {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className={`rounded-xl shadow-2xl p-6 w-full max-w-xl max-h-[90vh] overflow-auto border ${themeClasses.card}`}>
-          <h2 className={`text-lg font-semibold mb-4 ${themeClasses.text}`}>Create Vision Board</h2>
+          <h2 className={`text-lg font-semibold mb-4 ${themeClasses.text}`}>{t('visionBoard.fileUpload.createBoard')}</h2>
           
           {/* Preview image */}
           {preview && (
             <div className="mb-4">
-              <p className={`text-sm font-medium mb-2 ${themeClasses.textSecondary}`}>Preview:</p>
+              <p className={`text-sm font-medium mb-2 ${themeClasses.textSecondary}`}>{t('visionBoard.fileUpload.preview')}</p>
               <div className={`rounded-lg overflow-hidden border ${
                 darkMode ? 'border-slate-600' : 'border-gray-300'
               }`}>
@@ -198,7 +200,7 @@ return (
           <form onSubmit={handleUpload}>
             <div className="mb-4">
               <label htmlFor="title" className={`block text-sm font-medium mb-2 ${themeClasses.text}`}>
-                Title:
+                {t('visionBoard.fileUpload.titleLabel')}
               </label>
               <input
                 type="text"
@@ -210,14 +212,14 @@ return (
                     ? 'border-slate-600 bg-slate-700 text-slate-200 placeholder-slate-400 focus:ring-indigo-500 focus:border-indigo-500' 
                     : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500'
                 }`}
-                placeholder="My Vision Board"
+                placeholder={t('visionBoard.fileUpload.titlePlaceholder')}
                 required
               />
             </div>
             
             <div className="mb-4">
               <label htmlFor="category" className={`block text-sm font-medium mb-2 ${themeClasses.text}`}>
-                Category:
+                {t('visionBoard.fileUpload.categoryLabel')}
               </label>
               <select
                 id="category"
@@ -231,8 +233,8 @@ return (
                 required
               >
                 {categories.map((cat) => (
-                  <option key={cat} value={cat} className={darkMode ? 'bg-slate-700 text-slate-200' : 'bg-white text-gray-900'}>
-                    {cat}
+                  <option key={cat.value} value={cat.value} className={darkMode ? 'bg-slate-700 text-slate-200' : 'bg-white text-gray-900'}>
+                    {cat.label}
                   </option>
                 ))}
               </select>
@@ -259,7 +261,7 @@ return (
                 }`}
                 disabled={uploading}
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
   type="submit"
@@ -272,9 +274,9 @@ return (
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Saving...
+                    {t('visionBoard.fileUpload.uploading')}
                   </span>
-                ) : "Save Board"}
+                ) : t('visionBoard.fileUpload.saveBoard')}
               </button>
             </div>
           </form>

@@ -1,7 +1,9 @@
 import React from 'react';
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 
 const ExerciseCards = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const handleclickex1 = () => {
         navigate("/Breathingexercise");
@@ -17,10 +19,10 @@ const ExerciseCards = () => {
     <div className="min-h-screen z-50  pt-16 px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center justify-center py-10 text-center px-4">
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-4">
-                Serenity Sessions
+                {t('exercises.title')}
               </h1>
               <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl text-white font-medium">
-                Exercises for Mind and Body
+                {t('exercises.subtitle')}
               </h3>
             </div>
         
@@ -33,15 +35,15 @@ const ExerciseCards = () => {
             className="w-full h-32 object-cover group-hover:opacity-80 transition-all"
           />
           <div className="p-5">
-            <h2 className="text-xl font-bold text-white">Kumbhaka</h2>
+            <h2 className="text-xl font-bold text-white">{t('exercises.kumbhaka.title')}</h2>
             <p className="text-base text-gray-400 my-3">
-              A great exercise to help in improving lung capacity, oxygen intake, and can promote relaxation and mental clarity.
+              {t('exercises.kumbhaka.description')}
             </p>
             <button
               onClick={handleclickex1}
               className="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white font-semibold rounded-full transition duration-300"
             >
-              Start Exercise
+              {t('exercises.kumbhaka.button')}
             </button>
           </div>
         </div>
@@ -52,15 +54,15 @@ const ExerciseCards = () => {
             className="w-full h-32 object-cover group-hover:opacity-80 transition-all"
           />
           <div className="p-5">
-            <h2 className="text-xl font-bold text-white">Box breathing</h2>
+            <h2 className="text-xl font-bold text-white">{t('exercises.boxBreathing.title')}</h2>
             <p className="text-base text-gray-400 my-3">
-              A simple yet effective way to calm the nervous system, manage stress, and improve focus by activating the parasympathetic nervous system. 
+              {t('exercises.boxBreathing.description')}
             </p>
             <button
               onClick={handleclickex2}
               className="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white font-semibold rounded-full transition duration-300"
             >
-              Start Exercise
+              {t('exercises.boxBreathing.button')}
             </button>
           </div>
         </div>
@@ -72,15 +74,15 @@ const ExerciseCards = () => {
             className="w-full h-32 object-cover group-hover:opacity-80 transition-all"
           />
           <div className="p-5">
-            <h2 className="text-xl font-bold text-white">Mahamrityunjaya Breathing</h2>
+            <h2 className="text-xl font-bold text-white">{t('exercises.mahamrityunjaya.title')}</h2>
             <p className="text-base text-gray-400 my-3">
-              Inhaling and exhaling through one nostril for each part of the mantra as part of a Nadi Shodhana Pranayama practice
+              {t('exercises.mahamrityunjaya.description')}
             </p>
             <button
               onClick={handleclickex3}
               className="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white font-semibold rounded-full transition duration-300"
             >
-              Start Exercise
+              {t('exercises.mahamrityunjaya.button')}
             </button>
           </div>
         </div>
@@ -88,12 +90,12 @@ const ExerciseCards = () => {
         {/* Coming Soon Card */}
        <div className="bg-gray-800 rounded-lg shadow-lg overflow-hidden group hover:scale-105 transform transition-all w-80 max-w-sm">
   <div className="w-full h-32 bg-gray-600 flex items-center justify-center">
-    <span className="text-2xl font-bold text-white">Coming Soon</span>
+    <span className="text-2xl font-bold text-white">{t('exercises.comingSoon.title')}</span>
   </div>
   <div className="p-5 flex flex-col items-center justify-center text-center h-40">
     <h2 className="text-xl font-bold text-white"></h2>
     <p className="text-base text-gray-400">
-      Stay tuned! A fun cardio exercise that will get your heart pumping and your body moving.
+      {t('exercises.comingSoon.description')}
     </p>
   </div>
 </div>

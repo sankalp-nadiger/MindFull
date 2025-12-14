@@ -220,8 +220,8 @@ useEffect(() => {
             <div className="w-20 h-20 bg-gradient-to-br from-indigo-900 to-purple-900 rounded-full flex items-center justify-center mx-auto mb-6">
               <Heart className="w-10 h-10 text-indigo-400" />
             </div>
-            <h2 className="text-2xl font-bold text-slate-200 mb-3">Welcome to Your Vision Space</h2>
-            <p className="text-slate-400">Choose your preferred theme for a personalized wellness experience</p>
+            <h2 className="text-2xl font-bold text-slate-200 mb-3">{t('visionBoard.theme.welcome')}</h2>
+            <p className="text-slate-400">{t('visionBoard.theme.chooseTheme')}</p>
           </div>
          
 
@@ -234,8 +234,8 @@ useEffect(() => {
                 <Sun className="w-6 h-6 text-amber-600" />
               </div>
               <div className="text-left">
-                <h3 className="font-semibold text-slate-800">Light Mode</h3>
-                <p className="text-sm text-slate-600">Bright and uplifting interface</p>
+                <h3 className="font-semibold text-slate-800">{t('visionBoard.theme.lightMode')}</h3>
+                <p className="text-sm text-slate-600">{t('visionBoard.theme.lightDesc')}</p>
               </div>
             </button>
             
@@ -247,8 +247,8 @@ useEffect(() => {
                 <Moon className="w-6 h-6 text-indigo-400" />
               </div>
               <div className="text-left">
-                <h3 className="font-semibold text-slate-200">Dark Mode</h3>
-                <p className="text-sm text-slate-400">Calming and gentle on the eyes</p>
+                <h3 className="font-semibold text-slate-200">{t('visionBoard.theme.darkMode')}</h3>
+                <p className="text-sm text-slate-400">{t('visionBoard.theme.darkDesc')}</p>
               </div>
             </button>
           </div>
@@ -291,7 +291,7 @@ useEffect(() => {
             className={`flex items-center justify-center gap-1 sm:gap-2 ${themeClasses.text} hover:${themeClasses.textSecondary} transition-colors`}
           >
             <ArrowLeft className="w-5 h-5" />
-            <span className="hidden sm:block text-sm font-medium sm:text-base">Back to Dashboard</span>
+            <span className="hidden sm:block text-sm font-medium sm:text-base">{t('visionBoard.backToDashboard')}</span>
           </Link>
           
           {/* Brand name - Absolute Center */}
@@ -305,12 +305,12 @@ useEffect(() => {
             className={`ml-auto ${themeClasses.buttonSecondary} ${darkMode ? 'text-slate-300' : 'text-gray-700'} p-2 rounded-lg shadow-md transition-all flex items-center gap-2`}
           >
             {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-            <span className="text-sm">{darkMode ? 'Light' : 'Dark'}</span>
+            <span className="text-sm">{darkMode ? t('visionBoard.light') : t('visionBoard.dark')}</span>
           </button>
         </div>
 
         {/* Inspirational tagline */}
-        <p className={`${themeClasses.textSecondary} italic mb-6`}>Visualize • Believe • Achieve</p>
+        <p className={`${themeClasses.textSecondary} italic mb-6`}>{t('visionBoard.visualizeBelieveAchieve')}</p>
               
         {/* Decorative elements - positive words */}
         <div className="absolute top-32 left-16 rotate-[-15deg] text-purple-300 font-bold opacity-30 text-2xl">Success</div>
@@ -419,7 +419,7 @@ useEffect(() => {
                               onClick={() => handleDelete(board._id)}
                               className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-700 transition-all w-full"
                             >
-                              Delete
+                              {t('visionBoard.delete')}
                             </button>
                           </div>
                         )}
@@ -429,10 +429,10 @@ useEffect(() => {
                     <div className={`text-center py-10 ${themeClasses.card} rounded-lg shadow-sm p-6 w-64`}>
                       <div className={`${darkMode ? 'text-indigo-400/50' : 'text-gray-400'} mb-4 text-6xl`}>✨</div>
                       <h3 className={`text-xl font-medium ${themeClasses.text} mb-2`}>
-                        No vision boards yet
+                        {t('visionBoard.noBoardsYet')}
                       </h3>
                       <p className={`${themeClasses.textSecondary} mb-4`}>
-                        Create your first vision board to visualize your goals and dreams
+                        {t('visionBoard.createFirstBoard')}
                       </p>
                     </div>
                   )}
@@ -470,7 +470,7 @@ useEffect(() => {
               <div className="absolute -inset-1 bg-white/10 rounded-full filter blur-md opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
               
               <ChevronDown size={20} className="relative z-10" />
-              <span className="relative z-10 font-medium text-lg">Draw a Vision Board</span>
+              <span className="relative z-10 font-medium text-lg">{t('visionBoard.drawVisionBoard')}</span>
               <ChevronDown size={20} className="relative z-10" />
               
               {/* Animated ring */}
@@ -502,7 +502,7 @@ useEffect(() => {
         <div id="drawing-board-section" className="relative py-12">
           <div className="relative z-10 text-center">
             <h2 className={`text-2xl font-bold ${themeClasses.text} mb-6`}>
-              Create your Vision Board
+              {t('visionBoard.drawingBoard.createYourBoard')}
             </h2>
             
             {isMobile ? (
@@ -511,13 +511,12 @@ useEffect(() => {
                 <div className={`w-20 h-20 mx-auto ${darkMode ? 'bg-indigo-900/50' : 'bg-indigo-100'} rounded-full flex items-center justify-center`}>
                   <Maximize2 className={`w-10 h-10 ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`} />
                 </div>
-                <h3 className={`text-xl font-semibold ${themeClasses.text}`}>Drawing Feature Unavailable on Mobile</h3>
+                <h3 className={`text-xl font-semibold ${themeClasses.text}`}>{t('visionBoard.drawingBoard.featureUnavailable')}</h3>
                 <p className={themeClasses.textSecondary}>
-                  The Vision Board drawing feature requires a larger screen for the best experience. 
-                  Please access this feature on a tablet or desktop device.
+                  {t('visionBoard.drawingBoard.unavailableMessage')}
                 </p>
                 <p className={`text-sm ${themeClasses.textSecondary}`}>
-                  You can still view your existing boards and use the upload/AI features above!
+                  {t('visionBoard.drawingBoard.viewExistingBoards')}
                 </p>
               </div>
             ) : (

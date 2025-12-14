@@ -26,6 +26,7 @@ import axios from 'axios';
 import { io } from 'socket.io-client';
 import { Link } from "react-router-dom";
 import Toast from "../pages/Toast";
+import { useTranslation } from 'react-i18next';
 
 // WebRTC Configuration
 const rtcConfig = {
@@ -51,25 +52,30 @@ const getSocket = () => {
 };
 
 // Trust indicators component
-const TrustIndicators = () => (
-  <div className="flex items-center justify-center space-x-6 mb-8 text-sm text-slate-400">
-    <div className="flex items-center space-x-2">
-      <Shield className="w-4 h-4 text-emerald-400" />
-      <span>HIPAA Compliant</span>
+const TrustIndicators = () => {
+  const { t } = useTranslation();
+  return (
+    <div className="flex items-center justify-center space-x-6 mb-8 text-sm text-slate-400">
+      <div className="flex items-center space-x-2">
+        <Shield className="w-4 h-4 text-emerald-400" />
+        <span>{t('videoChat.hipaaCompliant')}</span>
+      </div>
+      <div className="flex items-center space-x-2">
+        <Heart className="w-4 h-4 text-rose-400" />
+        <span>{t('videoChat.licensedTherapists')}</span>
+      </div>
+      <div className="flex items-center space-x-2">
+        <CheckCircle className="w-4 h-4 text-blue-400" />
+        <span>{t('videoChat.endToEndEncrypted')}</span>
+      </div>
     </div>
-    <div className="flex items-center space-x-2">
-      <Heart className="w-4 h-4 text-rose-400" />
-      <span>Licensed Therapists</span>
-    </div>
-    <div className="flex items-center space-x-2">
-      <CheckCircle className="w-4 h-4 text-blue-400" />
-      <span>End-to-End Encrypted</span>
-    </div>
-  </div>
-);
+  );
+};
 
 // Request form component
-const RequestForm = ({ issueDetails, loading, requestSession, handleIssueDetailsChange, activeSession, rejoinSession, rejoinLoading, dismissActiveSession }) => (
+const RequestForm = ({ issueDetails, loading, requestSession, handleIssueDetailsChange, activeSession, rejoinSession, rejoinLoading, dismissActiveSession }) => {
+  const { t } = useTranslation();
+  return (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -86,9 +92,9 @@ const RequestForm = ({ issueDetails, loading, requestSession, handleIssueDetails
           <div className="flex items-center space-x-3">
             <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse"></div>
             <div>
-              <h4 className="font-semibold text-white">Active Session Found</h4>
+              <h4 className="font-semibold text-white">{t('videoChat.activeSessionFound')}</h4>
               <p className="text-sm text-slate-300">
-                You have an ongoing session with {activeSession.counselor?.fullName || 'a counselor'}
+                {t('videoChat.ongoingSessionWith', { counselor: activeSession.counselor?.fullName || t('videoChat.aCounselor') })}
               </p>
             </div>
           </div>
@@ -101,12 +107,12 @@ const RequestForm = ({ issueDetails, loading, requestSession, handleIssueDetails
               {rejoinLoading ? (
                 <div className="flex items-center space-x-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Joining...</span>
+                  <span>{t('videoChat.joining')}</span>
                 </div>
               ) : (
                 <div className="flex items-center space-x-2">
                   <Video className="w-4 h-4" />
-                  <span>Rejoin</span>
+                  <span>{t('videoChat.rejoin')}</span>
                 </div>
               )}
             </button>
@@ -114,11 +120,11 @@ const RequestForm = ({ issueDetails, loading, requestSession, handleIssueDetails
               onClick={() => dismissActiveSession(activeSession._id)}
               disabled={rejoinLoading}
               className="px-3 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-all font-semibold border border-slate-600 disabled:opacity-50"
-              title="Dismiss and mark session as completed"
+              title={t('videoChat.dismissTooltip')}
             >
               <div className="flex items-center space-x-1">
                 <AlertCircle className="w-4 h-4" />
-                <span>Dismiss</span>
+                <span>{t('videoChat.dismiss')}</span>
               </div>
             </button>
           </div>
@@ -131,22 +137,22 @@ const RequestForm = ({ issueDetails, loading, requestSession, handleIssueDetails
         <Video className="w-8 h-8 text-white" />
       </div>
       <h3 className="text-2xl font-semibold text-white mb-2">
-        {activeSession ? 'Start New Session' : 'Start Your Healing Journey'}
+        {activeSession ? t('videoChat.startNewSession') : t('videoChat.startHealingJourney')}
       </h3>
       <p className="text-slate-400">
-        Connect with a licensed mental health professional in a safe, private space
+        {t('videoChat.connectDescription')}
       </p>
     </div>
 
     <div className="space-y-4">
       <div>
         <label className="block text-sm font-medium text-slate-300 mb-2">
-          What brings you here today? *
+          {t('videoChat.whatBringsYou')}
         </label>
         <textarea
           value={issueDetails}
           onChange={handleIssueDetailsChange}
-          placeholder="Share what's on your mind. This helps us match you with the right counselor..."
+          placeholder={t('videoChat.sharePlaceholder')}
           rows="4"
           maxLength={500}
           className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors resize-none text-slate-200 placeholder-slate-500"
@@ -154,7 +160,7 @@ const RequestForm = ({ issueDetails, loading, requestSession, handleIssueDetails
           spellCheck="true"
         />
         <div className="flex justify-between items-center mt-2 text-xs text-slate-500">
-          <span>Your information is completely confidential</span>
+          <span>{t('videoChat.confidential')}</span>
           <span>{issueDetails.length}/500</span>
         </div>
       </div>
@@ -171,21 +177,24 @@ const RequestForm = ({ issueDetails, loading, requestSession, handleIssueDetails
         {loading ? (
           <div className="flex items-center justify-center space-x-2">
             <Loader2 className="w-5 h-5 animate-spin" />
-            <span>Finding Your Counselor...</span>
+            <span>{t('videoChat.findingCounselor')}</span>
           </div>
         ) : (
           <div className="flex items-center justify-center space-x-2">
             <Video className="w-5 h-5" />
-            <span>Request New Session</span>
+            <span>{t('videoChat.requestNewSession')}</span>
           </div>
         )}
       </button>
     </div>
   </motion.div>
-);
+  );
+};
 
 // Appointments Display Component
-const AppointmentsDisplay = ({ appointments, loading }) => (
+const AppointmentsDisplay = ({ appointments, loading }) => {
+  const { t } = useTranslation();
+  return (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -197,8 +206,8 @@ const AppointmentsDisplay = ({ appointments, loading }) => (
           <Calendar className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h3 className="text-xl font-semibold text-white">Scheduled Appointments</h3>
-          <p className="text-sm text-slate-400">Your upcoming counseling sessions</p>
+          <h3 className="text-xl font-semibold text-white">{t('videoChat.scheduledAppointments')}</h3>
+          <p className="text-sm text-slate-400">{t('videoChat.upcomingSessions')}</p>
         </div>
       </div>
     </div>
@@ -265,7 +274,7 @@ const AppointmentsDisplay = ({ appointments, loading }) => (
                 <div className="absolute top-2 right-2">
                   <div className="flex items-center space-x-1 bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
                     <Clock className="w-3 h-3" />
-                    <span>Today</span>
+                    <span>{t('videoChat.today')}</span>
                   </div>
                 </div>
               )}
@@ -353,13 +362,14 @@ const AppointmentsDisplay = ({ appointments, loading }) => (
       ) : (
         <div className="text-center py-12 bg-slate-800 rounded-xl border-2 border-dashed border-slate-700">
           <Calendar className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <p className="text-slate-400 mb-2">No upcoming scheduled appointments</p>
-          <p className="text-sm text-slate-500">Only future scheduled appointments are shown here</p>
+          <p className="text-slate-400 mb-2">{t('videoChat.noAppointments')}</p>
+          <p className="text-sm text-slate-500">{t('videoChat.onlyFutureShown')}</p>
         </div>
       );
     })()}
   </motion.div>
-);
+  );
+};
 
 // Active session component
 const ActiveSession = ({ 
@@ -919,6 +929,7 @@ const SessionHistory = ({ sessions, isLoadingSessions }) => {
 };
 
 const VideoChat = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const socket = useMemo(() => getSocket(), []);
   
@@ -1492,7 +1503,7 @@ const VideoChat = () => {
             <div className="bg-slate-900/80 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-700 p-6">
               <div className="flex items-center space-x-2 mb-6">
                 <Clock className="w-5 h-5 text-slate-400" />
-                <h2 className="text-xl font-semibold text-white">Recent Sessions</h2>
+                <h2 className="text-xl font-semibold text-white">{t('videoChat.recentSessions')}</h2>
               </div>
               <SessionHistory 
                 sessions={sessions} 
@@ -1502,20 +1513,20 @@ const VideoChat = () => {
 
             {/* Quick Actions */}
             <div className="mt-6 bg-gradient-to-br from-emerald-900/50 to-teal-900/50 rounded-2xl border border-emerald-500/30 p-6 backdrop-blur-md">
-              <h3 className="font-semibold text-white mb-4">Need Immediate Help?</h3>
+              <h3 className="font-semibold text-white mb-4">{t('videoChat.needImmediateHelp')}</h3>
               <div className="space-y-3">
                 <button className="w-full flex items-center space-x-3 p-3 bg-slate-800 border border-slate-700 rounded-xl hover:bg-slate-700 hover:border-emerald-500/50 transition-all text-left">
                   <Phone className="w-5 h-5 text-emerald-400" />
                   <div>
-                    <p className="font-medium text-white">Crisis Hotline</p>
-                    <p className="text-sm text-slate-400">24/7 Support</p>
+                    <p className="font-medium text-white">{t('videoChat.crisisHotline')}</p>
+                    <p className="text-sm text-slate-400">{t('videoChat.support24_7')}</p>
                   </div>
                 </button>
                 <button className="w-full flex items-center space-x-3 p-3 bg-slate-800 border border-slate-700 rounded-xl hover:bg-slate-700 hover:border-emerald-500/50 transition-all text-left">
                   <MessageCircle className="w-5 h-5 text-emerald-400" />
                   <div>
-                    <p className="font-medium text-white">Chat Support</p>
-                    <p className="text-sm text-slate-400">Get help now</p>
+                    <p className="font-medium text-white">{t('videoChat.chatSupport')}</p>
+                    <p className="text-sm text-slate-400">{t('videoChat.getHelpNow')}</p>
                   </div>
                 </button>
               </div>

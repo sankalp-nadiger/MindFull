@@ -38,25 +38,25 @@ export function HeroHighlightDemo() {
 
   const cards = [
     {
-      title: "QuickWit Quiz",
-      description: "CChallenge yourself with questions designed to boost your mental clarity and calm.",
+      title: t('mainPage.games.quickWit.title'),
+      description: t('mainPage.games.quickWit.description'),
       image: "https://plus.unsplash.com/premium_photo-1680303134459-912abf8efe2f?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjV8fHF1aXp8ZW58MHx8MHx8fDA%3D",
       route: "/Quiz",
-      buttonText: "Start Game"
+      buttonText: t('mainPage.games.quickWit.button')
     },
     {
-      title: "Memory Cards",
-      description: "Unlock your mind’s potential with every match",
+      title: t('mainPage.games.memoryCards.title'),
+      description: t('mainPage.games.memoryCards.description'),
       image: "https://plus.unsplash.com/premium_photo-1720371280126-41fd99e04291?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8bWVtb3J5JTIwY2FyZHxlbnwwfHwwfHx8MA%3D%3D",
       route: "/Memorycardgame",
-      buttonText: "Start Game"
+      buttonText: t('mainPage.games.memoryCards.button')
     },
     {
-      title: "Coming soon",
-      description: "New games and exercises are on their way to keep your mind sharp and engaged.",
+      title: t('mainPage.games.comingSoon.title'),
+      description: t('mainPage.games.comingSoon.description'),
       image: "https://images.unsplash.com/photo-1614332287897-cdc485fa562d?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Y29taW5nJTIwc29vbnxlbnwwfHwwfHx8MA%3D%3D",
       route: "/mainpage",
-      buttonText: "Stay Tuned"
+      buttonText: t('mainPage.games.comingSoon.button')
     }
   ];
   const handleScoreboardClick = () => {
@@ -215,20 +215,19 @@ export function HeroHighlightDemo() {
                 <div className="relative z-10 flex flex-col items-center text-center">
                   <div className="mb-4 text-4xl">📋</div>
                   <h2 className="text-2xl font-bold md:text-3xl">
-                    TaskMaster
+                    {t('mainPage.taskMaster.title')}
                   </h2>
                   <p className="text-sm font-medium text-purple-400 mb-2">
-                    Your Smart To-Do List Assistant
+                    {t('mainPage.taskMaster.subtitle')}
                   </p>
                   <p className="mt-2 text-sm text-gray-300 md:text-base flex-grow">
-                    Organize, prioritize, and complete your tasks efficiently.
-                    Keep track of progress, manage deadlines, and stay on top of your goals.
+                    {t('mainPage.taskMaster.description')}
                   </p>
                   <Link
                     to="/todo"
                     className="px-6 py-3 mt-6 font-medium text-white transition-all duration-300 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 transform hover:scale-105 shadow-lg"
                   >
-                    Manage Tasks
+                    {t('mainPage.taskMaster.button')}
                   </Link>
                 </div>
               </div>
@@ -239,20 +238,19 @@ export function HeroHighlightDemo() {
                 <div className="relative z-10 flex flex-col items-center text-center">
                   <div className="mb-4 text-4xl">🎯</div>
                   <h2 className="text-2xl font-bold md:text-3xl">
-                    VisionFull
+                    {t('mainPage.visionFull.title')}
                   </h2>
                   <p className="text-sm font-medium text-green-400 mb-2">
-                    Visualize Your Dreams Into Reality
+                    {t('mainPage.visionFull.subtitle')}
                   </p>
                   <p className="mt-2 text-sm text-gray-300 md:text-base flex-grow">
-                    Create digital vision boards that inspire and motivate.
-                    Collect images, quotes, and aspirations that help manifest your goals and dreams.
+                    {t('mainPage.visionFull.description')}
                   </p>
                   <Link
                     to="/vision-board"
                     className="px-6 py-3 mt-6 font-medium text-white transition-all duration-300 rounded-lg bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 transform hover:scale-105 shadow-lg"
                   >
-                    Create Vision Board
+                    {t('mainPage.visionFull.button')}
                   </Link>
                 </div>
               </div>
@@ -306,16 +304,16 @@ export function HeroHighlightDemo() {
             <div className="flex flex-col items-center justify-between w-full mx-auto lg:flex-row max-w-7xl">
               <div className="max-w-md space-y-6 text-center lg:text-left lg:max-w-xl">
                 <h1 className="text-3xl font-bold text-white md:text-4xl lg:text-5xl">
-                  Welcome to Your Music World
+                  {t('mainPage.musicWorld.title')}
                 </h1>
                 <p className="text-lg text-white md:text-xl">
-                  Dive into a world of soothing melodies and rhythmic beats. Explore our Soulynk library of music and let the tunes play on.
+                  {t('mainPage.musicWorld.description')}
                 </p>
                 <button
                   onClick={handleclick}
                   className="px-6 py-3 font-semibold text-white transition duration-300 bg-purple-500 rounded-full hover:bg-purple-600"
                 >
-                  Open Music Player
+                  {t('mainPage.musicWorld.button')}
                 </button>
               </div>
 
@@ -339,10 +337,10 @@ export function HeroHighlightDemo() {
           <section className="w-full font-poppins  text-white body-font relative z-10">
             <div className="flex flex-col items-center justify-center py-4 text-center px-4">
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-4">
-                SoulScape
+                {t('mainPage.soulScape.title')}
               </h1>
               <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl text-white font-medium">
-                Play fun games to relax your mind
+                {t('mainPage.soulScape.subtitle')}
               </h3>
             </div>
 
@@ -366,7 +364,7 @@ export function HeroHighlightDemo() {
                 onClick={handleScoreboardClick}
                 className="w-full  max-w-sm px-8 py-4 bg-gradient-to-r from-purple-900 to-indigo-800 text-white text-xl font-semibold rounded-lg shadow-lg hover:brightness-110 hover:scale-[1.02] transition-all duration-300"
               >
-                View Scoreboard
+                {t('mainPage.scoreboard.button')}
               </button>
             </div>
 

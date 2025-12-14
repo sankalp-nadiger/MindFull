@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { getAIImage, getAIQuote, updateVisionBoard } from "../../services/visionBoardAPI";
 import { Sparkles } from "lucide-react";
+import { useTranslation } from 'react-i18next';
 
 const AIRecommendation = ({ userId, fetchVisionBoards, darkMode }) => {
+  const { t } = useTranslation();
   // Define theme classes locally based on darkMode
   const themeClasses = {
     card: darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200',
@@ -21,7 +23,7 @@ const AIRecommendation = ({ userId, fetchVisionBoards, darkMode }) => {
 
   const fetchAIContent = async () => {
     if (!category.trim()) {
-      alert("Please enter a goal category");
+      alert(t('visionBoard.aiRecommendation.enterCategory'));
       return;
     }
 
@@ -37,7 +39,7 @@ const AIRecommendation = ({ userId, fetchVisionBoards, darkMode }) => {
       }
     } catch (error) {
       console.error("Error fetching AI content:", error);
-      alert("Failed to generate AI suggestions. Please try again.");
+      alert(t('visionBoard.aiRecommendation.fetchError'));
     } finally {
       setLoading(false);
     }
@@ -60,7 +62,7 @@ const AIRecommendation = ({ userId, fetchVisionBoards, darkMode }) => {
         setIncludeQuote(false);
       } catch (error) {
         console.error("Error adding to vision board:", error);
-        alert("Failed to add to vision board. Please try again.");
+        alert(t('visionBoard.aiRecommendation.addError'));
       }
     }
   };
@@ -69,13 +71,13 @@ const AIRecommendation = ({ userId, fetchVisionBoards, darkMode }) => {
      <div className={`ai-recommendation ${darkMode ? 'bg-indigo-400/50' : 'bg-white'} rounded-xl shadow-lg p-6 mb-8 w-full max-w-4xl mx-auto border ${themeClasses.card}`}>
       <h3 className={`text-xl font-semibold mb-5 ${themeClasses.text} flex items-center ${darkMode ? 'text-white' : 'text-black'}`}>
         <Sparkles className={`mr-2 w-5 h-5 ${themeClasses.brandText}`} />
-        AI-Powered Vision Board Suggestions
+        {t('visionBoard.aiRecommendation.title')}
       </h3>
 
       <div className="space-y-4">
         <input
           type="text"
-          placeholder="Enter goal category (e.g., Health, Career, Finance)"
+          placeholder={t('visionBoard.aiRecommendation.categoryPlaceholder')}
           value={category}
           onChange={(e) => setCategory(e.target.value)}
           className={`p-3 border rounded-lg w-full focus:outline-none focus:ring-2 transition-colors text-sm ${
@@ -97,7 +99,7 @@ const AIRecommendation = ({ userId, fetchVisionBoards, darkMode }) => {
                   : 'bg-white border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-white'
               }`}
             />
-            <span className={`${themeClasses.text} select-none`}>Include AI-Generated Image</span>
+            <span className={`${themeClasses.text} select-none`}>{t('visionBoard.aiRecommendation.includeImage')}</span>
           </label>
           <label className="flex items-center space-x-3 cursor-pointer">
             <input
@@ -110,7 +112,7 @@ const AIRecommendation = ({ userId, fetchVisionBoards, darkMode }) => {
                   : 'bg-white border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-white'
               }`}
             />
-            <span className={`${themeClasses.text} select-none`}>Include AI-Generated Quote</span>
+            <span className={`${themeClasses.text} select-none`}>{t('visionBoard.aiRecommendation.includeQuote')}</span>
           </label>
         </div>
 
@@ -129,10 +131,10 @@ const AIRecommendation = ({ userId, fetchVisionBoards, darkMode }) => {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Generating...
+              {t('visionBoard.aiRecommendation.generating')}
             </span>
           ) : (
-            "Generate AI Suggestions"
+            t('visionBoard.aiRecommendation.generateSuggestions')
           )}
         </button>
 
@@ -143,11 +145,11 @@ const AIRecommendation = ({ userId, fetchVisionBoards, darkMode }) => {
               ? 'bg-slate-800/50 border-slate-600' 
               : 'bg-gray-50 border-gray-200'
           }`}>
-            <h4 className={`font-medium ${themeClasses.text}`}>AI Suggestions:</h4>
+            <h4 className={`font-medium ${themeClasses.text}`}>{t('visionBoard.aiRecommendation.aiSuggestions')}</h4>
             
             {suggestedImage && (
   <div className="space-y-2">
-    <p className={`text-sm font-medium ${themeClasses.textSecondary}`}>Generated Image:</p>
+    <p className={`text-sm font-medium ${themeClasses.textSecondary}`}>{t('visionBoard.aiRecommendation.generatedImage')}</p>
     <div className={`rounded-md overflow-hidden border ${darkMode ? 'border-slate-600' : 'border-gray-200'}`}>
       <img
         src={suggestedImage}
@@ -163,7 +165,7 @@ const AIRecommendation = ({ userId, fetchVisionBoards, darkMode }) => {
             
             {suggestedQuote && (
               <div className="space-y-2">
-                <p className={`text-sm font-medium ${themeClasses.textSecondary}`}>Generated Quote:</p>
+                <p className={`text-sm font-medium ${themeClasses.textSecondary}`}>{t('visionBoard.aiRecommendation.generatedQuote')}</p>
                 <blockquote className={`text-lg font-medium italic ${themeClasses.text} border-l-4 pl-4 ${
                   darkMode ? 'border-indigo-400' : 'border-blue-500'
                 }`}>
@@ -183,7 +185,7 @@ const AIRecommendation = ({ userId, fetchVisionBoards, darkMode }) => {
                 : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 focus:ring-offset-white'
             }`}
           >
-            Add to Vision Board
+            {t('visionBoard.aiRecommendation.addToBoard')}
           </button>
         )}
       </div>

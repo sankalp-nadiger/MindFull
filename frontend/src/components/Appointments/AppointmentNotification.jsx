@@ -3,8 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, X, User, Calendar } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const AppointmentNotification = () => {
+  const { t } = useTranslation();
   const [upcomingAppointment, setUpcomingAppointment] = useState(null);
   const [timeRemaining, setTimeRemaining] = useState('');
   const [isVisible, setIsVisible] = useState(false);
@@ -120,17 +122,17 @@ const AppointmentNotification = () => {
 
     // If appointment has already started
     if (timeDiff <= 0) {
-      return 'Session in progress';
+      return t('appointments.sessionInProgress');
     }
 
     const minutesRemaining = Math.floor(timeDiff / (1000 * 60));
     
     if (minutesRemaining < 1) {
-      return 'Starting now!';
+      return t('appointments.startingNow');
     } else if (minutesRemaining === 1) {
-      return '1 minute to go';
+      return t('appointments.oneMinuteToGo');
     } else {
-      return `${minutesRemaining} minutes to go`;
+      return t('appointments.minutesToGo', { minutes: minutesRemaining });
     }
   };
 
@@ -206,7 +208,7 @@ const AppointmentNotification = () => {
                     <Clock className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-white font-semibold text-lg">Upcoming Session</h3>
+                    <h3 className="text-white font-semibold text-lg">{t('appointments.upcomingSession')}</h3>
                     <p className="text-blue-400 text-sm font-medium">{timeRemaining}</p>
                   </div>
                 </div>
@@ -226,10 +228,10 @@ const AppointmentNotification = () => {
                   </div>
                   <div className="flex-1">
                     <p className="text-white font-medium">
-                      {upcomingAppointment.counsellorId?.fullName || 'Counselor'}
+                      {upcomingAppointment.counsellorId?.fullName || t('videoChat.counselor')}
                     </p>
                     <p className="text-slate-400 text-xs">
-                      {upcomingAppointment.counsellorId?.specialization || 'Mental Health Professional'}
+                      {upcomingAppointment.counsellorId?.specialization || t('videoChat.mentalHealthProfessional')}
                     </p>
                   </div>
                 </div>
@@ -259,7 +261,7 @@ const AppointmentNotification = () => {
                 onClick={handleJoinSession}
                 className="mt-4 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl font-semibold text-center block hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-blue-500/50"
               >
-                Join Session
+                {t('appointments.joinSession')}
               </button>
             </div>
           </motion.div>

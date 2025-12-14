@@ -3,8 +3,10 @@ import { Clock, X, Calendar, Heart, Sun, Moon } from 'lucide-react';
 import { ArrowUp, ArrowDown, ArrowLeft, Check, Plus, Award, Lightbulb, ChevronRight, Trash, Save } from 'lucide-react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const TodoListPage = () => {
+  const { t } = useTranslation();
   const [tasks, setTasks] = useState([]);
   const [newTaskName, setNewTaskName] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
@@ -35,18 +37,18 @@ const TodoListPage = () => {
   // Generate motivational productivity message based on tasks and streaks
   const generateProductivityMessage = () => {
     const messages = [
-      "Focus on completing 3 important tasks today to boost your productivity!",
-      "Break down complex tasks into smaller steps for better progress.",
-      "You're making great progress! Keep the momentum going.",
-      "Time blocking your tasks can help you achieve more throughout the day.",
-      "Remember to take short breaks between tasks to maintain focus."
+      t('todoList.productivityMessages.message1'),
+      t('todoList.productivityMessages.message2'),
+      t('todoList.productivityMessages.message3'),
+      t('todoList.productivityMessages.message4'),
+      t('todoList.productivityMessages.message5')
     ];
     
     // Select message based on streak or randomly if no streak
     if (currentStreak > 5) {
-      setProductivityMessage("You're on fire with a " + currentStreak + "-day streak! Incredible consistency!");
+      setProductivityMessage(t('todoList.productivityMessages.streakHigh', { count: currentStreak }));
     } else if (currentStreak > 2) {
-      setProductivityMessage("Your " + currentStreak + "-day streak shows great dedication. Keep it up!");
+      setProductivityMessage(t('todoList.productivityMessages.streakMedium', { count: currentStreak }));
     } else {
       const randomIndex = Math.floor(Math.random() * messages.length);
       setProductivityMessage(messages[randomIndex]);
@@ -143,8 +145,8 @@ const TodoListPage = () => {
       // Show a user-friendly error message
       setAiInsights([{
         id: "error",
-        title: "Couldn't generate insights",
-        description: "There was a problem analyzing your tasks. Please try again later.",
+        title: t('todoList.aiInsights.errorTitle'),
+        description: t('todoList.aiInsights.errorDescription'),
         recommendedTasks: []
       }]);
     }
@@ -429,8 +431,8 @@ if (showThemeModal) {
             <div className="w-20 h-20 bg-gradient-to-br from-indigo-900 to-purple-900 rounded-full flex items-center justify-center mx-auto mb-6">
               <Heart className="w-10 h-10 text-indigo-400" />
             </div>
-            <h2 className="text-2xl font-bold text-slate-200 mb-3">Welcome to Your Task Manager</h2>
-            <p className="text-slate-400">Choose your preferred theme to get started</p>
+            <h2 className="text-2xl font-bold text-slate-200 mb-3">{t('todoList.themeModal.welcome')}</h2>
+            <p className="text-slate-400">{t('todoList.themeModal.chooseTheme')}</p>
           </div>
           
           <div className="space-y-4">
@@ -442,8 +444,8 @@ if (showThemeModal) {
                 <Sun className="w-6 h-6 text-amber-600" />
               </div>
               <div className="text-left">
-                <h3 className="font-semibold text-slate-800">Light Mode</h3>
-                <p className="text-sm text-slate-600">Bright and clean interface</p>
+                <h3 className="font-semibold text-slate-800">{t('todoList.themeModal.lightMode')}</h3>
+                <p className="text-sm text-slate-600">{t('todoList.themeModal.lightDesc')}</p>
               </div>
             </button>
             
@@ -455,8 +457,8 @@ if (showThemeModal) {
                 <Moon className="w-6 h-6 text-indigo-400" />
               </div>
               <div className="text-left">
-                <h3 className="font-semibold text-slate-200">Dark Mode</h3>
-                <p className="text-sm text-slate-400">Easy on the eyes, perfect for evening use</p>
+                <h3 className="font-semibold text-slate-200">{t('todoList.themeModal.darkMode')}</h3>
+                <p className="text-sm text-slate-400">{t('todoList.themeModal.darkDesc')}</p>
               </div>
             </button>
           </div>
@@ -487,7 +489,7 @@ if (showThemeModal) {
         }`}
       >
         <ArrowLeft className="w-5 h-5" />
-        <span className="hidden sm:inline">Back to Dashboard</span>
+        <span className="hidden sm:inline">{t('todoList.header.backToDashboard')}</span>
       </Link>
 
      
@@ -497,7 +499,7 @@ if (showThemeModal) {
             ? 'text-transparent bg-gradient-to-r from-indigo-300 via-cyan-300 to-teal-300 bg-clip-text'
             : 'text-gray-900'
         }`}>
-          TaskMaster
+          {t('todoList.title')}
         </h1>
         <button
           onClick={() => setDarkMode(!darkMode)}
@@ -506,7 +508,7 @@ if (showThemeModal) {
               ? 'bg-slate-800 border-slate-700 text-amber-400 hover:bg-slate-700'
               : 'bg-white border-gray-200 text-gray-800 hover:bg-gray-100'
           }`}
-          title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          title={darkMode ? t('todoList.header.switchToLight') : t('todoList.header.switchToDark')}
         >
           {darkMode ? (
             <Sun className="w-5 h-5" />
@@ -527,11 +529,11 @@ if (showThemeModal) {
         <div className="flex flex-col sm:flex-row items-center sm:justify-end gap-2 sm:gap-6 text-sm text-gray-50">
           <div className="flex items-center gap-2">
             <Award className="w-4 h-4 text-yellow-400" />
-            <span>Current Streak: <span className="font-medium text-white">{currentStreak} days</span></span>
+            <span>{t('todoList.header.currentStreak')}: <span className="font-medium text-white">{currentStreak} {t('todoList.header.days')}</span></span>
           </div>
           <div className="flex items-center gap-2">
             <Award className="w-4 h-4 text-purple-400" />
-            <span>Max Streak: <span className="font-medium text-white">{maxStreak} days</span></span>
+            <span>{t('todoList.header.maxStreak')}: <span className="font-medium text-white">{maxStreak} {t('todoList.header.days')}</span></span>
           </div>
         </div>
       </div>
@@ -545,18 +547,18 @@ if (showThemeModal) {
         <div className="flex flex-col md:flex-row gap-8">
           {/* Left panel - Task list */}
           <div className={`w-full md:w-2/3 ${theme.cardBg} backdrop-blur-sm rounded-lg p-6 ${theme.border} border`}>
-            <h2 className={`text-2xl font-bold ${darkMode ? 'bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent' : theme.accent} mb-6`}>My Tasks</h2>
+            <h2 className={`text-2xl font-bold ${darkMode ? 'bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent' : theme.accent} mb-6`}>{t('todoList.tasks.myTasks')}</h2>
             
             {/* Deadline Tasks Section */}
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
-                <h3 className={`text-lg font-medium ${theme.warning}`}>Upcoming Deadlines</h3>
+                <h3 className={`text-lg font-medium ${theme.warning}`}>{t('todoList.deadlines.upcomingDeadlines')}</h3>
                 <button 
                   className={`text-sm ${theme.warning} hover:opacity-75 hover:underline flex items-center transition-colors`}
                   onClick={() => setShowDeadlineForm(!showDeadlineForm)}
                 >
                   <Plus className="w-4 h-4 mr-1" />
-                  Add Deadline
+                  {t('todoList.deadlines.addDeadline')}
                 </button>
               </div>
               
@@ -566,7 +568,7 @@ if (showThemeModal) {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <input
                       type="text"
-                      placeholder="Deadline task name"
+                      placeholder={t('todoList.deadlines.deadlineTaskName')}
                       className={`px-4 py-2 ${theme.inputBg} ${theme.inputText} rounded-lg ${theme.inputBorder} border focus:outline-none focus:ring-2 ${theme.focusRing} ${theme.inputPlaceholder}`}
                       value={deadlineTaskName}
                       onChange={(e) => setDeadlineTaskName(e.target.value)}
@@ -574,14 +576,14 @@ if (showThemeModal) {
                     <div className="relative">
                       <input
                         type="datetime-local"
-                        className={`px-4 py-2 ${theme.inputBg} ${theme.inputText} rounded-lg ${theme.inputBorder} border focus:outline-none focus:ring-2 ${theme.focusRing} w-full`}
+                        className={`px-4 py-2 ${theme.inputBg} ${theme.inputText} rounded-lg ${theme.inputBorder} border focus:outline-none focus:ring-2 ${theme.focusRing} w-full ${!darkMode ? '[color-scheme:light]' : ''}`}
                         value={deadlineDate}
                         onChange={(e) => setDeadlineDate(e.target.value)}
-                        placeholder="Deadline date and time"
+                        placeholder={t('todoList.deadlines.deadlineDateTime')}
                       />
                     </div>
                     <textarea
-                      placeholder="Deadline task description"
+                      placeholder={t('todoList.deadlines.deadlineTaskDescription')}
                       className={`md:col-span-2 px-4 py-2 ${theme.inputBg} ${theme.inputText} rounded-lg ${theme.inputBorder} border focus:outline-none focus:ring-2 ${theme.focusRing} ${theme.inputPlaceholder}`}
                       value={deadlineTaskDescription}
                       onChange={(e) => setDeadlineTaskDescription(e.target.value)}
@@ -592,7 +594,7 @@ if (showThemeModal) {
                         className={`px-4 py-2 ${darkMode ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600' : 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600'} text-white rounded-lg flex items-center transition-all duration-200 shadow-lg`}
                         onClick={handleAddDeadlineTask}
                       >
-                        Add Deadline Task
+                        {t('todoList.deadlines.addDeadlineTask')}
                       </button>
                     </div>
                   </div>
@@ -648,7 +650,7 @@ if (showThemeModal) {
                               daysLeft <= 3 ? (darkMode ? 'bg-amber-800/80 text-amber-200' : 'bg-amber-200 text-amber-800') : 
                               (darkMode ? 'bg-slate-600/80 text-slate-300' : 'bg-gray-200 text-gray-700')
                             }`}>
-                              {daysLeft <= 0 ? 'Due today' : `${daysLeft} day${daysLeft !== 1 ? 's' : ''} left`}
+                              {daysLeft <= 0 ? t('todoList.deadlines.dueToday') : t('todoList.deadlines.daysLeft', { count: daysLeft })}
                             </span>
                             
                             <button
@@ -656,7 +658,7 @@ if (showThemeModal) {
                               onClick={() => handleCompleteDeadlineTask(task._id)}
                             >
                               <Check className="w-4 h-4 mr-1" />
-                              Done
+                              {t('todoList.tasks.done')}
                             </button>
                           </div>
                         </div>
@@ -664,7 +666,7 @@ if (showThemeModal) {
                     })
                   ) : (
                     <div className={`w-full text-center py-6 ${theme.mutedText}`}>
-                      <p>No deadline tasks. Add some to stay on schedule!</p>
+                      <p>{t('todoList.deadlines.noDeadlines')}</p>
                     </div>
                   )}
                 </div>
@@ -729,7 +731,7 @@ if (showThemeModal) {
                             className={`px-4 py-2 ${task.completed ? theme.secondaryButton : theme.primaryButton} text-white rounded-lg flex items-center transition-all duration-200`}
                             onClick={() => handleCompleteTask(task._id)}
                           >
-                            {task.completed ? 'Undo' : 'Done'}
+                            {task.completed ? t('todoList.tasks.undo') : t('todoList.tasks.done')}
                           </button>
                           
                           <div className="flex">
@@ -763,23 +765,23 @@ if (showThemeModal) {
                 
                 {tasks.length === 0 && (
                   <div className={`text-center py-12 ${theme.mutedText}`}>
-                    <p>No tasks yet. Add some tasks to get started!</p>
+                    <p>{t('todoList.tasks.noTasks')}</p>
                   </div>
                 )}
                 
                 {/* Add new task form */}
                 <div className={`mt-8 ${theme.secondaryCardBg} backdrop-blur-sm p-6 rounded-lg ${theme.secondaryBorder} border`}>
-                  <h3 className={`text-lg font-medium ${theme.accent} mb-4`}>Add New Task</h3>
+                  <h3 className={`text-lg font-medium ${theme.accent} mb-4`}>{t('todoList.tasks.addNewTask')}</h3>
                   <div className="space-y-4">
                     <input
                       type="text"
-                      placeholder="Task name"
+                      placeholder={t('todoList.tasks.taskName')}
                       className={`w-full px-4 py-2 ${theme.inputBg} ${theme.inputText} rounded-lg ${theme.inputBorder} border focus:outline-none focus:ring-2 ${theme.focusRing} ${theme.inputPlaceholder}`}
                       value={newTaskName}
                       onChange={(e) => setNewTaskName(e.target.value)}
                     />
                     <textarea
-                      placeholder="Task description"
+                      placeholder={t('todoList.tasks.taskDescription')}
                       className={`w-full px-4 py-2 ${theme.inputBg} ${theme.inputText} rounded-lg ${theme.inputBorder} border focus:outline-none focus:ring-2 ${theme.focusRing} ${theme.inputPlaceholder}`}
                       value={newTaskDescription}
                       onChange={(e) => setNewTaskDescription(e.target.value)}
@@ -789,11 +791,11 @@ if (showThemeModal) {
                     {/* Time selection */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="relative">
-                        <label className={`block ${theme.secondaryText} text-sm mb-1`}>Start Time</label>
+                        <label className={`block ${theme.secondaryText} text-sm mb-1`}>{t('todoList.tasks.startTime')}</label>
                         <div className="relative">
                           <input
                             type="time"
-                            className={`w-full px-4 py-2 ${theme.inputBg} ${theme.inputText} rounded-lg ${theme.inputBorder} border focus:outline-none focus:ring-2 ${theme.focusRing}`}
+                            className={`w-full px-4 py-2 ${theme.inputBg} ${theme.inputText} rounded-lg ${theme.inputBorder} border focus:outline-none focus:ring-2 ${theme.focusRing} ${!darkMode ? '[color-scheme:light]' : ''}`}
                             value={newTaskStartTime}
                             onChange={(e) => setNewTaskStartTime(e.target.value)}
                           />
@@ -801,11 +803,11 @@ if (showThemeModal) {
                       </div>
                       
                       <div className="relative">
-                        <label className={`block ${theme.secondaryText} text-sm mb-1`}>End Time</label>
+                        <label className={`block ${theme.secondaryText} text-sm mb-1`}>{t('todoList.tasks.endTime')}</label>
                         <div className="relative">
                           <input
                             type="time"
-                            className={`w-full px-4 py-2 ${theme.inputBg} ${theme.inputText} rounded-lg ${theme.inputBorder} border focus:outline-none focus:ring-2 ${theme.focusRing}`}
+                            className={`w-full px-4 py-2 ${theme.inputBg} ${theme.inputText} rounded-lg ${theme.inputBorder} border focus:outline-none focus:ring-2 ${theme.focusRing} ${!darkMode ? '[color-scheme:light]' : ''}`}
                             value={newTaskEndTime}
                             onChange={(e) => setNewTaskEndTime(e.target.value)}
                           />
@@ -818,7 +820,7 @@ if (showThemeModal) {
                       onClick={handleAddTask}
                     >
                       <Plus className="w-5 h-5 mr-2" />
-                      Add Task
+                      {t('todoList.tasks.addTask')}
                     </button>
                   </div>
                 </div>
@@ -830,11 +832,11 @@ if (showThemeModal) {
           <div className="w-full md:w-1/3 space-y-8">
             {/* Streaks section */}
             <div className={`${theme.cardBg} backdrop-blur-sm rounded-lg p-6 ${theme.border} border`}>
-              <h2 className={`text-xl font-bold ${darkMode ? 'bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent' : theme.accent} mb-4`}>Activity Streaks</h2>
+              <h2 className={`text-xl font-bold ${darkMode ? 'bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent' : theme.accent} mb-4`}>{t('todoList.streaks.activityStreaks')}</h2>
               <div className={`${theme.secondaryCardBg} backdrop-blur-sm rounded-lg p-4 ${theme.secondaryBorder} border`}>
                 <div className="flex justify-between items-center mb-2">
-                  <span className={theme.primaryText}>Current Streak</span>
-                  <span className={`${darkMode ? 'text-emerald-400' : 'text-green-600'} font-bold`}>{currentStreak} days</span>
+                  <span className={theme.primaryText}>{t('todoList.streaks.currentStreak')}</span>
+                  <span className={`${darkMode ? 'text-emerald-400' : 'text-green-600'} font-bold`}>{currentStreak} {t('todoList.header.days')}</span>
                 </div>
                 <div className={`w-full ${theme.progressBar} rounded-full h-2.5`}>
                   <div 
@@ -844,8 +846,8 @@ if (showThemeModal) {
                 </div>
                 
                 <div className="flex justify-between items-center mt-6 mb-2">
-                  <span className={theme.primaryText}>Max Streak</span>
-                  <span className={`${theme.accentSecondary} font-bold`}>{maxStreak} days</span>
+                  <span className={theme.primaryText}>{t('todoList.streaks.maxStreak')}</span>
+                  <span className={`${theme.accentSecondary} font-bold`}>{maxStreak} {t('todoList.header.days')}</span>
                 </div>
                 <div className={`w-full ${theme.progressBar} rounded-full h-2.5`}>
                   <div 
@@ -857,8 +859,8 @@ if (showThemeModal) {
                 <div className="mt-6 text-center">
                   <p className={`${theme.secondaryText} text-sm`}>
                     {currentStreak === 0 
-                      ? "Complete all tasks today to start your streak!" 
-                      : `Keep going! You're on a ${currentStreak} day streak!`}
+                      ? t('todoList.streaks.startStreak')
+                      : t('todoList.streaks.keepGoing', { count: currentStreak })}
                   </p>
                 </div>
               </div>
@@ -867,12 +869,12 @@ if (showThemeModal) {
             {/* AI Insights section */}
             <div className={`${theme.cardBg} backdrop-blur-sm rounded-lg p-6 ${theme.border} border`}>
               <div className="flex items-center justify-between mb-4">
-                <h2 className={`text-xl font-bold ${darkMode ? 'bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent' : theme.accent}`}>AI Insights</h2>
+                <h2 className={`text-xl font-bold ${darkMode ? 'bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent' : theme.accent}`}>{t('todoList.aiInsights.title')}</h2>
                 <button 
                   className={`text-sm ${darkMode ? 'text-emerald-400 hover:text-emerald-300' : 'text-blue-600 hover:text-blue-500'} flex items-center transition-colors`}
                   onClick={fetchAiInsights}
                 >
-                  <span>Refresh</span>
+                  <span>{t('todoList.aiInsights.refresh')}</span>
                   <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                   </svg>
@@ -890,7 +892,7 @@ if (showThemeModal) {
                     
                     {insight.recommendedTasks && (
                       <div className="mt-3">
-                        <h4 className={`${darkMode ? 'text-emerald-400' : 'text-green-600'} text-sm font-medium mb-2`}>Recommended Task List:</h4>
+                        <h4 className={`${darkMode ? 'text-emerald-400' : 'text-green-600'} text-sm font-medium mb-2`}>{t('todoList.aiInsights.recommendedTasks')}</h4>
                         <ul className={`${theme.secondaryText} text-sm mb-4 space-y-2`}>
                           {insight.recommendedTasks.map((task, i) => (
                             <li key={i} className="flex items-center">
@@ -905,7 +907,7 @@ if (showThemeModal) {
                           onClick={() => adoptAiRecommendation(insight.id)}
                         >
                           <Save className="w-4 h-4 mr-2" />
-                          Adopt This Plan
+                          {t('todoList.aiInsights.adoptPlan')}
                         </button>
                       </div>
                     )}
@@ -914,7 +916,7 @@ if (showThemeModal) {
                 
                 {aiInsights.length === 0 && (
                   <div className={`text-center py-6 ${theme.mutedText}`}>
-                    <p>Add more tasks to get personalized AI insights!</p>
+                    <p>{t('todoList.aiInsights.noInsights')}</p>
                   </div>
                 )}
               </div>
