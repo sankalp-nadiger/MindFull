@@ -367,14 +367,14 @@ const CommunityChat = () => {
                 className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
               >
                 <Plus size={20} />
-                Create Support Room
+                {t('community.createSupportRoom')}
               </button>
               <button
                 onClick={() => setShowJoinRoomModal(true)}
                 className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
               >
                 <UserPlus size={20} />
-                Join with Room ID
+                {t('community.joinWithRoomId')}
               </button>
             </div>
           )}
@@ -409,7 +409,7 @@ const CommunityChat = () => {
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
                       <Users size={12} />
-                      <span>Active now</span>
+                      <span>{t('community.activeNow')}</span>
                     </div>
                   </div>
                   
@@ -417,7 +417,7 @@ const CommunityChat = () => {
                     onClick={() => joinRoom(room._id)}
                     className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-lg transition-all duration-200 font-medium shadow-md hover:shadow-lg"
                   >
-                    Join Conversation
+                    {t('community.joinConversation')}
                   </button>
                 </div>
               ))}
@@ -425,8 +425,8 @@ const CommunityChat = () => {
               {rooms.length === 0 && (
                 <div className="col-span-full text-center py-12">
                   <MessageCircle size={48} className="mx-auto text-gray-500 mb-4" />
-                  <h3 className="text-xl font-semibold text-gray-400 mb-2">No rooms available</h3>
-                  <p className="text-gray-500">Be the first to create a support room for the community!</p>
+                  <h3 className="text-xl font-semibold text-gray-400 mb-2">{t('community.noRoomsAvailable')}</h3>
+                  <p className="text-gray-500">{t('community.beFirstToCreate')}</p>
                 </div>
               )}
             </div>
@@ -621,29 +621,29 @@ const CommunityChat = () => {
             <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4 overflow-y-auto">
               <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl shadow-2xl w-full max-w-md mx-auto my-8 overflow-hidden">
                 <div className="p-6 border-b border-gray-700">
-                  <h3 className="text-2xl font-bold text-white">Create Support Room</h3>
-                  <p className="text-gray-400 text-sm mt-1">Create a safe space for meaningful conversations</p>
+                  <h3 className="text-2xl font-bold text-white">{t('community.createSupportRoom')}</h3>
+                  <p className="text-gray-400 text-sm mt-1">{t('community.createRoomSubtitle')}</p>
                 </div>
                 
                 <div className="p-6 space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Room Name</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">{t('community.roomName')}</label>
                     <input
                       type="text"
                       value={newRoomName}
                       onChange={(e) => setNewRoomName(e.target.value)}
-                      placeholder="e.g., Anxiety Support Group"
+                      placeholder={t('community.roomNamePlaceholder')}
                       className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent overflow-hidden"
                       maxLength={50}
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">{t('community.description')}</label>
                     <textarea
                       value={newRoomDescription}
                       onChange={(e) => setNewRoomDescription(e.target.value)}
-                      placeholder="Describe the purpose and guidelines for this room..."
+                      placeholder={t('community.descriptionPlaceholder')}
                       className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent h-24 resize-none overflow-hidden"
                       maxLength={200}
                     />
@@ -659,14 +659,14 @@ const CommunityChat = () => {
                     }}
                     className="flex-1 p-3 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors duration-200"
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </button>
                   <button
                     onClick={createRoom}
                     disabled={!newRoomName.trim() || !newRoomDescription.trim()}
                     className="flex-1 p-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed rounded-lg transition-all duration-200"
                   >
-                    Create Room
+                    {t('community.createRoom')}
                   </button>
                 </div>
               </div>
@@ -678,17 +678,17 @@ const CommunityChat = () => {
             <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4 overflow-y-auto">
               <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl shadow-2xl w-full max-w-md mx-auto my-8 overflow-hidden">
                 <div className="p-6 border-b border-gray-700">
-                  <h3 className="text-2xl font-bold text-white">Join Room</h3>
-                  <p className="text-gray-400 text-sm mt-1">Enter the room ID to join a specific conversation</p>
+                  <h3 className="text-2xl font-bold text-white">{t('community.joinRoom')}</h3>
+                  <p className="text-gray-400 text-sm mt-1">{t('community.joinRoomSubtitle')}</p>
                 </div>
                 
                 <div className="p-6">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Room ID</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">{t('community.roomId')}</label>
                   <input
                     type="text"
                     value={roomIdToJoin}
                     onChange={(e) => setRoomIdToJoin(e.target.value)}
-                    placeholder="Enter the room ID..."
+                    placeholder={t('community.roomIdPlaceholder')}
                     className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono"
                   />
                 </div>
@@ -701,14 +701,14 @@ const CommunityChat = () => {
                     }}
                     className="flex-1 p-3 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors duration-200"
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </button>
                   <button
                     onClick={() => joinRoom(roomIdToJoin)}
                     disabled={!roomIdToJoin.trim()}
                     className="flex-1 p-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed rounded-lg transition-all duration-200"
                   >
-                    Join Room
+                    {t('community.joinRoom')}
                   </button>
                 </div>
               </div>

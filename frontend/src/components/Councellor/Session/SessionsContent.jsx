@@ -148,6 +148,21 @@ const SessionsContent = () => {
     };
   }, []);
 
+  // Check for auto-join from navigation state (from appointment)
+  useEffect(() => {
+    const checkAutoJoin = async () => {
+      const state = window.history.state?.usr;
+      if (state?.sessionId && state?.autoJoin && !activeRoom) {
+        console.log('🎯 Auto-joining session from appointment:', state.sessionId);
+        // Small delay to ensure sessions are loaded
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await acceptSession(state.sessionId);
+      }
+    };
+    
+    checkAutoJoin();
+  }, [activeRoom]);
+
   const rejoinSession = async (sessionId) => {
     try {
       setLoading(true);

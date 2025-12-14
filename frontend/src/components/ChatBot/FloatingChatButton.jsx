@@ -113,9 +113,9 @@ const FloatingChatButton = () => {
             <div className="absolute right-14 bottom-3 px-3 py-2 text-xs text-white transition-all duration-200 transform bg-gray-900 rounded-lg shadow-xl  whitespace-nowrap animate-fade-in z-40 pointer-events-none cursor-default">
               <div className="flex items-center gap-2">
                 <Heart className="w-3 h-3 text-pink-400" />
-                <span>Need someone to talk to?</span>
+                <span>{t('floatingChat.needSomeoneToTalk')}</span>
               </div>
-              <div className="text-[10px] text-gray-300 mt-1">Chat with Soulynk Bot</div>
+              <div className="text-[10px] text-gray-300 mt-1">{t('floatingChat.chatWithBot')}</div>
               <div className="absolute w-0 h-0  border-transparent top-full right-3 border-t-gray-900"></div>
             </div>
           )}
@@ -168,7 +168,7 @@ const FloatingChatButton = () => {
         {/* Message indicator - Repositioned to not cover button */}
         {showMessage && (
           <div className="absolute px-2 py-1 transform -translate-x-1/2 bg-white border rounded-full shadow-lg -top-8 left-1/2 animate-fade-in">
-            <div className="text-[10px] text-gray-600 font-medium whitespace-nowrap">I'm here to help! 💚</div>
+            <div className="text-[10px] text-gray-600 font-medium whitespace-nowrap">{t('floatingChat.hereToHelp')}</div>
           </div>
         )}
       </div>

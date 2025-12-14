@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Plus, BookOpen, Heart, Users, X } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 
 const DynamicCarousel = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [journalEntries, setJournalEntries] = useState([]);
   const [gratitudePosts, setGratitudePosts] = useState([]);
@@ -144,12 +146,12 @@ const DynamicCarousel = () => {
   const getMotivationalTitle = () => {
     if (isNegativeMood) {
       return journalEntries.length > 0 
-        ? "Revisit some happy memories from your journey"
-        : "Create Post your first joyful memory today";
+        ? t('posts.memories.title')
+        : t('posts.memories.titleEmpty');
     }
     return journalEntries.length > 0 
-      ? "More joyful moments like today"
-      : "Start capturing your beautiful moments";
+      ? t('posts.memories.titlePositive')
+      : t('posts.memories.titleEmpty');
   };
 
   // Get visible items for carousel with pagination
@@ -174,16 +176,16 @@ const DynamicCarousel = () => {
       <div className="w-16 h-16 mb-4 bg-purple-500/20 rounded-full flex items-center justify-center">
         <span className="text-3xl">📝</span>
       </div>
-      <h3 className="text-lg font-semibold text-white mb-3">Start Your Memory Journey</h3>
+      <h3 className="text-lg font-semibold text-white mb-3">{t('posts.memories.placeholder.title')}</h3>
       <p className="text-gray-300 text-sm mb-4 px-4">
-        Capture your precious moments and experiences.
+        {t('posts.memories.placeholder.description')}
       </p>
       <button
         onClick={() => navigate('/journals')}
         className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center space-x-2"
       >
         <BookOpen size={16} />
-        <span>Write Memory</span>
+        <span>{t('posts.memories.placeholder.button')}</span>
       </button>
     </div>
   );
@@ -193,16 +195,16 @@ const DynamicCarousel = () => {
       <div className="w-16 h-16 mb-4 bg-green-500/20 rounded-full flex items-center justify-center">
         <span className="text-3xl">🙏</span>
       </div>
-      <h3 className="text-lg font-semibold text-white mb-3">Share Your Gratitude</h3>
+      <h3 className="text-lg font-semibold text-white mb-3">{t('posts.gratitude.placeholder.title')}</h3>
       <p className="text-gray-300 text-sm mb-4 px-4">
-        Spread positivity by sharing what you're grateful for.
+        {t('posts.gratitude.placeholder.description')}
       </p>
       <button
         onClick={() => navigate('/createPost')}
         className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center space-x-2"
       >
         <Plus size={16} />
-        <span>Add Gratitude Post</span>
+        <span>{t('posts.gratitude.placeholder.button')}</span>
       </button>
     </div>
   );
@@ -229,7 +231,7 @@ const DynamicCarousel = () => {
         {entry.entryText}
       </p>
       <button className="mt-auto text-purple-400 hover:text-purple-300 text-xs font-medium transition-colors">
-        Read Full Memory
+        {t('posts.memories.readFull')}
       </button>
     </div>
   );
@@ -250,7 +252,7 @@ const DynamicCarousel = () => {
         )}
         <div>
           <p className="text-xs font-semibold text-white">{post.user?.username}</p>
-          <p className="text-xs text-green-300">Grateful heart</p>
+          <p className="text-xs text-green-300">{t('posts.gratitude.gratefulHeart')}</p>
         </div>
       </div>
 
@@ -344,7 +346,7 @@ const DynamicCarousel = () => {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
-        <span className="ml-3 text-white text-xl">Loading your memories...</span>
+        <span className="ml-3 text-white text-xl">{t('posts.loading')}</span>
       </div>
     );
   }
@@ -352,14 +354,14 @@ const DynamicCarousel = () => {
   if (error) {
     return (
       <div className="text-center py-12">
-        <div className="text-red-400 text-xl mb-4">Couldn't load your content</div>
+        <div className="text-red-400 text-xl mb-4">{t('posts.error')}</div>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <button
             onClick={() => navigate('/journals')}
             className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:scale-105 transform"
           >
             <BookOpen size={20} />
-            <span>View All Journals</span>
+            <span>{t('posts.actions.viewJournals')}</span>
           </button>
 
           <button
@@ -367,7 +369,7 @@ const DynamicCarousel = () => {
             className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:scale-105 transform"
           >
             <Plus size={20} />
-            <span>Share Gratitude</span>
+            <span>{t('posts.actions.shareGratitude')}</span>
           </button>
         </div>
       </div>
@@ -457,7 +459,7 @@ const DynamicCarousel = () => {
               <div className="text-center mb-6">
                 <h2 className="text-2xl font-bold text-white flex items-center justify-center space-x-3">
                   <Users className="text-green-400" size={24} />
-                  <span>{gratitudePosts.length > 0 ? "Community Gratitude" : "Share Your Gratitude"}</span>
+                  <span>{gratitudePosts.length > 0 ? t('posts.gratitude.title') : t('posts.gratitude.titleEmpty')}</span>
                 </h2>
               </div>
               
@@ -546,14 +548,14 @@ const DynamicCarousel = () => {
           className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:scale-105 transform"
         >
           <BookOpen size={20} />
-          <span>View All Journals</span>
+          <span>{t('posts.actions.viewJournals')}</span>
         </button>
         <button
           onClick={() => navigate('/createPost')}
           className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:scale-105 transform"
         >
           <Plus size={20} />
-          <span>Share Gratitude</span>
+          <span>{t('posts.actions.shareGratitude')}</span>
         </button>
       </div>
 

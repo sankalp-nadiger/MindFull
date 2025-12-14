@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Video, Clock, TrendingUp, Heart, Calendar, MessageCircle } from 'lucide-react';
+import ReactDOM from 'react-dom';
+import { Video, Clock, TrendingUp, Heart, Calendar, MessageCircle, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const DashboardContent = () => {
@@ -8,6 +9,8 @@ const DashboardContent = () => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const [todaySessions, setTodaySessions] = useState([]);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
 
 
   useEffect(() => {
@@ -158,7 +161,10 @@ const DashboardContent = () => {
                       {session.startTime || "N/A"}
                     </p>
                     <button
-                      onClick={() => navigate(`/appointments/${session._id}`)}
+                      onClick={() => {
+                        setSelectedAppointment(session);
+                        setShowDetailsModal(true);
+                      }}
                       className="text-sm text-gray-500 hover:text-gray-700"
                     >
                       View Details
@@ -201,6 +207,105 @@ const DashboardContent = () => {
           </button>
         </div> */}
       </div>
+
+      {/* Appointment Details Modal */}
+      {showDetailsModal && selectedAppointment && ReactDOM.createPortal(
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[9999] p-4">
+          <div className="bg-white rounded-xl p-6 w-full max-w-3xl shadow-lg">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-900">Appointment Details</h2>
+              <button
+                onClick={() => {
+                  setShowDetailsModal(false);
+                  setSelectedAppointment(null);
+                }}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+              {/* Client */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Client</label>
+                <div className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 text-gray-900 text-sm">
+                  {selectedAppointment.clientId?.fullName || 'Unknown Client'}
+                </div>
+              </div>
+
+              {/* Date */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                <div className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 text-gray-900 text-sm">
+                  {new Date(selectedAppointment.appointmentDate).toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                  })}
+                </div>
+              </div>
+
+              {/* Start Time */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                <div className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 text-gray-900 text-sm">
+                  {selectedAppointment.startTime || 'N/A'}
+                </div>
+              </div>
+
+              {/* End Time */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                <div className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 text-gray-900 text-sm">
+                  {selectedAppointment.endTime || 'N/A'}
+                </div>
+              </div>
+
+              {/* Session Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Session Type</label>
+                <div className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 text-gray-900 capitalize text-sm">
+                  {selectedAppointment.type || selectedAppointment.sessionType || 'Follow-up'}
+                </div>
+              </div>
+
+              {/* Status */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <div className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 text-gray-900 capitalize text-sm">
+                  {selectedAppointment.status || 'Pending'}
+                </div>
+              </div>
+
+              {/* Notes */}
+              {selectedAppointment.notes && (
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                  <div className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 text-gray-900 text-sm">
+                    {selectedAppointment.notes}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Close Button */}
+            <div className="flex justify-end mt-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDetailsModal(false);
+                  setSelectedAppointment(null);
+                }}
+                className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Clock, RotateCcw, ChevronDown, ChevronUp,ArrowLeft } from 'lucide-react';
 import { Link } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 const ActivityCard = ({
     image,
     title,
@@ -9,6 +10,7 @@ const ActivityCard = ({
     time,
     imageAlt = "Activity image"
 }) => {
+    const { t } = useTranslation();
     const [isExpanded, setIsExpanded] = useState(false);
 
     return (
@@ -43,11 +45,11 @@ const ActivityCard = ({
                     >
                         {isExpanded ? (
                             <>
-                                Show less <ChevronUp size={14} />
+                                {t('activities.showLess')} <ChevronUp size={14} />
                             </>
                         ) : (
                             <>
-                                Read more <ChevronDown size={14} />
+                                {t('activities.readMore')} <ChevronDown size={14} />
                             </>
                         )}
                     </button>
@@ -75,6 +77,7 @@ const ActivityCard = ({
 
 
 const ActivityCardDemo = () => {
+    const { t } = useTranslation();
     const activities = [
         {
             image: "https://plus.unsplash.com/premium_photo-1672037884220-3c42b63de4f6?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTN8fGRlZXAlMjBicmVhdGhpbmd8ZW58MHx8MHx8fDA%3D",
@@ -265,15 +268,15 @@ If in person, focus on face-to-face interaction, avoiding distractions.`,
         className="flex items-center justify-center  text-gray-900 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
       >
         <ArrowLeft className="w-5 h-5" />
-        <span className="hidden sm:block text-sm font-medium sm:text-base">Back to Dashboard</span>
+        <span className="hidden sm:block text-sm font-medium sm:text-base">{t('activities.backToDashboard')}</span>
       </Link>
       
       <div className="flex flex-col items-center">
         <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-          Activity Suggestions
+          {t('activities.activitySuggestions')}
         </h1>
         <p className="text-sm text-slate-400">
-          Discover new activities to enhance your daily routine
+          {t('activities.discoverActivities')}
         </p>
       </div>
       

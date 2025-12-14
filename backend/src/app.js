@@ -31,7 +31,7 @@ const app = express();
 app.use(cors({
     origin: ['http://localhost:5173','https://mindfullweb.netlify.app'],
     credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'] 
 }));
 app.use(express.json({ limit: "16kb" }));

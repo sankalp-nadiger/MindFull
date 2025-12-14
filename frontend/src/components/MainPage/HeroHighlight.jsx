@@ -4,6 +4,7 @@ import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { useMotionValue, motion, useMotionTemplate } from "framer-motion";
 import React from "react";
+import { useTranslation } from 'react-i18next';
 
 export function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -14,6 +15,7 @@ export const HeroHighlight = ({
   className,
   containerClassName
 }) => {
+  const { t } = useTranslation();
   let mouseX = useMotionValue(0);
   let mouseY = useMotionValue(0);
   
@@ -97,7 +99,7 @@ export const HeroHighlight = ({
         onClick={handleScrollDown}
         className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex flex-col items-center cursor-pointer z-20 opacity-70 hover:opacity-100 transition-opacity duration-300"
       >
-        <div className="text-sm text-indigo-600 dark:text-indigo-400 font-medium mb-1">Explore</div>
+        <div className="text-sm text-indigo-600 dark:text-indigo-400 font-medium mb-1">{t('hero.explore')}</div>
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
           className="h-5 w-5 text-indigo-600 dark:text-indigo-400 animate-bounce" 

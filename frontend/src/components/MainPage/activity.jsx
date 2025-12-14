@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { Clock, CheckCircle2, Plus, Calendar, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 
 export default function Suggestion() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -84,7 +86,7 @@ export default function Suggestion() {
   };
 
   const formatTime = (timeString) => {
-    if (!timeString) return "Anytime";
+    if (!timeString) return t('activity.anytime');
     const time = new Date(`2000-01-01 ${timeString}`);
     return time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
@@ -111,15 +113,15 @@ export default function Suggestion() {
           <Calendar className="w-8 h-8 text-cyan-400" />
         </div>
         <div className="text-left">
-          <h3 className="text-xl font-bold text-white mb-2">No Tasks Scheduled</h3>
+          <h3 className="text-xl font-bold text-white mb-2">{t('activity.noTasks.title')}</h3>
           <p className="text-gray-300 text-sm mb-4 max-w-md">
-            Your day is clear! Add a task to start optimizing your time.
+            {t('activity.noTasks.description')}
           </p>
           <button 
             onClick={() => navigate('/todo')}
             className="bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 flex items-center space-x-2 shadow-lg shadow-cyan-500/25">
             <Plus className="w-4 h-4" />
-            <span>Add Task Now</span>
+            <span>{t('activity.noTasks.button')}</span>
           </button>
         </div>
       </div>
@@ -146,7 +148,7 @@ export default function Suggestion() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-              Your To-Do today
+              {t('activity.title')}
             </h2>
             <p className="text-gray-400 text-sm mt-1">
               {currentTime.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' })} • {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -154,7 +156,7 @@ export default function Suggestion() {
           </div>
           <div className="flex items-center space-x-2 bg-gradient-to-r from-cyan-900/30 to-purple-900/30 px-4 py-2 rounded-xl">
             <Zap className="w-4 h-4 text-yellow-400" />
-            <span className="text-white text-sm font-medium">{todaysTasks.length} Tasks Today</span>
+            <span className="text-white text-sm font-medium">{todaysTasks.length} {t('activity.tasksToday')}</span>
           </div>
         </div>
 
@@ -166,7 +168,7 @@ export default function Suggestion() {
             <div className="flex items-center space-x-4 py-2">
               <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
               <div className="h-px bg-gradient-to-r from-red-500 to-transparent flex-1"></div>
-              <span className="text-red-400 text-sm font-medium">NOW</span>
+              <span className="text-red-400 text-sm font-medium">{t('activity.now')}</span>
             </div>
 
             {/* Upcoming Tasks Timeline */}
@@ -248,7 +250,7 @@ export default function Suggestion() {
             onClick={() => navigate('/todo')}
             className="bg-gradient-to-r mt-9 from-cyan-600 to-purple-600 hover:from-cyan-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 flex items-center space-x-2 shadow-lg shadow-cyan-500/25">
             <Plus className="w-4 h-4" />
-            <span>Add Task Now</span>
+            <span>{t('activity.noTasks.button')}</span>
           </button>
                 </div>
               ))
@@ -257,8 +259,8 @@ export default function Suggestion() {
                 <div className="w-16 h-16 bg-gradient-to-br from-green-500/20 to-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                   <CheckCircle2 className="w-8 h-8 text-green-400" />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-2">All Caught Up!</h3>
-                <p className="text-gray-400">No more tasks scheduled for today. Great work!</p>
+                <h3 className="text-xl font-semibold text-white mb-2">{t('activity.allCaughtUp.title')}</h3>
+                <p className="text-gray-400">{t('activity.allCaughtUp.description')}</p>
               </div>
             )}
           </div>

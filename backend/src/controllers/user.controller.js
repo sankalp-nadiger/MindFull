@@ -14,6 +14,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import ApiResponse from "../utils/API_Response.js";
 import jwt from "jsonwebtoken";
 import { Session } from "../models/session.model.js";
+import { Appointment } from "../models/appointment.model.js";
 import Tesseract from 'tesseract.js';
 import axios from "axios";
 import { getDistrictAndState } from "../utils/getDistrict.js";
@@ -302,6 +303,7 @@ const getUserSessions = async (req, res) => {
       createdAt: session.createdAt,
       endedAt: session.endedAt,
       notes: session.notes,
+      userNotes: session.userNotes,
       feedback: session.feedback,
       rating: session.rating,
       counselor: session.counselor ? {
@@ -322,10 +324,10 @@ const getUserSessions = async (req, res) => {
 // feedback
 export const updateFeedback = asyncHandler(async (req, res) => {
   const userId = req.user._id;
-  const { feedback, sessionId } = req.body;
+  const { feedback, sessionId, rating } = req.body;
   // Validate inputs
-  if (!userId || !feedback?.trim() || !sessionId) {
-      throw new ApiError(400, "User ID, counsellor ID, and feedback are required");
+  if (!userId || !sessionId) {
+      throw new ApiError(400, "User ID, session ID are required");
   }
 
   // Find the user
@@ -333,15 +335,29 @@ export const updateFeedback = asyncHandler(async (req, res) => {
   if (!user) {
       throw new ApiError(404, "User not found");
   }
-  // Find the counsellor and update feedback
-  const session = await Session.findById(sessionId).populate('counselor');;
+  // Find the session and update feedback and rating
+  const session = await Session.findById(sessionId).populate('counselor');
+  
+  if (!session) {
+      throw new ApiError(404, "Session not found");
+  }
 
-  session.counselor.feedback.push({ userId, feedback });
-  await session.counselor.save();
+  // Update session with feedback and rating
+  session.feedback = feedback;
+  if (rating) {
+      session.rating = rating;
+  }
+  await session.save();
+
+  // Also add feedback to counselor if needed
+  if (session.counselor && session.counselor.feedback) {
+      session.counselor.feedback.push({ userId, feedback });
+      await session.counselor.save();
+  }
 
   return res
       .status(200)
-      .json(new ApiResponse(200, { feedback: session.counselor.feedback }, "Feedback updated successfully"));
+      .json(new ApiResponse(200, { feedback: session.feedback, rating: session.rating }, "Feedback updated successfully"));
 });
 
   
@@ -542,8 +558,7 @@ await user.save();
     const userId  = req.user._id;
 
     const sessions = await Session.find({
-        user: userId,
-        status: { $in: ["Active"] }
+        user: userId
     }).populate('counselor', 'fullName');
 
     res.status(200).json({
@@ -707,24 +722,111 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 });
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
-  const { fullName, email, interests,age, gender, username } = req.body;
+  const { fullName, email, interests, age, gender, username, phone_no } = req.body;
+
+  // Build update object with only provided fields
+  const updateFields = {};
+  if (fullName !== undefined) updateFields.fullName = fullName;
+  if (email !== undefined) updateFields.email = email;
+  if (username !== undefined) updateFields.username = username;
+  if (gender !== undefined) updateFields.gender = gender;
+  if (age !== undefined) updateFields.age = age;
+  if (phone_no !== undefined) updateFields.phone_no = phone_no;
+  
+  // Handle interests - they need to be created/updated as Interest documents
+  if (interests !== undefined && Array.isArray(interests)) {
+    const userId = req.user._id;
+    const interestIds = [];
+    
+    for (const interest of interests) {
+      // Check if interest is an object with name property or just a string/ObjectId
+      if (typeof interest === 'object' && interest.name) {
+        // Find or create the interest
+        let interestDoc = await Interest.findOne({ 
+          name: interest.name, 
+          user: userId 
+        });
+        
+        if (!interestDoc) {
+          // Create new interest
+          interestDoc = await Interest.create({
+            name: interest.name,
+            user: userId,
+            isGoal: interest.goal || false
+          });
+        } else {
+          // Update existing interest's goal status if needed
+          if (interest.goal !== undefined && interestDoc.isGoal !== interest.goal) {
+            interestDoc.isGoal = interest.goal;
+            await interestDoc.save();
+          }
+        }
+        
+        interestIds.push(interestDoc._id);
+      } else if (typeof interest === 'string') {
+        // If it's already an ObjectId string, use it directly
+        try {
+          interestIds.push(interest);
+        } catch (error) {
+          console.log('Invalid interest ID:', interest);
+        }
+      }
+    }
+    
+    updateFields.interests = interestIds;
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    { $set: updateFields },
+    { new: true }
+  )
+    .populate({
+      path: "interests",
+      select: "name isGoal",
+    })
+    .select("-password -refreshToken");
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // Format interests for response
+  const formattedUser = {
+    ...user.toObject(),
+    interests: user.interests.map((interest) => ({
+      name: interest.name,
+      goal: interest.isGoal,
+    })),
+  };
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, formattedUser, "Account details updated successfully"));
+});
+
+const updateUserAvatar = asyncHandler(async (req, res) => {
+  const avatarLocalPath = req.file?.path;
+
+  if (!avatarLocalPath) {
+    throw new ApiError(400, "Avatar file is missing");
+  }
+
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
+
+  if (!avatar.url) {
+    throw new ApiError(400, "Error while uploading avatar");
+  }
 
   const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
-        fullName,
-        email,
-        username,
-        gender,
-        age,
-        interests: interests || [],
-         // Only update if provided
-          
+        avatar: avatar.url,
       },
     },
     { new: true }
-  ).select("-password -journals -streak -maxStreak -lastLogin");
+  ).select("-password -refreshToken");
 
   if (!user) {
     throw new ApiError(404, "User not found");
@@ -732,7 +834,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, user, "Account details updated successfully"));
+    .json(new ApiResponse(200, { avatar: user.avatar }, "Avatar updated successfully"));
 });
 
 const userProgress = asyncHandler(async (req,res) => {
@@ -1064,8 +1166,13 @@ const getCaseHistory = async (req, res) => {
       return sum + (progress.sittingProgress || 0);
     }, 0) || Math.floor((user.sessionProgress || 15) / 5); // Assuming 5% per session
 
-    // Get current mood from latest journal or mood field
-    const currentMood = user.journals?.[0]?.mood || user.mood || 'Not recorded';
+    // Get current mood from latest mood entry in Mood collection
+    const latestMood = await Mood.findOne({ user: clientId })
+      .sort({ timestamp: -1 })
+      .limit(1)
+      .lean();
+    
+    const currentMood = latestMood?.mood || user.journals?.[0]?.mood || user.mood || 'Not recorded';
 
     // Format active issues
     const activeIssues = user.issues?.map(issue => ({
@@ -1095,8 +1202,18 @@ const getCaseHistory = async (req, res) => {
       notes: review.notes
     })) || [];
 
-    // Format recent sessions (mock data based on sitting notes and progress)
-    const recentSessions = formatRecentSessions(user, counselor);
+    // Fetch actual sessions from database (completed only)
+    const sessions = await Session.find({ 
+      user: clientId,
+      status: 'Completed'
+    })
+      .populate('counselor', 'fullName specialization')
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .lean();
+
+    // Format recent sessions with proper duration calculation
+    const recentSessions = await formatRecentSessions(sessions, user, counselor, clientId);
 
     // Format activity timeline
     const activityTimeline = formatActivityTimeline(user);
@@ -1132,10 +1249,7 @@ const getCaseHistory = async (req, res) => {
                      'No counselor notes available yet.'
     };
 
-    res.status(200).json({
-      success: true,
-      data: caseHistory
-    });
+    res.status(200).json(caseHistory);
 
   } catch (error) {
     console.error('Error fetching case history:', error);
@@ -1182,60 +1296,138 @@ function calculateActivityScore(user) {
 }
 
 // Helper function to format recent sessions
-function formatRecentSessions(user, counselor) {
-  const sessions = [];
+async function formatRecentSessions(sessions, user, counselor, userId) {
+  const formattedSessions = [];
   
-  // If there are sitting notes, create sessions from them
-  if (user.sittingNotes && user.sittingNotes.length > 0) {
-    user.sittingNotes.forEach((note, index) => {
-      const sessionDate = new Date();
-      sessionDate.setDate(sessionDate.getDate() - (index * 7)); // Weekly sessions
+  // Import Mood model for querying user moods
+  const { Mood } = await import('../models/mood.model.js');
+  
+  // Format actual sessions from database with proper duration calculation
+  if (sessions && sessions.length > 0) {
+    for (const [index, session] of sessions.entries()) {
+      let duration = 'N/A';
+      let durationMinutes = 0;
       
-      sessions.push({
-        sessionNumber: user.sittingNotes.length - index,
-        date: sessionDate,
-        duration: '50 min',
-        notes: note,
-        summary: note,
-        mood: 'In Progress',
-        progress: Math.min((user.sittingNotes.length - index) * 10, 100),
-        type: 'Individual'
+      // Calculate duration from startTime and endTime
+      if (session.startTime && session.endTime) {
+        const start = new Date(session.startTime);
+        const end = new Date(session.endTime);
+        durationMinutes = Math.round((end - start) / (1000 * 60)); // Convert ms to minutes
+        
+        if (durationMinutes >= 60) {
+          const hours = Math.floor(durationMinutes / 60);
+          const mins = durationMinutes % 60;
+          duration = mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
+        } else if (durationMinutes > 0) {
+          duration = `${durationMinutes} min`;
+        }
+      } else if (session.duration) {
+        // Use stored duration if available
+        durationMinutes = session.duration;
+        if (durationMinutes >= 60) {
+          const hours = Math.floor(durationMinutes / 60);
+          const mins = durationMinutes % 60;
+          duration = mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
+        } else {
+          duration = `${durationMinutes} min`;
+        }
+      }
+      
+      // Calculate mood based on multiple sources (priority: user mood > counsellor review > feedback > neutral)
+      let mood = 'Neutral';
+      
+      // 1. First priority: Check user's recorded mood around session time (±24 hours)
+      const sessionDate = session.createdAt || session.startTime;
+      if (sessionDate && userId) {
+        const dayBefore = new Date(sessionDate);
+        dayBefore.setHours(dayBefore.getHours() - 24);
+        const dayAfter = new Date(sessionDate);
+        dayAfter.setHours(dayAfter.getHours() + 24);
+
+        try {
+          const userMoods = await Mood.find({
+            user: userId,
+            timestamp: { $gte: dayBefore, $lte: dayAfter }
+          }).sort({ timestamp: -1 }).limit(1).lean();
+
+          if (userMoods && userMoods.length > 0) {
+            mood = userMoods[0].mood; // User's self-reported mood
+          }
+        } catch (error) {
+          console.log('Could not fetch user mood:', error.message);
+        }
+      }
+      
+      // 2. Second priority: Check counsellor review symptoms if no user mood found
+      if (mood === 'Neutral' && session.counsellorReview && session.counsellorReview.symptoms) {
+        const symptoms = session.counsellorReview.symptoms;
+        if (symptoms.includes('anxiety')) {
+          mood = 'Anxious';
+        } else if (symptoms.includes('depression')) {
+          mood = 'Sad';
+        } else if (symptoms.includes('stress')) {
+          mood = 'Tired';
+        }
+      }
+      
+      // 3. Third priority: Check session feedback
+      if (mood === 'Neutral' && session.feedback) {
+        mood = 'Happy';
+      }
+      
+      formattedSessions.push({
+        sessionNumber: sessions.length - index,
+        date: session.createdAt || new Date(),
+        duration: duration,
+        // notes: session.userNotes || session.counselorFeedback || 'Session completed',
+        summary: session.issueDetails || 'Counseling session',
+        mood: mood,
+        progress: session.rating ? session.rating * 20 : 50, // Convert 5-star rating to percentage
+        type: session.counsellorReview ? 'Assessment' : 'Individual',
+        status: session.status,
+        rating: session.rating || 0,
+        counselorName: session.counselor?.fullName || counselor?.fullName || 'Counselor'
       });
-    });
+    }
   }
   
-  // Add sessions from counselor reviews
-  if (user.counsellorReviews && user.counsellorReviews.length > 0) {
-    user.counsellorReviews.forEach((review, index) => {
-      sessions.push({
-        sessionNumber: sessions.length + index + 1,
-        date: review.reviewedAt || new Date(),
-        duration: '50 min',
-        notes: review.notes || 'Assessment session completed',
-        summary: `Diagnosis: ${review.diagnosis || 'General assessment'}`,
-        mood: review.symptoms?.includes('anxiety') ? 'Anxious' : 
-              review.symptoms?.includes('depression') ? 'Low' : 'Neutral',
-        progress: review.willingToTreat ? 70 : 40,
-        type: 'Assessment'
-      });
-    });
-  }
+  // // If no actual sessions, create fallback from sitting notes
+  // if (formattedSessions.length === 0 && user.sittingNotes && user.sittingNotes.length > 0) {
+  //   user.sittingNotes.forEach((note, index) => {
+  //     const sessionDate = new Date();
+  //     sessionDate.setDate(sessionDate.getDate() - (index * 7)); // Weekly sessions
+      
+  //     formattedSessions.push({
+  //       sessionNumber: user.sittingNotes.length - index,
+  //       date: sessionDate,
+  //       duration: '50 min',
+  //       notes: note,
+  //       summary: note,
+  //       mood: 'In Progress',
+  //       progress: Math.min((user.sittingNotes.length - index) * 10, 100),
+  //       type: 'Individual'
+  //     });
+  //   });
+  // }
+  
+  // // Add sessions from counselor reviews if still empty
+  // if (formattedSessions.length === 0 && user.counsellorReviews && user.counsellorReviews.length > 0) {
+  //   user.counsellorReviews.forEach((review, index) => {
+  //     formattedSessions.push({
+  //       sessionNumber: formattedSessions.length + index + 1,
+  //       date: review.reviewedAt || new Date(),
+  //       duration: '50 min',
+  //       notes: review.notes || 'Assessment session completed',
+  //       summary: `Diagnosis: ${review.diagnosis || 'General assessment'}`,
+  //       mood: review.symptoms?.includes('anxiety') ? 'Anxious' : 
+  //             review.symptoms?.includes('depression') ? 'Low' : 'Neutral',
+  //       progress: review.willingToTreat ? 70 : 40,
+  //       type: 'Assessment'
+  //     });
+  //   });
+  // }
 
-  // If no sessions exist, create a placeholder
-  if (sessions.length === 0) {
-    sessions.push({
-      sessionNumber: 1,
-      date: new Date(),
-      duration: '50 min',
-      notes: 'Initial consultation scheduled',
-      summary: 'Awaiting first session',
-      mood: 'Not recorded',
-      progress: 0,
-      type: 'Initial'
-    });
-  }
-
-  return sessions.slice(0, 5); // Return last 5 sessions
+  return formattedSessions.slice(0, 5);
 }
 
 // Helper function to format activity timeline
@@ -1586,6 +1778,97 @@ const dismissUserSession = asyncHandler(async (req, res) => {
     }
 });
 
+// Get user appointments
+const getUserAppointments = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  
+  try {
+    const appointments = await Appointment.find({ clientId: userId })
+      .populate('counsellorId', 'fullName email specialization')
+      .sort({ appointmentDate: 1, startTime: 1 });
+    
+    return res.status(200).json({
+      success: true,
+      appointments
+    });
+  } catch (error) {
+    console.error('Error fetching appointments:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch appointments'
+    });
+  }
+});
+
+// Get today's appointments
+const getTodaysUserAppointments = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const appointments = await Appointment.find({
+      clientId: userId,
+      appointmentDate: { $gte: today, $lt: tomorrow },
+      status: { $in: ['scheduled'] }
+    })
+      .populate('counsellorId', 'fullName email specialization')
+      .sort({ startTime: 1 });
+    
+    return res.status(200).json({
+      success: true,
+      appointments
+    });
+  } catch (error) {
+    console.error('Error fetching today\'s appointments:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch today\'s appointments'
+    });
+  }
+});
+
+const markAppointmentJoined = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const { appointmentId } = req.params;
+  
+  try {
+    const appointment = await Appointment.findById(appointmentId);
+    
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Appointment not found'
+      });
+    }
+    
+    if (appointment.clientId.toString() !== userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to update this appointment'
+      });
+    }
+    
+    appointment.userJoined = true;
+    await appointment.save();
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Appointment marked as joined',
+      appointment
+    });
+  } catch (error) {
+    console.error('Error marking appointment as joined:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to mark appointment as joined'
+    });
+  }
+});
+
 export {
   registerUser, extractMobileNumber,
   loginUser,
@@ -1595,7 +1878,9 @@ export {
   changeCurrentPassword,
   getCurrentUser, getJournals,
   updateAccountDetails,
+  updateUserAvatar,
   addInterests, userProgress, calculateAverageMood,
   getWeeklyMoodData, getUserSessions,
-  updateCounselorProgress, getCaseHistory, rejoinUserSession, getUserActiveSession, dismissUserSession
+  updateCounselorProgress, getCaseHistory, rejoinUserSession, getUserActiveSession, dismissUserSession,
+  getUserAppointments, getTodaysUserAppointments, markAppointmentJoined
 };

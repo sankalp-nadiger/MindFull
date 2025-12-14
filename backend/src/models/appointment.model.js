@@ -36,6 +36,19 @@ const appointmentSchema = new mongoose.Schema({
         enum: ['initial', 'follow-up', 'emergency'],
         default: 'follow-up'
     },
+    userJoined: {
+        type: Boolean,
+        default: false
+    },
+    counselorJoined: {
+        type: Boolean,
+        default: false
+    },
+    sessionId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Session',
+        default: null
+    },
     createdAt: {
         type: Date,
         default: Date.now

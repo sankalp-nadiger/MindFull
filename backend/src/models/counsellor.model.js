@@ -38,7 +38,7 @@ const counsellorSchema = new Schema({
     },
     feedback: [{
         userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-        feedback: { type: String, required: true }
+        feedback: { type: String }
     }],
     availability: [{
         day: { type: String, enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] },

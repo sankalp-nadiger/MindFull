@@ -2,16 +2,20 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { User, Users, Mail, Book, Edit2, Upload, Star, Heart, Shield, Clock, Target } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import Navbar from "../Navbar/Navbar";
 import Footer from "../Footer/Footer";
 import FloatingChatButton from "../ChatBot/FloatingChatButton";
+import Toast from "../pages/Toast";
 
 export default function UserProfile() {
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [userDetails, setUserDetails] = useState(null);
   const [newInterest, setNewInterest] = useState("");
   const [isGoal, setIsGoal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [toast, setToast] = useState({ message: "", type: "info" });
 
   // Memoized fetch function to prevent unnecessary re-renders
   const fetchUserProfile = useCallback(async () => {
@@ -75,11 +79,11 @@ export default function UserProfile() {
           avatar: updatedData.avatar || URL.createObjectURL(file)
         }));
       } else {
-        throw new Error("Failed to update avatar");
+        throw new Error(t('userProfile.messages.avatarUpdateFailed'));
       }
     } catch (error) {
       console.error("Error updating avatar:", error);
-      // You might want to show an error message to the user here
+      setToast({ message: t('userProfile.messages.avatarUpdateFailed'), type: "error" });
     }
   };
 
@@ -101,7 +105,7 @@ export default function UserProfile() {
     try {
       const accessToken = sessionStorage.getItem("accessToken");
       if (!accessToken) {
-        alert("Authentication required.");
+        setToast({ message: t('userProfile.messages.authRequired'), type: "error" });
         return;
       }
   
@@ -124,12 +128,13 @@ export default function UserProfile() {
         }));
         setNewInterest("");
         setIsGoal(false);
+        setToast({ message: t('userProfile.messages.interestAdded', 'Interest added successfully'), type: "success" });
       } else {
-        alert("Failed to add interest. Please try again.");
+        setToast({ message: t('userProfile.messages.addInterestFailed'), type: "error" });
       }
     } catch (error) {
       console.error("Error adding interest:", error);
-      alert("There was an error while adding the interest.");
+      setToast({ message: t('userProfile.messages.addInterestError'), type: "error" });
     }
   };
 
@@ -145,37 +150,43 @@ export default function UserProfile() {
 
     const accessToken = sessionStorage.getItem("accessToken");
     if (!accessToken) {
-      alert("Authentication required.");
+      setToast({ message: t('userProfile.messages.authRequired'), type: "error" });
       return;
     }
 
-    const formData = new FormData();
-    Object.keys(userDetails).forEach((key) => {
-      if (key === "interests") {
-        formData.append(key, JSON.stringify(userDetails[key]));
-      } else if (key !== "avatar" && key !== "_id") {
-        formData.append(key, userDetails[key]);
-      }
-    });
+    // Prepare only the editable fields for update
+    const updateData = {
+      fullName: userDetails.fullName,
+      email: userDetails.email,
+      username: userDetails.username,
+      age: userDetails.age,
+      gender: userDetails.gender,
+      phone_no: userDetails.phone_no,
+      interests: userDetails.interests || [],
+    };
 
     try {
       const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/users/update`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
         },
-        body: formData,
+        body: JSON.stringify(updateData),
       });
 
       if (response.ok) {
-        alert("Profile updated successfully");
+        setToast({ message: t('userProfile.messages.profileUpdated'), type: "success" });
         setIsEditing(false);
+        // Refresh profile data
+        fetchUserProfile();
       } else {
-        alert("Failed to update profile. Please try again.");
+        const errorData = await response.json();
+        setToast({ message: t('userProfile.messages.updateFailed') + (errorData.message ? `: ${errorData.message}` : ''), type: "error" });
       }
     } catch (error) {
       console.error("Error updating profile:", error);
-      alert("There was an error while updating the profile.");
+      setToast({ message: t('userProfile.messages.updateError'), type: "error" });
     }
   };
 
@@ -184,7 +195,7 @@ export default function UserProfile() {
       <div className="min-h-screen bg-gradient-to-b from-slate-900 via-gray-900 to-black flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading your profile...</p>
+          <p className="text-gray-400">{t('userProfile.loadingProfile')}</p>
         </div>
       </div>
     );
@@ -198,8 +209,8 @@ export default function UserProfile() {
           <div className="bg-gray-900 rounded-2xl shadow-2xl border border-gray-800 overflow-hidden">
             {/* Header Section */}
             <div className="bg-gradient-to-r from-emerald-800/30 to-teal-800/30 p-6 border-b border-gray-800">
-              <h1 className="text-3xl font-bold text-white mb-2">Your Wellness Profile</h1>
-              <p className="text-gray-300">Manage your personal information and wellness preferences</p>
+              <h1 className="text-3xl font-bold text-white mb-2">{t('userProfile.pageTitle')}</h1>
+              <p className="text-gray-300">{t('userProfile.pageSubtitle')}</p>
             </div>
 
             <div className="flex flex-col xl:flex-row min-h-0">
@@ -239,7 +250,7 @@ export default function UserProfile() {
                   <div className="mt-6 space-y-3">
                     <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-700">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-400">Wellness Goals</span>
+                        <span className="text-sm text-gray-400">{t('userProfile.wellnessStats.wellnessGoals')}</span>
                         <span className="text-emerald-400 font-semibold">
                           {userDetails.interests?.filter(i => i.goal).length || 0}
                         </span>
@@ -247,7 +258,7 @@ export default function UserProfile() {
                     </div>
                     <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-700">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-400">Interests</span>
+                        <span className="text-sm text-gray-400">{t('userProfile.wellnessStats.interests')}</span>
                         <span className="text-emerald-400 font-semibold">
                           {userDetails.interests?.length || 0}
                         </span>
@@ -260,7 +271,7 @@ export default function UserProfile() {
               {/* Main Content */}
               <div className="w-full xl:w-2/3 p-4 sm:p-6 lg:p-8 min-w-0 flex-1">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 mb-8">
-                  <h3 className="text-xl sm:text-2xl font-semibold text-white">Personal Information</h3>
+                  <h3 className="text-xl sm:text-2xl font-semibold text-white">{t('userProfile.personalInformation')}</h3>
                   <button
                     onClick={() => {
                       if (isEditing) {
@@ -272,7 +283,7 @@ export default function UserProfile() {
                     className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 sm:px-6 rounded-lg flex items-center transition-all duration-200 shadow-lg hover:shadow-emerald-500/25 text-sm sm:text-base"
                   >
                     <Edit2 size={16} className="mr-2" />
-                    {isEditing ? "Save Changes" : "Edit Profile"}
+                    {isEditing ? t('userProfile.saveChanges') : t('userProfile.editProfile')}
                   </button>
                 </div>
 
@@ -283,19 +294,33 @@ export default function UserProfile() {
                       const excludedFields = [
                         "interests", "journals", "_id", "avatar", "goals", "events", 
                         "location", "progress", "refreshToken", "createdAt", "updatedAt", 
-                        "lastLoginDate", "issues", "parent", "__v"
+                        "lastLoginDate", "issues", "parent", "__v", "sittingProgress",
+                        "counselorProgress", "sessionProgress", "counsellorReviews",
+                        "inSittingSeries", "sittingNotes", "gameScores"
                       ];
                       
                       if (excludedFields.includes(field)) return null;
                       
-                      const isReadOnly = field === 'parent_phone_no';
-                      const fieldLabel = field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1');
+                      const protectedFields = ['parent_phone_no'];
+                      const nonEditableFields = ['maxStreak', 'streak', 'totalScore'];
+                      
+                      const isProtected = protectedFields.includes(field);
+                      const isNonEditable = nonEditableFields.includes(field);
+                      const isReadOnly = isProtected || isNonEditable;
+                      
+                      // Format field labels
+                      let fieldLabel;
+                      if (field === 'parent_phone_no') {
+                        fieldLabel = t('userProfile.fields.parent_phone_no', 'Parent Phone Number');
+                      } else {
+                        fieldLabel = t(`userProfile.fields.${field}`, field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1'));
+                      }
                       
                       return (
                         <div key={field} className="space-y-2">
                           <label className="block text-sm font-medium text-gray-300">
                             {fieldLabel}
-                            {isReadOnly && <span className="text-xs text-gray-500 ml-2">(Protected)</span>}
+                            {isProtected && <span className="text-xs text-gray-500 ml-2">{t('userProfile.protected')}</span>}
                           </label>
                           <input
                             type="text"
@@ -307,18 +332,59 @@ export default function UserProfile() {
                                 ? 'focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500' 
                                 : 'cursor-default'
                             } ${isReadOnly ? 'opacity-60' : ''}`}
-                            placeholder={`Enter your ${fieldLabel.toLowerCase()}`}
+                            placeholder={`${t('userProfile.enterYour')} ${fieldLabel.toLowerCase()}`}
                           />
                         </div>
                       );
                     })}
                   </div>
 
+                  {/* Game Scores Section */}
+                  {userDetails.gameScores && userDetails.gameScores.length > 0 && (
+                    <div className="bg-gray-800/30 rounded-xl p-6 border border-gray-700">
+                      <div className="flex items-center space-x-2 mb-4">
+                        <Star className="w-5 h-5 text-yellow-400" />
+                        <h4 className="text-lg font-semibold text-white">{t('userProfile.gamePerformance.title')}</h4>
+                      </div>
+                      
+                      <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
+                        {userDetails.gameScores.slice(0, 5).map((game, index) => {
+                          const date = new Date(game.playedAt);
+                          const formattedDate = `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
+                          
+                          return (
+                            <div key={index} className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                              <div className="flex justify-between items-start mb-2">
+                                <h5 className="text-white font-semibold">{game.gameName}</h5>
+                                <span className="text-emerald-400 text-sm">
+                                  {formattedDate}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-gray-400">{t('userProfile.gamePerformance.score')}: <span className="text-white font-medium">{game.score}/{game.totalQuestions}</span></span>
+                                <span className="text-yellow-400 font-medium">
+                                  {((game.score / game.totalQuestions) * 100).toFixed(0)}%
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      
+                      <div className="mt-4 bg-emerald-900/20 border border-emerald-800/50 rounded-lg p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-emerald-300 text-sm font-medium">{t('userProfile.gamePerformance.totalScore')}</span>
+                          <span className="text-emerald-400 text-lg font-bold">{userDetails.totalScore || 0}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Wellness Interests & Goals Section */}
                   <div className="bg-gray-800/30 rounded-xl p-6 border border-gray-700">
                     <div className="flex items-center space-x-2 mb-4">
                       <Target className="w-5 h-5 text-emerald-400" />
-                      <h4 className="text-lg font-semibold text-white">Wellness Interests & Goals</h4>
+                      <h4 className="text-lg font-semibold text-white">{t('userProfile.wellnessInterests.title')}</h4>
                     </div>
                     
                     <div className="space-y-3">
@@ -340,7 +406,7 @@ export default function UserProfile() {
                                 disabled={!isEditing}
                                 className="w-4 h-4 text-emerald-600 bg-gray-700 border-gray-600 rounded focus:ring-emerald-500"
                               />
-                              <span className="text-gray-300">Goal</span>
+                              <span className="text-gray-300">{t('userProfile.wellnessInterests.goal')}</span>
                             </label>
                             {isEditing && (
                               <button
@@ -362,7 +428,7 @@ export default function UserProfile() {
                           value={newInterest}
                           onChange={(e) => setNewInterest(e.target.value)}
                           className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm"
-                          placeholder="Add a new wellness interest..."
+                          placeholder={t('userProfile.wellnessInterests.addNew')}
                         />
                         <div className="flex items-center space-x-3">
                           <label className="flex items-center space-x-2 text-sm px-3">
@@ -372,13 +438,13 @@ export default function UserProfile() {
                               onChange={(e) => setIsGoal(e.target.checked)}
                               className="w-4 h-4 text-emerald-600 bg-gray-700 border-gray-600 rounded focus:ring-emerald-500"
                             />
-                            <span className="text-gray-300">Goal</span>
+                            <span className="text-gray-300">{t('userProfile.wellnessInterests.goal')}</span>
                           </label>
                           <button
                             onClick={handleAddInterest}
                             className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors font-medium text-sm whitespace-nowrap"
                           >
-                            Add
+                            {t('userProfile.wellnessInterests.add')}
                           </button>
                         </div>
                       </div>
@@ -391,9 +457,9 @@ export default function UserProfile() {
                   <div className="flex items-start space-x-3">
                     <Shield className="w-5 h-5 text-emerald-400 mt-0.5" />
                     <div>
-                      <h5 className="font-medium text-emerald-200 mb-1">Your Privacy Matters</h5>
+                      <h5 className="font-medium text-emerald-200 mb-1">{t('userProfile.privacy.title')}</h5>
                       <p className="text-sm text-emerald-300/80">
-                        All your personal information is encrypted and stored securely. We never share your data with third parties without your explicit consent.
+                        {t('userProfile.privacy.message')}
                       </p>
                     </div>
                   </div>
@@ -403,6 +469,14 @@ export default function UserProfile() {
           </div>
         </div>
       </div>
+      {/* Toast Notification */}
+      {toast.message && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ message: "", type: "info" })}
+        />
+      )}
       {/* Floating Chat Button */}
       <FloatingChatButton />
       <Footer />

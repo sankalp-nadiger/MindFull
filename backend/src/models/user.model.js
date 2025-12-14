@@ -103,6 +103,9 @@ const userSchema = new Schema( {
         {
           type: String
         },
+        phone_no: {
+          type: String
+        },
         parent_phone_no: Number,
         lastLoginDate: {
           type: Date,

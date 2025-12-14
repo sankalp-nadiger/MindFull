@@ -219,20 +219,15 @@ export const addNotesToSession = async (req, res) => {
     }
 
     try {
-        // Find the session
-        const session = await Session.findById(sessionId);
+        // Find the session and populate appointment details for time validation
+        const session = await Session.findById(sessionId).populate('user counselor');
         if (!session) {
             return res.status(404).json({ message: "Session not found" });
         }
 
         // Verify that the counselor is assigned to this session
-        if (session.counselor.toString() !== counselorId.toString()) {
+        if (session.counselor._id.toString() !== counselorId.toString()) {
             return res.status(403).json({ message: "Not authorized to rejoin this session" });
-        }
-
-        // Verify session is active
-        if (session.status !== 'Active') {
-            return res.status(400).json({ message: "Session is not active" });
         }
 
         // Check if session has a room name
@@ -240,11 +235,18 @@ export const addNotesToSession = async (req, res) => {
             return res.status(400).json({ message: "Session room not available" });
         }
 
+        // Ensure session is marked as Active when rejoining
+        if (session.status === 'Pending' || session.status === 'Completed') {
+            session.status = 'Active';
+            await session.save();
+        }
+
         // Log the rejoin attempt
         console.log('🔄 Counselor rejoining session:', {
             sessionId,
             counselorId,
-            roomName: session.roomName
+            roomName: session.roomName,
+            status: session.status
         });
 
         // Return session data for rejoining
@@ -271,7 +273,7 @@ export const acceptSession = asyncHandler(async (req, res) => {
     const { sessionId } = req.body;
     const counselorId = req.counsellor._id;
     
-    console.log('✅ Accepting session:', sessionId, 'by counselor:', counselorId);
+    console.log('✅ Accepting/Rejoining session:', sessionId, 'by counselor:', counselorId);
     
     const counselor = await Counsellor.findById(counselorId);
     const session = await Session.findById(sessionId);
@@ -280,6 +282,26 @@ export const acceptSession = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Session not found");
     }
 
+    // If session is already Active and this counselor is assigned, treat it as rejoin
+    if (session.status === "Active" && session.counselor.toString() === counselorId.toString()) {
+        console.log('🔄 Session already active, rejoining...');
+        
+        if (!session.roomName) {
+            throw new ApiError(400, "Session room not available");
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Rejoining active session",
+            session: {
+                _id: session._id,
+                roomName: session.roomName,
+                status: "Active",
+            }
+        });
+    }
+
+    // Original logic for Pending sessions
     if (session.status !== "Pending") {
         throw new ApiError(400, "Session is not in pending state");
     }
@@ -1281,6 +1303,16 @@ export const scheduleAppointment = async (req, res) => {
             return res.status(400).json({ message: 'This time slot is already booked' });
         }
 
+        // Create a session for the appointment
+        const roomName = `appointment-${counsellorId}-${clientId}-${Date.now()}`;
+        const newSession = await Session.create({
+            user: clientId,
+            counselor: counsellorId,
+            roomName,
+            issueDetails: notes || `Scheduled ${sessionType || 'follow-up'} session`,
+            status: "Pending"
+        });
+
         const newAppointment = new Appointment({
             counsellorId,
             clientId,
@@ -1288,26 +1320,107 @@ export const scheduleAppointment = async (req, res) => {
             startTime,
             endTime,
             notes: notes || '',
-            sessionType: sessionType || 'follow-up'
+            sessionType: sessionType || 'follow-up',
+            sessionId: newSession._id
         });
 
         await newAppointment.save();
 
         const populatedAppointment = await Appointment.findById(newAppointment._id)
-            .populate('clientId', 'fullName email mobileNumber');
+            .populate('clientId', 'fullName email mobileNumber parent_phone_no')
+            .populate('sessionId');
 
-        // ✅ Twilio SMS Notification
+        // Get counsellor info for email
+        const counsellorInfo = await Counsellor.findById(counsellorId).select('fullName specialization email mobileNumber');
+
+        // ✅ Send Email Notification to User
+        try {
+            if (populatedAppointment.clientId?.email) {
+                const transporter = nodemailer.createTransport({
+                    service: 'gmail',
+                    auth: {
+                        user: process.env.EMAIL_USER,
+                        pass: process.env.EMAIL_PASS,
+                    },
+                });
+
+                const appointmentDateFormatted = moment(appointmentDate).format('dddd, MMMM Do YYYY');
+                
+                await transporter.sendMail({
+                    from: process.env.EMAIL_USER,
+                    to: populatedAppointment.clientId.email,
+                    subject: 'Appointment Confirmation - MindFull',
+                    html: `
+                        <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4;">
+                            <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <h2 style="color: #2563eb; margin-bottom: 20px;">Appointment Confirmed</h2>
+                                <p style="font-size: 16px; color: #333;">Hello ${populatedAppointment.clientId.fullName},</p>
+                                <p style="font-size: 16px; color: #333;">Your appointment has been successfully scheduled.</p>
+                                
+                                <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                                    <h3 style="color: #1e40af; margin-top: 0;">Appointment Details:</h3>
+                                    <p style="margin: 10px 0;"><strong>Counsellor:</strong> ${counsellorInfo.fullName}</p>
+                                    <p style="margin: 10px 0;"><strong>Specialization:</strong> ${counsellorInfo.specialization || 'Mental Health Professional'}</p>
+                                    <p style="margin: 10px 0;"><strong>Date:</strong> ${appointmentDateFormatted}</p>
+                                    <p style="margin: 10px 0;"><strong>Time:</strong> ${startTime} - ${endTime}</p>
+                                    <p style="margin: 10px 0;"><strong>Session Type:</strong> ${sessionType || 'Follow-up'}</p>
+                                    ${notes ? `<p style="margin: 10px 0;"><strong>Notes:</strong> ${notes}</p>` : ''}
+                                </div>
+                                
+                                <div style="background-color: #f9fafb; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                                    <h4 style="color: #374151; margin-top: 0; margin-bottom: 10px;">Counsellor Contact Information:</h4>
+                                    ${counsellorInfo.email ? `<p style="margin: 5px 0; color: #4b5563;"><strong>Email:</strong> ${counsellorInfo.email}</p>` : ''}
+                                    ${counsellorInfo.mobileNumber ? `<p style="margin: 5px 0; color: #4b5563;"><strong>Phone:</strong> ${counsellorInfo.mobileNumber}</p>` : ''}
+                                </div>
+                                
+                                <p style="font-size: 14px; color: #666; margin-top: 20px;">Please log in to your account 5 minutes before your appointment time to join the session.</p>
+                                <p style="font-size: 14px; color: #666;">If you need to reschedule or cancel, please contact your counsellor as soon as possible.</p>
+                                
+                                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                                    <p style="font-size: 12px; color: #999; margin: 0;">This is an automated message from MindFull. Please do not reply to this email.</p>
+                                </div>
+                            </div>
+                        </div>
+                    `
+                });
+                console.log('✅ Email notification sent to user:', populatedAppointment.clientId.email);
+            }
+        } catch (err) {
+            console.error('❌ Error sending email notification:', err.message);
+        }
+
+        // ✅ Twilio SMS Notification to User
         try {
             if (populatedAppointment.clientId?.mobileNumber) {
+                const contactInfo = counsellorInfo.mobileNumber ? ` Contact: ${counsellorInfo.mobileNumber}` : '';
                 await client.messages.create({
-                    body: `Hello ${populatedAppointment.clientId.fullName}, your appointment has been scheduled for ${appointmentDate} at ${startTime}.`,
+                    body: `Hello ${populatedAppointment.clientId.fullName}, your appointment has been scheduled for ${appointmentDate} at ${startTime} with ${counsellorInfo.fullName}.${contactInfo} Please check your email for details.`,
                     from: process.env.TWILIO_PHONE_NUMBER,
                     to: populatedAppointment.clientId.mobileNumber
                 });
-                console.log('Twilio: appointment created SMS sent');
+                console.log('✅ SMS notification sent to user');
             }
         } catch (err) {
-            console.error('Twilio error:', err.message);
+            console.error('❌ Error sending SMS to user:', err.message);
+        }
+
+        // ✅ SMS Notification to Parent (if parent phone number exists)
+        try {
+            if (populatedAppointment.clientId?.parent_phone_no) {
+                const parentPhone = populatedAppointment.clientId.parent_phone_no.toString();
+                // Ensure phone number has country code
+                const formattedParentPhone = parentPhone.startsWith('+') ? parentPhone : `+91${parentPhone}`;
+                const contactInfo = counsellorInfo.mobileNumber ? ` Counsellor contact: ${counsellorInfo.mobileNumber}` : '';
+                
+                await client.messages.create({
+                    body: `Your child ${populatedAppointment.clientId.fullName} has a counselling appointment scheduled on ${moment(appointmentDate).format('MMM Do')} at ${startTime} with ${counsellorInfo.fullName}.${contactInfo} - MindFull`,
+                    from: process.env.TWILIO_PHONE_NUMBER,
+                    to: formattedParentPhone
+                });
+                console.log('✅ SMS notification sent to parent:', formattedParentPhone);
+            }
+        } catch (err) {
+            console.error('❌ Error sending SMS to parent:', err.message);
         }
 
         res.status(201).json({
@@ -1368,6 +1481,7 @@ export const getAppointments = async (req, res) => {
 
         const appointments = await Appointment.find(query)
             .populate('clientId', 'fullName email mobileNumber')
+            .populate('sessionId')
             .sort({ appointmentDate: 1, startTime: 1 });
 
         res.status(200).json(appointments);
@@ -1383,6 +1497,27 @@ export const updateAppointmentStatus = async (req, res) => {
         const { appointmentId } = req.params;
         const { status, notes } = req.body;
         const counsellorId = req.counsellor._id;
+
+        // Check if this is the counselor-joined route
+        if (req.path.includes('counselor-joined')) {
+            const appointment = await Appointment.findOne({
+                _id: appointmentId,
+                counsellorId
+            });
+
+            if (!appointment) {
+                return res.status(404).json({ message: 'Appointment not found' });
+            }
+
+            appointment.counselorJoined = true;
+            appointment.updatedAt = new Date();
+            await appointment.save();
+
+            return res.status(200).json({ 
+                message: 'Counselor joined status updated',
+                appointment
+            });
+        }
 
         const appointment = await Appointment.findOne({
             _id: appointmentId,
@@ -1441,6 +1576,85 @@ export const updateAppointmentStatus = async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 };
+
+
+        // Update appointment details (date/time/type/notes/client)
+        export const updateAppointment = async (req, res) => {
+          try {
+            console.log('Update appointment request body:', req.body);
+            const counsellorId = req.counsellor._id;
+            const { appointmentId } = req.params;
+            const {
+              clientId,
+              appointmentDate,
+              startTime,
+              endTime,
+              sessionType,
+              notes,
+              status,
+            } = req.body;
+
+            const appointment = await Appointment.findById(appointmentId);
+            if (!appointment) {
+              return res.status(404).json({ success: false, message: 'Appointment not found' });
+            }
+            if (appointment.counsellorId.toString() !== counsellorId.toString()) {
+              return res.status(403).json({ success: false, message: 'Not authorized to update this appointment' });
+            }
+
+            // Create session if it doesn't exist
+            if (!appointment.sessionId) {
+              const roomName = `appointment-${counsellorId}-${appointment.clientId}-${Date.now()}`;
+              const newSession = await Session.create({
+                user: appointment.clientId,
+                counselor: counsellorId,
+                roomName,
+                issueDetails: appointment.notes || `Scheduled ${appointment.sessionType || 'follow-up'} session`,
+                status: "Pending"
+              });
+              appointment.sessionId = newSession._id;
+              await appointment.save();
+            }
+
+            const updates = {};
+            if (typeof clientId === 'string' && clientId.trim()) updates.clientId = clientId;
+            if (appointmentDate) {
+              const dateObj = new Date(appointmentDate);
+              if (isNaN(dateObj)) {
+                return res.status(400).json({ success: false, message: 'Invalid appointmentDate' });
+              }
+              updates.appointmentDate = dateObj;
+            }
+
+            const timeRegex = /^([01]?\d|2[0-3]):[0-5]\d$/; // HH:MM
+            if (typeof startTime === 'string') {
+              if (!timeRegex.test(startTime)) {
+                return res.status(400).json({ success: false, message: 'Invalid startTime format. Use HH:MM' });
+              }
+              updates.startTime = startTime;
+            }
+            if (typeof endTime === 'string') {
+              if (!timeRegex.test(endTime)) {
+                return res.status(400).json({ success: false, message: 'Invalid endTime format. Use HH:MM' });
+              }
+              updates.endTime = endTime;
+            }
+            if (typeof sessionType === 'string') updates.sessionType = sessionType;
+            if (typeof notes === 'string') updates.notes = notes;
+            if (typeof status === 'string') updates.status = status;
+
+            updates.updatedAt = new Date();
+
+            const updated = await Appointment.findByIdAndUpdate(appointmentId, { $set: updates }, { new: true })
+              .populate('clientId', 'fullName email mobileNumber')
+              .populate('sessionId');
+
+            return res.status(200).json({ success: true, appointment: updated });
+          } catch (error) {
+            console.error('Error updating appointment:', error);
+            return res.status(500).json({ success: false, message: 'Failed to update appointment' });
+          }
+        };
 
 // Delete appointment
 export const deleteAppointment = async (req, res) => {

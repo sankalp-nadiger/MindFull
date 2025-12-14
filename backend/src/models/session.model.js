@@ -6,6 +6,7 @@ const sessionSchema = new mongoose.Schema({
     roomName: { type: String, required: true },
     issueDetails: { type: String, required: true },
     rating: { type: Number, default: 0 },
+    feedback: { type: String, default: "" },
     status: { 
         type: String, 
         enum: ["Pending", "Active", "Completed"],

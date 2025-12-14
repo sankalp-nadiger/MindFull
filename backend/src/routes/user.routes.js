@@ -7,6 +7,7 @@ import {
   changeCurrentPassword,
   getCurrentUser,
   updateAccountDetails,
+  updateUserAvatar,
   addInterests,
   addIssues,
   userProgress,
@@ -21,7 +22,10 @@ import {
   getCaseHistory,
   rejoinUserSession,
   getUserActiveSession,
-  dismissUserSession
+  dismissUserSession,
+  getUserAppointments,
+  getTodaysUserAppointments,
+  markAppointmentJoined
 } from "../controllers/user.controller.js";
 import { addNotesToSession, endSession } from "../controllers/counsellor.controller.js";
 import {upload} from "../middleware/multer.middleware.js"
@@ -44,6 +48,7 @@ router.post("/change-password", user_verifyJWT, changeCurrentPassword);
 router.get("/current", user_verifyJWT, getCurrentUser); 
 router.get('/counseling-sessions', user_verifyJWT, getUserSessions);
 router.post("/update", user_verifyJWT, updateAccountDetails); 
+router.post("/update-avatar", user_verifyJWT, upload.single("avatar"), updateUserAvatar);
 router.get("/journal-entries", user_verifyJWT, getJournals);
 
 router.patch("/add-interests", user_verifyJWT, addInterests); 
@@ -63,6 +68,9 @@ router.get('/case_history', getCaseHistory);
 router.get('/active-session', user_verifyJWT, getUserActiveSession);
 router.post('/rejoin', user_verifyJWT, rejoinUserSession);
 router.post('/dismiss-session', user_verifyJWT, dismissUserSession);
+router.get('/appointments', user_verifyJWT, getUserAppointments);
+router.get('/appointments/today', user_verifyJWT, getTodaysUserAppointments);
+router.patch('/appointments/:appointmentId/joined', user_verifyJWT, markAppointmentJoined);
 router.get('/generate-report', async (req, res) => {
   const userId = req.user._id;
 

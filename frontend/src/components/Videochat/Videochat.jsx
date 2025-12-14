@@ -18,13 +18,15 @@ import {
   Camera,
   Mic,
   MicOff,
-  VideoOff
+  VideoOff,
+  Bell
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { Link } from "react-router-dom";
 import Toast from "../pages/Toast";
+import { useTranslation } from 'react-i18next';
 
 // WebRTC Configuration
 const rtcConfig = {
@@ -50,25 +52,30 @@ const getSocket = () => {
 };
 
 // Trust indicators component
-const TrustIndicators = () => (
-  <div className="flex items-center justify-center space-x-6 mb-8 text-sm text-slate-400">
-    <div className="flex items-center space-x-2">
-      <Shield className="w-4 h-4 text-emerald-400" />
-      <span>HIPAA Compliant</span>
+const TrustIndicators = () => {
+  const { t } = useTranslation();
+  return (
+    <div className="flex items-center justify-center space-x-6 mb-8 text-sm text-slate-400">
+      <div className="flex items-center space-x-2">
+        <Shield className="w-4 h-4 text-emerald-400" />
+        <span>{t('videoChat.hipaaCompliant')}</span>
+      </div>
+      <div className="flex items-center space-x-2">
+        <Heart className="w-4 h-4 text-rose-400" />
+        <span>{t('videoChat.licensedTherapists')}</span>
+      </div>
+      <div className="flex items-center space-x-2">
+        <CheckCircle className="w-4 h-4 text-blue-400" />
+        <span>{t('videoChat.endToEndEncrypted')}</span>
+      </div>
     </div>
-    <div className="flex items-center space-x-2">
-      <Heart className="w-4 h-4 text-rose-400" />
-      <span>Licensed Therapists</span>
-    </div>
-    <div className="flex items-center space-x-2">
-      <CheckCircle className="w-4 h-4 text-blue-400" />
-      <span>End-to-End Encrypted</span>
-    </div>
-  </div>
-);
+  );
+};
 
 // Request form component
-const RequestForm = ({ issueDetails, loading, requestSession, handleIssueDetailsChange, activeSession, rejoinSession, rejoinLoading, dismissActiveSession }) => (
+const RequestForm = ({ issueDetails, loading, requestSession, handleIssueDetailsChange, activeSession, rejoinSession, rejoinLoading, dismissActiveSession }) => {
+  const { t } = useTranslation();
+  return (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -85,9 +92,9 @@ const RequestForm = ({ issueDetails, loading, requestSession, handleIssueDetails
           <div className="flex items-center space-x-3">
             <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse"></div>
             <div>
-              <h4 className="font-semibold text-white">Active Session Found</h4>
+              <h4 className="font-semibold text-white">{t('videoChat.activeSessionFound')}</h4>
               <p className="text-sm text-slate-300">
-                You have an ongoing session with {activeSession.counselor?.fullName || 'a counselor'}
+                {t('videoChat.ongoingSessionWith', { counselor: activeSession.counselor?.fullName || t('videoChat.aCounselor') })}
               </p>
             </div>
           </div>
@@ -100,12 +107,12 @@ const RequestForm = ({ issueDetails, loading, requestSession, handleIssueDetails
               {rejoinLoading ? (
                 <div className="flex items-center space-x-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Joining...</span>
+                  <span>{t('videoChat.joining')}</span>
                 </div>
               ) : (
                 <div className="flex items-center space-x-2">
                   <Video className="w-4 h-4" />
-                  <span>Rejoin</span>
+                  <span>{t('videoChat.rejoin')}</span>
                 </div>
               )}
             </button>
@@ -113,11 +120,11 @@ const RequestForm = ({ issueDetails, loading, requestSession, handleIssueDetails
               onClick={() => dismissActiveSession(activeSession._id)}
               disabled={rejoinLoading}
               className="px-3 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-all font-semibold border border-slate-600 disabled:opacity-50"
-              title="Dismiss and mark session as completed"
+              title={t('videoChat.dismissTooltip')}
             >
               <div className="flex items-center space-x-1">
                 <AlertCircle className="w-4 h-4" />
-                <span>Dismiss</span>
+                <span>{t('videoChat.dismiss')}</span>
               </div>
             </button>
           </div>
@@ -130,22 +137,22 @@ const RequestForm = ({ issueDetails, loading, requestSession, handleIssueDetails
         <Video className="w-8 h-8 text-white" />
       </div>
       <h3 className="text-2xl font-semibold text-white mb-2">
-        {activeSession ? 'Start New Session' : 'Start Your Healing Journey'}
+        {activeSession ? t('videoChat.startNewSession') : t('videoChat.startHealingJourney')}
       </h3>
       <p className="text-slate-400">
-        Connect with a licensed mental health professional in a safe, private space
+        {t('videoChat.connectDescription')}
       </p>
     </div>
 
     <div className="space-y-4">
       <div>
         <label className="block text-sm font-medium text-slate-300 mb-2">
-          What brings you here today? *
+          {t('videoChat.whatBringsYou')}
         </label>
         <textarea
           value={issueDetails}
           onChange={handleIssueDetailsChange}
-          placeholder="Share what's on your mind. This helps us match you with the right counselor..."
+          placeholder={t('videoChat.sharePlaceholder')}
           rows="4"
           maxLength={500}
           className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors resize-none text-slate-200 placeholder-slate-500"
@@ -153,7 +160,7 @@ const RequestForm = ({ issueDetails, loading, requestSession, handleIssueDetails
           spellCheck="true"
         />
         <div className="flex justify-between items-center mt-2 text-xs text-slate-500">
-          <span>Your information is completely confidential</span>
+          <span>{t('videoChat.confidential')}</span>
           <span>{issueDetails.length}/500</span>
         </div>
       </div>
@@ -170,18 +177,291 @@ const RequestForm = ({ issueDetails, loading, requestSession, handleIssueDetails
         {loading ? (
           <div className="flex items-center justify-center space-x-2">
             <Loader2 className="w-5 h-5 animate-spin" />
-            <span>Finding Your Counselor...</span>
+            <span>{t('videoChat.findingCounselor')}</span>
           </div>
         ) : (
           <div className="flex items-center justify-center space-x-2">
             <Video className="w-5 h-5" />
-            <span>Request New Session</span>
+            <span>{t('videoChat.requestNewSession')}</span>
           </div>
         )}
       </button>
     </div>
   </motion.div>
-);
+  );
+};
+
+// Appointments Display Component
+const AppointmentsDisplay = ({ appointments, loading, onJoinSession }) => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+
+  const isWithinJoinTimeWindow = (appointment) => {
+    if (!appointment.appointmentDate || !appointment.startTime || !appointment.endTime) {
+      return false;
+    }
+
+    const now = new Date();
+    const appointmentDate = new Date(appointment.appointmentDate);
+    
+    // Parse start time
+    const [startHour, startMinute] = appointment.startTime.split(':').map(Number);
+    const startDateTime = new Date(appointmentDate);
+    startDateTime.setHours(startHour, startMinute, 0, 0);
+    
+    // Parse end time
+    const [endHour, endMinute] = appointment.endTime.split(':').map(Number);
+    const endDateTime = new Date(appointmentDate);
+    endDateTime.setHours(endHour, endMinute, 0, 0);
+    
+    // Calculate time window: 4 minutes before start to 4 minutes after end
+    const windowStart = new Date(startDateTime.getTime() - 4 * 60 * 1000);
+    const windowEnd = new Date(endDateTime.getTime() + 4 * 60 * 1000);
+    
+    return now >= windowStart && now <= windowEnd;
+  };
+
+  const handleJoinSession = async (appointment) => {
+    if (!appointment.sessionId) {
+      console.error('No session ID found in appointment');
+      alert('No session ID found in this appointment');
+      return;
+    }
+    
+    try {
+      const sessionId = appointment.sessionId._id || appointment.sessionId;
+      console.log('🎥 User joining session from appointment:', sessionId);
+      
+      // Mark appointment as joined
+      await axios.patch(
+        `${import.meta.env.VITE_BASE_API_URL}/users/appointments/${appointment._id}/joined`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
+          },
+        }
+      );
+      
+      // Navigate to video page with sessionId - let VideoChat's joinSessionFromAppointment handle it
+      navigate(`/video?sessionId=${sessionId}`);
+    } catch (error) {
+      console.error('❌ Error joining session:', error);
+      // Still try to navigate
+      const sessionId = appointment.sessionId?._id || appointment.sessionId;
+      if (sessionId) {
+        navigate(`/video?sessionId=${sessionId}`);
+      }
+    }
+  };
+
+  return (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="bg-slate-900/80 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-700 p-6 mb-6"
+  >
+    <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center space-x-3">
+        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+          <Calendar className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h3 className="text-xl font-semibold text-white">{t('videoChat.scheduledAppointments')}</h3>
+          <p className="text-sm text-slate-400">{t('videoChat.upcomingSessions')}</p>
+        </div>
+      </div>
+    </div>
+
+    {loading ? (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
+      </div>
+    ) : (() => {
+      // Filter appointments to only show scheduled ones after current time
+      const now = new Date();
+      const upcoming = (appointments || []).filter((appointment) => {
+        if (!appointment) return false;
+        if (appointment.status !== 'scheduled') return false;
+
+        const appointmentDate = new Date(appointment.appointmentDate);
+        if (isNaN(appointmentDate)) return false;
+
+        // Parse end time "HH:MM" for today's appointments
+        const today = new Date();
+        const isToday = appointmentDate.toDateString() === today.toDateString();
+        
+        if (isToday) {
+          // For today's appointments, check if end time hasn't passed
+          if (!appointment.endTime || !/^[0-2]?\d:\d{2}$/.test(appointment.endTime)) return false;
+          const [endH, endM] = appointment.endTime.split(':').map((x) => parseInt(x, 10));
+          const appointmentEndTime = new Date(appointmentDate);
+          appointmentEndTime.setHours(endH, endM, 0, 0);
+          
+          return appointmentEndTime.getTime() > now.getTime();
+        } else {
+          // For future dates, check if start time is after now
+          if (!appointment.startTime || !/^[0-2]?\d:\d{2}$/.test(appointment.startTime)) return false;
+          const [h, m] = appointment.startTime.split(':').map((x) => parseInt(x, 10));
+          appointmentDate.setHours(h, m, 0, 0);
+          
+          return appointmentDate.getTime() > now.getTime();
+        }
+      });
+
+      return upcoming.length > 0 ? (
+        <div className="space-y-4">
+          {upcoming.map((appointment, index) => {
+          const appointmentDate = new Date(appointment.appointmentDate);
+          const today = new Date();
+          const isToday = appointmentDate.toDateString() === today.toDateString();
+          const isPast = appointmentDate < today && !isToday;
+          
+          return (
+            <motion.div
+              key={appointment._id}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className={`relative overflow-hidden rounded-xl border ${
+                isPast 
+                  ? 'bg-slate-800/50 border-slate-600/50' 
+                  : isToday 
+                    ? 'bg-gradient-to-r from-blue-900/50 to-indigo-900/50 border-blue-500/50' 
+                    : 'bg-slate-800 border-slate-700'
+              } p-4 hover:border-blue-500/50 transition-all`}
+            >
+              {isToday && (
+                <div className="absolute top-2 right-2">
+                  <div className="flex items-center space-x-1 bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                    <Clock className="w-3 h-3" />
+                    <span>{t('videoChat.today')}</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center shadow-lg">
+                      <User className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-white text-lg">
+                        {appointment.counsellorId?.fullName || 'Counselor'}
+                      </h4>
+                      <p className="text-sm text-slate-400">
+                        {appointment.counsellorId?.specialization || 'Mental Health Professional'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 mt-4">
+                    <div className="flex items-center space-x-2 text-slate-300">
+                      <Calendar className="w-4 h-4 text-blue-400" />
+                      <div>
+                        <p className="text-xs text-slate-500">Date</p>
+                        <p className="font-medium">
+                          {appointmentDate.toLocaleDateString('en-US', { 
+                            weekday: 'short', 
+                            month: 'short', 
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2 text-slate-300">
+                      <Clock className="w-4 h-4 text-emerald-400" />
+                      <div>
+                        <p className="text-xs text-slate-500">Time</p>
+                        <p className="font-medium">
+                          {appointment.startTime} - {appointment.endTime}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2 text-slate-300">
+                      <FileText className="w-4 h-4 text-purple-400" />
+                      <div>
+                        <p className="text-xs text-slate-500">Session Type</p>
+                        <p className="font-medium capitalize">
+                          {appointment.sessionType || 'Follow-up'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2 text-slate-300">
+                      <CheckCircle className={`w-4 h-4 ${
+                        appointment.status === 'scheduled' ? 'text-green-400' :
+                        appointment.status === 'completed' ? 'text-blue-400' :
+                        appointment.status === 'cancelled' ? 'text-red-400' :
+                        'text-amber-400'
+                      }`} />
+                      <div>
+                        <p className="text-xs text-slate-500">Status</p>
+                        <p className="font-medium capitalize">
+                          {appointment.status}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {appointment.notes && (
+                    <div className="mt-4 bg-slate-700/50 rounded-lg p-3 border border-slate-600">
+                      <p className="text-xs text-slate-400 mb-1">Notes</p>
+                      <p className="text-sm text-slate-200">{appointment.notes}</p>
+                    </div>
+                  )}
+
+                  {appointment.sessionId && (
+                    <div className="mt-4">
+                      {isWithinJoinTimeWindow(appointment) ? (
+                        <button
+                          onClick={() => handleJoinSession(appointment)}
+                          className={`w-full px-4 py-3 text-white rounded-lg transition-all font-semibold shadow-lg flex items-center justify-center space-x-2 ${
+                            appointment.sessionId?.status === 'Active' && appointment.sessionId?.userJoined
+                              ? 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-blue-500/20'
+                              : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-emerald-500/20 animate-pulse'
+                          }`}
+                        >
+                          <Video className="w-5 h-5" />
+                          <span>
+                            {appointment.userJoined
+                              ? (t('videoChat.rejoinSession') || 'Rejoin Session')
+                              : (t('videoChat.joinSession') || 'Join Session Now')}
+                          </span>
+                        </button>
+                      ) : (
+                        <button
+                          disabled
+                          className="w-full px-4 py-3 bg-slate-700 text-slate-400 rounded-lg cursor-not-allowed font-semibold flex items-center justify-center space-x-2 opacity-50"
+                          title="Available 4 minutes before session starts"
+                        >
+                          <Video className="w-5 h-5" />
+                          <span>{t('videoChat.joinAvailableSoon') || 'Join Available Soon'}</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          );
+          })}
+        </div>
+      ) : (
+        <div className="text-center py-12 bg-slate-800 rounded-xl border-2 border-dashed border-slate-700">
+          <Calendar className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+          <p className="text-slate-400 mb-2">{t('videoChat.noAppointments')}</p>
+          <p className="text-sm text-slate-500">{t('videoChat.onlyFutureShown')}</p>
+        </div>
+      );
+    })()}
+  </motion.div>
+  );
+};
 
 // Active session component
 const ActiveSession = ({ 
@@ -555,8 +835,22 @@ const FeedbackForm = ({
   handleFeedbackChange, 
   handleFeedbackSubmit, 
   handleSkipFeedback, 
-  feedbackStatus 
-}) => (
+  feedbackStatus,
+  endedSession,
+  onRejoinSession
+}) => {
+  // Check if session ended within last 10 minutes
+  const canRejoin = () => {
+    if (!endedSession || !endedSession.endTime) return false;
+    
+    const now = new Date();
+    const sessionEndTime = new Date(endedSession.endTime);
+    const timeDiffMinutes = (now - sessionEndTime) / (1000 * 60);
+    
+    return timeDiffMinutes <= 10 && endedSession.roomName;
+  };
+
+  return (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -614,6 +908,31 @@ const FeedbackForm = ({
       </motion.div>
     )}
 
+    {canRejoin() && (
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-blue-900/50 border border-blue-500/30 rounded-xl p-4 backdrop-blur-sm"
+      >
+        <div className="flex items-center space-x-3 mb-3">
+          <Video className="w-5 h-5 text-blue-400" />
+          <div>
+            <h4 className="font-semibold text-white">Session just ended</h4>
+            <p className="text-sm text-slate-300">
+              You can rejoin the session room within 10 minutes
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={onRejoinSession}
+          className="w-full py-3 px-6 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all font-semibold shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-2"
+        >
+          <Video className="w-5 h-5" />
+          <span>Rejoin Session Room</span>
+        </button>
+      </motion.div>
+    )}
+
     <div className="flex space-x-4">
       <button
         onClick={handleFeedbackSubmit}
@@ -629,12 +948,22 @@ const FeedbackForm = ({
       </button>
     </div>
   </motion.div>
-);
+  );
+};
 
 // Session history component
-const SessionHistory = ({ sessions, isLoadingSessions }) => (
-  <div className="space-y-4">
-    {isLoadingSessions ? (
+const SessionHistory = ({ sessions, isLoadingSessions }) => {
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [selectedNotes, setSelectedNotes] = useState('');
+
+  const handleViewNotes = (notes) => {
+    setSelectedNotes(notes);
+    setShowNotesModal(true);
+  };
+
+  return (
+    <div className="space-y-4">
+      {isLoadingSessions ? (
       <div className="flex flex-col items-center justify-center py-12">
         <Loader2 className="w-8 h-8 text-emerald-400 animate-spin mb-4" />
         <p className="text-slate-400">Loading your sessions...</p>
@@ -655,22 +984,37 @@ const SessionHistory = ({ sessions, isLoadingSessions }) => (
                 <p className="text-sm text-slate-400">{session.counselor?.specialization || session.counselorSpecialization || 'General'}</p>
               </div>
               <div className="text-right">
+                <span className="text-xs text-slate-500 block mb-1">
+                  {new Date(session.createdAt).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                  })}
+                </span>
                 {session.rating && (
-                  <div className="flex items-center space-x-1 text-amber-400 mb-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className={`w-3 h-3 ${i < session.rating ? 'fill-current' : 'text-slate-600'}`} />
-                    ))}
+                  <div className="flex items-center justify-end space-x-1">
+                    <Star className="w-3 h-3 text-amber-400 fill-current" />
+                    <span className="text-xs text-slate-400">{session.rating}/5</span>
                   </div>
                 )}
-                <span className="text-xs text-slate-500">
-                  {new Date(session.createdAt).toLocaleDateString()}
-                </span>
               </div>
             </div>
             
             <p className="text-sm text-slate-300 mb-2 line-clamp-2">
               <span className="font-medium">Discussed:</span> {session.issueDetails}
             </p>
+            
+            {session.userNotes && (
+              <div className="flex justify-center mb-2">
+                <button
+                  onClick={() => handleViewNotes(session.userNotes)}
+                  className="flex items-center space-x-2 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>View Notes</span>
+                </button>
+              </div>
+            )}
             
             {session.notes && (
               <p className="text-sm text-slate-400 bg-slate-700 rounded-lg p-2 line-clamp-2">
@@ -687,11 +1031,39 @@ const SessionHistory = ({ sessions, isLoadingSessions }) => (
         <p className="text-sm text-slate-500">Your session history will appear here</p>
       </div>
     )}
+
+    {/* Notes Modal */}
+    {showNotesModal && (
+      <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setShowNotesModal(false)}>
+        <div className="bg-slate-800 rounded-xl p-6 max-w-2xl w-full border border-slate-700 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <FileText className="w-5 h-5 text-blue-400" />
+              <h3 className="text-xl font-semibold text-white">Session Notes</h3>
+            </div>
+            <button
+              onClick={() => setShowNotesModal(false)}
+              className="text-slate-400 hover:text-white transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="bg-slate-900 rounded-lg p-4 border border-slate-700 max-h-96 overflow-y-auto">
+            <p className="text-slate-200 whitespace-pre-wrap">{selectedNotes}</p>
+          </div>
+        </div>
+      </div>
+    )}
   </div>
 );
+};
 
 const VideoChat = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const socket = useMemo(() => getSocket(), []);
   
   // State management
@@ -714,6 +1086,9 @@ const VideoChat = () => {
   const [toast, setToast] = useState({ message: "", type: "info" });
   const [activeSession, setActiveSession] = useState(null);
   const [rejoinLoading, setRejoinLoading] = useState(false);
+  const [appointments, setAppointments] = useState([]);
+  const [isLoadingAppointments, setIsLoadingAppointments] = useState(false);
+  const [activeRoom, setActiveRoom] = useState(null);
 
   // Get user ID from token or storage
   const getUserId = useCallback(() => {
@@ -727,6 +1102,73 @@ const VideoChat = () => {
       }
     }
     return null;
+  }, []);
+
+  // Join session from appointment
+  const joinSessionFromAppointment = useCallback(async (sessionId) => {
+    try {
+      setLoading(true);
+      setError(''); // Clear any previous errors
+      console.log('🔄 Joining session from appointment:', sessionId);
+      
+      // Fetch all sessions and find the matching one
+      const response = await axios.get(
+        `${import.meta.env.VITE_BASE_API_URL}/users/sessions`,
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
+          },
+        }
+      );
+
+      console.log('📊 Sessions API response:', response.data);
+      
+      // Handle both response.data.sessions and response.data array formats
+      const sessionsList = response.data.sessions || response.data;
+      
+      if (!Array.isArray(sessionsList)) {
+        console.error('❌ Sessions list is not an array:', sessionsList);
+        throw new Error('Invalid sessions response format');
+      }
+
+      console.log('📝 Looking for session:', sessionId, 'in', sessionsList.length, 'sessions');
+      
+      const foundSession = sessionsList.find(s => s._id === sessionId);
+      
+      if (!foundSession) {
+        console.error('❌ Session not found with ID:', sessionId);
+        console.log('Available session IDs:', sessionsList.map(s => s._id));
+        throw new Error('Session not found in your sessions list');
+      }
+
+      console.log('✅ Found session:', foundSession);
+      console.log('🏠 Session roomName:', foundSession.roomName);
+      console.log('📊 Session status:', foundSession.status);
+      
+      // Use the same ActiveSession component regardless of roomName
+      if (foundSession.status === 'Active') {
+        console.log('⚡ Session is Active, using ActiveSession component');
+        setSession(foundSession);
+        setActiveSession(null); // Clear any active session alert
+        setActiveRoom(null); // Don't use VideoMeetWindow
+        setToast({ message: 'Joining session...', type: 'success' });
+        // Clear URL parameter
+        window.history.replaceState({}, '', '/video');
+      } else {
+        // If session is still Pending, show waiting state
+        console.log('⏳ Session is pending, waiting for counselor...');
+        setSession(foundSession);
+        setActiveSession(null);
+      }
+    } catch (error) {
+      console.error('❌ Error joining session:', error);
+      setError(error.message || 'Failed to join session. Please try again or contact support.');
+      setToast({ message: error.message || 'Failed to join session', type: 'error' });
+      // Clear URL parameter on error
+      window.history.replaceState({}, '', '/video');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   // Check for active session
@@ -745,6 +1187,27 @@ const VideoChat = () => {
       console.error('Error checking active session:', error);
     }
   }, []);
+
+  // Handle join session from appointment
+  const handleJoinSessionFromAppointment = useCallback((roomName) => {
+    console.log('🎥 Opening VideoMeetWindow with room:', roomName);
+    setActiveRoom(roomName);
+  }, []);
+
+  // Handle rejoin after session end
+  const handleRejoinEndedSession = useCallback(() => {
+    if (!endedSession) {
+      setError('Session information not available.');
+      return;
+    }
+    
+    console.log('🔄 Rejoining ended session:', endedSession._id);
+    // Use the same ActiveSession component by setting session
+    setSession(endedSession);
+    setShowFeedback(false);
+    setEndedSession(null);
+    setToast({ message: 'Rejoining session...', type: 'success' });
+  }, [endedSession]);
 
   // Dismiss active session function
   const dismissActiveSession = useCallback(async (sessionId) => {
@@ -795,9 +1258,15 @@ const VideoChat = () => {
       console.log('🎥 Rejoined session:', response.data);
       
       if (response.data.session) {
-        setSession(response.data.session);
+        // Ensure session status is Active when rejoining
+        const rejoinedSession = {
+          ...response.data.session,
+          status: 'Active'
+        };
+        setSession(rejoinedSession);
         setActiveSession(null); // Clear the active session alert
         setError('');
+        setToast({ message: 'Successfully rejoined session', type: 'success' });
       } else {
         throw new Error('No session data returned');
       }
@@ -818,6 +1287,36 @@ const VideoChat = () => {
       return;
     }
 
+    // Check for last counselor progress before making request
+    try {
+      const token = sessionStorage.getItem('accessToken');
+      if (!token) {
+        setError('Authentication token not found. Please login again.');
+        return;
+      }
+
+      const progressRes = await axios.get(
+        `${import.meta.env.VITE_BASE_API_URL}/users/last-counselor-progress`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      if (progressRes.data.hasProgress) {
+        // Show counselor choice modal
+        setLastCounselor(progressRes.data.counselor);
+        setShowCounselorChoice(true);
+        return; // Don't proceed with request yet
+      }
+    } catch (e) {
+      // If check fails, proceed with request
+      console.log('No previous counselor progress found, proceeding with request');
+    }
+
+    // Proceed with actual session request
+    await proceedWithSessionRequest();
+  }, [issueDetails]);
+
+  // Separate function to actually make the session request
+  const proceedWithSessionRequest = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -878,6 +1377,23 @@ const VideoChat = () => {
     }
   }, []);
 
+  const fetchAppointments = useCallback(async () => {
+    setIsLoadingAppointments(true);
+    
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/users/appointments`, {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+        },
+      });
+      setAppointments(response.data.appointments || []);
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+    } finally {
+      setIsLoadingAppointments(false);
+    }
+  }, []);
+
   const handleAddNotes = useCallback(async () => {
     if (!notes.trim()) {
       setNoteStatus('Please enter some notes');
@@ -916,7 +1432,8 @@ const VideoChat = () => {
       );
 
       socket.emit('endSession', { sessionId: session._id });
-      setEndedSession(session);
+      // Store the session with current timestamp as endTime
+      setEndedSession({ ...session, endTime: new Date().toISOString() });
       setSession(null);
       setShowFeedback(true);
     } catch (error) {
@@ -925,40 +1442,6 @@ const VideoChat = () => {
       setEnding(false);
     }
   }, [session, socket]);
-
-  const handleFeedbackSubmit = useCallback(async () => {
-    if (!endedSession || !endedSession._id) {
-      setFeedbackStatus("Session information missing.");
-      return;
-    }
-
-    if (!feedback.trim()) {
-      setFeedbackStatus("Please provide feedback");
-      return;
-    }
-
-    try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BASE_API_URL}/sessions/${endedSession._id}/feedback`,
-        { feedback, rating },
-        {
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
-          },
-        }
-      );
-
-      if (response.status === 200) {
-        setFeedbackStatus("Thank you for your feedback!");
-        setTimeout(() => {
-          handleFeedbackComplete();
-        }, 2000);
-      }
-    } catch (error) {
-      console.error("Error submitting feedback:", error);
-      setFeedbackStatus("Failed to submit feedback. Please try again.");
-    }
-  }, [endedSession, feedback, rating]);
 
   // Memoized input change handlers
   const handleIssueDetailsChange = useCallback((e) => {
@@ -989,26 +1472,44 @@ const VideoChat = () => {
     fetchSessions(); // Refresh sessions
   }, [fetchSessions]);
 
-  // On mount, check for last counselor progress and active session
-  useEffect(() => {
-    const checkProgress = async () => {
-      try {
-        const token = sessionStorage.getItem('accessToken');
-        const res = await axios.get(
-          `${import.meta.env.VITE_BASE_API_URL}/users/last-counselor-progress`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (res.data.hasProgress) {
-          setLastCounselor(res.data.counselor);
-          setShowCounselorChoice(true);
+  
+  const handleFeedbackSubmit = useCallback(async () => {
+    if (!endedSession || !endedSession._id) {
+      setFeedbackStatus("Session information missing.");
+      return;
+    }
+
+    if (!rating || rating < 1) {
+      setFeedbackStatus("Please provide a rating");
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_API_URL}/users/feedback`,
+        { feedback: feedback.trim() || '', sessionId: endedSession._id, rating },
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+          },
         }
-      } catch (e) {
-        // ignore
+      );
+
+      if (response.status === 200) {
+        setFeedbackStatus("Thank you for your feedback!");
+        setTimeout(() => {
+          handleFeedbackComplete();
+        }, 2000);
       }
-    };
-    
-    checkProgress();
-    checkActiveSession(); // Check for active session
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+      setFeedbackStatus("Failed to submit feedback. Please try again.");
+    }
+  }, [endedSession, feedback, rating, handleFeedbackComplete]);
+
+  // On mount, check for active session only
+  useEffect(() => {
+    checkActiveSession();
   }, [checkActiveSession]);
 
   // Handler for user choice
@@ -1034,6 +1535,9 @@ const VideoChat = () => {
           type: "success"
         });
       }
+      
+      // Proceed with the session request after choice is made
+      await proceedWithSessionRequest();
     } catch (e) {
       setToast({ message: "Error updating counselor progress.", type: "error" });
     }
@@ -1041,7 +1545,18 @@ const VideoChat = () => {
 
   // Effects
   useEffect(() => {
+    // Check for sessionId in URL params (from appointment join)
+    const urlParams = new URLSearchParams(location.search);
+    const sessionIdFromUrl = urlParams.get('sessionId');
+    
+    if (sessionIdFromUrl) {
+      joinSessionFromAppointment(sessionIdFromUrl);
+    } else {
+      checkActiveSession();
+    }
+
     fetchSessions();
+    fetchAppointments();
     
     const handleSessionsUpdated = () => {
       fetchSessions();
@@ -1052,7 +1567,7 @@ const VideoChat = () => {
     return () => {
       socket.off('sessionsUpdated', handleSessionsUpdated);
     };
-  }, [fetchSessions, socket]);
+  }, [location.search, fetchSessions, fetchAppointments, socket, joinSessionFromAppointment, checkActiveSession]);
 
   useEffect(() => {
     if (!session || session.status === 'Active') return;
@@ -1134,19 +1649,19 @@ const VideoChat = () => {
               className="flex items-center justify-center gap-1 sm:gap-2 text-gray-900 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
-              <span className="hidden sm:block text-sm font-medium sm:text-base">Back to Dashboard</span>
+              <span className="hidden sm:block text-sm font-medium sm:text-base">{t('videoChat.backToDashboard')}</span>
             </Link>
             
             <div className="text-center">
               <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
                 SoulCare
               </h1>
-              <p className="text-sm text-slate-400">Professional Video Counseling</p>
+              <p className="text-sm text-slate-400">{t('videoChat.professionalVideoCounseling')}</p>
             </div>
             
             <div className="flex items-center space-x-2 text-sm">
               <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-              <span className="text-slate-400">Secure Session</span>
+              <span className="text-slate-400">{t('videoChat.secureSession')}</span>
             </div>
           </div>
         </div>
@@ -1162,10 +1677,18 @@ const VideoChat = () => {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Session Area */}
           <div className="lg:col-span-2">
+            {/* Appointments Display */}
+            <AppointmentsDisplay 
+              appointments={appointments} 
+              loading={isLoadingAppointments}
+              onJoinSession={handleJoinSessionFromAppointment}
+            />
+            
             <div className="bg-slate-900/80 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-700 p-6 lg:p-8">
-              <AnimatePresence mode="wait">
+              <AnimatePresence>
                 {error && (
                   <motion.div
+                    key="error-message"
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
@@ -1178,9 +1701,12 @@ const VideoChat = () => {
                     </div>
                   </motion.div>
                 )}
+              </AnimatePresence>
 
+              <AnimatePresence mode="wait">
                {showFeedback ? (
                   <FeedbackForm
+                    key="feedback-form"
                     feedback={feedback}
                     rating={rating}
                     setRating={setRating}
@@ -1188,9 +1714,12 @@ const VideoChat = () => {
                     handleFeedbackSubmit={handleFeedbackSubmit}
                     handleSkipFeedback={handleSkipFeedback}
                     feedbackStatus={feedbackStatus}
+                    endedSession={endedSession}
+                    onRejoinSession={handleRejoinEndedSession}
                   />
                 ) : session ? (
                   <ActiveSession
+                    key="active-session"
                     session={session}
                     endSession={endSession}
                     ending={ending}
@@ -1203,6 +1732,7 @@ const VideoChat = () => {
                   />
                 ) :  (
                   <RequestForm
+                    key="request-form"
                     issueDetails={issueDetails}
                     loading={loading}
                     requestSession={requestSession}
@@ -1222,7 +1752,7 @@ const VideoChat = () => {
             <div className="bg-slate-900/80 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-700 p-6">
               <div className="flex items-center space-x-2 mb-6">
                 <Clock className="w-5 h-5 text-slate-400" />
-                <h2 className="text-xl font-semibold text-white">Recent Sessions</h2>
+                <h2 className="text-xl font-semibold text-white">{t('videoChat.recentSessions')}</h2>
               </div>
               <SessionHistory 
                 sessions={sessions} 
@@ -1232,20 +1762,20 @@ const VideoChat = () => {
 
             {/* Quick Actions */}
             <div className="mt-6 bg-gradient-to-br from-emerald-900/50 to-teal-900/50 rounded-2xl border border-emerald-500/30 p-6 backdrop-blur-md">
-              <h3 className="font-semibold text-white mb-4">Need Immediate Help?</h3>
+              <h3 className="font-semibold text-white mb-4">{t('videoChat.needImmediateHelp')}</h3>
               <div className="space-y-3">
                 <button className="w-full flex items-center space-x-3 p-3 bg-slate-800 border border-slate-700 rounded-xl hover:bg-slate-700 hover:border-emerald-500/50 transition-all text-left">
                   <Phone className="w-5 h-5 text-emerald-400" />
                   <div>
-                    <p className="font-medium text-white">Crisis Hotline</p>
-                    <p className="text-sm text-slate-400">24/7 Support</p>
+                    <p className="font-medium text-white">{t('videoChat.crisisHotline')}</p>
+                    <p className="text-sm text-slate-400">{t('videoChat.support24_7')}</p>
                   </div>
                 </button>
                 <button className="w-full flex items-center space-x-3 p-3 bg-slate-800 border border-slate-700 rounded-xl hover:bg-slate-700 hover:border-emerald-500/50 transition-all text-left">
                   <MessageCircle className="w-5 h-5 text-emerald-400" />
                   <div>
-                    <p className="font-medium text-white">Chat Support</p>
-                    <p className="text-sm text-slate-400">Get help now</p>
+                    <p className="font-medium text-white">{t('videoChat.chatSupport')}</p>
+                    <p className="text-sm text-slate-400">{t('videoChat.getHelpNow')}</p>
                   </div>
                 </button>
               </div>

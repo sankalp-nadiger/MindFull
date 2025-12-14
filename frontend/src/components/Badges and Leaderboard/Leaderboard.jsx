@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Trophy, Flame, Medal, Crown, Activity, TrendingUp, MapPin, Star, Users, Target, AlertCircle, RefreshCw } from 'lucide-react';
 import Navbar from '../Navbar/Navbar';
 import FloatingChatButton from '../ChatBot/FloatingChatButton';
+import { useTranslation } from 'react-i18next';
 
 // API service functions
 const API_BASE_URL = import.meta.env.VITE_BASE_API_URL;
@@ -54,6 +55,7 @@ const leaderboardAPI = {
 };
 
 function Leaderboard() {
+  const { t } = useTranslation();
   const [topUsers, setTopUsers] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [districtStats, setDistrictStats] = useState([]);
@@ -216,8 +218,8 @@ const renderBadges = (badges) => {
       <div className="min-h-screen bg-gradient-to-b from-black via-blue-950 to-black flex items-center justify-center">
         <div className="text-center">
           <Activity className="w-12 h-12 text-blue-400 animate-spin mx-auto mb-4" />
-          <p className="text-white text-lg">Loading leaderboard...</p>
-          <p className="text-gray-400 text-sm mt-2">Fetching latest rankings...</p>
+          <p className="text-white text-lg">{t('leaderboard.loading')}</p>
+          <p className="text-gray-400 text-sm mt-2">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -228,7 +230,7 @@ const renderBadges = (badges) => {
       <div className="min-h-screen bg-gradient-to-b from-black via-blue-950 to-black flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-white mb-2">Unable to Load Leaderboard</h2>
+          <h2 className="text-xl font-bold text-white mb-2">{t('common.error')}</h2>
           <p className="text-red-400 mb-4">{error}</p>
           <button 
             onClick={handleRefresh} 
@@ -236,7 +238,7 @@ const renderBadges = (badges) => {
             disabled={refreshing}
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-            {refreshing ? 'Retrying...' : 'Try Again'}
+            {refreshing ? t('common.loading') : t('leaderboard.refresh')}
           </button>
         </div>
       </div>
@@ -252,7 +254,7 @@ const renderBadges = (badges) => {
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-3xl font-bold text-white flex items-center gap-3">
               <Trophy className="w-8 h-8 text-yellow-400" />
-              Leaderboard
+              {t('leaderboard.title')}
             </h1>
             <button
               onClick={handleRefresh}
@@ -260,7 +262,7 @@ const renderBadges = (badges) => {
               className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors disabled:opacity-50"
             >
               <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-              {refreshing ? 'Refreshing...' : 'Refresh'}
+              {refreshing ? t('common.loading') : t('leaderboard.refresh')}
             </button>
           </div>
 
@@ -291,9 +293,9 @@ const renderBadges = (badges) => {
                   <div>
                     <h2 className="text-2xl font-bold text-white">{currentUser.fullName || currentUser.username}</h2>
                     <p className="text-blue-100">
-                      Global Rank #{currentUser.globalRank} 
+                      {t('leaderboard.globalRanking')} #{currentUser.globalRank} 
                       {currentUser.district && ` • ${currentUser.district}`}
-                      {currentUser.districtRank && ` (District #${currentUser.districtRank})`}
+                      {currentUser.districtRank && ` (${t('leaderboard.district')} #${currentUser.districtRank})`}
                     </p>
                   </div>
                 </div>
@@ -303,21 +305,21 @@ const renderBadges = (badges) => {
     <div className="flex items-center gap-2 mb-1">
       <Flame className="w-6 h-6 text-orange-400" />
       <span className="text-2xl font-bold">{currentUser.currentStreak || currentUser.streak || 0}</span>
-      <span className="text-sm">current streak</span>
+      <span className="text-sm">{t('leaderboard.currentStreak')}</span>
     </div>
     <div className="text-md text-blue-200">
-      Best: {currentUser.maxStreak} days
+      {t('leaderboard.maxStreak')}: {currentUser.maxStreak} {t('dashboard.streakCounter')}
     </div>
   </div>
   <div className="flex items-center gap-2 text-blue-100">
     <Star className="w-5 h-5 text-yellow-400" />
-    <span className="font-semibold">{currentUser.points} pts</span>
+    <span className="font-semibold">{currentUser.points} {t('leaderboard.points')}</span>
   </div>
 </div>
                 
                 {/* Badges Section */}
                 <div className="mb-4">
-                  <h3 className="text-sm font-semibold text-blue-100 mb-2">🏆 Your Badges</h3>
+                  <h3 className="text-sm font-semibold text-blue-100 mb-2">🏆 {t('leaderboard.badges')}</h3>
                   {renderBadges(currentUser.badges)}
                 </div>
 
@@ -328,14 +330,13 @@ const renderBadges = (badges) => {
       <TrendingUp className="w-5 h-5 text-green-400" />
       <span className="text-sm">
         {currentUser.pointsToNextRank > 0 
-          ? `${currentUser.pointsToNextRank} points to reach rank #${currentUser.globalRank - 1}`
-          : "You're at the top! Keep your streak going!"
+          ? `${currentUser.pointsToNextRank} ${t('leaderboard.pointsToNext')} #${currentUser.globalRank - 1}`
+          : t('leaderboard.atTop')
         }
       </span>
     </div>
     <div className="text-xs text-blue-200 bg-blue-600/20 p-2 rounded">
-      💡 <strong>Quick Tips:</strong> Complete daily challenges, maintain your streak, 
-      or help others in community to earn more points!
+      💡 <strong>{t('leaderboard.quickTips')}:</strong> {t('leaderboard.tipMessage')}
     </div>
   </div>
 )}
@@ -344,15 +345,15 @@ const renderBadges = (badges) => {
               <div className="bg-gradient-to-r from-gray-600 to-gray-700 rounded-2xl p-6 shadow-2xl">
                 <div className="text-center text-white">
                   <Crown className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                  <h2 className="text-xl font-bold mb-2">Join the Competition!</h2>
+                  <h2 className="text-xl font-bold mb-2">{t('leaderboard.notLoggedIn')}</h2>
                   <p className="text-gray-300 mb-4">
-                    Sign in to see your ranking and compete with others in your district.
+                    {t('auth.signInToAccount')}
                   </p>
                   <button 
                     onClick={() => window.location.href = '/login'}
                     className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
                   >
-                    Sign In
+                    {t('common.signin')}
                   </button>
                 </div>
               </div>
@@ -363,7 +364,7 @@ const renderBadges = (badges) => {
               <div className="p-4 bg-gradient-to-r from-purple-800 to-blue-800">
                 <h2 className="text-xl font-bold text-white flex items-center gap-2">
                   <Crown className="w-6 h-6 text-yellow-400" />
-                  Top 5 Performers
+                  {t('leaderboard.topPerformers')}
                 </h2>
               </div>
               
@@ -413,7 +414,7 @@ const renderBadges = (badges) => {
     <span className="text-white font-bold text-xs">{user.currentStreak || user.streak || 0}</span>
   </div>
   <div className="text-xs text-gray-400">
-    Max: {user.maxStreak}
+    {t('leaderboard.max')}: {user.maxStreak}
   </div>
   <div className="flex items-center gap-1 text-yellow-400">
     <Star className="w-3 h-3" />
@@ -449,7 +450,7 @@ const renderBadges = (badges) => {
                   <div className="p-6 bg-gradient-to-r from-green-800 to-teal-800">
                     <h2 className="text-2xl font-bold text-white flex items-center gap-3">
                       <MapPin className="w-7 h-7 text-green-400" />
-                      Top 3 Districts
+                      {t('leaderboard.topDistricts')}
                     </h2>
                   </div>
                   
@@ -472,18 +473,18 @@ const renderBadges = (badges) => {
                         <div className="space-y-2 text-sm">
                           <div className="flex items-center gap-2 text-gray-300">
                             <Users className="w-4 h-4" />
-                            <span>{district.userCount} users</span>
+                            <span>{district.userCount} {t('leaderboard.users')}</span>
                           </div>
                           <div className="flex items-center gap-2 text-gray-300">
                             <Target className="w-4 h-4" />
-                            <span>{district.totalPoints} total points</span>
+                            <span>{district.totalPoints} {t('leaderboard.totalPoints')}</span>
                           </div>
                           <div className="text-green-400 font-semibold">
-                            Average: {Math.round(district.avgPoints)} points/user
+                            {t('leaderboard.avgPoints')}: {Math.round(district.avgPoints)} {t('leaderboard.points')}/{t('leaderboard.users').toLowerCase()}
                           </div>
                           {index > 0 && districtStats[0] && (
                             <div className="text-red-400 text-xs">
-                              -{districtStats[0].totalPoints - district.totalPoints} points behind leader
+                              -{districtStats[0].totalPoints - district.totalPoints} {t('leaderboard.points')} {t('leaderboard.behindLeader')}
                             </div>
                           )}
                         </div>
@@ -496,14 +497,14 @@ const renderBadges = (badges) => {
                 {districtStats.map((district, districtIndex) => (
                   <div key={district.name} className="bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
                     <div className="p-4 bg-gradient-to-r from-gray-700 to-gray-600">
-                      <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between">
                         <h3 className="text-xl font-bold text-white flex items-center gap-2">
                           <MapPin className="w-6 h-6 text-blue-400" />
                           {district.name}
                         </h3>
                         <div className="flex items-center gap-4 text-sm text-gray-300">
-                          <span>{district.userCount} users</span>
-                          <span>{district.totalPoints} total points</span>
+                          <span>{district.userCount} {t('leaderboard.users')}</span>
+                          <span>{district.totalPoints} {t('leaderboard.points')}</span>
                         </div>
                       </div>
                     </div>
@@ -544,7 +545,7 @@ const renderBadges = (badges) => {
                                 )}
                               </div>
                               <p className="text-xs text-gray-400">
-                                District rank: #{userIndex + 1} • {user.lastActive || 'Recently active'}
+                                {t('leaderboard.district')} {t('leaderboard.rank')}: #{userIndex + 1} • {user.lastActive || 'Recently active'}
                               </p>
                             </div>
                             
