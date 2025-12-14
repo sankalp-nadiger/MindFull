@@ -772,6 +772,7 @@
     "aCounselor": "ಸಲಹೆಗಾರ",
     "joining": "ಸೇರುತ್ತಿದ್ದಾರೆ...",
     "rejoin": "ಮತ್ತೆ ಸೇರಿ",
+    "rejoinSession": "ಮತ್ತೆ ಸೆಷನ್‌ಗೆ ಸೇರಿ",
     "dismiss": "ವಜಾಗೊಳಿಸಿ",
     "dismissTooltip": "ವಜಾಗೊಳಿಸಿ ಮತ್ತು ಸೆಷನ್ ಪೂರ್ಣಗೊಂಡಿದೆ ಎಂದು ಗುರುತಿಸಿ",
     "startNewSession": "ಹೊಸ ಸೆಷನ್ ಪ್ರಾರಂಭಿಸಿ",
@@ -798,7 +799,12 @@
     "crisisHotline": "ಬಿಕ್ಕಟ್ಟು ಹಾಟ್‌ಲೈನ್",
     "support24_7": "24/7 ಬೆಂಬಲ",
     "chatSupport": "ಚಾಟ್ ಬೆಂಬಲ",
-    "getHelpNow": "ಈಗಲೇ ಸಹಾಯ ಪಡೆಯಿರಿ"
+    "getHelpNow": "ಈಗಲೇ ಸಹಾಯ ಪಡೆಯಿರಿ",
+    "joinSession": "ಸೆಷನ್‌ಗೆ ಸೇರಿ",
+    "joinAvailableSoon": "ಸೇರಲು ಶೀಘ್ರದಲ್ಲಿ ಲಭ್ಯವಿರುತ್ತದೆ",
+    "backToDashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್‌ಗೆ ಹಿಂತಿರುಗಿ",
+    "professionalVideoCounseling": "ವೃತ್ತಿಪರ ವೀಡಿಯೋ ಸಲಹಾ",
+    "secureSession": "ಸುರಕ್ಷಿತ ಸೆಷನ್"
   },
   "floatingChat": {
     "needSomeoneToTalk": "ಯಾರೊಂದಿಗಾದರೂ ಮಾತನಾಡಬೇಕೆ?",
@@ -811,7 +817,8 @@
     "startingNow": "ಈಗ ಪ್ರಾರಂಭವಾಗುತ್ತಿದೆ!",
     "oneMinuteToGo": "1 ನಿಮಿಷ ಉಳಿದಿದೆ",
     "minutesToGo": "{{minutes}} ನಿಮಿಷಗಳು ಉಳಿದಿವೆ",
-    "joinSession": "ಸೆಷನ್‌ಗೆ ಸೇರಿ"
+    "joinSession": "ಸೆಷನ್‌ಗೆ ಸೇರಿ",
+    "joinAvailableSoon": "ಸೇರಲು ಶೀಘ್ರದಲ್ಲಿ ಲಭ್ಯವಿರುತ್ತದೆ"
   },
   "errors": {
     "generic": "ಏನೋ ತಪ್ಪಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",

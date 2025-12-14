@@ -21,7 +21,7 @@ import {
   VideoOff,
   Bell
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { Link } from "react-router-dom";
@@ -192,8 +192,69 @@ const RequestForm = ({ issueDetails, loading, requestSession, handleIssueDetails
 };
 
 // Appointments Display Component
-const AppointmentsDisplay = ({ appointments, loading }) => {
+const AppointmentsDisplay = ({ appointments, loading, onJoinSession }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+
+  const isWithinJoinTimeWindow = (appointment) => {
+    if (!appointment.appointmentDate || !appointment.startTime || !appointment.endTime) {
+      return false;
+    }
+
+    const now = new Date();
+    const appointmentDate = new Date(appointment.appointmentDate);
+    
+    // Parse start time
+    const [startHour, startMinute] = appointment.startTime.split(':').map(Number);
+    const startDateTime = new Date(appointmentDate);
+    startDateTime.setHours(startHour, startMinute, 0, 0);
+    
+    // Parse end time
+    const [endHour, endMinute] = appointment.endTime.split(':').map(Number);
+    const endDateTime = new Date(appointmentDate);
+    endDateTime.setHours(endHour, endMinute, 0, 0);
+    
+    // Calculate time window: 4 minutes before start to 4 minutes after end
+    const windowStart = new Date(startDateTime.getTime() - 4 * 60 * 1000);
+    const windowEnd = new Date(endDateTime.getTime() + 4 * 60 * 1000);
+    
+    return now >= windowStart && now <= windowEnd;
+  };
+
+  const handleJoinSession = async (appointment) => {
+    if (!appointment.sessionId) {
+      console.error('No session ID found in appointment');
+      alert('No session ID found in this appointment');
+      return;
+    }
+    
+    try {
+      const sessionId = appointment.sessionId._id || appointment.sessionId;
+      console.log('🎥 User joining session from appointment:', sessionId);
+      
+      // Mark appointment as joined
+      await axios.patch(
+        `${import.meta.env.VITE_BASE_API_URL}/users/appointments/${appointment._id}/joined`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
+          },
+        }
+      );
+      
+      // Navigate to video page with sessionId - let VideoChat's joinSessionFromAppointment handle it
+      navigate(`/video?sessionId=${sessionId}`);
+    } catch (error) {
+      console.error('❌ Error joining session:', error);
+      // Still try to navigate
+      const sessionId = appointment.sessionId?._id || appointment.sessionId;
+      if (sessionId) {
+        navigate(`/video?sessionId=${sessionId}`);
+      }
+    }
+  };
+
   return (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
@@ -351,6 +412,37 @@ const AppointmentsDisplay = ({ appointments, loading }) => {
                     <div className="mt-4 bg-slate-700/50 rounded-lg p-3 border border-slate-600">
                       <p className="text-xs text-slate-400 mb-1">Notes</p>
                       <p className="text-sm text-slate-200">{appointment.notes}</p>
+                    </div>
+                  )}
+
+                  {appointment.sessionId && (
+                    <div className="mt-4">
+                      {isWithinJoinTimeWindow(appointment) ? (
+                        <button
+                          onClick={() => handleJoinSession(appointment)}
+                          className={`w-full px-4 py-3 text-white rounded-lg transition-all font-semibold shadow-lg flex items-center justify-center space-x-2 ${
+                            appointment.sessionId?.status === 'Active' && appointment.sessionId?.userJoined
+                              ? 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-blue-500/20'
+                              : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-emerald-500/20 animate-pulse'
+                          }`}
+                        >
+                          <Video className="w-5 h-5" />
+                          <span>
+                            {appointment.userJoined
+                              ? (t('videoChat.rejoinSession') || 'Rejoin Session')
+                              : (t('videoChat.joinSession') || 'Join Session Now')}
+                          </span>
+                        </button>
+                      ) : (
+                        <button
+                          disabled
+                          className="w-full px-4 py-3 bg-slate-700 text-slate-400 rounded-lg cursor-not-allowed font-semibold flex items-center justify-center space-x-2 opacity-50"
+                          title="Available 4 minutes before session starts"
+                        >
+                          <Video className="w-5 h-5" />
+                          <span>{t('videoChat.joinAvailableSoon') || 'Join Available Soon'}</span>
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -743,8 +835,22 @@ const FeedbackForm = ({
   handleFeedbackChange, 
   handleFeedbackSubmit, 
   handleSkipFeedback, 
-  feedbackStatus 
-}) => (
+  feedbackStatus,
+  endedSession,
+  onRejoinSession
+}) => {
+  // Check if session ended within last 10 minutes
+  const canRejoin = () => {
+    if (!endedSession || !endedSession.endTime) return false;
+    
+    const now = new Date();
+    const sessionEndTime = new Date(endedSession.endTime);
+    const timeDiffMinutes = (now - sessionEndTime) / (1000 * 60);
+    
+    return timeDiffMinutes <= 10 && endedSession.roomName;
+  };
+
+  return (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -802,6 +908,31 @@ const FeedbackForm = ({
       </motion.div>
     )}
 
+    {canRejoin() && (
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-blue-900/50 border border-blue-500/30 rounded-xl p-4 backdrop-blur-sm"
+      >
+        <div className="flex items-center space-x-3 mb-3">
+          <Video className="w-5 h-5 text-blue-400" />
+          <div>
+            <h4 className="font-semibold text-white">Session just ended</h4>
+            <p className="text-sm text-slate-300">
+              You can rejoin the session room within 10 minutes
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={onRejoinSession}
+          className="w-full py-3 px-6 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all font-semibold shadow-lg shadow-blue-500/20 flex items-center justify-center space-x-2"
+        >
+          <Video className="w-5 h-5" />
+          <span>Rejoin Session Room</span>
+        </button>
+      </motion.div>
+    )}
+
     <div className="flex space-x-4">
       <button
         onClick={handleFeedbackSubmit}
@@ -817,7 +948,8 @@ const FeedbackForm = ({
       </button>
     </div>
   </motion.div>
-);
+  );
+};
 
 // Session history component
 const SessionHistory = ({ sessions, isLoadingSessions }) => {
@@ -931,6 +1063,7 @@ const SessionHistory = ({ sessions, isLoadingSessions }) => {
 const VideoChat = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const socket = useMemo(() => getSocket(), []);
   
   // State management
@@ -955,6 +1088,7 @@ const VideoChat = () => {
   const [rejoinLoading, setRejoinLoading] = useState(false);
   const [appointments, setAppointments] = useState([]);
   const [isLoadingAppointments, setIsLoadingAppointments] = useState(false);
+  const [activeRoom, setActiveRoom] = useState(null);
 
   // Get user ID from token or storage
   const getUserId = useCallback(() => {
@@ -968,6 +1102,73 @@ const VideoChat = () => {
       }
     }
     return null;
+  }, []);
+
+  // Join session from appointment
+  const joinSessionFromAppointment = useCallback(async (sessionId) => {
+    try {
+      setLoading(true);
+      setError(''); // Clear any previous errors
+      console.log('🔄 Joining session from appointment:', sessionId);
+      
+      // Fetch all sessions and find the matching one
+      const response = await axios.get(
+        `${import.meta.env.VITE_BASE_API_URL}/users/sessions`,
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
+          },
+        }
+      );
+
+      console.log('📊 Sessions API response:', response.data);
+      
+      // Handle both response.data.sessions and response.data array formats
+      const sessionsList = response.data.sessions || response.data;
+      
+      if (!Array.isArray(sessionsList)) {
+        console.error('❌ Sessions list is not an array:', sessionsList);
+        throw new Error('Invalid sessions response format');
+      }
+
+      console.log('📝 Looking for session:', sessionId, 'in', sessionsList.length, 'sessions');
+      
+      const foundSession = sessionsList.find(s => s._id === sessionId);
+      
+      if (!foundSession) {
+        console.error('❌ Session not found with ID:', sessionId);
+        console.log('Available session IDs:', sessionsList.map(s => s._id));
+        throw new Error('Session not found in your sessions list');
+      }
+
+      console.log('✅ Found session:', foundSession);
+      console.log('🏠 Session roomName:', foundSession.roomName);
+      console.log('📊 Session status:', foundSession.status);
+      
+      // Use the same ActiveSession component regardless of roomName
+      if (foundSession.status === 'Active') {
+        console.log('⚡ Session is Active, using ActiveSession component');
+        setSession(foundSession);
+        setActiveSession(null); // Clear any active session alert
+        setActiveRoom(null); // Don't use VideoMeetWindow
+        setToast({ message: 'Joining session...', type: 'success' });
+        // Clear URL parameter
+        window.history.replaceState({}, '', '/video');
+      } else {
+        // If session is still Pending, show waiting state
+        console.log('⏳ Session is pending, waiting for counselor...');
+        setSession(foundSession);
+        setActiveSession(null);
+      }
+    } catch (error) {
+      console.error('❌ Error joining session:', error);
+      setError(error.message || 'Failed to join session. Please try again or contact support.');
+      setToast({ message: error.message || 'Failed to join session', type: 'error' });
+      // Clear URL parameter on error
+      window.history.replaceState({}, '', '/video');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   // Check for active session
@@ -986,6 +1187,27 @@ const VideoChat = () => {
       console.error('Error checking active session:', error);
     }
   }, []);
+
+  // Handle join session from appointment
+  const handleJoinSessionFromAppointment = useCallback((roomName) => {
+    console.log('🎥 Opening VideoMeetWindow with room:', roomName);
+    setActiveRoom(roomName);
+  }, []);
+
+  // Handle rejoin after session end
+  const handleRejoinEndedSession = useCallback(() => {
+    if (!endedSession) {
+      setError('Session information not available.');
+      return;
+    }
+    
+    console.log('🔄 Rejoining ended session:', endedSession._id);
+    // Use the same ActiveSession component by setting session
+    setSession(endedSession);
+    setShowFeedback(false);
+    setEndedSession(null);
+    setToast({ message: 'Rejoining session...', type: 'success' });
+  }, [endedSession]);
 
   // Dismiss active session function
   const dismissActiveSession = useCallback(async (sessionId) => {
@@ -1036,9 +1258,15 @@ const VideoChat = () => {
       console.log('🎥 Rejoined session:', response.data);
       
       if (response.data.session) {
-        setSession(response.data.session);
+        // Ensure session status is Active when rejoining
+        const rejoinedSession = {
+          ...response.data.session,
+          status: 'Active'
+        };
+        setSession(rejoinedSession);
         setActiveSession(null); // Clear the active session alert
         setError('');
+        setToast({ message: 'Successfully rejoined session', type: 'success' });
       } else {
         throw new Error('No session data returned');
       }
@@ -1204,7 +1432,8 @@ const VideoChat = () => {
       );
 
       socket.emit('endSession', { sessionId: session._id });
-      setEndedSession(session);
+      // Store the session with current timestamp as endTime
+      setEndedSession({ ...session, endTime: new Date().toISOString() });
       setSession(null);
       setShowFeedback(true);
     } catch (error) {
@@ -1213,40 +1442,6 @@ const VideoChat = () => {
       setEnding(false);
     }
   }, [session, socket]);
-
-  const handleFeedbackSubmit = useCallback(async () => {
-    if (!endedSession || !endedSession._id) {
-      setFeedbackStatus("Session information missing.");
-      return;
-    }
-
-    if (!feedback.trim()) {
-      setFeedbackStatus("Please provide feedback");
-      return;
-    }
-
-    try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BASE_API_URL}/sessions/${endedSession._id}/feedback`,
-        { feedback, rating },
-        {
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
-          },
-        }
-      );
-
-      if (response.status === 200) {
-        setFeedbackStatus("Thank you for your feedback!");
-        setTimeout(() => {
-          handleFeedbackComplete();
-        }, 2000);
-      }
-    } catch (error) {
-      console.error("Error submitting feedback:", error);
-      setFeedbackStatus("Failed to submit feedback. Please try again.");
-    }
-  }, [endedSession, feedback, rating]);
 
   // Memoized input change handlers
   const handleIssueDetailsChange = useCallback((e) => {
@@ -1276,6 +1471,41 @@ const VideoChat = () => {
     setFeedbackStatus('');
     fetchSessions(); // Refresh sessions
   }, [fetchSessions]);
+
+  
+  const handleFeedbackSubmit = useCallback(async () => {
+    if (!endedSession || !endedSession._id) {
+      setFeedbackStatus("Session information missing.");
+      return;
+    }
+
+    if (!rating || rating < 1) {
+      setFeedbackStatus("Please provide a rating");
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_API_URL}/users/feedback`,
+        { feedback: feedback.trim() || '', sessionId: endedSession._id, rating },
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        setFeedbackStatus("Thank you for your feedback!");
+        setTimeout(() => {
+          handleFeedbackComplete();
+        }, 2000);
+      }
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+      setFeedbackStatus("Failed to submit feedback. Please try again.");
+    }
+  }, [endedSession, feedback, rating, handleFeedbackComplete]);
 
   // On mount, check for active session only
   useEffect(() => {
@@ -1315,6 +1545,16 @@ const VideoChat = () => {
 
   // Effects
   useEffect(() => {
+    // Check for sessionId in URL params (from appointment join)
+    const urlParams = new URLSearchParams(location.search);
+    const sessionIdFromUrl = urlParams.get('sessionId');
+    
+    if (sessionIdFromUrl) {
+      joinSessionFromAppointment(sessionIdFromUrl);
+    } else {
+      checkActiveSession();
+    }
+
     fetchSessions();
     fetchAppointments();
     
@@ -1327,7 +1567,7 @@ const VideoChat = () => {
     return () => {
       socket.off('sessionsUpdated', handleSessionsUpdated);
     };
-  }, [fetchSessions, fetchAppointments, socket]);
+  }, [location.search, fetchSessions, fetchAppointments, socket, joinSessionFromAppointment, checkActiveSession]);
 
   useEffect(() => {
     if (!session || session.status === 'Active') return;
@@ -1409,19 +1649,19 @@ const VideoChat = () => {
               className="flex items-center justify-center gap-1 sm:gap-2 text-gray-900 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
-              <span className="hidden sm:block text-sm font-medium sm:text-base">Back to Dashboard</span>
+              <span className="hidden sm:block text-sm font-medium sm:text-base">{t('videoChat.backToDashboard')}</span>
             </Link>
             
             <div className="text-center">
               <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
                 SoulCare
               </h1>
-              <p className="text-sm text-slate-400">Professional Video Counseling</p>
+              <p className="text-sm text-slate-400">{t('videoChat.professionalVideoCounseling')}</p>
             </div>
             
             <div className="flex items-center space-x-2 text-sm">
               <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-              <span className="text-slate-400">Secure Session</span>
+              <span className="text-slate-400">{t('videoChat.secureSession')}</span>
             </div>
           </div>
         </div>
@@ -1441,12 +1681,14 @@ const VideoChat = () => {
             <AppointmentsDisplay 
               appointments={appointments} 
               loading={isLoadingAppointments}
+              onJoinSession={handleJoinSessionFromAppointment}
             />
             
             <div className="bg-slate-900/80 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-700 p-6 lg:p-8">
-              <AnimatePresence mode="wait">
+              <AnimatePresence>
                 {error && (
                   <motion.div
+                    key="error-message"
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
@@ -1459,9 +1701,12 @@ const VideoChat = () => {
                     </div>
                   </motion.div>
                 )}
+              </AnimatePresence>
 
+              <AnimatePresence mode="wait">
                {showFeedback ? (
                   <FeedbackForm
+                    key="feedback-form"
                     feedback={feedback}
                     rating={rating}
                     setRating={setRating}
@@ -1469,9 +1714,12 @@ const VideoChat = () => {
                     handleFeedbackSubmit={handleFeedbackSubmit}
                     handleSkipFeedback={handleSkipFeedback}
                     feedbackStatus={feedbackStatus}
+                    endedSession={endedSession}
+                    onRejoinSession={handleRejoinEndedSession}
                   />
                 ) : session ? (
                   <ActiveSession
+                    key="active-session"
                     session={session}
                     endSession={endSession}
                     ending={ending}
@@ -1484,6 +1732,7 @@ const VideoChat = () => {
                   />
                 ) :  (
                   <RequestForm
+                    key="request-form"
                     issueDetails={issueDetails}
                     loading={loading}
                     requestSession={requestSession}

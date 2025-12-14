@@ -13,11 +13,39 @@ const AppointmentNotification = () => {
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
 
-  // Mark appointment as joined
+  // Check if within join time window (4 min before start to 4 min after end)
+  const isWithinJoinTimeWindow = () => {
+    if (!upcomingAppointment) return false;
+
+    const now = new Date();
+    const appointmentDate = new Date(upcomingAppointment.appointmentDate);
+    
+    // Parse start time
+    const [startHour, startMinute] = upcomingAppointment.startTime.split(':').map(Number);
+    const startDateTime = new Date(appointmentDate);
+    startDateTime.setHours(startHour, startMinute, 0, 0);
+    
+    // Parse end time
+    const [endHour, endMinute] = upcomingAppointment.endTime.split(':').map(Number);
+    const endDateTime = new Date(appointmentDate);
+    endDateTime.setHours(endHour, endMinute, 0, 0);
+    
+    // Calculate time window: 4 minutes before start to 4 minutes after end
+    const windowStart = new Date(startDateTime.getTime() - 4 * 60 * 1000); // 4 minutes before
+    const windowEnd = new Date(endDateTime.getTime() + 4 * 60 * 1000); // 4 minutes after
+    
+    return now >= windowStart && now <= windowEnd;
+  };
+
+  // Mark appointment as joined and navigate to video page
   const handleJoinSession = async () => {
-    if (!upcomingAppointment) return;
+    if (!upcomingAppointment || !upcomingAppointment.sessionId) return;
     
     try {
+      const sessionId = upcomingAppointment.sessionId._id || upcomingAppointment.sessionId;
+      console.log('🎥 Joining session from notification:', sessionId);
+      
+      // Mark appointment as joined
       await axios.patch(
         `${import.meta.env.VITE_BASE_API_URL}/users/appointments/${upcomingAppointment._id}/joined`,
         {},
@@ -28,12 +56,16 @@ const AppointmentNotification = () => {
         }
       );
       
-      // Navigate to video session
-      navigate('/video');
+      // Navigate to video page with sessionId in URL
+      // The VideoChat component will pick it up and join the session
+      navigate(`/video?sessionId=${sessionId}`);
     } catch (error) {
-      console.error('Error marking appointment as joined:', error);
-      // Still navigate even if the API call fails
-      navigate('/video');
+      console.error('❌ Error joining session:', error);
+      // Still try to navigate
+      const sessionId = upcomingAppointment.sessionId?._id || upcomingAppointment.sessionId;
+      if (sessionId) {
+        navigate(`/video?sessionId=${sessionId}`);
+      }
     }
   };
 
@@ -257,12 +289,22 @@ const AppointmentNotification = () => {
               </div>
 
               {/* Action Button */}
-              <button
-                onClick={handleJoinSession}
-                className="mt-4 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl font-semibold text-center block hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-blue-500/50"
-              >
-                {t('appointments.joinSession')}
-              </button>
+              {isWithinJoinTimeWindow() ? (
+                <button
+                  onClick={handleJoinSession}
+                  className="mt-4 w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-3 rounded-xl font-semibold text-center block hover:from-emerald-600 hover:to-teal-700 transition-all shadow-lg hover:shadow-emerald-500/50 animate-pulse"
+                >
+                  {t('appointments.joinSession') || 'Join Session Now'}
+                </button>
+              ) : (
+                <button
+                  disabled
+                  className="mt-4 w-full bg-slate-700 text-slate-400 py-3 rounded-xl font-semibold text-center block cursor-not-allowed opacity-50"
+                  title="Join available 4 minutes before session starts"
+                >
+                  {t('appointments.joinAvailableSoon') || 'Join Available Soon'}
+                </button>
+              )}
             </div>
           </motion.div>
         )}

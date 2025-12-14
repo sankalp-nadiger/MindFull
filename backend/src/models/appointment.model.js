@@ -44,6 +44,11 @@ const appointmentSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    sessionId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Session',
+        default: null
+    },
     createdAt: {
         type: Date,
         default: Date.now

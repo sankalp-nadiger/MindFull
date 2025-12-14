@@ -761,6 +761,9 @@
     "title": "Multilingual Example"
   },
   "videoChat": {
+    "backToDashboard": "Back to Dashboard",
+    "professionalVideoCounseling": "Professional Video Counseling",
+    "secureSession": "Secure Session",
     "hipaaCompliant": "HIPAA Compliant",
     "licensedTherapists": "Licensed Therapists",
     "endToEndEncrypted": "End-to-End Encrypted",
@@ -770,6 +773,9 @@
     "joining": "Joining...",
     "rejoin": "Rejoin",
     "dismiss": "Dismiss",
+    "joinSession": "Join Session",
+    "rejoinSession": "Rejoin Session",
+    "joinAvailableSoon": "Join Available Soon",
     "dismissTooltip": "Dismiss and mark session as completed",
     "startNewSession": "Start New Session",
     "startHealingJourney": "Start Your Healing Journey",

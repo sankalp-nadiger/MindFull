@@ -795,6 +795,9 @@
     "title": "बहुभाषी उदाहरण"
   },
   "videoChat": {
+    "backToDashboard": "डैशबोर्ड पर वापस जाएं",
+    "professionalVideoCounseling": "पेशेवर वीडियो परामर्श",
+    "secureSession": "सुरक्षित सत्र",
     "hipaaCompliant": "HIPAA अनुपालन",
     "licensedTherapists": "लाइसेंसधारी चिकित्सक",
     "endToEndEncrypted": "एंड-टू-एंड एन्क्रिप्टेड",
@@ -804,6 +807,9 @@
     "joining": "शामिल हो रहे हैं...",
     "rejoin": "फिर से जुड़ें",
     "dismiss": "खारिज करें",
+    "joinSession": "सत्र में शामिल हों",
+    "rejoinSession": "फिर से सत्र में शामिल हों",
+    "joinAvailableSoon": "शीघ्र ही शामिल हो सकेंगे",
     "dismissTooltip": "खारिज करें और सत्र पूर्ण के रूप में चिह्नित करें",
     "startNewSession": "नया सत्र शुरू करें",
     "startHealingJourney": "अपनी उपचार यात्रा शुरू करें",

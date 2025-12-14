@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { Users, Search, Filter, MoreVertical, AlertCircle, Loader, Eye, Calendar, Clock, X, Check } from 'lucide-react';
 
 const ClientsContent = ({ onViewCaseHistory }) => {
@@ -25,6 +26,17 @@ const ClientsContent = ({ onViewCaseHistory }) => {
   useEffect(() => {
     fetchClientsData();
   }, []);
+
+  useEffect(() => {
+    if (showScheduleModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showScheduleModal]);
 
   const fetchClientsData = async () => {
     try {
@@ -294,9 +306,6 @@ const ClientsContent = ({ onViewCaseHistory }) => {
                         <div className="text-sm font-medium text-gray-900">
                           {client.name || client.clientName || 'Client'}
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {client.notes || client.description || 'No notes available'}
-                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -332,9 +341,9 @@ const ClientsContent = ({ onViewCaseHistory }) => {
                         >
                           <Calendar className="h-4 w-4" />
                         </button>
-                        <button className="text-gray-400 hover:text-gray-600">
+                        {/* <button className="text-gray-400 hover:text-gray-600">
                           <MoreVertical className="h-4 w-4" />
-                        </button>
+                        </button> */}
                       </div>
                     </td>
                   </tr>
@@ -346,8 +355,8 @@ const ClientsContent = ({ onViewCaseHistory }) => {
       </div>
 
       {/* Schedule Appointment Modal */}
-      {showScheduleModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      {showScheduleModal && ReactDOM.createPortal(
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-gray-900">
@@ -490,7 +499,8 @@ const ClientsContent = ({ onViewCaseHistory }) => {
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

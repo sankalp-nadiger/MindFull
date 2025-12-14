@@ -102,7 +102,7 @@ const CounselorReview = ({ isOpen, onClose, sessionData, userId, inSittingSeries
       );
       
       if (response.ok) {
-        onClose();
+        onClose(true); // Pass true to indicate success
         alert('Review submitted successfully!');
       } else {
         throw new Error('Failed to submit review');

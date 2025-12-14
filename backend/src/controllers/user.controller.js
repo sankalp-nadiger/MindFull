@@ -326,8 +326,8 @@ export const updateFeedback = asyncHandler(async (req, res) => {
   const userId = req.user._id;
   const { feedback, sessionId, rating } = req.body;
   // Validate inputs
-  if (!userId || !feedback?.trim() || !sessionId) {
-      throw new ApiError(400, "User ID, session ID, and feedback are required");
+  if (!userId || !sessionId) {
+      throw new ApiError(400, "User ID, session ID are required");
   }
 
   // Find the user
@@ -558,8 +558,7 @@ await user.save();
     const userId  = req.user._id;
 
     const sessions = await Session.find({
-        user: userId,
-        status: { $in: ["Active"] }
+        user: userId
     }).populate('counselor', 'fullName');
 
     res.status(200).json({
@@ -1203,8 +1202,18 @@ const getCaseHistory = async (req, res) => {
       notes: review.notes
     })) || [];
 
-    // Format recent sessions (mock data based on sitting notes and progress)
-    const recentSessions = formatRecentSessions(user, counselor);
+    // Fetch actual sessions from database (completed only)
+    const sessions = await Session.find({ 
+      user: clientId,
+      status: 'Completed'
+    })
+      .populate('counselor', 'fullName specialization')
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .lean();
+
+    // Format recent sessions with proper duration calculation
+    const recentSessions = await formatRecentSessions(sessions, user, counselor, clientId);
 
     // Format activity timeline
     const activityTimeline = formatActivityTimeline(user);
@@ -1287,60 +1296,138 @@ function calculateActivityScore(user) {
 }
 
 // Helper function to format recent sessions
-function formatRecentSessions(user, counselor) {
-  const sessions = [];
+async function formatRecentSessions(sessions, user, counselor, userId) {
+  const formattedSessions = [];
   
-  // If there are sitting notes, create sessions from them
-  if (user.sittingNotes && user.sittingNotes.length > 0) {
-    user.sittingNotes.forEach((note, index) => {
-      const sessionDate = new Date();
-      sessionDate.setDate(sessionDate.getDate() - (index * 7)); // Weekly sessions
+  // Import Mood model for querying user moods
+  const { Mood } = await import('../models/mood.model.js');
+  
+  // Format actual sessions from database with proper duration calculation
+  if (sessions && sessions.length > 0) {
+    for (const [index, session] of sessions.entries()) {
+      let duration = 'N/A';
+      let durationMinutes = 0;
       
-      sessions.push({
-        sessionNumber: user.sittingNotes.length - index,
-        date: sessionDate,
-        duration: '50 min',
-        notes: note,
-        summary: note,
-        mood: 'In Progress',
-        progress: Math.min((user.sittingNotes.length - index) * 10, 100),
-        type: 'Individual'
+      // Calculate duration from startTime and endTime
+      if (session.startTime && session.endTime) {
+        const start = new Date(session.startTime);
+        const end = new Date(session.endTime);
+        durationMinutes = Math.round((end - start) / (1000 * 60)); // Convert ms to minutes
+        
+        if (durationMinutes >= 60) {
+          const hours = Math.floor(durationMinutes / 60);
+          const mins = durationMinutes % 60;
+          duration = mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
+        } else if (durationMinutes > 0) {
+          duration = `${durationMinutes} min`;
+        }
+      } else if (session.duration) {
+        // Use stored duration if available
+        durationMinutes = session.duration;
+        if (durationMinutes >= 60) {
+          const hours = Math.floor(durationMinutes / 60);
+          const mins = durationMinutes % 60;
+          duration = mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
+        } else {
+          duration = `${durationMinutes} min`;
+        }
+      }
+      
+      // Calculate mood based on multiple sources (priority: user mood > counsellor review > feedback > neutral)
+      let mood = 'Neutral';
+      
+      // 1. First priority: Check user's recorded mood around session time (±24 hours)
+      const sessionDate = session.createdAt || session.startTime;
+      if (sessionDate && userId) {
+        const dayBefore = new Date(sessionDate);
+        dayBefore.setHours(dayBefore.getHours() - 24);
+        const dayAfter = new Date(sessionDate);
+        dayAfter.setHours(dayAfter.getHours() + 24);
+
+        try {
+          const userMoods = await Mood.find({
+            user: userId,
+            timestamp: { $gte: dayBefore, $lte: dayAfter }
+          }).sort({ timestamp: -1 }).limit(1).lean();
+
+          if (userMoods && userMoods.length > 0) {
+            mood = userMoods[0].mood; // User's self-reported mood
+          }
+        } catch (error) {
+          console.log('Could not fetch user mood:', error.message);
+        }
+      }
+      
+      // 2. Second priority: Check counsellor review symptoms if no user mood found
+      if (mood === 'Neutral' && session.counsellorReview && session.counsellorReview.symptoms) {
+        const symptoms = session.counsellorReview.symptoms;
+        if (symptoms.includes('anxiety')) {
+          mood = 'Anxious';
+        } else if (symptoms.includes('depression')) {
+          mood = 'Sad';
+        } else if (symptoms.includes('stress')) {
+          mood = 'Tired';
+        }
+      }
+      
+      // 3. Third priority: Check session feedback
+      if (mood === 'Neutral' && session.feedback) {
+        mood = 'Happy';
+      }
+      
+      formattedSessions.push({
+        sessionNumber: sessions.length - index,
+        date: session.createdAt || new Date(),
+        duration: duration,
+        // notes: session.userNotes || session.counselorFeedback || 'Session completed',
+        summary: session.issueDetails || 'Counseling session',
+        mood: mood,
+        progress: session.rating ? session.rating * 20 : 50, // Convert 5-star rating to percentage
+        type: session.counsellorReview ? 'Assessment' : 'Individual',
+        status: session.status,
+        rating: session.rating || 0,
+        counselorName: session.counselor?.fullName || counselor?.fullName || 'Counselor'
       });
-    });
+    }
   }
   
-  // Add sessions from counselor reviews
-  if (user.counsellorReviews && user.counsellorReviews.length > 0) {
-    user.counsellorReviews.forEach((review, index) => {
-      sessions.push({
-        sessionNumber: sessions.length + index + 1,
-        date: review.reviewedAt || new Date(),
-        duration: '50 min',
-        notes: review.notes || 'Assessment session completed',
-        summary: `Diagnosis: ${review.diagnosis || 'General assessment'}`,
-        mood: review.symptoms?.includes('anxiety') ? 'Anxious' : 
-              review.symptoms?.includes('depression') ? 'Low' : 'Neutral',
-        progress: review.willingToTreat ? 70 : 40,
-        type: 'Assessment'
-      });
-    });
-  }
+  // // If no actual sessions, create fallback from sitting notes
+  // if (formattedSessions.length === 0 && user.sittingNotes && user.sittingNotes.length > 0) {
+  //   user.sittingNotes.forEach((note, index) => {
+  //     const sessionDate = new Date();
+  //     sessionDate.setDate(sessionDate.getDate() - (index * 7)); // Weekly sessions
+      
+  //     formattedSessions.push({
+  //       sessionNumber: user.sittingNotes.length - index,
+  //       date: sessionDate,
+  //       duration: '50 min',
+  //       notes: note,
+  //       summary: note,
+  //       mood: 'In Progress',
+  //       progress: Math.min((user.sittingNotes.length - index) * 10, 100),
+  //       type: 'Individual'
+  //     });
+  //   });
+  // }
+  
+  // // Add sessions from counselor reviews if still empty
+  // if (formattedSessions.length === 0 && user.counsellorReviews && user.counsellorReviews.length > 0) {
+  //   user.counsellorReviews.forEach((review, index) => {
+  //     formattedSessions.push({
+  //       sessionNumber: formattedSessions.length + index + 1,
+  //       date: review.reviewedAt || new Date(),
+  //       duration: '50 min',
+  //       notes: review.notes || 'Assessment session completed',
+  //       summary: `Diagnosis: ${review.diagnosis || 'General assessment'}`,
+  //       mood: review.symptoms?.includes('anxiety') ? 'Anxious' : 
+  //             review.symptoms?.includes('depression') ? 'Low' : 'Neutral',
+  //       progress: review.willingToTreat ? 70 : 40,
+  //       type: 'Assessment'
+  //     });
+  //   });
+  // }
 
-  // If no sessions exist, create a placeholder
-  if (sessions.length === 0) {
-    sessions.push({
-      sessionNumber: 1,
-      date: new Date(),
-      duration: '50 min',
-      notes: 'Initial consultation scheduled',
-      summary: 'Awaiting first session',
-      mood: 'Not recorded',
-      progress: 0,
-      type: 'Initial'
-    });
-  }
-
-  return sessions.slice(0, 5); // Return last 5 sessions
+  return formattedSessions.slice(0, 5);
 }
 
 // Helper function to format activity timeline
