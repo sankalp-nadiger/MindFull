@@ -723,24 +723,111 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 });
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
-  const { fullName, email, interests,age, gender, username } = req.body;
+  const { fullName, email, interests, age, gender, username, phone_no } = req.body;
+
+  // Build update object with only provided fields
+  const updateFields = {};
+  if (fullName !== undefined) updateFields.fullName = fullName;
+  if (email !== undefined) updateFields.email = email;
+  if (username !== undefined) updateFields.username = username;
+  if (gender !== undefined) updateFields.gender = gender;
+  if (age !== undefined) updateFields.age = age;
+  if (phone_no !== undefined) updateFields.phone_no = phone_no;
+  
+  // Handle interests - they need to be created/updated as Interest documents
+  if (interests !== undefined && Array.isArray(interests)) {
+    const userId = req.user._id;
+    const interestIds = [];
+    
+    for (const interest of interests) {
+      // Check if interest is an object with name property or just a string/ObjectId
+      if (typeof interest === 'object' && interest.name) {
+        // Find or create the interest
+        let interestDoc = await Interest.findOne({ 
+          name: interest.name, 
+          user: userId 
+        });
+        
+        if (!interestDoc) {
+          // Create new interest
+          interestDoc = await Interest.create({
+            name: interest.name,
+            user: userId,
+            isGoal: interest.goal || false
+          });
+        } else {
+          // Update existing interest's goal status if needed
+          if (interest.goal !== undefined && interestDoc.isGoal !== interest.goal) {
+            interestDoc.isGoal = interest.goal;
+            await interestDoc.save();
+          }
+        }
+        
+        interestIds.push(interestDoc._id);
+      } else if (typeof interest === 'string') {
+        // If it's already an ObjectId string, use it directly
+        try {
+          interestIds.push(interest);
+        } catch (error) {
+          console.log('Invalid interest ID:', interest);
+        }
+      }
+    }
+    
+    updateFields.interests = interestIds;
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    { $set: updateFields },
+    { new: true }
+  )
+    .populate({
+      path: "interests",
+      select: "name isGoal",
+    })
+    .select("-password -refreshToken");
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // Format interests for response
+  const formattedUser = {
+    ...user.toObject(),
+    interests: user.interests.map((interest) => ({
+      name: interest.name,
+      goal: interest.isGoal,
+    })),
+  };
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, formattedUser, "Account details updated successfully"));
+});
+
+const updateUserAvatar = asyncHandler(async (req, res) => {
+  const avatarLocalPath = req.file?.path;
+
+  if (!avatarLocalPath) {
+    throw new ApiError(400, "Avatar file is missing");
+  }
+
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
+
+  if (!avatar.url) {
+    throw new ApiError(400, "Error while uploading avatar");
+  }
 
   const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
-        fullName,
-        email,
-        username,
-        gender,
-        age,
-        interests: interests || [],
-         // Only update if provided
-          
+        avatar: avatar.url,
       },
     },
     { new: true }
-  ).select("-password -journals -streak -maxStreak -lastLogin");
+  ).select("-password -refreshToken");
 
   if (!user) {
     throw new ApiError(404, "User not found");
@@ -748,7 +835,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, user, "Account details updated successfully"));
+    .json(new ApiResponse(200, { avatar: user.avatar }, "Avatar updated successfully"));
 });
 
 const userProgress = asyncHandler(async (req,res) => {
@@ -1704,6 +1791,7 @@ export {
   changeCurrentPassword,
   getCurrentUser, getJournals,
   updateAccountDetails,
+  updateUserAvatar,
   addInterests, userProgress, calculateAverageMood,
   getWeeklyMoodData, getUserSessions,
   updateCounselorProgress, getCaseHistory, rejoinUserSession, getUserActiveSession, dismissUserSession,

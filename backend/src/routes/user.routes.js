@@ -7,6 +7,7 @@ import {
   changeCurrentPassword,
   getCurrentUser,
   updateAccountDetails,
+  updateUserAvatar,
   addInterests,
   addIssues,
   userProgress,
@@ -47,6 +48,7 @@ router.post("/change-password", user_verifyJWT, changeCurrentPassword);
 router.get("/current", user_verifyJWT, getCurrentUser); 
 router.get('/counseling-sessions', user_verifyJWT, getUserSessions);
 router.post("/update", user_verifyJWT, updateAccountDetails); 
+router.post("/update-avatar", user_verifyJWT, upload.single("avatar"), updateUserAvatar);
 router.get("/journal-entries", user_verifyJWT, getJournals);
 
 router.patch("/add-interests", user_verifyJWT, addInterests); 

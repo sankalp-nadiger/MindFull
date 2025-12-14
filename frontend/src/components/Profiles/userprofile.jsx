@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import Navbar from "../Navbar/Navbar";
 import Footer from "../Footer/Footer";
 import FloatingChatButton from "../ChatBot/FloatingChatButton";
+import Toast from "../pages/Toast";
 
 export default function UserProfile() {
   const { t } = useTranslation();
@@ -14,6 +15,7 @@ export default function UserProfile() {
   const [newInterest, setNewInterest] = useState("");
   const [isGoal, setIsGoal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [toast, setToast] = useState({ message: "", type: "info" });
 
   // Memoized fetch function to prevent unnecessary re-renders
   const fetchUserProfile = useCallback(async () => {
@@ -81,7 +83,7 @@ export default function UserProfile() {
       }
     } catch (error) {
       console.error("Error updating avatar:", error);
-      alert(t('userProfile.messages.avatarUpdateFailed'));
+      setToast({ message: t('userProfile.messages.avatarUpdateFailed'), type: "error" });
     }
   };
 
@@ -103,7 +105,7 @@ export default function UserProfile() {
     try {
       const accessToken = sessionStorage.getItem("accessToken");
       if (!accessToken) {
-        alert(t('userProfile.messages.authRequired'));
+        setToast({ message: t('userProfile.messages.authRequired'), type: "error" });
         return;
       }
   
@@ -126,12 +128,13 @@ export default function UserProfile() {
         }));
         setNewInterest("");
         setIsGoal(false);
+        setToast({ message: t('userProfile.messages.interestAdded', 'Interest added successfully'), type: "success" });
       } else {
-        alert(t('userProfile.messages.addInterestFailed'));
+        setToast({ message: t('userProfile.messages.addInterestFailed'), type: "error" });
       }
     } catch (error) {
       console.error("Error adding interest:", error);
-      alert(t('userProfile.messages.addInterestError'));
+      setToast({ message: t('userProfile.messages.addInterestError'), type: "error" });
     }
   };
 
@@ -147,37 +150,43 @@ export default function UserProfile() {
 
     const accessToken = sessionStorage.getItem("accessToken");
     if (!accessToken) {
-      alert(t('userProfile.messages.authRequired'));
+      setToast({ message: t('userProfile.messages.authRequired'), type: "error" });
       return;
     }
 
-    const formData = new FormData();
-    Object.keys(userDetails).forEach((key) => {
-      if (key === "interests") {
-        formData.append(key, JSON.stringify(userDetails[key]));
-      } else if (key !== "avatar" && key !== "_id") {
-        formData.append(key, userDetails[key]);
-      }
-    });
+    // Prepare only the editable fields for update
+    const updateData = {
+      fullName: userDetails.fullName,
+      email: userDetails.email,
+      username: userDetails.username,
+      age: userDetails.age,
+      gender: userDetails.gender,
+      phone_no: userDetails.phone_no,
+      interests: userDetails.interests || [],
+    };
 
     try {
       const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/users/update`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
         },
-        body: formData,
+        body: JSON.stringify(updateData),
       });
 
       if (response.ok) {
-        alert(t('userProfile.messages.profileUpdated'));
+        setToast({ message: t('userProfile.messages.profileUpdated'), type: "success" });
         setIsEditing(false);
+        // Refresh profile data
+        fetchUserProfile();
       } else {
-        alert(t('userProfile.messages.updateFailed'));
+        const errorData = await response.json();
+        setToast({ message: t('userProfile.messages.updateFailed') + (errorData.message ? `: ${errorData.message}` : ''), type: "error" });
       }
     } catch (error) {
       console.error("Error updating profile:", error);
-      alert(t('userProfile.messages.updateError'));
+      setToast({ message: t('userProfile.messages.updateError'), type: "error" });
     }
   };
 
@@ -292,14 +301,26 @@ export default function UserProfile() {
                       
                       if (excludedFields.includes(field)) return null;
                       
-                      const isReadOnly = field === 'parent_phone_no';
-                      const fieldLabel = t(`userProfile.fields.${field}`, field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1'));
+                      const protectedFields = ['parent_phone_no'];
+                      const nonEditableFields = ['maxStreak', 'streak', 'totalScore'];
+                      
+                      const isProtected = protectedFields.includes(field);
+                      const isNonEditable = nonEditableFields.includes(field);
+                      const isReadOnly = isProtected || isNonEditable;
+                      
+                      // Format field labels
+                      let fieldLabel;
+                      if (field === 'parent_phone_no') {
+                        fieldLabel = t('userProfile.fields.parent_phone_no', 'Parent Phone Number');
+                      } else {
+                        fieldLabel = t(`userProfile.fields.${field}`, field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1'));
+                      }
                       
                       return (
                         <div key={field} className="space-y-2">
                           <label className="block text-sm font-medium text-gray-300">
                             {fieldLabel}
-                            {isReadOnly && <span className="text-xs text-gray-500 ml-2">{t('userProfile.protected')}</span>}
+                            {isProtected && <span className="text-xs text-gray-500 ml-2">{t('userProfile.protected')}</span>}
                           </label>
                           <input
                             type="text"
@@ -448,6 +469,14 @@ export default function UserProfile() {
           </div>
         </div>
       </div>
+      {/* Toast Notification */}
+      {toast.message && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ message: "", type: "info" })}
+        />
+      )}
       {/* Floating Chat Button */}
       <FloatingChatButton />
       <Footer />
