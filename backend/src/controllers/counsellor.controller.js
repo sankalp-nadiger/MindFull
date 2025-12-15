@@ -13,6 +13,9 @@ import nodemailer from "nodemailer";
 import { OTP } from "../models/otp.model.js";
 import Notification from "../models/notification.model.js";
 import twilio from 'twilio';
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH_TOKEN);
 
@@ -621,19 +624,24 @@ export const registerCounsellor = asyncHandler(async (req, res) => {
 
 // Helper to send code via email
 const sendCodeByEmail = async (email, code) => {
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-  await transporter.sendMail({
-    from: process.env.EMAIL_USER,
+  await resend.emails.send({
+    from: "MindFull <onboarding@resend.dev>", // change after domain verification
     to: email,
-    subject: 'Your MindFull Login Code',
-    text: `Your login code is: ${code}`,
+    subject: "Your MindFull Login Code",
+    html: `
+      <div style="font-family: Arial, sans-serif;">
+        <h2>Your Login Code</h2>
+        <p>Use the following code to log in:</p>
+        <h1 style="letter-spacing: 4px;">${code}</h1>
+        <p>This code will expire shortly.</p>
+        <p style="font-size: 12px; color: #777;">
+          If you didn’t request this, you can safely ignore this email.
+        </p>
+      </div>
+    `,
   });
+
+  console.log("✅ Login code email sent via Resend:", email);
 };
 
 // Login Counsellor
@@ -1333,61 +1341,49 @@ export const scheduleAppointment = async (req, res) => {
         // Get counsellor info for email
         const counsellorInfo = await Counsellor.findById(counsellorId).select('fullName specialization email mobileNumber');
 
-        // ✅ Send Email Notification to User
-        try {
-            if (populatedAppointment.clientId?.email) {
-                const transporter = nodemailer.createTransport({
-                    service: 'gmail',
-                    auth: {
-                        user: process.env.EMAIL_USER,
-                        pass: process.env.EMAIL_PASS,
-                    },
-                });
+        // ✅ Send Email Notification to User (Resend)
+try {
+    if (populatedAppointment.clientId?.email) {
+        const appointmentDateFormatted = moment(appointmentDate).format('dddd, MMMM Do YYYY');
 
-                const appointmentDateFormatted = moment(appointmentDate).format('dddd, MMMM Do YYYY');
-                
-                await transporter.sendMail({
-                    from: process.env.EMAIL_USER,
-                    to: populatedAppointment.clientId.email,
-                    subject: 'Appointment Confirmation - MindFull',
-                    html: `
-                        <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4;">
-                            <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                                <h2 style="color: #2563eb; margin-bottom: 20px;">Appointment Confirmed</h2>
-                                <p style="font-size: 16px; color: #333;">Hello ${populatedAppointment.clientId.fullName},</p>
-                                <p style="font-size: 16px; color: #333;">Your appointment has been successfully scheduled.</p>
-                                
-                                <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                                    <h3 style="color: #1e40af; margin-top: 0;">Appointment Details:</h3>
-                                    <p style="margin: 10px 0;"><strong>Counsellor:</strong> ${counsellorInfo.fullName}</p>
-                                    <p style="margin: 10px 0;"><strong>Specialization:</strong> ${counsellorInfo.specialization || 'Mental Health Professional'}</p>
-                                    <p style="margin: 10px 0;"><strong>Date:</strong> ${appointmentDateFormatted}</p>
-                                    <p style="margin: 10px 0;"><strong>Time:</strong> ${startTime} - ${endTime}</p>
-                                    <p style="margin: 10px 0;"><strong>Session Type:</strong> ${sessionType || 'Follow-up'}</p>
-                                    ${notes ? `<p style="margin: 10px 0;"><strong>Notes:</strong> ${notes}</p>` : ''}
-                                </div>
-                                
-                                <div style="background-color: #f9fafb; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                                    <h4 style="color: #374151; margin-top: 0; margin-bottom: 10px;">Counsellor Contact Information:</h4>
-                                    ${counsellorInfo.email ? `<p style="margin: 5px 0; color: #4b5563;"><strong>Email:</strong> ${counsellorInfo.email}</p>` : ''}
-                                    ${counsellorInfo.mobileNumber ? `<p style="margin: 5px 0; color: #4b5563;"><strong>Phone:</strong> ${counsellorInfo.mobileNumber}</p>` : ''}
-                                </div>
-                                
-                                <p style="font-size: 14px; color: #666; margin-top: 20px;">Please log in to your account 5 minutes before your appointment time to join the session.</p>
-                                <p style="font-size: 14px; color: #666;">If you need to reschedule or cancel, please contact your counsellor as soon as possible.</p>
-                                
-                                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-                                    <p style="font-size: 12px; color: #999; margin: 0;">This is an automated message from MindFull. Please do not reply to this email.</p>
-                                </div>
-                            </div>
+        await resend.emails.send({
+            from: "MindFull <onboarding@resend.dev>", // replace with your domain later
+            to: populatedAppointment.clientId.email,
+            subject: "Appointment Confirmation - MindFull",
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4;">
+                    <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px;">
+                        <h2 style="color: #2563eb;">Appointment Confirmed</h2>
+
+                        <p>Hello ${populatedAppointment.clientId.fullName},</p>
+                        <p>Your appointment has been successfully scheduled.</p>
+
+                        <div style="background-color: #eff6ff; padding: 15px; border-radius: 8px;">
+                            <p><strong>Counsellor:</strong> ${counsellorInfo.fullName}</p>
+                            <p><strong>Specialization:</strong> ${counsellorInfo.specialization || "Mental Health Professional"}</p>
+                            <p><strong>Date:</strong> ${appointmentDateFormatted}</p>
+                            <p><strong>Time:</strong> ${startTime} - ${endTime}</p>
+                            <p><strong>Session Type:</strong> ${sessionType || "Follow-up"}</p>
+                            ${notes ? `<p><strong>Notes:</strong> ${notes}</p>` : ""}
                         </div>
-                    `
-                });
-                console.log('✅ Email notification sent to user:', populatedAppointment.clientId.email);
-            }
-        } catch (err) {
-            console.error('❌ Error sending email notification:', err.message);
-        }
+
+                        <p style="margin-top: 20px;">
+                            Please log in 5 minutes before your appointment time.
+                        </p>
+
+                        <p style="font-size: 12px; color: #777;">
+                            This is an automated email from MindFull. Do not reply.
+                        </p>
+                    </div>
+                </div>
+            `,
+        });
+
+        console.log("✅ Email notification sent via Resend:", populatedAppointment.clientId.email);
+    }
+} catch (err) {
+    console.error("❌ Error sending email via Resend:", err);
+}
 
         // ✅ Twilio SMS Notification to User
         try {

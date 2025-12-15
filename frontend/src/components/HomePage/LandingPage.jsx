@@ -238,7 +238,7 @@ export default function HeroSection() {
                 </a>
                 
                 <button onClick={() =>navigate('/signin')} className="mt-4 bg-green-500 dark:bg-green-600 text-white px-6 py-2 rounded-full font-medium hover:bg-green-600 dark:hover:bg-green-700 transition-colors shadow-lg">
-                  Sign Up
+                  Get Started
                 </button>
               </nav>
             </div>
