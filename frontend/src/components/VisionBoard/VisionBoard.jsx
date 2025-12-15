@@ -25,44 +25,56 @@ const VisionBoard = () => {
   const [showThemeModal, setShowThemeModal] = useState(false);
   const [darkMode, setDarkMode] = useState(true); // Default to dark mode
   const [isMobile, setIsMobile] = useState(false);
+  const [aiItemsToAdd, setAiItemsToAdd] = useState([]);
   
   const userId = JSON.parse(sessionStorage.getItem("user"))?._id;
   // Add this inside your VisionBoard component
-useEffect(() => {
-  // Check if device is mobile
-  const checkIfMobile = () => {
-    setIsMobile(window.innerWidth <= 768); // Consider devices <= 768px as mobile
-  };
+  useEffect(() => {
+    // Check if device is mobile
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth <= 768); // Consider devices <= 768px as mobile
+    };
 
-  // Initial check
-  checkIfMobile();
+    // Initial check
+    checkIfMobile();
 
-  // Add event listener for window resize
-  window.addEventListener('resize', checkIfMobile);
+    // Add event listener for window resize
+    window.addEventListener('resize', checkIfMobile);
 
-  // Set up drawing board observer only if not mobile
-  if (!isMobile) {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsDrawingBoardVisible(entry.isIntersecting);
-      },
-      { threshold: 0.5 }
-    );
+    // Set up drawing board observer only if not mobile
+    if (!isMobile) {
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          setIsDrawingBoardVisible(entry.isIntersecting);
+        },
+        { threshold: 0.5 }
+      );
 
-    const drawingBoard = document.getElementById('drawing-board-section');
-    if (drawingBoard) observer.observe(drawingBoard);
+      const drawingBoard = document.getElementById('drawing-board-section');
+      if (drawingBoard) observer.observe(drawingBoard);
 
+      return () => {
+        if (drawingBoard) observer.unobserve(drawingBoard);
+        window.removeEventListener('resize', checkIfMobile);
+      };
+    }
+
+    // Cleanup
     return () => {
-      if (drawingBoard) observer.unobserve(drawingBoard);
       window.removeEventListener('resize', checkIfMobile);
     };
-  }
+  }, [isMobile]);
 
-  // Cleanup
-  return () => {
-    window.removeEventListener('resize', checkIfMobile);
+  // Helper to detect laptop/desktop (not mobile, width >= 1024)
+  const isLaptop = !isMobile && window.innerWidth >= 1024;
+
+  // Handler to receive AI items and open DrawingBoard with them
+  const handleAddToDrawingBoard = (items) => {
+    setAiItemsToAdd(items);
+    setTimeout(() => {
+      document.getElementById('drawing-board-section')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
   };
-}, [isMobile]);
   useEffect(() => {
     // Check for saved theme preference
     const savedTheme = localStorage.getItem('visionBoardDarkMode');
@@ -495,6 +507,8 @@ useEffect(() => {
             userId={userId} 
             fetchVisionBoards={fetchVisionBoards}
             darkMode={darkMode}
+            onAddToDrawingBoard={handleAddToDrawingBoard}
+            isLaptop={isLaptop}
           />
         </div>
 
@@ -531,7 +545,7 @@ useEffect(() => {
                     : 'shadow-[0_0_40px_rgba(59,130,246,0.25),0_0_20px_rgba(59,130,246,0.15)] hover:shadow-[0_0_50px_rgba(59,130,246,0.35),0_0_25px_rgba(59,130,246,0.2)]'
                   }
                 `}>
-                   <DrawingBoard />
+                   <DrawingBoard initialAIItems={aiItemsToAdd} />
                 </div>
               </div>
             )}

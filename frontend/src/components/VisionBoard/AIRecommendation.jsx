@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { getAIImage, getAIQuote, updateVisionBoard } from "../../services/visionBoardAPI";
+import { getAIImage, getAIQuote } from "../../services/visionBoardAPI";
 import { Sparkles } from "lucide-react";
 import { useTranslation } from 'react-i18next';
 
-const AIRecommendation = ({ userId, fetchVisionBoards, darkMode }) => {
+const AIRecommendation = ({ userId, fetchVisionBoards, darkMode, onAddToDrawingBoard, isLaptop }) => {
   const { t } = useTranslation();
   // Define theme classes locally based on darkMode
   const themeClasses = {
@@ -45,25 +45,19 @@ const AIRecommendation = ({ userId, fetchVisionBoards, darkMode }) => {
     }
   };
 
-  const addToVisionBoard = async () => {
+  // Add to DrawingBoard instead of backend
+  const addToDrawingBoard = () => {
     const items = [];
     if (suggestedImage) items.push({ type: "image", content: suggestedImage });
     if (suggestedQuote) items.push({ type: "quote", content: suggestedQuote });
-
-    if (items.length > 0) {
-      try {
-        await updateVisionBoard(userId, { items });
-        fetchVisionBoards();
-        // Clear suggestions after adding
-        setSuggestedImage("");
-        setSuggestedQuote("");
-        setCategory("");
-        setIncludeImage(false);
-        setIncludeQuote(false);
-      } catch (error) {
-        console.error("Error adding to vision board:", error);
-        alert(t('visionBoard.aiRecommendation.addError'));
-      }
+    if (items.length > 0 && onAddToDrawingBoard) {
+      onAddToDrawingBoard(items);
+      // Clear suggestions after adding
+      setSuggestedImage("");
+      setSuggestedQuote("");
+      setCategory("");
+      setIncludeImage(false);
+      setIncludeQuote(false);
     }
   };
 
@@ -176,9 +170,9 @@ const AIRecommendation = ({ userId, fetchVisionBoards, darkMode }) => {
           </div>
         )}
 
-        {(suggestedImage || suggestedQuote) && (
+        {(suggestedImage || suggestedQuote) && isLaptop && (
           <button
-            onClick={addToVisionBoard}
+            onClick={addToDrawingBoard}
             className={`w-full py-3 px-4 rounded-md font-medium transition-all duration-200 text-white focus:outline-none focus:ring-2 focus:ring-offset-2 ${
               darkMode
                 ? 'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500 focus:ring-offset-slate-800'

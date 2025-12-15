@@ -669,8 +669,43 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
   );
 };
 
-const DrawingBoard = ({ onSave }) => {
+const DrawingBoard = ({ onSave, initialAIItems = [] }) => {
   const [elements, setElements] = useState([]);
+    // Add AI items to board on mount if provided
+    useEffect(() => {
+      if (initialAIItems && initialAIItems.length > 0) {
+        const newElements = initialAIItems.map((item, idx) => {
+          if (item.type === 'image') {
+            return {
+              id: `ai-image-${Date.now()}-${idx}`,
+              type: 'image',
+              src: item.content,
+              x: 100 + idx * 40,
+              y: 100 + idx * 40,
+              width: 200,
+              height: 200,
+              rotation: 0
+            };
+          } else if (item.type === 'quote') {
+            return {
+              id: `ai-quote-${Date.now()}-${idx}`,
+              type: 'text',
+              text: item.content,
+              x: 120 + idx * 40,
+              y: 320 + idx * 40,
+              fontSize: 28,
+              fontFamily: 'Georgia',
+              color: '#4F46E5',
+              fontStyle: 'italic',
+              rotation: 0
+            };
+          }
+          return null;
+        }).filter(Boolean);
+        setElements((prev) => [...prev, ...newElements]);
+      }
+      // eslint-disable-next-line
+    }, [initialAIItems]);
   const [selectedId, setSelectedId] = useState(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [tool, setTool] = useState("select");
