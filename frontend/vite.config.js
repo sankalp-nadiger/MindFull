@@ -35,11 +35,12 @@ export default defineConfig({
       'framer-motion',
       'lucide-react',
       'react-player',
+      'scheduler',
+      'react-konva',
+      'konva',
     ],
     exclude: [
       'chart.js',
-      'konva',
-      'react-konva',
       'three',
     ]
   },

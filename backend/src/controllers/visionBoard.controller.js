@@ -132,7 +132,7 @@ export const getAISuggestedQuote = async (category) => {
           {
             parts: [
               { text: `You are an AI that provides motivational quotes for using in a vision board creation feature for a mental wellness platform. 
-                Give an inspiring quote for the category: ${category}. Keep it short` }
+                Give an inspiring quote for the category: ${category}. Keep it short and a markdown free response.` }
             ]
           }
         ]
