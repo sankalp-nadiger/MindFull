@@ -594,7 +594,8 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
         tension={line.style === 'curved' ? 0.5 : 0}
         lineCap="round"
         lineJoin="round"
-        hitStrokeWidth={Math.max(12, (line.strokeWidth || 2) * 4)}
+        // smaller hit area so selection requires closer pointer proximity
+        hitStrokeWidth={Math.max(6, (line.strokeWidth || 2) * 2)}
         listening={true}
         onMouseEnter={() => {
           if (tool === 'select' && !draggingEndpoint && !isDraggingLine) {
