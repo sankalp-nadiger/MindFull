@@ -200,11 +200,7 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
 
   const handleSelect = (e) => {
     if (tool === 'select') {
-      e.cancelBubble = true;
-      if (e.evt) {
-        e.evt.stopPropagation();
-        e.evt.preventDefault();
-      }
+      if (e.evt) e.evt.stopPropagation();
       onSelect(text.id);
     }
   };
@@ -508,11 +504,7 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
 
   const handleLineSelect = (e) => {
     if (tool === 'select') {
-      e.cancelBubble = true;
-      if (e.evt) {
-        e.evt.stopPropagation();
-        e.evt.preventDefault();
-      }
+      if (e.evt) e.evt.stopPropagation();
       onSelect(line.id);
     }
   };
@@ -531,8 +523,8 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
 
   const handleLineDragEnd = (e) => {
     setIsDraggingLine(false);
-    if (tool === 'select' && onUpdate && lineRef.current) {
-      const node = lineRef.current;
+    if (tool === 'select' && onUpdate && groupRef.current) {
+      const node = groupRef.current;
       const deltaX = node.x();
       const deltaY = node.y();
       
@@ -544,8 +536,8 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
         
         node.x(0);
         node.y(0);
-        node.shadowOffset({ x: 0, y: 0 });
-        node.shadowOpacity(0);
+        node.shadowOffset ? node.shadowOffset({ x: 0, y: 0 }) : null;
+        node.shadowOpacity ? node.shadowOpacity(0) : null;
         
         onUpdate(line.id, { points: newPoints });
       }
@@ -582,7 +574,7 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
   };
 
   return (
-    <Group id={line.id} name={`flowline-${line.id}`} ref={groupRef}>
+    <Group id={line.id} name={`flowline-${line.id}`} ref={groupRef} draggable={tool === 'select' && !draggingEndpoint} onDragStart={handleLineDragStart} onDragEnd={handleLineDragEnd}>
       <Line
         ref={lineRef}
         points={points}
@@ -592,13 +584,10 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
         lineCap="round"
         lineJoin="round"
         hitStrokeWidth={Math.max(8, (line.strokeWidth || 2) * 2)}
-        draggable={tool === 'select' && !draggingEndpoint}
         listening={true}
         onClick={handleLineSelect}
         onTap={handleLineSelect}
         onMouseDown={handleLineSelect}
-        onDragStart={handleLineDragStart}
-        onDragEnd={handleLineDragEnd}
         onMouseEnter={() => {
           if (tool === 'select' && !draggingEndpoint && !isDraggingLine) {
             document.body.style.cursor = isSelected ? 'move' : 'pointer';
