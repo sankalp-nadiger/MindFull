@@ -269,6 +269,8 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
   
   return (
     <Group
+      id={text.id}
+      name={`text-${text.id}`}
       ref={groupRef}
       x={text.x}
       y={text.y}
@@ -418,6 +420,8 @@ const URLImage = ({ element, onSelect, isSelected, onUpdate, tool }) => {
 
   return (
     <Group
+      id={element.id}
+      name={`image-${element.id}`}
       ref={groupRef}
       x={element.x}
       y={element.y}
@@ -576,7 +580,7 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
   };
 
   return (
-    <Group ref={groupRef}>
+    <Group id={line.id} name={`flowline-${line.id}`} ref={groupRef}>
       <Line
         ref={lineRef}
         points={points}
