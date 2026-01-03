@@ -482,6 +482,7 @@ const URLImage = ({ element, onSelect, isSelected, onUpdate, tool }) => {
 const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
   const [draggingEndpoint, setDraggingEndpoint] = useState(null);
   const [isDraggingLine, setIsDraggingLine] = useState(false);
+  const draggingEndpointRef = useRef(null);
   const groupRef = useRef();
   const lineRef = useRef();
 
@@ -510,7 +511,8 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
     }
   };
   const handleLineDragStart = (e) => {
-    if (tool === 'select' && !draggingEndpoint) {
+    // if an endpoint is being dragged (sync ref), don't let the group start dragging
+    if (tool === 'select' && draggingEndpointRef.current == null) {
       if (!isSelected) onSelect(line.id);
       setIsDraggingLine(true);
 
@@ -547,6 +549,8 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
   const handleEndpointDragStart = (endpointIndex, e) => {
     e.cancelBubble = true;
     if (e.evt) e.evt.stopPropagation();
+    // set synchronous ref first to prevent group drag from starting
+    draggingEndpointRef.current = endpointIndex;
     setDraggingEndpoint(endpointIndex);
     e.target.setAttrs({
       scaleX: 1.2,
@@ -565,6 +569,8 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
   };
 
   const handleEndpointDragEnd = (endpointIndex, e) => {
+    // clear both ref and state
+    draggingEndpointRef.current = null;
     setDraggingEndpoint(null);
     e.target.to({
       duration: 0.2,
@@ -630,6 +636,7 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
               // mark endpoint dragging early to prevent group drag from starting
               e.cancelBubble = true;
               if (e.evt) e.evt.stopPropagation();
+              draggingEndpointRef.current = 0;
               setDraggingEndpoint(0);
             }}
             onMouseEnter={() => {
@@ -659,6 +666,7 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
               // mark endpoint dragging early to prevent group drag from starting
               e.cancelBubble = true;
               if (e.evt) e.evt.stopPropagation();
+              draggingEndpointRef.current = 1;
               setDraggingEndpoint(1);
             }}
             onMouseEnter={() => {
@@ -1144,9 +1152,8 @@ const handleMouseDown = (e) => {
   }
   if (!clickedElementId) console.debug('handleMouseDown: no element found at pointer');
 
-  // If we found an element, handle selection
+  // If we found an element, let the node-level handlers manage selection/drag
   if (clickedElementId && tool === 'select') {
-    handleElementSelect(clickedElementId);
     return;
   }
   
