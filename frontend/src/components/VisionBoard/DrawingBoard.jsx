@@ -1037,15 +1037,23 @@ const handleMouseDown = (e) => {
     clickedElementId = directId;
   }
   
-  // Method 2: Check if element name contains an element ID
+  // Method 2: Check if element name contains an element ID (robustly)
   if (!clickedElementId) {
     const elementName = clickedElement.attrs?.name || '';
-    if (elementName.includes('-')) {
-      // Try to extract ID from name pattern (text-123, image-456, etc.)
-      const possibleId = elementName.substring(elementName.indexOf('-') + 1);
-      if (elements.find(el => el.id === possibleId)) {
-        clickedElementId = possibleId;
-      }
+    if (elementName) {
+      // Try to match any element whose id appears in the node's name.
+      // This handles ids with additional hyphens or prefixes reliably.
+      const found = elements.find(el => {
+        if (!el || !el.id) return false;
+        // exact match
+        if (elementName === el.id) return true;
+        // cases like "text-<id>" or "drawing-<id>" -> endsWith handles that
+        if (elementName.endsWith(`-${el.id}`)) return true;
+        // fallback: anywhere in the name
+        return elementName.includes(el.id);
+      });
+
+      if (found) clickedElementId = found.id;
     }
   }
   
