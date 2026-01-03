@@ -200,11 +200,7 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
 
   const handleSelect = (e) => {
     if (tool === 'select') {
-      e.cancelBubble = true;
-      if (e.evt) {
-        e.evt.stopPropagation();
-        e.evt.preventDefault();
-      }
+      if (e.evt) e.evt.stopPropagation();
       onSelect(text.id);
     }
   };
@@ -508,11 +504,7 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
 
   const handleLineSelect = (e) => {
     if (tool === 'select') {
-      e.cancelBubble = true;
-      if (e.evt) {
-        e.evt.stopPropagation();
-        e.evt.preventDefault();
-      }
+      if (e.evt) e.evt.stopPropagation();
       onSelect(line.id);
     }
   };
