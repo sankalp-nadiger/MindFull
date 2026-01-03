@@ -210,7 +210,8 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
   };
 
   const handleDragStart = (e) => {
-    if (tool === 'select' && isSelected) {
+    if (tool === 'select') {
+      if (!isSelected) onSelect(text.id);
       setIsDragging(true);
       e.target.setAttrs({
         shadowOffset: { x: 5, y: 5 },
@@ -269,10 +270,12 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
   
   return (
     <Group
+      id={text.id}
+      name={`text-${text.id}`}
       ref={groupRef}
       x={text.x}
       y={text.y}
-      draggable={tool === 'select' && isSelected && !isTransforming}
+      draggable={tool === 'select' && !isTransforming}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onClick={handleSelect}
@@ -418,6 +421,8 @@ const URLImage = ({ element, onSelect, isSelected, onUpdate, tool }) => {
 
   return (
     <Group
+      id={element.id}
+      name={`image-${element.id}`}
       ref={groupRef}
       x={element.x}
       y={element.y}
@@ -513,7 +518,8 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
   };
 
   const handleLineDragStart = (e) => {
-    if (tool === 'select' && isSelected && !draggingEndpoint) {
+    if (tool === 'select' && !draggingEndpoint) {
+      if (!isSelected) onSelect(line.id);
       setIsDraggingLine(true);
       e.target.setAttrs({
         shadowOffset: { x: 3, y: 3 },
@@ -576,7 +582,7 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
   };
 
   return (
-    <Group ref={groupRef}>
+    <Group id={line.id} name={`flowline-${line.id}`} ref={groupRef}>
       <Line
         ref={lineRef}
         points={points}
@@ -586,7 +592,7 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
         lineCap="round"
         lineJoin="round"
         hitStrokeWidth={Math.max(8, (line.strokeWidth || 2) * 2)}
-        draggable={tool === 'select' && isSelected && !draggingEndpoint}
+        draggable={tool === 'select' && !draggingEndpoint}
         listening={true}
         onClick={handleLineSelect}
         onTap={handleLineSelect}
@@ -777,9 +783,14 @@ const addElementWithHistory = (element) => {
     const stage = stageRef.current;
     if (stage) {
       const node = stage.findOne(`#${element.id}`);
+      console.debug('addElementWithHistory: stage.findOne ->', element.id, node);
       if (node) {
         node.moveToTop();
         stage.batchDraw();
+      } else {
+        // also try name-based lookup
+        const byName = stage.findOne(`[name="text-${element.id}"]`) || stage.findOne(`[name="image-${element.id}"]`) || stage.findOne(`[name="flowline-${element.id}"]`);
+        console.debug('addElementWithHistory: fallback name lookup ->', byName);
       }
     }
   }, 0);
@@ -1018,15 +1029,20 @@ const handleElementDelete = (id) => {
 
   // Mouse event handlers
 const handleMouseDown = (e) => {
-  setContextMenu({ show: false, position: { x: 0, y: 0 }, elementId: null });
-  
   const stage = e.target.getStage();
   if (!stage) return;
   
   const pos = stage.getPointerPosition();
   if (!pos) return;
 
+  // Detect right-clicks so we don't deselect when user is opening context menu
+  const isRightClick = !!(e.evt && (e.evt.button === 2 || e.evt.which === 3));
+  if (!isRightClick) {
+    setContextMenu({ show: false, position: { x: 0, y: 0 }, elementId: null });
+  }
+
   const clickedElement = e.target;
+  console.debug('handleMouseDown: clicked target', clickedElement && clickedElement.getClassName && clickedElement.getClassName(), clickedElement && clickedElement.attrs);
   
   // Check if we clicked on any element
   let clickedElementId = null;
@@ -1036,16 +1052,26 @@ const handleMouseDown = (e) => {
   if (directId && elements.find(el => el.id === directId)) {
     clickedElementId = directId;
   }
+  console.debug('handleMouseDown: directId ->', directId, 'clickedElementId ->', clickedElementId);
   
-  // Method 2: Check if element name contains an element ID
+  // Method 2: Check if element name contains an element ID (robustly)
   if (!clickedElementId) {
     const elementName = clickedElement.attrs?.name || '';
-    if (elementName.includes('-')) {
-      // Try to extract ID from name pattern (text-123, image-456, etc.)
-      const possibleId = elementName.substring(elementName.indexOf('-') + 1);
-      if (elements.find(el => el.id === possibleId)) {
-        clickedElementId = possibleId;
-      }
+    if (elementName) {
+      // Try to match any element whose id appears in the node's name.
+      // This handles ids with additional hyphens or prefixes reliably.
+      const found = elements.find(el => {
+        if (!el || !el.id) return false;
+        // exact match
+        if (elementName === el.id) return true;
+        // cases like "text-<id>" or "drawing-<id>" -> endsWith handles that
+        if (elementName.endsWith(`-${el.id}`)) return true;
+        // fallback: anywhere in the name
+        return elementName.includes(el.id);
+      });
+
+      if (found) clickedElementId = found.id;
+      console.debug('handleMouseDown: name-match ->', elementName, 'found ->', clickedElementId);
     }
   }
   
@@ -1060,7 +1086,61 @@ const handleMouseDown = (e) => {
       }
       parent = parent.parent;
     }
+    console.debug('handleMouseDown: parent-match ->', clickedElementId);
   }
+
+  // Method 4: Fallback — check all intersections at the pointer position
+  // This handles cases where the clicked node is an anchor/transformer or not yet directly mapped
+  if (!clickedElementId) {
+    try {
+      const intersections = stage.getAllIntersections(pos) || [];
+      console.debug('handleMouseDown: intersections count ->', intersections.length);
+      for (let shape of intersections) {
+        if (!shape) continue;
+
+        // direct id on the shape
+        const sid = shape.attrs?.id;
+        if (sid && elements.find(el => el.id === sid)) {
+          clickedElementId = sid;
+          console.debug('handleMouseDown: intersection matched id ->', sid);
+          break;
+        }
+
+        // name-based matching (handles patterns like "text-<id>" etc.)
+        const sname = shape.attrs?.name || '';
+        if (sname) {
+          const found = elements.find(el => {
+            if (!el || !el.id) return false;
+            if (sname === el.id) return true;
+            if (sname.endsWith(`-${el.id}`)) return true;
+            return sname.includes(el.id);
+          });
+          if (found) {
+            clickedElementId = found.id;
+            console.debug('handleMouseDown: intersection name matched ->', found.id, sname);
+            break;
+          }
+        }
+
+        // traverse parents of the intersection shape
+        let p = shape.parent;
+        while (p && p !== stage) {
+          const pid = p.attrs?.id;
+          if (pid && elements.find(el => el.id === pid)) {
+            clickedElementId = pid;
+            break;
+          }
+          p = p.parent;
+        }
+        if (clickedElementId) console.debug('handleMouseDown: intersection parent matched ->', clickedElementId);
+        if (clickedElementId) break;
+      }
+    } catch (err) {
+      // safe fallback — ignore intersection errors
+      console.warn('Intersection lookup failed', err);
+    }
+  }
+  if (!clickedElementId) console.debug('handleMouseDown: no element found at pointer');
 
   // If we found an element, handle selection
   if (clickedElementId && tool === 'select') {
@@ -2057,24 +2137,49 @@ onContextMenu={(e) => {
     const containerRect = stage.container().getBoundingClientRect();
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    
-    // Calculate available space
-    const rightSpace = viewportWidth - (containerRect.left + pos.x);
-    const bottomSpace = viewportHeight - (containerRect.top + pos.y);
-    
-    // Adjust position if needed
-    let adjustedX = pos.x + containerRect.left;
-    let adjustedY = pos.y + containerRect.top;
-    
-    // Ensure menu stays within viewport
-    if (rightSpace < 250) adjustedX -= 250;
-    if (bottomSpace < 300) adjustedY -= 300;
-    
-    // Corrected state update
+
+    // Determine quadrant relative to the stage container using pointer position
+    const localX = pos.x; // position inside stage container
+    const localY = pos.y;
+    const centerX = containerRect.width / 2;
+    const centerY = containerRect.height / 2;
+
+    // Menu dimensions (approximate) and padding
+    const MENU_WIDTH = 220;
+    const MENU_HEIGHT = 300;
+    const PADDING = 10;
+
+    // Start with the click position in client coordinates
+    let adjustedX = containerRect.left + localX;
+    let adjustedY = containerRect.top + localY;
+
+    // Place menu based on quadrant of the click
+    if (localX < centerX && localY < centerY) {
+      // top-left => show menu at bottom-right of item
+      adjustedX = containerRect.left + localX + PADDING;
+      adjustedY = containerRect.top + localY + PADDING;
+    } else if (localX >= centerX && localY < centerY) {
+      // top-right => show menu at bottom-left
+      adjustedX = containerRect.left + localX - MENU_WIDTH - PADDING;
+      adjustedY = containerRect.top + localY + PADDING;
+    } else if (localX < centerX && localY >= centerY) {
+      // bottom-left => show menu at top-right
+      adjustedX = containerRect.left + localX + PADDING;
+      adjustedY = containerRect.top + localY - MENU_HEIGHT - PADDING;
+    } else {
+      // bottom-right => show menu at top-left
+      adjustedX = containerRect.left + localX - MENU_WIDTH - PADDING;
+      adjustedY = containerRect.top + localY - MENU_HEIGHT - PADDING;
+    }
+
+    // Clamp within viewport
+    adjustedX = Math.max(8, Math.min(adjustedX, viewportWidth - MENU_WIDTH - 8));
+    adjustedY = Math.max(8, Math.min(adjustedY, viewportHeight - MENU_HEIGHT - 8));
+
     setContextMenu({
       show: true,
       position: { x: adjustedX, y: adjustedY },
-      elementId: selectedId 
+      elementId: selectedId
     });
   }
 }}

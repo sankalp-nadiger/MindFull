@@ -366,11 +366,23 @@
     }
   },
   "music": {
-    "title": "Mental Health Podcasts",
-    "description": "Discover insightful discussions on mindfulness, stress relief, and positivity. Tune in and find your inner peace.",
+    "title": "Mood-Based Music Player",
+    "description": "How are you feeling TODAY? We have carefully curated these songs according to your mood.",
     "player": "Music Player",
-    "podcasts": "Podcasts",
-    "playlist": "Playlist"
+    "podcasts": {
+      "title": "🌿 Mental Health Podcasts",
+      "description": "Discover insightful discussions on mindfulness, stress relief, and positivity. Tune in and find your inner peace.",
+      "moreComing": "More Coming Soon..."
+    },
+    "playlist": "Playlist",
+    "noSongs": "No songs available for this mood.",
+    "moods": {
+      "happy": "Happy",
+      "sad": "Sad",
+      "sleepy": "Sleepy",
+      "energetic": "Energetic",
+      "nostalgia": "Nostalgia"
+    }
   },
   "community": {
     "title": "Community Support",
@@ -391,7 +403,6 @@
     "createRoomSubtitle": "Create a safe space for meaningful conversations",
     "roomName": "Room Name",
     "roomNamePlaceholder": "e.g., Anxiety Support Group",
-    "description": "Description",
     "descriptionPlaceholder": "Describe the purpose and guidelines for this room...",
     "createRoom": "Create Room",
     "joinRoom": "Join Room",
