@@ -578,7 +578,8 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
       id={line.id}
       name={`flowline-${line.id}`}
       ref={groupRef}
-      draggable={tool === 'select' && isSelected && !draggingEndpoint}
+      // Allow dragging immediately when in select tool to support hold+drag
+      draggable={tool === 'select' && !draggingEndpoint}
       onDragStart={handleLineDragStart}
       onDragEnd={handleLineDragEnd}
       onClick={handleLineSelect}
@@ -625,8 +626,10 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
             onDragMove={(e) => handleEndpointDragMove(0, e)}
             onDragEnd={(e) => handleEndpointDragEnd(0, e)}
             onMouseDown={(e) => {
+              // mark endpoint dragging early to prevent group drag from starting
               e.cancelBubble = true;
               if (e.evt) e.evt.stopPropagation();
+              setDraggingEndpoint(0);
             }}
             onMouseEnter={() => {
               document.body.style.cursor = 'crosshair';
@@ -652,8 +655,10 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
             onDragMove={(e) => handleEndpointDragMove(1, e)}
             onDragEnd={(e) => handleEndpointDragEnd(1, e)}
             onMouseDown={(e) => {
+              // mark endpoint dragging early to prevent group drag from starting
               e.cancelBubble = true;
               if (e.evt) e.evt.stopPropagation();
+              setDraggingEndpoint(1);
             }}
             onMouseEnter={() => {
               document.body.style.cursor = 'crosshair';
