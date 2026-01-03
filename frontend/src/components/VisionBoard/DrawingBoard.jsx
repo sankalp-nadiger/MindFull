@@ -484,7 +484,6 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
   const [isDraggingLine, setIsDraggingLine] = useState(false);
   const groupRef = useRef();
   const lineRef = useRef();
-  const trRef = useRef();
 
   const points = line.points || [50, 50, 200, 50];
 
@@ -503,55 +502,43 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
     }
   }, [isSelected, line.id]);
 
-  // Attach/detach Transformer to the line when selection changes
-  useEffect(() => {
-    if (!trRef.current) return;
-    if (isSelected && lineRef.current) {
-      trRef.current.nodes([lineRef.current]);
-      trRef.current.getLayer()?.batchDraw();
-    } else {
-      trRef.current.nodes([]);
-      trRef.current.getLayer()?.batchDraw();
-    }
-  }, [isSelected]);
-
   const handleLineSelect = (e) => {
     if (tool === 'select') {
+      // don't prevent default here; just stop propagation so Konva can handle drag start
       if (e.evt) e.evt.stopPropagation();
       onSelect(line.id);
     }
   };
-
   const handleLineDragStart = (e) => {
     if (tool === 'select' && !draggingEndpoint) {
       if (!isSelected) onSelect(line.id);
       setIsDraggingLine(true);
-      e.target.setAttrs({
-        shadowOffset: { x: 3, y: 3 },
-        shadowOpacity: 0.2,
-        shadowBlur: 5
-      });
+
+      const g = groupRef.current || e.target;
+      const node = lineRef.current;
+      if (g) g.setAttrs({ shadowOffset: { x: 3, y: 3 }, shadowOpacity: 0.2, shadowBlur: 5 });
+      if (node) node.setAttrs({ shadowOffset: { x: 3, y: 3 }, shadowOpacity: 0.2, shadowBlur: 5 });
     }
   };
 
   const handleLineDragEnd = (e) => {
     setIsDraggingLine(false);
-    if (tool === 'select' && onUpdate && lineRef.current) {
-      const node = lineRef.current;
-      const deltaX = node.x();
-      const deltaY = node.y();
-      
+    if (tool === 'select' && onUpdate && lineRef.current && groupRef.current) {
+      const g = groupRef.current;
+      const deltaX = g.x();
+      const deltaY = g.y();
+
       if (deltaX !== 0 || deltaY !== 0) {
-        const newPoints = points.map((point, index) => {
-          if (index % 2 === 0) return point + deltaX;
-          return point + deltaY;
-        });
-        
-        node.x(0);
-        node.y(0);
-        node.shadowOffset({ x: 0, y: 0 });
-        node.shadowOpacity(0);
-        
+        const newPoints = points.map((point, index) => (index % 2 === 0 ? point + deltaX : point + deltaY));
+
+        g.x(0);
+        g.y(0);
+        const node = lineRef.current;
+        if (node) {
+          node.shadowOffset({ x: 0, y: 0 });
+          node.shadowOpacity(0);
+        }
+
         onUpdate(line.id, { points: newPoints });
       }
     }
@@ -587,7 +574,17 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
   };
 
   return (
-    <Group id={line.id} name={`flowline-${line.id}`} ref={groupRef}>
+    <Group
+      id={line.id}
+      name={`flowline-${line.id}`}
+      ref={groupRef}
+      draggable={tool === 'select' && isSelected && !draggingEndpoint}
+      onDragStart={handleLineDragStart}
+      onDragEnd={handleLineDragEnd}
+      onClick={handleLineSelect}
+      onTap={handleLineSelect}
+      onMouseDown={handleLineSelect}
+    >
       <Line
         ref={lineRef}
         points={points}
@@ -596,14 +593,8 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
         tension={line.style === 'curved' ? 0.5 : 0}
         lineCap="round"
         lineJoin="round"
-        hitStrokeWidth={Math.max(8, (line.strokeWidth || 2) * 2)}
-        draggable={tool === 'select' && !draggingEndpoint}
+        hitStrokeWidth={Math.max(12, (line.strokeWidth || 2) * 4)}
         listening={true}
-        onClick={handleLineSelect}
-        onTap={handleLineSelect}
-        onMouseDown={handleLineSelect}
-        onDragStart={handleLineDragStart}
-        onDragEnd={handleLineDragEnd}
         onMouseEnter={() => {
           if (tool === 'select' && !draggingEndpoint && !isDraggingLine) {
             document.body.style.cursor = isSelected ? 'move' : 'pointer';
@@ -621,22 +612,6 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
       
       {isSelected && tool === 'select' && (
         <>
-            <Transformer
-              ref={trRef}
-              anchorFill="#ffffff"
-              anchorStroke="#0066ff"
-              anchorSize={8}
-              anchorStrokeWidth={2}
-              borderStroke="#0066ff"
-              borderStrokeWidth={2}
-              padding={8}
-              rotateEnabled={true}
-              keepRatio={false}
-              centeredScaling={false}
-              enabledAnchors={[
-                'top-left', 'top-right', 'bottom-left', 'bottom-right'
-              ]}
-            />
           <Circle
             x={points[0]}
             y={points[1]}
