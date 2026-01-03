@@ -210,7 +210,8 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
   };
 
   const handleDragStart = (e) => {
-    if (tool === 'select' && isSelected) {
+    if (tool === 'select') {
+      if (!isSelected) onSelect(text.id);
       setIsDragging(true);
       e.target.setAttrs({
         shadowOffset: { x: 5, y: 5 },
@@ -274,7 +275,7 @@ const TextNode = ({ text, isSelected, onSelect, onChange, tool }) => {
       ref={groupRef}
       x={text.x}
       y={text.y}
-      draggable={tool === 'select' && isSelected && !isTransforming}
+      draggable={tool === 'select' && !isTransforming}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onClick={handleSelect}
@@ -517,7 +518,8 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
   };
 
   const handleLineDragStart = (e) => {
-    if (tool === 'select' && isSelected && !draggingEndpoint) {
+    if (tool === 'select' && !draggingEndpoint) {
+      if (!isSelected) onSelect(line.id);
       setIsDraggingLine(true);
       e.target.setAttrs({
         shadowOffset: { x: 3, y: 3 },
@@ -590,7 +592,7 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
         lineCap="round"
         lineJoin="round"
         hitStrokeWidth={Math.max(8, (line.strokeWidth || 2) * 2)}
-        draggable={tool === 'select' && isSelected && !draggingEndpoint}
+        draggable={tool === 'select' && !draggingEndpoint}
         listening={true}
         onClick={handleLineSelect}
         onTap={handleLineSelect}

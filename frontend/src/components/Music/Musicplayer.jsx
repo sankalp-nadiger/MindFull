@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Play, Pause, SkipForward, X, Smile, Frown, Moon, Zap, Heart } from 'lucide-react';
 import ReactPlayer from 'react-player';
 import Navbar from '../Navbar/Navbar';
@@ -37,6 +38,7 @@ const podcasts = [
 ];
 
 export default function MusicPlayerApp() {
+  const { t } = useTranslation();
   const [selectedMood, setSelectedMood] = useState(moods[0].id);
   const [currentSong, setCurrentSong] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -77,9 +79,9 @@ export default function MusicPlayerApp() {
   speed={0.5}
 ></Aurora>
   <div className="w-full max-w-4xl px-6">
-    <h1 className="text-5xl font-bold mb-6 text-center">Mood-Based Music Player</h1>
+    <h1 className="text-5xl font-bold mb-6 text-center">{t('music.title')}</h1>
     <p className="text-lg sm:text-xl md:text-2xl py-2 font-mono text-gray-800 dark:text-gray-300 leading-relaxed tracking-wide text-center">
-      How are you feeling TODAY ? We have carefully curated these songs according to your mood.
+      {t('music.description')}
     </p>
     
     <div className="flex flex-wrap gap-3 mb-6 justify-center">
@@ -89,7 +91,7 @@ export default function MusicPlayerApp() {
           onClick={() => setSelectedMood(mood.id)} 
           className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ${selectedMood === mood.id ? 'bg-purple-600' : 'bg-gray-800 hover:bg-gray-700'}`}
         >
-          {mood.icon} {mood.name}
+          {mood.icon} {t(`music.moods.${mood.id.toLowerCase()}`)}
         </button>
       ))}
     </div>
@@ -107,7 +109,7 @@ export default function MusicPlayerApp() {
             <p className="text-sm text-gray-400">{song.artist}</p>
           </div>
         </button>
-      )) : <p className="text-center">No songs available for this mood.</p>}
+      )) : <p className="text-center">{t('music.noSongs')}</p>}
     </div>
   </div>
 </div>
@@ -222,19 +224,17 @@ export default function MusicPlayerApp() {
           backgroundSize: '55px 55px',
         }}>
           <div className="relative z-10">
-            <h2 className="text-5xl font-extrabold mb-6 text-center border-b-2 border-purple-500 pb-2">🌿 Mental Health Podcasts</h2>
-            <p className="text-white text-lg mb-6 text-center">
-              Discover insightful discussions on mindfulness, stress relief, and positivity. Tune in and find your inner peace.
-            </p>
+            <h2 className="text-5xl font-extrabold mb-6 text-center border-b-2 border-purple-500 pb-2">{t('music.podcasts.title')}</h2>
+            <p className="text-white text-lg mb-6 text-center">{t('music.podcasts.description')}</p>
             <div className="grid md:grid-cols-2 gap-6">
               {podcasts.map(podcast => (
                 <div key={podcast.id} className="bg-gray-800/80 backdrop-blur-sm p-5 rounded-lg shadow-md hover:shadow-xl transition-shadow border border-gray-600">
                   <h3 className="text-xl font-semibold mb-3 text-white">{podcast.title}</h3>
-                  {podcast.url ? (
+                    {podcast.url ? (
                     <ReactPlayer url={podcast.url} width="100%" height="220px" controls className="rounded-lg overflow-hidden" />
                   ) : (
                     <div className="w-full h-[220px] bg-gray-700 rounded-lg flex items-center justify-center">
-                      <p className="text-gray-400">More Coming Soon...</p>
+                      <p className="text-gray-400">{t('music.podcasts.moreComing')}</p>
                     </div>
                   )}
                 </div>
