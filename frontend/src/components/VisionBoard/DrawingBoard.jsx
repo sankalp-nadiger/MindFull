@@ -2057,24 +2057,49 @@ onContextMenu={(e) => {
     const containerRect = stage.container().getBoundingClientRect();
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    
-    // Calculate available space
-    const rightSpace = viewportWidth - (containerRect.left + pos.x);
-    const bottomSpace = viewportHeight - (containerRect.top + pos.y);
-    
-    // Adjust position if needed
-    let adjustedX = pos.x + containerRect.left;
-    let adjustedY = pos.y + containerRect.top;
-    
-    // Ensure menu stays within viewport
-    if (rightSpace < 250) adjustedX -= 250;
-    if (bottomSpace < 300) adjustedY -= 300;
-    
-    // Corrected state update
+
+    // Determine quadrant relative to the stage container using pointer position
+    const localX = pos.x; // position inside stage container
+    const localY = pos.y;
+    const centerX = containerRect.width / 2;
+    const centerY = containerRect.height / 2;
+
+    // Menu dimensions (approximate) and padding
+    const MENU_WIDTH = 220;
+    const MENU_HEIGHT = 300;
+    const PADDING = 10;
+
+    // Start with the click position in client coordinates
+    let adjustedX = containerRect.left + localX;
+    let adjustedY = containerRect.top + localY;
+
+    // Place menu based on quadrant of the click
+    if (localX < centerX && localY < centerY) {
+      // top-left => show menu at bottom-right of item
+      adjustedX = containerRect.left + localX + PADDING;
+      adjustedY = containerRect.top + localY + PADDING;
+    } else if (localX >= centerX && localY < centerY) {
+      // top-right => show menu at bottom-left
+      adjustedX = containerRect.left + localX - MENU_WIDTH - PADDING;
+      adjustedY = containerRect.top + localY + PADDING;
+    } else if (localX < centerX && localY >= centerY) {
+      // bottom-left => show menu at top-right
+      adjustedX = containerRect.left + localX + PADDING;
+      adjustedY = containerRect.top + localY - MENU_HEIGHT - PADDING;
+    } else {
+      // bottom-right => show menu at top-left
+      adjustedX = containerRect.left + localX - MENU_WIDTH - PADDING;
+      adjustedY = containerRect.top + localY - MENU_HEIGHT - PADDING;
+    }
+
+    // Clamp within viewport
+    adjustedX = Math.max(8, Math.min(adjustedX, viewportWidth - MENU_WIDTH - 8));
+    adjustedY = Math.max(8, Math.min(adjustedY, viewportHeight - MENU_HEIGHT - 8));
+
     setContextMenu({
       show: true,
       position: { x: adjustedX, y: adjustedY },
-      elementId: selectedId 
+      elementId: selectedId
     });
   }
 }}
