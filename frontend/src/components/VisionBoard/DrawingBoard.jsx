@@ -1146,7 +1146,6 @@ const handleMouseDown = (e) => {
   // If we found an element, handle selection
   if (clickedElementId && tool === 'select') {
     handleElementSelect(clickedElementId);
-    e.evt?.preventDefault();
     return;
   }
   
