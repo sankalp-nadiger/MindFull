@@ -484,6 +484,7 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
   const [isDraggingLine, setIsDraggingLine] = useState(false);
   const groupRef = useRef();
   const lineRef = useRef();
+  const trRef = useRef();
 
   const points = line.points || [50, 50, 200, 50];
 
@@ -501,6 +502,18 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
       }
     }
   }, [isSelected, line.id]);
+
+  // Attach/detach Transformer to the line when selection changes
+  useEffect(() => {
+    if (!trRef.current) return;
+    if (isSelected && lineRef.current) {
+      trRef.current.nodes([lineRef.current]);
+      trRef.current.getLayer()?.batchDraw();
+    } else {
+      trRef.current.nodes([]);
+      trRef.current.getLayer()?.batchDraw();
+    }
+  }, [isSelected]);
 
   const handleLineSelect = (e) => {
     if (tool === 'select') {
@@ -608,6 +621,22 @@ const FlowLineComponent = ({ line, isSelected, onSelect, onUpdate, tool }) => {
       
       {isSelected && tool === 'select' && (
         <>
+            <Transformer
+              ref={trRef}
+              anchorFill="#ffffff"
+              anchorStroke="#0066ff"
+              anchorSize={8}
+              anchorStrokeWidth={2}
+              borderStroke="#0066ff"
+              borderStrokeWidth={2}
+              padding={8}
+              rotateEnabled={true}
+              keepRatio={false}
+              centeredScaling={false}
+              enabledAnchors={[
+                'top-left', 'top-right', 'bottom-left', 'bottom-right'
+              ]}
+            />
           <Circle
             x={points[0]}
             y={points[1]}
