@@ -13,7 +13,7 @@ function Quiz() {
   const [answered, setAnswered] = useState(false);
   const [isSubmittingScore, setIsSubmittingScore] = useState(false);
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
-
+  const BACKEND_URL = import.meta.env.VITE_BASE_URL;
   // Function to submit score to backend
   const submitScore = async (finalScore, totalQuestions, gameName = "Quiz Game") => {
     console.log('🎮 Attempting to submit score:', { finalScore, totalQuestions, gameName });
@@ -38,7 +38,7 @@ function Quiz() {
       };
       console.log('📤 Sending payload:', payload);
       
-      const response = await axios.post('http://localhost:8000/api/scores/add', payload, {
+      const response = await axios.post(`${BACKEND_URL}/api/scores/add`, payload, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
