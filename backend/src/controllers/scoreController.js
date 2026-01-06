@@ -58,28 +58,39 @@ const getUserScores = asyncHandler(async (req, res) => {
       return res.status(404).json(new ApiResponse(404, null, "User not found"));
     }
 
-    // Sort scores by most recent first
-    user.gameScores.sort((a, b) => new Date(b.playedAt) - new Date(a.playedAt));
+    // Normalize and sort scores by most recent first
+    const normalizedHistory = (user.gameScores || []).map((game) => {
+      const totalQ = game.totalQuestions || 10;
+      // If already on a 10-point scale, keep it. Otherwise normalize to 0-10
+      let normalizedScore = totalQ === 10 ? game.score : Math.round((game.score / totalQ) * 10);
+      normalizedScore = Math.max(0, Math.min(10, normalizedScore));
+      return {
+        gameName: game.gameName,
+        score: normalizedScore,
+        totalQuestions: 10,
+        playedAt: game.playedAt
+      };
+    }).sort((a, b) => new Date(b.playedAt) - new Date(a.playedAt));
 
-    // Calculate statistics
+    const totalGamesPlayed = normalizedHistory.length;
+    const totalScore = normalizedHistory.reduce((sum, g) => sum + g.score, 0);
+    const averageScore = totalGamesPlayed > 0 ? (totalScore / totalGamesPlayed).toFixed(1) : 0;
+    const bestScore = totalGamesPlayed > 0 ? Math.max(...normalizedHistory.map(g => g.score)) : 0;
+
     const stats = {
-      totalGamesPlayed: user.gameScores.length,
-      totalScore: user.totalScore,
-      averageScore: user.gameScores.length > 0 
-        ? (user.gameScores.reduce((sum, game) => sum + (game.score / game.totalQuestions * 100), 0) / user.gameScores.length).toFixed(1)
-        : 0,
-      bestScore: user.gameScores.length > 0 
-        ? Math.max(...user.gameScores.map(game => game.score / game.totalQuestions * 100))
-        : 0
+      totalGamesPlayed,
+      totalScore,
+      averageScore,
+      bestScore
     };
 
     return res.status(200).json(
       new ApiResponse(200, {
         user: {
           username: user.username,
-          totalScore: user.totalScore
+          totalScore
         },
-        gameHistory: user.gameScores,
+        gameHistory: normalizedHistory,
         statistics: stats
       }, "Scores fetched successfully")
     );

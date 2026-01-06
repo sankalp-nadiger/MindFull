@@ -5,7 +5,7 @@ const Scoreboard = () => {
   const [userScores, setUserScores] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const BACKEND_URL = import.meta.env.VITE_BASE_URL;
   useEffect(() => {
     fetchUserScores();
   }, []);
@@ -26,7 +26,7 @@ const Scoreboard = () => {
         return;
       }
       
-      const response = await fetch('http://localhost:8000/api/scores/user', {
+      const response = await fetch(`${BACKEND_URL}/api/scores/user`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -154,7 +154,7 @@ const Scoreboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-white">Average Score</p>
-                <p className="text-2xl font-bold text-purple-100">{userScores?.statistics?.averageScore || 0}%</p>
+                <p className="text-2xl font-bold text-purple-100">{userScores?.statistics?.averageScore || 0}/10</p>
               </div>
               <TrendingUp className="w-8 h-8 text-purple-500" />
             </div>
@@ -164,7 +164,7 @@ const Scoreboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-white">Best Score</p>
-                <p className="text-2xl font-bold text-yellow-100">{userScores?.statistics?.bestScore?.toFixed(1) || 0}%</p>
+                <p className="text-2xl font-bold text-yellow-100">{userScores?.statistics?.bestScore?.toFixed(1) || 0}/10</p>
               </div>
               <Trophy className="w-8 h-8 text-yellow-500" />
             </div>
@@ -201,7 +201,7 @@ const Scoreboard = () => {
                         <div className="flex items-center space-x-3">
                           <div className="text-right">
                             <p className="text-lg font-bold text-gray-800">{game.score}/{game.totalQuestions}</p>
-                            <p className="text-sm text-gray-500">questions</p>
+                            <p className="text-sm text-gray-500">points</p>
                           </div>
                           <div className={`px-3 py-1 rounded-full text-sm font-medium ${getScoreColor(percentage)}`}>
                             {percentage}%

@@ -15,6 +15,9 @@ const MemoryCardGame = () => {
   const [isSubmittingScore, setIsSubmittingScore] = useState(false);
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
 
+  // Backend URL
+  const BACKEND_URL = import.meta.env.VITE_BASE_URL;
+
   // Game configurations
   const gameConfigs = {
     easy: { size: 5, time: 180, name: 'Easy (5×5)' }, // 3 minutes
@@ -132,14 +135,14 @@ const MemoryCardGame = () => {
     }
   };
 
-  // Submit score to backend
+  // Submit score to backend (scale result to 0-10)
   const submitScore = async () => {
     console.log('🎮 Attempting to submit memory game score');
     setIsSubmittingScore(true);
-    
+
     try {
       const token = sessionStorage.getItem('accessToken');
-      
+
       if (!token) {
         console.error('❌ No token found');
         setIsSubmittingScore(false);
@@ -149,17 +152,25 @@ const MemoryCardGame = () => {
       const config = gameConfigs[gameLevel];
       const totalPairs = (config.size * config.size) / 2;
       const timeBonus = Math.max(0, Math.floor(timeLeft / 10)); // Bonus points for remaining time
-      const finalScore = score + timeBonus;
+      const rawFinal = score + timeBonus;
+
+      // Max possible points for this difficulty = pairs + max time bonus (when timeLeft === config.time)
+      const maxTimeBonus = Math.max(0, Math.floor(config.time / 10));
+      const maxPossible = totalPairs + maxTimeBonus || 1; // avoid division by zero
+
+      // Scale to 0-10 and round
+      let scaledScore = Math.round((rawFinal / maxPossible) * 10);
+      scaledScore = Math.max(0, Math.min(10, scaledScore));
 
       const payload = {
         gameName: `Memory Game - ${config.name}`,
-        score: finalScore,
-        totalQuestions: totalPairs // Using totalPairs as "total possible score"
+        score: scaledScore,
+        totalQuestions: 10 // normalized to 10-point scale
       };
-      
-      console.log('📤 Sending memory game payload:', payload);
-      
-      const response = await fetch('http://localhost:8000/api/scores/add', {
+
+      console.log('📤 Sending memory game payload (scaled to 0-10):', payload);
+
+      const response = await fetch(`${BACKEND_URL}/api/scores/add`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -174,9 +185,9 @@ const MemoryCardGame = () => {
 
       const data = await response.json();
 
-      console.log('✅ Memory game score submitted:', data);
+      console.log('✅ Memory game score submitted (normalized):', data);
       setScoreSubmitted(true);
-      
+
     } catch (error) {
       console.error('❌ Error submitting memory game score:', error.message);
     } finally {
