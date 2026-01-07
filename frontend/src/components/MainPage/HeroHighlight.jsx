@@ -73,7 +73,7 @@ export const HeroHighlight = ({
         }} />
       
       {/* #AIEnabled positioned at top center - made sure z-index doesn't block hover effect */}
-      <div className="absolute top-6 left-0 right-0 flex justify-center text-2xl font-bold text-indigo-600 dark:text-indigo-400 opacity-70 hover:opacity-100 transition-opacity duration-300 z-20 pointer-events-auto">
+      <div className="absolute top-6 left-0 right-0 flex justify-center text-lg md:text-2xl font-bold text-indigo-600 dark:text-indigo-400 opacity-70 hover:opacity-100 transition-opacity duration-300 z-20 pointer-events-auto">
         #AIEnabled
       </div>
       
@@ -82,11 +82,11 @@ export const HeroHighlight = ({
       
       {/* Feature hashtags with appropriate pointer events and z-index */}
       <div className="absolute bottom-20 left-0 right-0 flex justify-center items-center w-full z-20 pointer-events-none">
-        <div className="flex flex-wrap justify-center gap-x-8 md:gap-x-12 lg:gap-x-16 gap-y-4 pointer-events-none">
+        <div className="flex flex-wrap justify-center gap-x-8 md:gap-x-12 lg:gap-x-10 gap-y-1 md:gap-y-4 pointer-events-none">
           {features.map((feature, index) => (
             <div 
               key={`feature-${index}`} 
-              className="text-xl md:text-2xl font-bold text-indigo-600 dark:text-indigo-400 opacity-30 hover:opacity-100 transition-opacity duration-300 pointer-events-auto"
+              className="text-base md:text-2xl font-bold text-indigo-600 dark:text-indigo-400 opacity-30 hover:opacity-100 transition-opacity duration-300 pointer-events-auto"
             >
               {feature}
             </div>

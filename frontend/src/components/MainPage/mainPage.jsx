@@ -4,24 +4,17 @@ import { motion } from "framer-motion";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { HeroHighlight, Highlight } from "./HeroHighlight";
 import Navbar from "../Navbar/Navbar";
-import { ChatInterface } from "../ChatBot/ChatInterface";
 import { useNavigate } from "react-router-dom";
-import LazyLoadWrapper from "../LazyLoad/LazyLoadWrapper";
 import { useTranslation } from 'react-i18next';
-import LanguageSelector from '../common/LanguageSelector';
 import Card from "../Games/Gamecard";
 import AppointmentNotification from "../Appointments/AppointmentNotification";
 // Lazy load heavy components
-const BentoGridDemo = React.lazy(() => import("./BentoGridDemo").then(module => ({ default: module.BentoGridDemo })));
 const Getquotes = React.lazy(() => import("./quotes"));
-const BadgesCorner = React.lazy(() => import("../Badges and Leaderboard/Badges"));
-const Recommendations = React.lazy(() => import("../Materialrecommendation/AIrecommendation"));
 const Footer = React.lazy(() => import("../Footer/Footer"));
 const Suggestion = React.lazy(() => import("./activity"));
 const DynamicCarousel = React.lazy(() => import("../pages/FetchPosts"));
 const ExerciseCards = React.lazy(() => import("../Exercises/exercise"));
 const FloatingChatButton = React.lazy(() => import("../ChatBot/FloatingChatButton"));
-const MoodBasedMemories = React.lazy(() => import("../pages/MoodBasedMemories"));
 
 export function HeroHighlightDemo() {
   const { t } = useTranslation();
@@ -159,21 +152,21 @@ export function HeroHighlightDemo() {
 
       <div className="w-full relative z-30 font-poppins">
         <HeroHighlight>
-          <div className="min-h-[40vh] flex flex-col justify-center items-center text-center px-4">
+          <div className="flex flex-col justify-end md:justify-center items-center text-center px-4 pb-20 md:py-8">
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: [20, -5, 0] }}
               transition={{ duration: 0.5, ease: [0.4, 0.0, 0.2, 1] }}
-              className="flex flex-wrap justify-center gap-4 text-4xl font-bold md:text-6xl lg:text-7xl text-neutral-700 dark:text-white"
+              className="flex flex-col md:flex-row md:flex-wrap justify-center gap-2 md:gap-4 text-3xl font-bold md:text-6xl lg:text-7xl text-neutral-700 dark:text-white mb-2 md:mb-0"
             >
-              {t('dashboard.welcome')},
+              <span className="text-2xl md:text-6xl lg:text-7xl">{t('dashboard.welcome')},</span>
               <Highlight
-                className="inline-block px-3 py-1 text-3xl text-black rounded-md shadow-md dark:text-white md:text-5xl lg:text-6xl bg-gradient-to-r from-purple-500 to-blue-500"
+                className="inline-block px-3 py-1 text-2xl text-black rounded-md shadow-md dark:text-white md:text-5xl lg:text-6xl bg-gradient-to-r from-purple-500 to-blue-500"
               >
                 {loading ? t('common.loading') : error ? `${t('common.error')}: ${error}` : username}
               </Highlight>
             </motion.h1>
-            <div className="block w-full mt-6 text-xl text-center md:text-2xl lg:text-3xl dark:text-white">
+            <div className="block w-full mt-2 md:mt-6 text-lg md:text-2xl lg:text-3xl dark:text-white">
               {t('dashboard.todayQuestion')}
             </div>
           </div>
@@ -368,7 +361,6 @@ export function HeroHighlightDemo() {
               </button>
             </div>
 
-            {/* <BentoGridDemo /> */}
             {/* <BadgesCorner /> */}
             <Footer />
           </section>
