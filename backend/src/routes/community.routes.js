@@ -1,5 +1,5 @@
 import express from 'express';
-import { createCommunityRoom, joinCommunityRoom, sendMessageToCommunityRoom ,getCommunityRooms} from '../controllers/community.controller.js';
+import { createCommunityRoom, joinCommunityRoom, sendMessageToCommunityRoom ,getCommunityRooms } from '../controllers/community.controller.js';
 import { user_verifyJWT } from '../middleware/auth.middleware.js';
 
 const router = express.Router();

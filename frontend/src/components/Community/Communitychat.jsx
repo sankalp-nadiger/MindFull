@@ -4,6 +4,7 @@ import Navbar from '../Navbar/Navbar';
 import { MessageCircle, Users, Plus, Hash, Send, X, Shield, Heart, UserPlus, ChevronDown } from 'lucide-react';
 import FloatingChatButton from "../ChatBot/FloatingChatButton";
 import { useTranslation } from 'react-i18next';
+import Toast from '../pages/Toast';
 
 const CommunityChat = () => {
   const { t } = useTranslation();
@@ -25,6 +26,7 @@ const CommunityChat = () => {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [lastSeenMessageIndex, setLastSeenMessageIndex] = useState(0);
   const [newMessageCount, setNewMessageCount] = useState(0);
+  const [toast, setToast] = useState({ message: '', type: 'info' });
   
   const accessToken = sessionStorage.getItem('accessToken');
 
@@ -94,6 +96,17 @@ const CommunityChat = () => {
       }
     }
   };
+
+  // When opening a conversation, always scroll to the bottommost message
+  useEffect(() => {
+    if (joinedRoom) {
+      // Wait a tick for messages to render, then force-scroll to bottom
+      const id = setTimeout(() => {
+        scrollToBottom(true);
+      }, 50);
+      return () => clearTimeout(id);
+    }
+  }, [joinedRoom]);
 
   // Handle scroll events
   useEffect(() => {
@@ -185,8 +198,25 @@ const CommunityChat = () => {
     }
   }, [messages]);
 
-  const joinRoom = async (roomId) => {
+  const joinRoom = async (roomId, showToast = false) => {
     try {
+      // First, check if the room exists locally and if user is already a member
+      let existingRoom = rooms.find(r => r._id === roomId);
+      
+      // If not found by exact ID, try partial match (last 8 chars)
+      if (!existingRoom) {
+        existingRoom = rooms.find(r => r._id.endsWith(roomId) || r._id.startsWith(roomId));
+      }
+      
+      // If room exists and user is already a member, just open it
+      if (existingRoom) {
+        setShowJoinRoomModal(false);
+        setRoomIdToJoin('');
+        openChat(existingRoom, showToast);
+        return;
+      }
+      
+      // If room doesn't exist locally, try to join via API
       let response;
       response = await axios.post(
         `${import.meta.env.VITE_BASE_API_URL}/community/join`,
@@ -197,28 +227,53 @@ const CommunityChat = () => {
           },
         }
       );
+      
+      // If user is already a member, just open the chat
+      if (response.data.alreadyMember) {
+        setShowJoinRoomModal(false);
+        setRoomIdToJoin('');
+        
+        // Refresh rooms to get latest data
+        const roomsResponse = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/community/rooms`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        setUsername(roomsResponse.data.senderUsername);
+        setRooms(roomsResponse.data.rooms || []);
+        const room = roomsResponse.data.rooms.find(r => r._id === roomId);
+        if (room) {
+          openChat(room, showToast);
+        }
+        return;
+      }
+
       setUserId(response.data.userId);
       localStorage.setItem("userId", response.data.userId);
-      const room = rooms.find(r => r._id === roomId);
-      setCurrentRoom(room);
-      setJoinedRoom(roomId);
       setShowJoinRoomModal(false);
-      
+
+      // Refresh rooms and messages; backend provides isMember flag
       response = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/community/rooms`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
       });
-      setUsername(response.data.senderUsername)
-      const currentRoomData = response.data.rooms.find(r => r._id === roomId);
-      if (currentRoomData && currentRoomData.messages) {
-        setMessages(currentRoomData.messages);
-        setLastSeenMessageIndex(currentRoomData.messages.length - 1);
-        setNewMessageCount(0);
+      setUsername(response.data.senderUsername);
+      setRooms(response.data.rooms || []);
+      const currentRoomData = response.data.rooms.find(r => r._id === roomId || r._id.endsWith(roomId) || r._id.startsWith(roomId));
+      if (currentRoomData) {
+        openChat(currentRoomData, showToast);
       }
     } catch (error) {
       console.error('Error joining room:', error);
-      alert('Failed to join the room. Please try again.');
+      setShowJoinRoomModal(false);
+      setRoomIdToJoin('');
+      setToast({ 
+        message: error.response?.status === 404 
+          ? 'Room not found. Please check the Room ID and try again.' 
+          : 'Failed to join room. Please try again.', 
+        type: 'error' 
+      });
     }
   };
 
@@ -308,6 +363,20 @@ const CommunityChat = () => {
     return '🌟';
   };
 
+  // Open chat for a room (used when user is already a member)
+  const openChat = (room, showToast = false) => {
+    setCurrentRoom(room);
+    setJoinedRoom(room._id);
+    setMessages(room.messages || []);
+    setLastSeenMessageIndex((room.messages?.length || 0) - 1);
+    setNewMessageCount(0);
+    setShowJoinRoomModal(false);
+    setUsername(localStorage.getItem('username') || '');
+    if (showToast) {
+      setToast({ message: `You've joined ${room.name}`, type: 'success' });
+    }
+  };
+
   return (
     <>
     <style>
@@ -327,7 +396,7 @@ const CommunityChat = () => {
           backgroundImage: `url('1a.png')`,
         }}
       />
-        <div className="max-w-7xl mx-auto px-4 py-8 overflow-x-hidden">
+        <div className={`mx-auto px-4 py-8 overflow-x-hidden ${joinedRoom ? 'max-w-5xl' : 'max-w-7xl'}`}>
           {/* Header Section */}
           <div className="text-center mb-8">
             <div className="flex justify-center items-center gap-3 mb-4">
@@ -407,18 +476,20 @@ const CommunityChat = () => {
                       <Hash size={12} className="flex-shrink-0" />
                       <span className="font-mono truncate">{room._id.slice(-8)}</span>
                     </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
+                    {/* <div className="flex items-center gap-1 flex-shrink-0">
                       <Users size={12} />
                       <span>{t('community.activeNow')}</span>
-                    </div>
+                    </div> */}
                   </div>
                   
-                  <button
-                    onClick={() => joinRoom(room._id)}
-                    className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-lg transition-all duration-200 font-medium shadow-md hover:shadow-lg"
-                  >
-                    {t('community.joinConversation')}
-                  </button>
+                  <div className="flex flex-col gap-3">
+                    <button
+                      onClick={() => (room.isMember ? openChat(room) : joinRoom(room._id))}
+                      className="w-full py-3 rounded-lg transition-all duration-200 font-medium shadow-md hover:shadow-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                    >
+                      {t('community.joinConversation')}
+                    </button>
+                  </div>
                 </div>
               ))}
               
@@ -436,7 +507,7 @@ const CommunityChat = () => {
           {joinedRoom && currentRoom && (
             <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl shadow-2xl overflow-hidden">
               {/* Chat Header */}
-              <div className="bg-gradient-to-r from-purple-800 to-blue-800 p-6 border-b border-gray-700">
+              <div className="bg-gradient-to-r from-purple-800 to-blue-800 p-4 border-b border-gray-700">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-4 min-w-0 flex-1 overflow-hidden">
                     <div className="text-2xl flex-shrink-0">{getRoomIcon(currentRoom.name)}</div>
@@ -458,10 +529,13 @@ const CommunityChat = () => {
                       setNewMessageCount(0);
                       setLastSeenMessageIndex(0);
                     }}
-                    className="p-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors duration-200 flex-shrink-0"
+                    className="p-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors duration-200 flex-shrink-0 group relative"
                     title="Leave room"
                   >
                     <X size={20} />
+                    <span className="absolute -bottom-8 right-0 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
+                      Leave Room
+                    </span>
                   </button>
                 </div>
               </div>
@@ -470,7 +544,7 @@ const CommunityChat = () => {
  <div className="relative">
   <div 
   ref={chatContainerRef} 
-  className="h-96 lg:h-[500px] overflow-y-auto overflow-x-hidden p-6 bg-gradient-to-b from-gray-900 to-slate-900 scroll-smooth w-full"
+  className="h-80 lg:h-[400px] overflow-y-auto overflow-x-hidden p-4 bg-gradient-to-b from-gray-900 to-slate-900 scroll-smooth w-full"
 >
 
 
@@ -503,9 +577,9 @@ const CommunityChat = () => {
         )}
         
         {/* Message */}
-        <div className={`flex w-full mb-4 ${isCurrentUser ? "justify-end" : "justify-start"} min-w-0 overflow-hidden`}>
+        <div className={`flex w-full mb-3 ${isCurrentUser ? "justify-end" : "justify-start"} min-w-0 overflow-hidden`}>
           <div
-            className={`relative p-4 max-w-[85%] sm:max-w-[75%] rounded-2xl shadow-lg overflow-hidden ${
+            className={`relative p-3 max-w-[80%] sm:max-w-[70%] rounded-2xl shadow-lg overflow-hidden ${
               isCurrentUser 
                 ? "bg-gradient-to-r from-green-600 to-green-700 text-white rounded-br-sm" 
                 : "bg-gradient-to-r from-gray-700 to-gray-800 text-white rounded-bl-sm border border-gray-600"
@@ -566,13 +640,7 @@ const CommunityChat = () => {
                     <button
                       onClick={(e) => {
                         e.preventDefault();
-                        if (chatContainerRef.current && messagesEndRef.current) {
-                          const chatContainer = chatContainerRef.current;
-                          const end = messagesEndRef.current;
-                          // Calculate the offset needed to bring the last message into view
-                          const offset = end.offsetTop - chatContainer.offsetTop - chatContainer.clientHeight + end.clientHeight + 16; // 16px padding
-                          chatContainer.scrollTo({ top: offset, behavior: 'auto' });
-                        }
+                        scrollToBottom(true);
                       }}
                       className="relative p-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 animate-bounce"
                       title="Scroll to latest message"
@@ -591,7 +659,7 @@ const CommunityChat = () => {
               </div>
 
               {/* Message Input */}
-              <div className="p-6 bg-gradient-to-r from-gray-800 to-gray-900 border-t border-gray-700">
+              <div className="p-4 bg-gradient-to-r from-gray-800 to-gray-900 border-t border-gray-700">
                 <form onSubmit={sendMessage} className="flex gap-3 w-full max-w-full overflow-hidden">
                   <input
                     type="text"
@@ -704,7 +772,7 @@ const CommunityChat = () => {
                     {t('common.cancel')}
                   </button>
                   <button
-                    onClick={() => joinRoom(roomIdToJoin)}
+                    onClick={() => joinRoom(roomIdToJoin, true)}
                     disabled={!roomIdToJoin.trim()}
                     className="flex-1 p-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed rounded-lg transition-all duration-200"
                   >
@@ -718,6 +786,7 @@ const CommunityChat = () => {
       </div>
       
       <FloatingChatButton />
+      {toast.message && <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: 'info' })} />}
     </>
   );
 };

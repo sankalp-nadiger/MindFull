@@ -2,6 +2,8 @@ import asyncHandler from '../utils/asynchandler.utils.js';
 import { ApiError } from '../utils/API_Error.js';
 import { Community } from '../models/community.model.js';  // Import your Community model
 import { User } from '../models/user.model.js';
+import mongoose from 'mongoose';
+
 // Create a Community Room (Group Chat)
 const createCommunityRoom = asyncHandler(async (req, res) => {
     const { roomName,  description } = req.body;
@@ -35,14 +37,16 @@ const createCommunityRoom = asyncHandler(async (req, res) => {
 
 // Get all Community Rooms
 const getCommunityRooms = asyncHandler(async (req, res) => {
-    const rooms = await Community.find({}); // Get all rooms
     const userId = req.user._id;
     const user = await User.findById(userId);
     if (!user) {
         throw new ApiError(404, 'User not found');
     }
 
-    res.status(200).json({ rooms, senderUsername: user.username });
+    // Include a lightweight isMember flag per room so frontend can show Join/Leave
+    const rooms = await Community.find({}); // Get all rooms
+
+    res.status(200).json({ rooms: rooms, senderUsername: user.username, userId: userId.toString() });
 });
 
 // Join a Community Room (Group Chat) - HTTP-based
@@ -52,20 +56,37 @@ const joinCommunityRoom = asyncHandler(async (req, res) => {
     if (!userId || !roomId) {
         throw new ApiError(400, 'User ID and Room ID are required');
     }
-    console.log(userId)
-    // Find the room by roomId and add the user to the members array
-    const room = await Community.findById(roomId);
+
+    // Lookup room by full ObjectId when valid, otherwise try to match by short/truncated id prefix
+    let room = null;
+    try {
+        if (mongoose.Types.ObjectId.isValid(roomId)) {
+            room = await Community.findById(roomId);
+        }
+    } catch (err) {
+        room = null;
+    }
+
+    if (!room) {
+        // Try to find by prefix (e.g., UI may send last 8 chars shown in UI)
+        const allRooms = await Community.find({});
+        room = allRooms.find(r => r._id.toString().endsWith(roomId) || r._id.toString().startsWith(roomId));
+    }
+
     if (!room) {
         throw new ApiError(404, 'Room not found');
     }
 
-    // Add user to the room's members if not already present
-    if (!room.members.includes(userId)) {
-        room.members.push(userId);
-        await room.save();
+    const isMember = Array.isArray(room.members) && room.members.some(m => m.toString() === userId.toString());
+    if (isMember) {
+        return res.status(200).json({ message: 'User already a member of room', userId: userId.toString(), alreadyMember: true });
     }
 
-    res.status(200).json({ message: `User ${userId} joined room ${roomId}`,userId: userId.toString(),})
+    // Add user to the room's members
+    room.members.push(userId);
+    await room.save();
+
+    res.status(200).json({ message: `User ${userId} joined room ${room._id}`, userId: userId.toString(), alreadyMember: false });
 });
 
 // Send a Message to Community Room - HTTP-based
@@ -78,7 +99,18 @@ const sendMessageToCommunityRoom = asyncHandler(async (req, res) => {
 
     const username = req.user.username;
     // Save the message in the database (or similar)
-    const room = await Community.findById(roomId);
+    let room = null;
+    try {
+        if (mongoose.Types.ObjectId.isValid(roomId)) {
+            room = await Community.findById(roomId);
+        }
+    } catch (err) {
+        room = null;
+    }
+    if (!room) {
+        const allRooms = await Community.find({});
+        room = allRooms.find(r => r._id.toString().endsWith(roomId) || r._id.toString().startsWith(roomId));
+    }
     if (!room) {
         throw new ApiError(404, 'Room not found');
     }
