@@ -12,13 +12,13 @@ A comprehensive mental health support platform designed to help students, parent
 
 ## 🌟 Overview
 
-MindfulStudent is an innovative digital platform that addresses the growing mental health challenges faced by students in the digital age. By combining AI-driven personalization, peer support networks, and professional guidance, we create a safe, engaging environment for students to manage their mental well-being.
+Soulynk is an innovative digital platform that addresses the growing mental health challenges faced by students and professionals across diverse age groups in the digital age. By combining AI-driven personalization, peer support networks, and professional guidance, Soulynk creates a safe and engaging environment for individuals to manage their mental well-being. Originally began as MindFull, the platform evolved into Soulynk, reflecting its deeper purpose of reconnecting the soul with a state of serenity.
 
 ## 🎯 Key Features
 
 ### Core Platform Features
 
-- **MindFull Bot**
+- **Soulynk Bot**
   - Personalized mental health assistant
   - AI-driven conversational support
   - Guided mindfulness and relaxation exercises
@@ -99,7 +99,7 @@ MindfulStudent is an innovative digital platform that addresses the growing ment
    - Goals setting
 
 2. **Core Features**
-   - MindFull AI ChatBot
+   - Soulynk AI ChatBot
    - Daily activity tracking
    - Mood selection
    - Personalized content delivery
