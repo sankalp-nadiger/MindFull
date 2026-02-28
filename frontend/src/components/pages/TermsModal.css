@@ -1,0 +1,361 @@
+.terms-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 1rem;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.terms-modal-container {
+  background: white;
+  border-radius: 16px;
+  max-width: 1100px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.terms-modal-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 2px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px 16px 0 0;
+}
+
+.terms-modal-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+}
+
+.terms-modal-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  font-size: 1.5rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.terms-modal-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.terms-modal-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  background: #f9fafb;
+}
+
+.terms-modal-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+  background: #f9fafb;
+}
+
+.terms-modal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.terms-modal-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.terms-modal-content::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.terms-modal-content::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.terms-section {
+  margin-bottom: 2rem;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border-left: 4px solid #667eea;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.warning-section {
+  border-left-color: #ef4444;
+  background: #fef2f2;
+}
+
+.terms-section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.warning-section .terms-section-title {
+  color: #dc2626;
+}
+
+.terms-paragraph {
+  margin-bottom: 1rem;
+  line-height: 1.7;
+  color: #4b5563;
+  font-size: 0.95rem;
+}
+
+.terms-paragraph.important {
+  background: #fef3c7;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #f59e0b;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.terms-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.terms-list li {
+  padding-left: 1.5rem;
+  margin-bottom: 0.75rem;
+  position: relative;
+  line-height: 1.6;
+  color: #4b5563;
+  font-size: 0.95rem;
+}
+
+.terms-list li::before {
+  content: "•";
+  position: absolute;
+  left: 0.5rem;
+  color: #667eea;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.warning-section .terms-list li::before {
+  color: #ef4444;
+}
+
+.terms-modal-sidebar {
+  width: 380px;
+  background: white;
+  border-left: 2px solid #e5e7eb;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.terms-modal-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.terms-modal-sidebar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.terms-modal-sidebar::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+.sidebar-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.sidebar-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.sidebar-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.sidebar-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.terms-modal-footer {
+  padding: 1.5rem 2rem;
+  border-top: 2px solid #e5e7eb;
+  background: white;
+  border-radius: 0 0 16px 16px;
+  display: none;
+}
+
+.terms-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.terms-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  cursor: pointer;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.terms-checkbox-label:hover {
+  background: #f3f4f6;
+  border-color: #667eea;
+}
+
+.terms-checkbox {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  margin-right: 0.75rem;
+  margin-top: 0.125rem;
+  cursor: pointer;
+  accent-color: #667eea;
+}
+
+.terms-checkbox-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.terms-accept-button {
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.terms-accept-button:hover:not(.disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.terms-accept-button.disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.terms-accept-button:active:not(.disabled) {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .terms-modal-container {
+    max-height: 95vh;
+    margin: 1rem;
+  }
+
+  .terms-modal-body {
+    flex-direction: column;
+  }
+
+  .terms-modal-sidebar {
+    width: 100%;
+    border-left: none;
+    border-top: 2px solid #e5e7eb;
+    max-height: 300px;
+  }
+
+  .terms-modal-header {
+    padding: 1rem 1.5rem;
+  }
+
+  .terms-modal-title {
+    font-size: 1.25rem;
+  }
+
+  .terms-modal-content {
+    padding: 1.5rem;
+  }
+
+  .terms-section {
+    padding: 1rem;
+  }
+
+  .terms-section-title {
+    font-size: 1.1rem;
+  }
+
+  .terms-paragraph,
+  .terms-list li {
+    font-size: 0.9rem;
+  }
+
+  .terms-checkbox-text {
+    font-size: 0.85rem;
+  }
+
+  .sidebar-title {
+    font-size: 1.1rem;
+  }
+}

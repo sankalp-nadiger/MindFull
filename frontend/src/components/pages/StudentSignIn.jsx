@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./StudentSignIn.css";
 import Toast from "./Toast";
+import TermsModal from "./TermsModal";
 import { motion } from "framer-motion";
 import { CheckCircle2, User, Shield, Star } from 'lucide-react';
 
@@ -38,6 +39,7 @@ const StudentSignIn = () => {
   const [toast, setToast] = useState({ message: "", type: "info" });
   const [fieldError, setFieldError] = useState({ username: false, password: false, mood: false });
   const [errorCount, setErrorCount] = useState(0);
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
@@ -142,6 +144,11 @@ const StudentSignIn = () => {
   return (
     <>
       <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: "", type: "info" })} />
+      <TermsModal 
+        isOpen={isTermsModalOpen} 
+        onClose={() => setIsTermsModalOpen(false)}
+        viewOnly={true}
+      />
       <div className="min-h-screen font-poppins bg-gradient-to-b from-green-400 via-green-200 to-blue-300 flex items-center justify-center p-4 ">
        
 
@@ -310,7 +317,13 @@ const StudentSignIn = () => {
                 <div className="mb-4 text-center">
                   <p className="text-gray-700 text-xs">
                     By signing in, you agree to our
-                    <a href="#" className="text-primaryblue hover:text-blue-800 ml-1">Terms of Service</a>
+                    <button 
+                      type="button"
+                      onClick={() => setIsTermsModalOpen(true)} 
+                      className="text-primaryblue hover:text-blue-800 ml-1 underline bg-transparent border-none cursor-pointer"
+                    >
+                      Terms of Service
+                    </button>
                   </p>
                 </div>
 

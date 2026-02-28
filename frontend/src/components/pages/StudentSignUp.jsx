@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import "./StudentSignIn.css";
 import Toast from "./Toast";
+import TermsModal from "./TermsModal";
 
 const StudentSignUp = () => {
   const [fullName, setFullName] = useState("");
@@ -19,6 +20,8 @@ const StudentSignUp = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState({ message: "", type: "info" });
   const [errorCount, setErrorCount] = useState(0);
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
+  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
 
   const navigate = useNavigate();
 
@@ -75,6 +78,12 @@ const StudentSignUp = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!hasAcceptedTerms) {
+      showErrorToast("You must accept the Terms & Conditions to proceed.");
+      setIsTermsModalOpen(true);
+      return;
+    }
 
     if ([fullName, email, username, password].some((field) => field.trim() === "")) {
       showErrorToast("Please fill out all required fields.");
@@ -156,8 +165,11 @@ const StudentSignUp = () => {
 
   return (
     <>
-     <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: "", type: "info" })} />
-    <div className="min-h-screen font-poppins bg-gradient-to-b from-green-400 via-green-200 to-blue-300  flex items-center justify-center p-4 ">
+     <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: "", type: "info" })} />     <TermsModal 
+       isOpen={isTermsModalOpen} 
+       onClose={() => setIsTermsModalOpen(false)}
+       onAccept={() => setHasAcceptedTerms(true)}
+     />    <div className="min-h-screen font-poppins bg-gradient-to-b from-green-400 via-green-200 to-blue-300  flex items-center justify-center p-4 ">
       
      
         
@@ -407,8 +419,17 @@ const StudentSignUp = () => {
     
               <div className="mb-4 text-center">
                 <p className="text-gray-700 text-xs">
-                  By signing in, you agree to our 
-                  <a href="#" className="text-primaryblue hover:text-blue-800 ml-1">Terms of Service</a>
+                  By signing up, you agree to our 
+                  <button 
+                    type="button"
+                    onClick={() => setIsTermsModalOpen(true)} 
+                    className="text-primaryblue hover:text-blue-800 ml-1 underline bg-transparent border-none cursor-pointer"
+                  >
+                    Terms of Service
+                  </button>
+                  {hasAcceptedTerms && (
+                    <span className="ml-2 text-green-600 font-semibold">✓ Accepted</span>
+                  )}
                 </p>
               </div>
 
